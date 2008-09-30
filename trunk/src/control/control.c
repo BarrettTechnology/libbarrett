@@ -25,25 +25,7 @@
 
 #include "control.h"
 
-char * bt_control_mode_names[] =
-{
-   "IDLE",
-   "IDLE_TEACH_DISCRETE",
-   "IDLE_TEACH_CONTINUOUS",
-   "HOLD",
-   "TRAJ_PREP",
-   "TRAJ_READY",
-   "TRAJ_MOVING",
-   "TRAJ_PAUSING",
-   "TRAJ_PAUSED",
-   "TRAJ_UNPAUSING",
-   "OTHER"
-};
 
-char * bt_control_mode_name(int mode)
-{
-   return bt_control_mode_names[mode];
-}
 
 
 

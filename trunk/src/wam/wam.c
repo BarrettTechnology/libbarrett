@@ -22,6 +22,8 @@
 
 #include "wam.h"
 
+#include "wambot_sim.h"
+
 #include <string.h>
 #include <syslog.h>
 #include <math.h>     /* For sqrt() */
@@ -53,8 +55,7 @@ struct setup_helper
    int is_setup;
    int setup_failed;
 };
-
-struct setup_helper * helper_create(struct bt_wam * wam, config_setting_t * config)
+static struct setup_helper * helper_create(struct bt_wam * wam, config_setting_t * config)
 {
    struct setup_helper * helper;
    helper = (struct setup_helper *) malloc( sizeof(struct setup_helper) );
@@ -65,8 +66,7 @@ struct setup_helper * helper_create(struct bt_wam * wam, config_setting_t * conf
    helper->setup_failed = 0;
    return helper;
 }
-
-void helper_destroy(struct setup_helper * helper)
+static void helper_destroy(struct setup_helper * helper)
 {
    free(helper);
    return;
@@ -95,6 +95,8 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
       syslog(LOG_ERR,"%s: No memory for a new WAM.",__func__);
       return 0;
    }
+    
+   wam->count = 0;
    
    /* Spin off the non-realtime log-saving thread */
    wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, "LOG", 10, nonrt_thread_function, (void *)wam);
@@ -177,10 +179,10 @@ void bt_wam_destroy(struct bt_wam * wam)
       bt_os_rtime mins[TSNUM];
       bt_os_rtime maxs[TSNUM];
       bt_os_timestat_get(wam->ts,means,vars,mins,maxs);
-      printf("%15s:   us  ns      us  ns      min       max  \n","Timing Stats");
-      printf("%15s--------------------------------------------\n","-------------");
+      syslog(LOG_ERR,"%15s:   us  ns      us  ns      min       max  \n","Timing Stats");
+      syslog(LOG_ERR,"%15s--------------------------------------------\n","-------------");
       for (i=0; i<TSNUM; i++)
-         printf("%15s: %4d %03d  +/-%3d %03d   %4d %03d  %4d %03d\n",
+         syslog(LOG_ERR,"%15s: %4d %03d  +/-%3d %03d   %4d %03d  %4d %03d\n",
                 ts_name[i],
                 ((int)(means[i]))/1000,      ((int)(means[i]))%1000,
                 ((int)(sqrt(vars[i])))/1000, ((int)(sqrt(vars[i])))%1000,
@@ -231,10 +233,11 @@ void rt_wam(bt_os_thread * thread)
    wam->con_active = (struct bt_control *) wam->con_joint;
    
    /* Set velocity safety limit tp 2.0 m/s */
-   bt_bus_set_property(wam->wambot->bus, SAFETY_PUCK_ID, wam->wambot->bus->p->VL2, 1, 2.0 * 0x1000);
+   /*bt_bus_set_property(wam->wambot->bus, SAFETY_PUCK_ID, wam->wambot->bus->p->VL2, 1, 2.0 * 0x1000);*/
    
    /* Set up the easy-access wam vectors */
    wam->jposition = wam->wambot->jposition;
+   wam->jvelocity = wam->wambot->jvelocity;
    wam->jtorque = wam->wambot->jtorque;
    wam->cposition = wam->kin->tool->origin_pos;
    wam->crotation = wam->kin->tool->rot_to_inertial;
@@ -252,6 +255,8 @@ void rt_wam(bt_os_thread * thread)
    /* Loop until we're told by destroy() to exit */
    while (!bt_os_thread_done(thread))
    {
+      wam->count++;
+      
       /* Make sure task is still in primary mode,
        * and wait until the next control period */
       bt_os_timestat_start(wam->ts);
@@ -259,6 +264,13 @@ void rt_wam(bt_os_thread * thread)
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
+      
+      /* Always Hold! */
+      if ( wam->con_active->is_holding(wam->con_active) )
+      {
+         syslog(LOG_ERR,"trying to hold!");
+         wam->con_active->hold( wam->con_active );
+      }
       
       /* Forward kinematics */
       bt_kinematics_eval_forward( wam->kin, wam->wambot->jposition );
@@ -313,8 +325,9 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->log = 0;
    wam->con_joint= 0;
    
-   /* Create a wambot object (which sets the dof) */
-   wam->wambot = bt_wambot_create( config_setting_get_member(wamconfig,"wambot") );
+   /* Create a wambot object (which sets the dof)
+    * NOTE - this should be configurable! */
+   wam->wambot = (struct bt_wambot *) bt_wambot_sim_create( config_setting_get_member(wamconfig,"wambot") );
    if (!wam->wambot)
    {
       syslog(LOG_ERR,"%s: Could not create wambot.",__func__);
@@ -389,7 +402,7 @@ void rt_wam_destroy(struct bt_wam * wam)
    if (wam->kin)
       bt_kinematics_destroy(wam->kin);
    if (wam->wambot)
-      bt_wambot_destroy(wam->wambot);
+      bt_wambot_sim_destroy((struct bt_wambot_sim *)wam->wambot);
 }
 
 
@@ -401,7 +414,7 @@ void nonrt_thread_function(bt_os_thread * thread)
    {
       if (wam->log)
       {
-         syslog(LOG_ERR,"Flushing Log Files ...");
+         /*syslog(LOG_ERR,"Flushing Log Files ...");*/
          bt_log_flush( wam->log );
          bt_os_usleep(1000000);
       }

@@ -23,6 +23,8 @@
 #ifndef BT_KINEMATICS_H
 #define BT_KINEMATICS_H
 
+#include <libconfig.h>
+
 /* btkinematics uses gsl :-) */
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>

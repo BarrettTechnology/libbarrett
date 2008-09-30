@@ -20,35 +20,42 @@
  *
  * ======================================================================== */
 
-#ifndef BT_WAMBOT_H
-#define BT_WAMBOT_H
+#ifndef BT_WAMBOT_PHYS_H
+#define BT_WAMBOT_PHYS_H
 
-/* bt_wambot uses gsl :-) */
+#include "wambot.h"
+
+#include "bus.h"
+
+/* btwam uses gsl :-) */
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
 
-struct bt_wambot
+/* bt_wambot_phys uses libconfig */
+#include <libconfig.h>
+
+struct bt_wambot_phys
 {
-   int dof;
-   
-   /* Communication with actuators, interface with bot */
-   gsl_vector * jtorque; /* Nm */
-   gsl_vector * jposition; /* rad */
-   gsl_vector * jvelocity; /* rad/s */
-   gsl_vector * jacceleration; /* rad/s/s */
-   
-   /* Constant stuff to be read from config file */
-   gsl_vector * home; /* rad */
-   
-   /* wambot function pointers */
-   /*struct bt_wambot * bt_wambot_create( config_setting_t * wamconfig );
-   int bt_wambot_destroy( struct bt_wambot * wambot );*/
+   struct bt_wambot base;
 
-   int (*update)( struct bt_wambot * wambot );
-   int (*setjtor)( struct bt_wambot * wambot );
+   /* Constant stuff to be read from config file */
+   struct bt_bus * bus; /* The bt_bus this WAM is on */
+   gsl_vector * zeromag; /* enc counts */
+   gsl_matrix * j2mp; /* ratios */
+   
+   /* Constant cache stuff computed from config file stuff above */
+   gsl_matrix * m2jp; /* inverse of j2mp */
+   gsl_matrix * j2mt; /* inverse of j2mp^T */
+   
+   /* temporary storage locations */
+   gsl_vector * mposition; /* rad */
+   gsl_vector * mvelocity; /* rad */
+   gsl_vector * macceleration; /* rad */
+   gsl_vector * mtorque; /* Nm */
+   
 };
 
-/* Shortcut Functions */
-int bt_wambot_update( struct bt_wambot * wambot );
-int bt_wambot_setjtor( struct bt_wambot * wambot );
+struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config );
+int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot );
 
-#endif /* BT_WAMBOT_H */
+#endif /* BT_WAMBOT_PHYS_H */

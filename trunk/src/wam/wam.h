@@ -24,15 +24,14 @@
 #define BT_WAM_H
 
 /* Include the bt libraries */
-#include <libbt/os.h>
-#include <libbt/bus.h>
-#include <libbt/log.h>
-#include <libbt/wambot.h>
-#include <libbt/kinematics.h>
-#include <libbt/gravity.h>
-#include <libbt/trajectory.h>
-#include <libbt/control.h>
-#include <libbt/control_joint.h>
+#include "os.h"
+#include "wambot.h"
+#include "log.h"
+#include "gravity.h"
+#include "kinematics.h"
+#include "trajectory.h"
+#include "control.h"
+#include "control_joint.h"
 
 struct bt_wam
 {
@@ -47,6 +46,8 @@ struct bt_wam
    struct bt_os_timestat * ts; /* For timing things */
    
    int gcomp;
+   
+   int count;
 
    /* realtime WAM stuff */
    struct bt_wambot * wambot; /* wambot has dof */
@@ -60,6 +61,7 @@ struct bt_wam
    
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
+   gsl_vector * jvelocity; /* From wambot */
    gsl_vector * jtorque; /* From wambot */
    gsl_vector * cposition; /* From kinematics (tool) */
    gsl_matrix * crotation; /* 3x3 rotation matrix, From kinematics (tool) */

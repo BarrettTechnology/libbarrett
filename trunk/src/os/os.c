@@ -36,6 +36,9 @@
 
 #include <pthread.h>
 
+#ifdef RTSYS_NONE
+#include <sys/time.h>
+#endif
 
 
 /*==============================*
@@ -370,14 +373,58 @@ BTINLINE void * bt_os_realloc(void * ptr, size_t size)
 #endif
 
 
-
-
 /* If we're using RTAI, these will also be used in real-time mode */
 struct pthd {
    pthread_t thd_id;
    pthread_attr_t attr;
    struct sched_param param;
 };
+
+#ifdef RTSYS_NONE
+bt_os_thread ** threads;
+int threads_num = 0;
+static int thread_list_add( bt_os_thread * thd )
+{
+   if (threads_num == 0)
+       threads = (bt_os_thread **) malloc( sizeof(bt_os_thread *) );
+   else
+       threads = (bt_os_thread **) realloc( threads, (threads_num+1) * sizeof(bt_os_thread *) );
+   threads[threads_num] = thd;
+   threads_num++;
+   return 0;
+}
+static int thread_list_remove( bt_os_thread * thd )
+{
+   int i;
+   for (i=0; i<threads_num; i++) if (threads[i] == thd)
+   {
+      int j;
+      for (j=i+1; j<threads_num; j++)
+         threads[j-1] = threads[j];
+      threads_num--;
+      if (threads_num)
+         threads = (bt_os_thread **) realloc( threads, threads_num * sizeof(bt_os_thread *) );
+      else
+         free(threads);
+      return 0;
+   }
+   return -1;
+}
+static bt_os_thread * thread_list_current()
+{
+   int i;
+   pthread_t thd_id;
+   thd_id = pthread_self();
+   for (i=0; i<threads_num; i++)
+   {
+      if ( pthread_equal( ((struct pthd *)threads[i]->sys)->thd_id, thd_id ) )
+      {
+         return threads[i];
+      }
+   }
+   return 0;
+}
+#endif
 
 /* Non-realtime stuff first! */
 
@@ -400,6 +447,8 @@ is reasonable.
 name is only used by xenomai in realtime
  
 */
+
+
 bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
                                  int priority, void (*funcptr)(bt_os_thread *), void * data)
 /*bt_os_thread * bt_os_thread_create(int priority, void * function, void * args)*/
@@ -417,7 +466,10 @@ bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
    thd->function = funcptr;
    thd->data = data;
    thd->priority = priority;
-   /*thd->periodic = 0;*/
+#ifdef RTSYS_NONE
+   thd->period = 0.0; /* Here just in case we want to wait_period in non-real-time mode */
+   thd->last_called = 0;
+#endif
    thd->mutex = bt_os_mutex_create(type);
    thd->type = type;
    
@@ -456,7 +508,7 @@ bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
       
       pthread_create(&(sys->thd_id), &(sys->attr),
                      (void * (*)(void *))funcptr, (void *)thd);
-
+      syslog(LOG_ERR,"Made thread ID: %d",(int)sys->thd_id);
       if (sys->thd_id == -1)
       {
          syslog(LOG_ERR,"btthread_create:Couldn't start control thread!");
@@ -464,6 +516,13 @@ bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
       }
    }
    
+#ifdef RTSYS_NONE
+   if (thread_list_add(thd))
+   {
+      syslog(LOG_ERR,"Drastic linked list (add) error.");
+      exit(-1);
+   }
+#endif
    return thd;
 }
 
@@ -475,6 +534,14 @@ int bt_os_thread_destroy(bt_os_thread * thd)
    
    free( thd->sys );
    free( thd );
+
+#ifdef RTSYS_NONE
+   if (thread_list_remove(thd))
+   {
+      syslog(LOG_ERR,"Drastic linked list (remove) error.");
+      exit(-1);
+   }
+#endif
    
    return 0;
 }
@@ -553,7 +620,7 @@ BTINLINE void bt_os_thread_exit(bt_os_thread * thd)
 
 
 
-void bt_os_rt_set_mode_soft(void)
+void bt_os_rt_set_mode_soft()
 {
 #ifdef RTSYS_XENOMAI
    rt_task_set_mode( T_PRIMARY, 0, NULL);
@@ -561,9 +628,10 @@ void bt_os_rt_set_mode_soft(void)
 #ifdef RTSYS_RTAI
    rt_make_soft_real_time();
 #endif
+   return;
 }
 
-void bt_os_rt_set_mode_hard(void)
+void bt_os_rt_set_mode_hard()
 {
 #ifdef RTSYS_XENOMAI
    rt_task_set_mode(0, T_PRIMARY, NULL);
@@ -571,14 +639,16 @@ void bt_os_rt_set_mode_hard(void)
 #ifdef RTSYS_RTAI
    rt_make_hard_real_time();
 #endif
+   return;
 }
 
 
-void bt_os_rt_set_mode_warn(void)
+void bt_os_rt_set_mode_warn()
 {
 #ifdef RTSYS_XENOMAI
    rt_task_set_mode(0, T_WARNSW, NULL);
 #endif
+   return;
 }
 
 
@@ -595,18 +665,12 @@ bt_os_rtime bt_os_rt_get_time(void)
    time = rt_get_cpu_time_ns();
    return (bt_os_rtime)time;
 #endif
+#ifdef RTSYS_NONE
+   struct timeval tv;
+   gettimeofday(&tv,0);
+   return 1e9 * (bt_os_rtime)tv.tv_sec + 1e3 * (bt_os_rtime)tv.tv_usec;
+#endif
    return (bt_os_rtime)0;
-}
-
-void bt_os_rt_task_wait_period(void)
-{
-#ifdef RTSYS_XENOMAI
-   bt_os_rt_set_mode_hard();
-   rt_task_wait_period(NULL);
-#endif
-#ifdef RTSYS_RTAI
-   rt_task_wait_period();
-#endif
 }
 
 /* Be sure to only call this once!
@@ -618,6 +682,22 @@ void bt_os_make_periodic(double period, char * sixname)
    RT_TASK * tsk;
 #endif
    bt_os_rtime rtime_period;
+
+#ifdef RTSYS_NONE
+   {
+      /* Determine which thread this is */
+      bt_os_thread * cur;
+      cur = thread_list_current();
+      if (!cur)
+      {
+         syslog(LOG_ERR,"Drastic error, couldn't find thread in make_periodic.");
+         exit(-1);
+      }
+      cur->period = period;
+      return;
+   }
+#endif
+   
    rtime_period = (period * 1000000000.0);
 #ifdef RTSYS_RTAI
    /* Start the rt timer */
@@ -635,6 +715,39 @@ void bt_os_make_periodic(double period, char * sixname)
    /*Make task periodic*/
    test_and_log(
       rt_task_set_periodic(NULL, TM_NOW, rt_timer_ns2ticks((rtime_period))),"WAMControlThread: rt_task_set_periodic failed, code");
+#endif
+}
+
+void bt_os_rt_task_wait_period()
+{
+#ifdef RTSYS_XENOMAI
+   rt_task_wait_period(0);
+   return;
+#endif
+#ifdef RTSYS_RTAI
+   rt_task_wait_period();
+   return;
+#endif
+#ifdef RTSYS_NONE
+   {
+      bt_os_rtime now;
+      bt_os_thread * cur;
+      cur = thread_list_current();
+      if (!cur)
+      {
+         syslog(LOG_ERR,"Drastic error, couldn't find thread in wait_period.");
+         exit(-1);
+      }
+      now = bt_os_rt_get_time();
+      if (!cur->last_called)
+      {
+         cur->last_called = now;
+      }
+      /* lastcalled --- now ----------------- period */
+      bt_os_usleep( 1e6 * cur->period - 1e-3 * (now - cur->last_called));
+      cur->last_called = bt_os_rt_get_time();
+      return;
+   }
 #endif
 }
 

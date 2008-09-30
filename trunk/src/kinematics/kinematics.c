@@ -30,6 +30,9 @@
 /* For M_PI */
 #include <gsl/gsl_math.h>
 
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+
 #include "kinematics.h"
 
 #include <math.h> /* For sin(), cos() */
@@ -139,9 +142,6 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
             case CONFIG_TYPE_INT:
                link->alpha = M_PI * config_setting_get_int(setting);
                break;
-            case CONFIG_TYPE_INT64:
-               link->alpha = M_PI * config_setting_get_int64(setting);
-               break;
             case CONFIG_TYPE_FLOAT:
                link->alpha = M_PI * config_setting_get_float(setting);
                break;
@@ -156,9 +156,6 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
             case CONFIG_TYPE_INT:
                link->a = config_setting_get_int(setting);
                break;
-            case CONFIG_TYPE_INT64:
-               link->a = config_setting_get_int64(setting);
-               break;
             case CONFIG_TYPE_FLOAT:
                link->a = config_setting_get_float(setting);
                break;
@@ -172,9 +169,6 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             case CONFIG_TYPE_INT:
                link->d = config_setting_get_int(setting);
-               break;
-            case CONFIG_TYPE_INT64:
-               link->d = config_setting_get_int64(setting);
                break;
             case CONFIG_TYPE_FLOAT:
                link->d = config_setting_get_float(setting);

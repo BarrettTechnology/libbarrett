@@ -23,62 +23,34 @@
  *
  * ======================================================================== */
 
-/* A controller takes care of:
- *   - reference tracking
- *   - trajectories
- *      - creating
- *      - starting/stopping
- *      - pausing/unpausing
- *   - teach & play */
+/* A controller represents a "space",
+ * and can idle/hold a reference position,
+ * return the current position,
+ * and outputs a joint torque vector */
 
 #ifndef BT_CONTROL_H
 #define BT_CONTROL_H
 
 #include <gsl/gsl_vector.h>
 
-enum bt_control_mode {
-   BT_CONTROL_IDLE, /* Not affecting torque */
-   BT_CONTROL_IDLE_TEACH_DISCRETE,
-   BT_CONTROL_IDLE_TEACH_CONTINUOUS,
-   BT_CONTROL_HOLD, /* Holding current reference position */
-   BT_CONTROL_TRAJ_PREP, /* Moving to start of trajectory */
-   BT_CONTROL_TRAJ_READY, /* At start, waiting for go-ahead */
-   BT_CONTROL_TRAJ_MOVING, /* Moving through the trajectory */
-   BT_CONTROL_TRAJ_PAUSING, /* Stretching time */
-   BT_CONTROL_TRAJ_PAUSED, /* Stretching time */
-   BT_CONTROL_TRAJ_UNPAUSING, /* Re-condensing time */
-   BT_CONTROL_OTHER /* Unknown - used to add more states */
-};
-char * bt_control_mode_name(int mode);
-
 /* "Base Class" function pointers */
 struct bt_control
 {
-   const char * name;
-   
-   /* Getting mode */
-   enum bt_control_mode(*get_mode)(struct bt_control * base);
+   const char * name; /* points to the same place for a given type */
+   int n; /* number of dimensions to be controlled */
    
    /* Simple state switching */
    int (*idle)(struct bt_control * base);
    int (*hold)(struct bt_control * base);
+   int (*is_holding)(struct bt_control * base);
    
-   /* Teaching new discrete trajectories */
-   int (*teach_discrete)(struct bt_control * base);
-   int (*teach_continuous)(struct bt_control * base);
-   int (*teach_add)(struct bt_control * base); /* add a new discrete point */
-   int (*teach_done)(struct bt_control * base); /* wrap-up and get ready to start */   
-   
-   /* Interacting with the current trajectory */
-   int (*traj_start)(struct bt_control * base, int skip_ready); /* Move to the start of the traj if necessary, then go! */
+   /* Note - these getting/setting functions should be mutex safe! */
+   int (*get_position)(struct bt_control * base, gsl_vector * position);
+   /* Eventually a get_velocity? */
+   int (*set_reference)(struct bt_control * base, gsl_vector * reference);
    
    /* RT - Evaluate, put resulting torque in torque */
    int (*eval)(struct bt_control * base, gsl_vector * jtorque, double time);
 };
-
-/* Everyone has their own:
- *   - create() and destroy() methods
- *   - Reference vector(s) and/or matrices
- *   - */
 
 #endif /* BT_CONTROL_H */

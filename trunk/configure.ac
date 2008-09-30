@@ -63,18 +63,55 @@ AC_SUBST([BT_OS_CPP],["$bt_os_cpp"])
 AC_SUBST([BT_OS_LDFLAGS],["$bt_os_ldflags"])
 AC_SUBST([BT_OS_LIBS],["$bt_os_libs"])
 
-### STEP 2: CAN CARD / INTERFACE ###
-# Choose a CAN card/interface (for libbt/sys)
+
+### STEP 2: WAMBOT PHYSICAL AND/OR SIMULATION ###
+# Choose a physical/simulator option (between libbt/wambot_phys and libbt/wambot_sim)
+
+# This sets the variables:
+#   with_wambot_physical
+#   with_wambot_simulated
+AC_ARG_WITH([wambot_physical],
+   [AS_HELP_STRING([--with-wambot-physical],[Physical WAM support (Def:yes)])],
+   [],[with_wambot_physical=yes])
+AC_ARG_WITH([wambot_simulated],
+   [AS_HELP_STRING([--with-wambot-simulated],[Simulated WAM support (Def:yes)])],
+   [],[with_wambot_simulated=yes])
+
+# Make sure the user picks at least one
+AS_IF(
+   [test "$with_wambot_physical" = yes],[],
+   [test "$with_wambot_simulated" = yes],[],
+   [AC_MSG_FAILURE([at least one of --with-wambot-physical or --with-wambot-simulated required])]
+)
+
+# Set Automake Conditional
+AM_CONDITIONAL([BT_WAMBOT_PHYSICAL],[test "$with_wambot_physical" = yes])
+AM_CONDITIONAL([BT_WAMBOT_SIMULATED],[test "$with_wambot_simulated" = yes])
+
+# Only compile bt_bus of physical is set
+AM_CONDITIONAL([BT_BUS_ENABLE],[test "$with_wambot_physical" = yes])
+
+
+### STEP 3: CAN CARD / INTERFACE ###
+# Choose a CAN card/interface (for libbt/bus)
+# This sets the varibles:
+#   with_can_esd
+#   with_can_peak_pci
+#   with_can_peak_isa
+
 AC_ARG_WITH([can-esd],
-   [AS_HELP_STRING([--with-can-esd],[ESD CAN])],
+   [AS_HELP_STRING([--with-can-esd],[ESD CAN (Def:no)])],
    [],[with_can_esd=no])
 AC_ARG_WITH([can-peak-pci],
-   [AS_HELP_STRING([--with-can-peak-pci],[Peak CAN / PCI Bus])],
+   [AS_HELP_STRING([--with-can-peak-pci],[Peak CAN / PCI Bus (Def:no)])],
    [],[with_can_peak_pci=no])
 AC_ARG_WITH([can-peak-isa],
-   [AS_HELP_STRING([--with-can-peak-isa],[Peak CAN / ISA Bus])],
+   [AS_HELP_STRING([--with-can-peak-isa],[Peak CAN / ISA Bus (Def:no)])],
    [],[with_can_peak_isa=no])
+
 AS_IF(
+   # It doesn't matter; bt_bus it won't even compile.
+   [! test "$with_wambot_physical" = yes],[],
    [test "$with_can_esd" = yes],
    [
       AC_SUBST([BT_SYS_CANTYPE],[CANTYPE_ESD])
@@ -90,7 +127,7 @@ AS_IF(
       AC_SUBST([BT_SYS_CANTYPE],[CANTYPE_PEAKISA])
       AC_SUBST([BT_SYS_LIBS],["-lpcan"])
    ],
-   [AC_MSG_FAILURE([one of --with-can-esd, --with-can-peak-pci, or --with-can-peak-isa required])]
+   [AC_MSG_FAILURE([one of --with-can-esd, --with-can-peak-pci, --with-can-peak-isa, or --without-wambot-physical required])]
 )
 
 # Checks for programs

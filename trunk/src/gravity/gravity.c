@@ -95,9 +95,6 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
             case CONFIG_TYPE_INT:
                gsl_vector_set( grav->mu[j], i, config_setting_get_int(val) );
                break;
-            case CONFIG_TYPE_INT64:
-               gsl_vector_set( grav->mu[j], i, config_setting_get_int64(val) );
-               break;
             case CONFIG_TYPE_FLOAT:
                gsl_vector_set( grav->mu[j], i, config_setting_get_float(val) );
                break;

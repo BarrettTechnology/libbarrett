@@ -33,35 +33,30 @@ struct bt_control_joint
    /* Include the base function pointers */
    struct bt_control base;
    
-   enum bt_control_mode mode;
+   /* Our current mode */
+   int is_holding;
    
-   /* Pointers to external vectors */
+   /* Saved pointers to external vectors */
    gsl_vector * jposition;
    gsl_vector * jvelocity;
    
+   /* We must maintain places for asynchronous communication;
+    * these can be in any format we want */
+   /* Note: we don't need position, as we already have jposition to copy from! */
+   /*gsl_vector * position;*/ /* Updated on get_position() */
+   gsl_vector * reference; /* Saved on set_reference() */
+   
    /* Owned by me: */
-   gsl_vector * reference;
    gsl_vector * Kp;
    gsl_vector * Ki;
    gsl_vector * Kd;
    gsl_vector * integrator;
    gsl_vector * temp1;
    gsl_vector * temp2;
-
-   struct bt_trajectory_spline * move_spline; /* The current spline, if there is one */
-   struct bt_trajectory_profile * move_profile; /* The current profile, if there is one */
    
-   struct bt_trajectory_spline * traj_spline; /* The current spline, if there is one */
-   struct bt_trajectory_profile * traj_profile; /* The current profile, if there is one */
-   
-   /* When we start trajectories,
-    * this is the start time! */
-   double start_time;
+   int last_time_saved;
    double last_time;
-   int start_time_saved;
    
-   /* Skip the TRAJ_READY state when starting a trajectory */
-   int skip_ready;
 };
 
 struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);

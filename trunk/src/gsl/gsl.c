@@ -42,9 +42,6 @@ int bt_gsl_config_get_double(config_setting_t * setting, double * result)
       case CONFIG_TYPE_INT:
          *result = config_setting_get_int(setting);
          return 0;
-      case CONFIG_TYPE_INT64:
-         *result = config_setting_get_int64(setting);
-         return 0;
       case CONFIG_TYPE_FLOAT:
          *result = config_setting_get_float(setting);
          return 0;

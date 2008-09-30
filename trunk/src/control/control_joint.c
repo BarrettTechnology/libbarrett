@@ -28,23 +28,18 @@
 
 #include "gsl.h"
 
-#include "trajectory.h"
-
 #include <libconfig.h>
 #include <syslog.h>
 #include <gsl/gsl_blas.h>
 
 /* Base function pointers */
-const char name[] = "joint controller";
-static enum bt_control_mode get_mode(struct bt_control * base);
+const char name[] = "joint-space";
 static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
-static int teach_discrete(struct bt_control * base);
-static int teach_add(struct bt_control * base);
-static int teach_done(struct bt_control * base);
-static int traj_start(struct bt_control * base, int skip_ready);
+static int is_holding(struct bt_control * base);
+static int get_position(struct bt_control * base, gsl_vector * position);
+static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
-
 
 /* Controller-specific functions */
 struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity)
@@ -52,27 +47,26 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    int n;
    struct bt_control_joint * c;
    c = (struct bt_control_joint *) malloc( sizeof(struct bt_control_joint) );
+   n = jposition->size;
    
    /* Set base function pointers */
    c->base.name = name;
-   c->base.get_mode = &get_mode;
+   c->base.n = n;
    c->base.idle = &idle;
    c->base.hold = &hold;
-   c->base.teach_discrete = &teach_discrete;
-   c->base.teach_continuous = 0;
-   c->base.teach_add = &teach_add;
-   c->base.teach_done = &teach_done;
-   c->base.traj_start = &traj_start;
+   c->base.hold = &is_holding;
+   c->base.get_position = &get_position;
+   c->base.set_reference = &set_reference;
    c->base.eval = &eval;
    
-   c->mode = BT_CONTROL_IDLE;
+   /* Start uninitialized*/
+   c->is_holding = 0;
    
-   /* Set pointers to external input vectors */
+   /* Save pointers to external input vectors */
    c->jposition = jposition;
    c->jvelocity = jvelocity;
    
    /* Create owned-by-me vectors */
-   n = jposition->size;
    c->reference = gsl_vector_calloc(n);
    c->Kp = gsl_vector_calloc(n);
    c->Ki = gsl_vector_calloc(n);
@@ -80,11 +74,6 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    c->integrator = gsl_vector_calloc(n);
    c->temp1 = gsl_vector_calloc(n);
    c->temp2 = gsl_vector_calloc(n);
-   
-   c->move_spline = 0;
-   c->move_profile = 0;
-   c->traj_spline = 0;
-   c->traj_profile = 0;
    
    /* Read in the PID values: */
    {
@@ -137,18 +126,11 @@ void bt_control_joint_destroy(struct bt_control_joint * c)
    return;
 }
 
-/* Base functions for this controller */
-static enum bt_control_mode get_mode(struct bt_control * base)
-{
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
-   return c->mode;
-}
-
 static int idle(struct bt_control * base)
 {
    struct bt_control_joint * c = (struct bt_control_joint *) base;
    /* Do we need to stop doing anything? */
-   c->mode = BT_CONTROL_IDLE;
+   c->is_holding = 0;
    return 0;
 }
 
@@ -157,11 +139,32 @@ static int hold(struct bt_control * base)
    struct bt_control_joint * c = (struct bt_control_joint *) base;
    gsl_vector_memcpy(c->reference,c->jposition);
    gsl_vector_set_zero(c->integrator);
-   c->mode = BT_CONTROL_HOLD;
+   c->last_time_saved = 0;
+   c->is_holding = 1;
    return 0;
 }
 
+static int is_holding(struct bt_control * base)
+{
+   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   return c->is_holding ? 1 : 0;
+}
 
+static int get_position(struct bt_control * base, gsl_vector * position)
+{
+   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   gsl_vector_memcpy( position, c->jposition );
+   return 0;
+}
+
+static int set_reference(struct bt_control * base, gsl_vector * reference)
+{
+   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   gsl_vector_memcpy( c->reference, reference );
+   return 0;
+}
+
+#if 0
 /* Teaches - into traj_spline, traj_profile */
 static int teach_discrete(struct bt_control * base)
 {
@@ -264,7 +267,6 @@ static int traj_start(struct bt_control * base, int skip_ready)
    return 0;
 }
 
-
 /* RT - Evaluate */
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
 {
@@ -322,47 +324,41 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
       default:
          break;
    }
+#endif
+
+/* RT - Evaluate */
+static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
+{
+   struct bt_control_joint * c = (struct bt_control_joint *) base;
    
    /* Do PID position control with the current reference */
-   switch (c->mode)
+   if (c->is_holding)
    {
-      /* If we're idling / teaching, apply no torque */
-      case BT_CONTROL_IDLE:
-      case BT_CONTROL_IDLE_TEACH_DISCRETE:
-      case BT_CONTROL_IDLE_TEACH_CONTINUOUS:
-         break;
-      /* Other? */
-      case BT_CONTROL_OTHER:
-         break;
-      /* If we're holding or following a trajectory, apply torque */
-      case BT_CONTROL_HOLD:
-      case BT_CONTROL_TRAJ_PREP:
-      case BT_CONTROL_TRAJ_READY:
-      case BT_CONTROL_TRAJ_MOVING:
-      case BT_CONTROL_TRAJ_PAUSING:
-      case BT_CONTROL_TRAJ_PAUSED:
-      case BT_CONTROL_TRAJ_UNPAUSING:
-         /* Compute the error */
-         gsl_vector_memcpy( c->temp1, c->jposition );
-         gsl_vector_sub( c->temp1, c->reference );
-         /* Increment integrator */
-         gsl_vector_memcpy( c->temp2, c->temp1 );
-         gsl_vector_scale( c->temp2, time - c->last_time );
+      if (!c->last_time_saved)
+      {
          c->last_time = time;
-         gsl_vector_add( c->integrator, c->temp2 );
-         /* Copy in P term */
-         gsl_vector_memcpy( c->temp2, c->temp1 );
-         gsl_vector_mul( c->temp2, c->Kp );
-         gsl_vector_sub( jtorque, c->temp2 );
-         /* Copy in I term */
-         gsl_vector_memcpy( c->temp2, c->integrator);
-         gsl_vector_mul( c->temp2, c->Ki );
-         gsl_vector_sub( jtorque, c->temp2 );
-         /* Copy in D term */
-         gsl_vector_memcpy( c->temp2, c->jvelocity );
-         gsl_vector_mul( c->temp2, c->Kd );
-         gsl_vector_sub( jtorque, c->temp2 );
-         break;
+         c->last_time_saved = 1;
+      }
+      /* Compute the error */
+      gsl_vector_memcpy( c->temp1, c->jposition );
+      gsl_vector_sub( c->temp1, c->reference );
+      /* Increment integrator */
+      gsl_vector_memcpy( c->temp2, c->temp1 );
+      gsl_vector_scale( c->temp2, time - c->last_time );
+      c->last_time = time;
+      gsl_vector_add( c->integrator, c->temp2 );
+      /* Copy in P term */
+      gsl_vector_memcpy( c->temp2, c->temp1 );
+      gsl_vector_mul( c->temp2, c->Kp );
+      gsl_vector_sub( jtorque, c->temp2 );
+      /* Copy in I term */
+      gsl_vector_memcpy( c->temp2, c->integrator);
+      gsl_vector_mul( c->temp2, c->Ki );
+      gsl_vector_sub( jtorque, c->temp2 );
+      /* Copy in D term */
+      gsl_vector_memcpy( c->temp2, c->jvelocity );
+      gsl_vector_mul( c->temp2, c->Kd );
+      gsl_vector_sub( jtorque, c->temp2 );
    }
    
    return 0;

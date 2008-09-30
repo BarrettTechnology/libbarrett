@@ -19,6 +19,9 @@
  *
  * ======================================================================== */
 
+/* ########### IMPORTANT - NO NON-GLOBAL IFDEFS IN HEADER FILES! */
+
+
 /** \file os.h
     \brief Operating system abstractions and helpers.
 
@@ -171,12 +174,15 @@ typedef struct bt_os_thread {
    struct sched_param param;
 #endif
    */
+   
 
    enum bt_os_rt_type type;
    int priority; /*Priority this thread was created at*/
-   /* I don't get why this is in here ... */
-   /*int periodic;*/ /*!0 = This thread is a periodic one*/
-   /*double period;*/ /* The period we want this thread to be*/
+
+/* Why can't I #ifdef RTSYS_NONOE these two? */
+   double period; /* The period we want this thread to be (in case we're in non-real-time mode) */
+   bt_os_rtime last_called;
+
    int done; /*!< See btthread_done()*/
    void (*function)(struct bt_os_thread * thd); /*Pointer to the function this thread is running*/
    void * data;
