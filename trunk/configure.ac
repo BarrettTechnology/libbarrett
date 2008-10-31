@@ -47,7 +47,7 @@ AS_IF(
       bt_os_ldflags="$bt_os_ldflags -rdynamic"
       bt_os_libs="$bt_os_libs $xeno_libs -lnative"
    ],
-   [test "$with_rtai" = yes],
+   [test "x$with_rtai" != no],
    [
       # Set up RTAI
       bt_os_cpp="$bt_os_cpp -D_GNU_SOURCE -DRTSYS_RTAI -I/usr/realtime/include"
@@ -109,29 +109,34 @@ AC_ARG_WITH([can-peak-isa],
    [AS_HELP_STRING([--with-can-peak-isa],[Peak CAN / ISA Bus (Def:no)])],
    [],[with_can_peak_isa=no])
 
+bt_bus_cantype="woo2"
+bt_bus_libs=""
 AS_IF(
    # It doesn't matter; bt_bus it won't even compile.
    [! test "$with_wambot_physical" = yes],[],
    [test "$with_can_esd" = yes],
    [
-      AC_SUBST([BT_SYS_CANTYPE],[CANTYPE_ESD])
-      AC_SUBST([BT_SYS_LIBS],["-lntcan"])
+      bt_bus_cantype="CANTYPE_ESD"
+      bt_bus_libs="-lntcan"
    ],
    [test "$with_can_peak_pci" = yes],
    [
-      AC_SUBST([BT_SYS_CANTYPE],[CANTYPE_PEAKPCI])
-      AC_SUBST([BT_SYS_LIBS],["-lpcan"])
+      bt_bus_cantype="CANTYPE_PEAKPCI"
+      bt_bus_libs="-lpcan"
    ],
    [test "$with_can_peak_isa" = yes],
    [
-      AC_SUBST([BT_SYS_CANTYPE],[CANTYPE_PEAKISA])
-      AC_SUBST([BT_SYS_LIBS],["-lpcan"])
+      bt_bus_cantype="CANTYPE_PEAKISA"
+      bt_bus_libs="-lpcan"
    ],
    [AC_MSG_FAILURE([one of --with-can-esd, --with-can-peak-pci, --with-can-peak-isa, or --without-wambot-physical required])]
 )
+AC_SUBST([BT_BUS_CANTYPE],["$bt_bus_cantype"])
+AC_SUBST([BT_BUS_LIBS],["$bt_bus_libs"])
 
 # Checks for programs
 AC_PROG_CC
+
 AC_PROG_LIBTOOL
 
 # Checks for libraries

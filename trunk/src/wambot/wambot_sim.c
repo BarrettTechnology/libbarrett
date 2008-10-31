@@ -63,7 +63,7 @@ static void helper_destroy(struct setup_helper * helper)
 }
 
 /* A couple of convenience / glue functions from gsl to libconfig */
-int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
+static int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
 {
    int i;
    config_setting_t * child;

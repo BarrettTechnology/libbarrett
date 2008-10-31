@@ -93,7 +93,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
       {
          printf("no port\n");
          bt_bus_destroy(bus);
-         return NULL;
+         return 0;
       }
       bus->port = config_setting_get_int(setting);
    }
@@ -104,7 +104,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    {
       syslog(LOG_ERR, "Could not initialize can bus port %d", bus->port);
       bt_bus_destroy(bus);
-      return NULL;
+      return 0;
    }
    
    /* Wake all the pucks on the bus */

@@ -33,7 +33,8 @@
 /* bt_wambot_phys uses libconfig */
 #include <libconfig.h>
 
-#include <ode/ode.h>
+/* We don't need this here?
+#include <ode/ode.h> */
 
 struct bt_wambot_sim
 {

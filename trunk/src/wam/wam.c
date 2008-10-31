@@ -22,7 +22,7 @@
 
 #include "wam.h"
 
-#include "wambot_sim.h"
+#include "wambot_phys.h"
 
 #include <string.h>
 #include <syslog.h>
@@ -230,10 +230,13 @@ void rt_wam(bt_os_thread * thread)
    }
    
    /* Set the active controller to joint-space */
+#if 0
    wam->con_active = (struct bt_control *) wam->con_joint;
+#endif
    
-   /* Set velocity safety limit tp 2.0 m/s */
-   /*bt_bus_set_property(wam->wambot->bus, SAFETY_PUCK_ID, wam->wambot->bus->p->VL2, 1, 2.0 * 0x1000);*/
+   /* Set velocity safety limit to 2.0 m/s */
+   bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, SAFETY_PUCK_ID,
+                       ((struct bt_wambot_phys *)(wam->wambot))->bus->p->VL2, 1, 2.0 * 0x1000);
    
    /* Set up the easy-access wam vectors */
    wam->jposition = wam->wambot->jposition;
@@ -266,12 +269,13 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
       
       /* Always Hold! */
+#if 0
       if ( wam->con_active->is_holding(wam->con_active) )
       {
          syslog(LOG_ERR,"trying to hold!");
          wam->con_active->hold( wam->con_active );
       }
-      
+#endif      
       /* Forward kinematics */
       bt_kinematics_eval_forward( wam->kin, wam->wambot->jposition );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
@@ -289,8 +293,10 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* Do the active controller  */
+#if 0
       wam->con_active->eval( wam->con_active, wam->wambot->jtorque, 1e-9 * bt_os_rt_get_time() );
       bt_os_timestat_trigger(wam->ts,TS_SPLINE);
+#endif
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
@@ -327,7 +333,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
-   wam->wambot = (struct bt_wambot *) bt_wambot_sim_create( config_setting_get_member(wamconfig,"wambot") );
+   wam->wambot = (struct bt_wambot *) bt_wambot_phys_create( config_setting_get_member(wamconfig,"wambot") );
    if (!wam->wambot)
    {
       syslog(LOG_ERR,"%s: Could not create wambot.",__func__);
@@ -374,7 +380,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-   
+#if 0   
    /* Create a joint-space controller */
    wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"joint-controller"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
@@ -384,14 +390,17 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
+#endif
    
    return 0;
 }
 
 void rt_wam_destroy(struct bt_wam * wam)
 {
+#if 0
    if (wam->con_joint)
       bt_control_joint_destroy(wam->con_joint);
+#endif
    if (wam->log)
    {
       bt_log_off(wam->log); /* Just to make sure! */
@@ -402,7 +411,7 @@ void rt_wam_destroy(struct bt_wam * wam)
    if (wam->kin)
       bt_kinematics_destroy(wam->kin);
    if (wam->wambot)
-      bt_wambot_sim_destroy((struct bt_wambot_sim *)wam->wambot);
+      bt_wambot_phys_destroy((struct bt_wambot_phys *)wam->wambot);
 }
 
 

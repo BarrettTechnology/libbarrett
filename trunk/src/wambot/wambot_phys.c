@@ -40,7 +40,7 @@ static int update( struct bt_wambot * base );
 static int setjtor( struct bt_wambot * base );
 
 /* A couple of convenience / glue functions from gsl to libconfig */
-int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
+static int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
 {
    int i;
    config_setting_t * child;
@@ -67,7 +67,7 @@ int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * n
    }
    return 0;
 }
-int glue_fill_matrix(gsl_matrix * mat, config_setting_t * parent, const char * name)
+static int glue_fill_matrix(gsl_matrix * mat, config_setting_t * parent, const char * name)
 {
    int i, j;
    config_setting_t * rows;
@@ -178,9 +178,10 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       }
       
       /* Attempt to open the system */
-      wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_ACCPOS );
+      wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_POS_ONLY );
+      if (!wambot->bus)
       {
-         syslog(LOG_ERR,"%s: No bus in configuration.\n",__func__);
+         syslog(LOG_ERR,"%s: Could not create the bus.\n",__func__);
          bt_wambot_phys_destroy(wambot);
          return 0;
       }

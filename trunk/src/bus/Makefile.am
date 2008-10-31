@@ -7,9 +7,9 @@ noinst_LTLIBRARIES = libbtbus.la
 pkginclude_HEADERS = bus.h
 
 # Source files to complile
-AM_CPPFLAGS = -I../os -D@BT_SYS_CANTYPE@
+AM_CPPFLAGS = -I../os -D@BT_BUS_CANTYPE@
 AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 libbtbus_la_SOURCES = bus.c can_peakesd.c can.h
-libbtbus_la_LIBADD = @BT_SYS_LIBS@
+libbtbus_la_LIBADD = @BT_BUS_LIBS@
 
 endif

@@ -171,13 +171,15 @@ int main(int argc, char ** argv)
             /* Show HEADER */
             mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
             line++;
-            
+#if 0            
             /* Show state controller MODE (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", wam->con_active->name );
-            
+#endif            
             /* Show CONSTRAINT */
+#if 0
             mvprintw(line++, 0, "      State: %s", bt_control_mode_name(wam->con_active->get_mode(wam->con_active)) );
             line++;
+#endif
             
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
