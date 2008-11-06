@@ -42,12 +42,18 @@
    char * ts_name[] = { TS 0 };
 #undef T
 
+/* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
+ * calls rt_wam_create() and rm_wam_destroy() appropriately. */
 void rt_wam(bt_os_thread * thread);
 int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig);
 void rt_wam_destroy(struct bt_wam * wam);
 
+/* Here's the WAM non-realtime thread, which takes care of logging,
+ * and perhaps some other things. */
 void nonrt_thread_function(bt_os_thread * thread);
 
+/* The setup helper is for communication between the non-realtime create()
+ * function and the realtime rt_wam() setup function. */
 struct setup_helper
 {
    struct bt_wam * wam;
@@ -72,6 +78,7 @@ static void helper_destroy(struct setup_helper * helper)
    return;
 }
 
+/* Here are the non-realtime create/destroy functions */
 struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
 {
    struct bt_wam * wam;
@@ -118,6 +125,8 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
    
    /* Set up defaults */
    wam->gcomp = 0;
+   wam->path_list = 0;
+   wam->path_editing = 0;
    
    /* Spin off the realtime thread to set everything up */
    helper = helper_create(wam,wamconfig);
@@ -199,6 +208,11 @@ void bt_wam_destroy(struct bt_wam * wam)
    return;
 }
 
+
+
+
+
+/* Here are the asynchronous WAM functions */
 int bt_wam_isgcomp(struct bt_wam * wam)
 {
    return wam->gcomp;
@@ -209,6 +223,122 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
    wam->gcomp = onoff ? 1 : 0;
    return 0;
 }
+
+int bt_wam_path_new(struct bt_wam * const wam, const char * const name)
+{
+   struct bt_wam_path * path;
+
+   /* Make sure the path name doesn't aleady exist */
+   for (path = wam->path_list; path; path = path->next)
+      if ( strcmp(name,path->name) == 0 )
+         return -1;
+
+   /* Create the new path */
+   path = (struct bt_wam_path *) malloc( sizeof(struct bt_wam_path) );
+   if (!path) return -1;
+   
+   /* Copy in the name */
+   path->name = (char *) malloc( strlen(name) + 1 );
+   if (!path->name) { free(path); return -1; }
+   strcpy(path->name,name);
+   
+   /* Insert it at the beginning of the path list */
+   path->prev = 0;
+   path->next = wam->path_list;
+   wam->path_list = path;
+   
+   /* Save is as the path we're currently editing */
+   wam->path_editing = path;
+   
+   return 0;
+}
+
+int bt_wam_path_delete(struct bt_wam * const wam, const char * const name)
+{
+   struct bt_wam_path * path;
+   
+   /* Find the path */
+   for (path = wam->path_list; path; path = path->next)
+      if ( strcmp(name,path->name) == 0 )
+         break;
+   
+   /* If there was no path by this name, bork */
+   if (!path) return -1;
+   
+   /* If we're currently editing a path, forget it */
+   if (wam->path_editing == path) wam->path_editing = 0;
+   
+   /* Remove the path from the list */
+   if (path->prev) path->prev->next = path->next;
+   if (path->next) path->next->prev = path->prev;
+   if (path == wam->path_list) wam->path_list = 0;
+   
+   /* Destroy the path */
+   free(path->name);
+   free(path);
+   
+   return 0;
+}
+
+int bt_wam_path_delete_all(struct bt_wam * const wam)
+{
+   while (wam->path_list)
+      bt_wam_path_delete(wam,wam->path_list->name);
+   return 0;
+}
+
+int bt_wam_path_get_number(const struct bt_wam * const wam, int * const num)
+{
+   int i;
+   struct bt_wam_path * path;
+   i = 0;
+   for (path = wam->path_list; path; path = path->next) i++;
+   (*num) = i;
+   return 0;
+}
+
+int bt_wam_path_get_name(const struct bt_wam * const wam, const int num, char ** nameptr)
+{
+   int i;
+   struct bt_wam_path * path;
+   i = 0;
+   for (path = wam->path_list; path; path = path->next)
+      if (i++ == num)
+      {
+         (*nameptr) = path->name;
+         return 0;
+      }
+   return -1;
+}
+
+int bt_wam_path_set_editing(struct bt_wam * const wam, char * name)
+{
+   struct bt_wam_path * path;
+   
+   /* Find the path */
+   for (path = wam->path_list; path; path = path->next)
+      if ( strcmp(name,path->name) == 0 )
+         break;
+   
+   /* If there was no path by this name, bork */
+   if (!path) return -1;
+   
+   wam->path_editing = path;
+   return 0;
+}
+
+int bt_wam_path_get_editing(const struct bt_wam * const wam, char ** nameptr)
+{
+   if (!wam->path_editing)
+      return -1;
+   (*nameptr) = wam->path_editing->name;
+   return 0;
+}
+
+
+
+
+
 
 
 /* Below are separate thread stuffs */
@@ -230,9 +360,7 @@ void rt_wam(bt_os_thread * thread)
    }
    
    /* Set the active controller to joint-space */
-#if 0
    wam->con_active = (struct bt_control *) wam->con_joint;
-#endif
    
    /* Set velocity safety limit to 2.0 m/s */
    bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, SAFETY_PUCK_ID,
@@ -267,15 +395,7 @@ void rt_wam(bt_os_thread * thread)
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
-      
-      /* Always Hold! */
-#if 0
-      if ( wam->con_active->is_holding(wam->con_active) )
-      {
-         syslog(LOG_ERR,"trying to hold!");
-         wam->con_active->hold( wam->con_active );
-      }
-#endif      
+         
       /* Forward kinematics */
       bt_kinematics_eval_forward( wam->kin, wam->wambot->jposition );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
@@ -293,10 +413,8 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* Do the active controller  */
-#if 0
       wam->con_active->eval( wam->con_active, wam->wambot->jtorque, 1e-9 * bt_os_rt_get_time() );
       bt_os_timestat_trigger(wam->ts,TS_SPLINE);
-#endif
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
@@ -380,9 +498,9 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-#if 0   
+   
    /* Create a joint-space controller */
-   wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"joint-controller"),
+   wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
    if (!wam->con_joint)
    {
@@ -390,17 +508,14 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-#endif
    
    return 0;
 }
 
 void rt_wam_destroy(struct bt_wam * wam)
 {
-#if 0
    if (wam->con_joint)
       bt_control_joint_destroy(wam->con_joint);
-#endif
    if (wam->log)
    {
       bt_log_off(wam->log); /* Just to make sure! */

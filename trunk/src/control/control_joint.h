@@ -36,17 +36,15 @@ struct bt_control_joint
    /* Our current mode */
    int is_holding;
    
-   /* Saved pointers to external vectors */
+   /* Saved pointers to external vectors we need */
    gsl_vector * jposition;
    gsl_vector * jvelocity;
    
    /* We must maintain places for asynchronous communication;
     * these can be in any format we want */
-   /* Note: we don't need position, as we already have jposition to copy from! */
-   /*gsl_vector * position;*/ /* Updated on get_position() */
    gsl_vector * reference; /* Saved on set_reference() */
    
-   /* Owned by me: */
+   /* Owned by me, each an n-vector */
    gsl_vector * Kp;
    gsl_vector * Ki;
    gsl_vector * Kd;
@@ -54,10 +52,12 @@ struct bt_control_joint
    gsl_vector * temp1;
    gsl_vector * temp2;
    
+   /* This is for us to keep track of during real-time evals */
    int last_time_saved;
    double last_time;
    
 };
 
+/* The controller-specific create/destroy functions */
 struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
-void bt_control_joint_destroy(struct bt_control_joint *);
+void bt_control_joint_destroy(struct bt_control_joint * c);

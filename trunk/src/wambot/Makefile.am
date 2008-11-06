@@ -20,5 +20,5 @@ pkginclude_HEADERS = wambot.h $(HEADER_PHYS) $(HEADER_SIM)
 # Source files to complile
 # Note - remove os.h dep from bus.h ...
 AM_CPPFLAGS = $(CPP_PHYS) $(CPP_SIM)
-#AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 libbtwambot_la_SOURCES = wambot.c $(SOURCE_PHYS) $(SOURCE_SIM)

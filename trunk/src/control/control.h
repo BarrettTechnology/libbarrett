@@ -26,7 +26,7 @@
 /* A controller represents a "space",
  * and can idle/hold a reference position,
  * return the current position,
- * and outputs a joint torque vector */
+ * and output a joint torque vector */
 
 #ifndef BT_CONTROL_H
 #define BT_CONTROL_H

@@ -33,6 +33,13 @@
 #include "control.h"
 #include "control_joint.h"
 
+struct bt_wam_path
+{
+   char * name;
+   struct bt_wam_path * next;
+   struct bt_wam_path * prev;
+};
+
 struct bt_wam
 {
    /* The WAM control stuff is in a separate realtime thread;
@@ -65,6 +72,11 @@ struct bt_wam
    gsl_vector * jtorque; /* From wambot */
    gsl_vector * cposition; /* From kinematics (tool) */
    gsl_matrix * crotation; /* 3x3 rotation matrix, From kinematics (tool) */
+   
+   /* A WAM has a list of named paths (linked list) */
+   struct bt_wam_path * path_list;
+   struct bt_wam_path * path_editing;
+   
 };
 
 /* This function sets up a new WAM,
@@ -79,6 +91,15 @@ void bt_wam_destroy(struct bt_wam * wam);
 
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
+
+int bt_wam_path_new(struct bt_wam * const wam, const char * const name);
+int bt_wam_path_delete(struct bt_wam * const wam, const char * const name);
+int bt_wam_path_delete_all(struct bt_wam * const wam);
+int bt_wam_path_get_number(const struct bt_wam * const wam, int * const num);
+int bt_wam_path_get_name(const struct bt_wam * const wam, const int num, char ** nameptr);
+int bt_wam_path_set_editing(struct bt_wam * const wam, char * name);
+int bt_wam_path_get_editing(const struct bt_wam * const wam, char ** nameptr);
+
 
 
 #endif /* BT_WAM_H */

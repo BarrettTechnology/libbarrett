@@ -33,10 +33,10 @@
 #include <gsl/gsl_blas.h>
 
 /* Base function pointers */
-const char name[] = "joint-space";
+static const char name[] = "joint-space";
 static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
-static int is_holding(struct bt_control * base);
+int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base, gsl_vector * position);
 static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
@@ -54,12 +54,12 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    c->base.n = n;
    c->base.idle = &idle;
    c->base.hold = &hold;
-   c->base.hold = &is_holding;
+   c->base.is_holding = &is_holding;
    c->base.get_position = &get_position;
    c->base.set_reference = &set_reference;
    c->base.eval = &eval;
    
-   /* Start uninitialized*/
+   /* Start uninitialized */
    c->is_holding = 0;
    
    /* Save pointers to external input vectors */
@@ -144,7 +144,7 @@ static int hold(struct bt_control * base)
    return 0;
 }
 
-static int is_holding(struct bt_control * base)
+int is_holding(struct bt_control * base)
 {
    struct bt_control_joint * c = (struct bt_control_joint *) base;
    return c->is_holding ? 1 : 0;

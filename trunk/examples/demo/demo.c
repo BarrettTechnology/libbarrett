@@ -171,10 +171,10 @@ int main(int argc, char ** argv)
             /* Show HEADER */
             mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
             line++;
-#if 0            
+            
             /* Show state controller MODE (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", wam->con_active->name );
-#endif            
+            
             /* Show CONSTRAINT */
 #if 0
             mvprintw(line++, 0, "      State: %s", bt_control_mode_name(wam->con_active->get_mode(wam->con_active)) );
@@ -183,6 +183,10 @@ int main(int argc, char ** argv)
             
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
+            line++;
+            
+            /* Show HOLDING */
+            mvprintw(line++, 0, "    Holding: %s", wam->con_active->is_holding(wam->con_active) ? "On" : "Off" );
             line++;
             
             /* Show HAPTICS */
@@ -232,7 +236,13 @@ int main(int argc, char ** argv)
             going = 0;
             break;
          case 'g':
-            bt_wam_setgcomp(wam, !bt_wam_isgcomp(wam) );
+            bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
+            break;
+         case 'h':
+            if ( wam->con_active->is_holding(wam->con_active) )
+               wam->con_active->idle(wam->con_active);
+            else
+               wam->con_active->hold(wam->con_active);
             break;
          default:
             break;
@@ -253,9 +263,6 @@ int main(int argc, char ** argv)
    
    /* Close syslog */
    closelog();
-   
-   /* Put some distance between the last printed data and the user's prompt */
-   printf("\n\n");
    
    return 0;
 }

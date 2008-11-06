@@ -53,7 +53,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    
    /* Initialize the world_g link */
    grav->world_g = gsl_vector_calloc(3);
-   gsl_vector_set( grav->world_g, 2, 9.805 ); /* UPSIDE DOWN! */
+   gsl_vector_set( grav->world_g, 2, -9.805 );
    
    /* Initialize vectors for each moving link (dof) */
    grav->g  = (gsl_vector **) malloc((kin->dof)*sizeof(gsl_vector *));
