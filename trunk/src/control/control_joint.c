@@ -32,14 +32,23 @@
 #include <syslog.h>
 #include <gsl/gsl_blas.h>
 
-/* Base function pointers */
-static const char name[] = "joint-space";
+/* Define the type */
 static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
 static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base, gsl_vector * position);
 static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
+static const struct bt_control_type bt_control_joint_type = {
+   "joint-space",
+   &idle,
+   &hold,
+   &is_holding,
+   &get_position,
+   &set_reference,
+   &eval
+};
+const struct bt_control_type * bt_control_joint = &bt_control_joint_type;
 
 /* Controller-specific functions */
 struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity)
@@ -49,15 +58,11 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    c = (struct bt_control_joint *) malloc( sizeof(struct bt_control_joint) );
    n = jposition->size;
    
-   /* Set base function pointers */
-   c->base.name = name;
+   /* Set the type */
+   c->base.type = bt_control_joint;
+   
+   /* Set the n */
    c->base.n = n;
-   c->base.idle = &idle;
-   c->base.hold = &hold;
-   c->base.is_holding = &is_holding;
-   c->base.get_position = &get_position;
-   c->base.set_reference = &set_reference;
-   c->base.eval = &eval;
    
    /* Start uninitialized */
    c->is_holding = 0;
@@ -144,7 +149,7 @@ static int hold(struct bt_control * base)
    return 0;
 }
 
-int is_holding(struct bt_control * base)
+static int is_holding(struct bt_control * base)
 {
    struct bt_control_joint * c = (struct bt_control_joint *) base;
    return c->is_holding ? 1 : 0;

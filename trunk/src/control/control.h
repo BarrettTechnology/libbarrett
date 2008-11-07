@@ -33,24 +33,30 @@
 
 #include <gsl/gsl_vector.h>
 
+struct bt_control;
+
 /* "Base Class" function pointers */
-struct bt_control
+struct bt_control_type
 {
-   const char * name; /* points to the same place for a given type */
-   int n; /* number of dimensions to be controlled */
+   char name[20]; /* points to the same place for a given type */
    
    /* Simple state switching */
-   int (*idle)(struct bt_control * base);
-   int (*hold)(struct bt_control * base);
-   int (*is_holding)(struct bt_control * base);
+   int (*idle)(struct bt_control * c);
+   int (*hold)(struct bt_control * c);
+   int (*is_holding)(struct bt_control * c);
    
    /* Note - these getting/setting functions should be mutex safe! */
-   int (*get_position)(struct bt_control * base, gsl_vector * position);
+   int (*get_position)(struct bt_control * c, gsl_vector * position);
    /* Eventually a get_velocity? */
-   int (*set_reference)(struct bt_control * base, gsl_vector * reference);
+   int (*set_reference)(struct bt_control * c, gsl_vector * reference);
    
    /* RT - Evaluate, put resulting torque in torque */
-   int (*eval)(struct bt_control * base, gsl_vector * jtorque, double time);
+   int (*eval)(struct bt_control * c, gsl_vector * jtorque, double time);
+};
+
+struct bt_control {
+   struct bt_control_type * type;
+   int n; /* number of dimensions to be controlled */
 };
 
 #endif /* BT_CONTROL_H */

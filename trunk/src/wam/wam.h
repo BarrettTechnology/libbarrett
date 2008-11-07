@@ -35,13 +35,8 @@
 
 struct bt_wam_path
 {
-   char * name;
-   struct bt_wam_path * next;
-   struct bt_wam_path * prev;
-   
    /* A path has a controller */
-   struct bt_control * control;
-   
+   struct bt_control * control;  
    
 };
 
@@ -58,7 +53,6 @@ struct bt_wam
    struct bt_os_timestat * ts; /* For timing things */
    
    int gcomp;
-   
    int count;
 
    /* realtime WAM stuff */
@@ -97,15 +91,6 @@ void bt_wam_destroy(struct bt_wam * wam);
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
 
-int bt_wam_path_new(struct bt_wam * const wam, const char * const name);
-int bt_wam_path_delete(struct bt_wam * const wam, const char * const name);
-int bt_wam_path_delete_all(struct bt_wam * const wam);
-int bt_wam_path_get_number(const struct bt_wam * const wam, int * const num);
-int bt_wam_path_get_name(const struct bt_wam * const wam, const int idx, char ** nameptr); /* note - this is not safe */
-int bt_wam_path_editing_set(struct bt_wam * const wam, char * name);
-int bt_wam_path_editing_get(const struct bt_wam * const wam, char ** nameptr); /* note - this is not safe */
-int bt_wam_path_editing_next(struct bt_wam * const wam);
-int bt_wam_path_editing_prev(struct bt_wam * const wam);
 
 
 

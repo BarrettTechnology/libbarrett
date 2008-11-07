@@ -222,32 +222,6 @@ int main(int argc, char ** argv)
             }
             line++;
             
-            /* Show PATHS */
-            {
-               int i, num;
-               char * editing;
-               char * name;
-               bt_wam_path_get_number(wam,&num);
-               bt_wam_path_editing_get(wam,&editing);
-               mvprintw(line++, 0, "Number of paths: %d", num );
-               for (i=0; i<num; i++)
-               {
-                  if ((err = bt_wam_path_get_name(wam, i, &name)))
-                     syslog(LOG_ERR,"bt_wam_path_get_name(%d) returned %d.",i,err);
-                  if ( name == editing )
-                     mvprintw(line++, 0, " --> %s", name );
-                  else
-                     mvprintw(line++, 0, "     %s", name );
-               }
-            }
-            line++;
-            
-            /* Input area */
-            if (mode == MODE_PATH_NEW_NAME_INPUT)
-               mvprintw(line, 0, "Enter new path name: %s",input);
-            if (mode == MODE_PATH_DELETE_NAME_INPUT)
-               mvprintw(line, 0, "Enter to-delete path name: %s",input);
-            
             break;
          case SCREEN_HELP:
             line = 0;
@@ -279,69 +253,8 @@ int main(int argc, char ** argv)
                else
                   wam->con_active->hold(wam->con_active);
                break;
-            case 'n':
-               /* Grab the name for the new path */
-               input_idx = 0;
-               input[0] = 0;
-               mode = MODE_PATH_NEW_NAME_INPUT;
-               break;
-            case 'd':
-               /* Grab the name for the path to delete */
-               input_idx = 0;
-               input[0] = 0;
-               mode = MODE_PATH_DELETE_NAME_INPUT;
-               break;
-            case 'D':
-               bt_wam_path_delete_all(wam);
-               break;
-            case BTKEY_UP:
-               bt_wam_path_editing_prev(wam);
-               break;
-            case BTKEY_DOWN:
-               bt_wam_path_editing_next(wam);
-               break;
             default:
                break;
-         }
-         break;
-         case MODE_PATH_NEW_NAME_INPUT:
-         case MODE_PATH_DELETE_NAME_INPUT:
-         {
-            enum btkey key;
-            key = btkey_get();
-            if ( (   ('A' <= key && key <= 'Z')
-                  || ('a' <= key && key <= 'z')
-                  || ('0' <= key && key <= '9') 
-                  || key == ' ' )
-                && (input_idx < INPUT_MAX) )
-            {
-               input[input_idx] = key;
-               input[input_idx+1] = 0;
-               input_idx++;
-            }
-            if (key == BTKEY_ESCAPE)
-            {
-               mode = MODE_PATH_SELECT;
-            }
-            if (key == BTKEY_BACKSPACE && input_idx > 0)
-            {
-               input_idx--;
-               input[input_idx] = 0;
-            }
-            if (key == BTKEY_ENTER && input_idx > 0)
-            {
-               if (mode == MODE_PATH_NEW_NAME_INPUT)
-               {
-                  if ((err = bt_wam_path_new(wam, input)))
-                     syslog(LOG_ERR,"bt_wam_path_new('%s') returned %d.",input,err);
-               }
-               if (mode == MODE_PATH_DELETE_NAME_INPUT)
-               {
-                  if ((err = bt_wam_path_delete(wam, input)))
-                     syslog(LOG_ERR,"bt_wam_path_delete('%s') returned %d.",input,err);
-               }
-               mode = MODE_PATH_SELECT;
-            }
          }
          break;
       }

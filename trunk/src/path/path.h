@@ -1,16 +1,25 @@
 #ifndef BT_PATH_H
 #define BT_PATH_H
 
-/* "Base Class" function pointers */
+/* Note: paths are time-invariant */
+
+struct bt_path;
+
+struct bt_path_type
+{
+   char name[20];
+
+   /* Define the asynchronous interface */
+   int (*get_num_points)(struct bt_path * path);
+   int (*get_total_time)(struct bt_path * path);
+
+   /* Define the synchronous interface */
+   int (*get_reference)(struct bt_path * path, double time);
+};
+
+/* A path */
 struct bt_path {
-   const char * name; /* points to the same place for a given type */
-   
-   /* Asynchronous interface */
-   int (*get_num_points)(struct bt_path * base);
-   int (*get_total_time)(struct bt_path * base);
-   
-   /* Eventually, here will go the generic functions (interface),
-    * used in synchronous mode (e.g. get_reference()) */
+   const struct bt_path_type * type;
 };
 
 #endif /* BT_PATH_H */
