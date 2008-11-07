@@ -33,6 +33,14 @@
 
 #include <gsl/gsl_vector.h>
 
+/* Bound methods */
+#define bt_control_idle(c) (c->type->idle(c))
+#define bt_control_hold(c) (c->type->hold(c))
+#define bt_control_is_holding(c) (c->type->is_holding(c))
+#define bt_control_get_position(c,p) (c->type->get_position(c,p))
+#define bt_control_set_reference(c,r) (c->type->set_reference(c,r))
+#define bt_control_eval(c,j,t) (c->type->eval(c,j,t))
+
 struct bt_control;
 
 /* "Base Class" function pointers */
@@ -55,7 +63,7 @@ struct bt_control_type
 };
 
 struct bt_control {
-   struct bt_control_type * type;
+   const struct bt_control_type * type;
    int n; /* number of dimensions to be controlled */
 };
 

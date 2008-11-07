@@ -114,18 +114,6 @@ int main(int argc, char ** argv)
       SCREEN_HELP
    } screen;
    
-   /* When in SCREEN_MAIN, what mode are we in? */
-   enum {
-      MODE_PATH_SELECT,
-      MODE_PATH_NEW_NAME_INPUT,
-      MODE_PATH_DELETE_NAME_INPUT,
-      MODE_POINT_SELECT
-   } mode;
-   
-   /* A space for entering characters, and the current index */
-   char input[INPUT_MAX+1];
-   int input_idx;
-   
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
    
@@ -161,7 +149,6 @@ int main(int argc, char ** argv)
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
-   mode = MODE_PATH_SELECT;
    
    /* Register the ctrl-c interrupt handler
     * to close the WAM nicely */
@@ -188,13 +175,13 @@ int main(int argc, char ** argv)
             line++;
             
             /* Show controller name (joint space, cartesian space) */
-            mvprintw(line++, 0, " Controller: %s", wam->con_active->name );
+            mvprintw(line++, 0, " Controller: %s", wam->con_active->type->name );
             
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
             
             /* Show HOLDING */
-            mvprintw(line++, 0, "    Holding: %s", wam->con_active->is_holding(wam->con_active) ? "On" : "Off" );
+            mvprintw(line++, 0, "    Holding: %s", bt_control_is_holding(wam->con_active) ? "On" : "Off" );
             line++;
             
             /* Show HAPTICS */
@@ -235,29 +222,24 @@ int main(int argc, char ** argv)
       refresh();
       
       /* Grab a key */
-      switch (mode)
+      switch (btkey_get())
       {
-         case MODE_PATH_SELECT:
-         switch (btkey_get())
-         {
-            case 'x':
-            case 'X':
-               going = 0;
-               break;
-            case 'g':
-               bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
-               break;
-            case 'h':
-               if ( wam->con_active->is_holding(wam->con_active) )
-                  wam->con_active->idle(wam->con_active);
-               else
-                  wam->con_active->hold(wam->con_active);
-               break;
-            default:
-               break;
+         case 'x':
+         case 'X':
+            going = 0;
+            break;
+         case 'g':
+            bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
+            break;
+         case 'h':
+            if ( bt_control_is_holding(wam->con_active) )
+               bt_control_idle(wam->con_active);
+            else
+               bt_control_hold(wam->con_active);
+            break;
+         default:
+            break;
          }
-         break;
-      }
       
       /* Slow this loop down to about 10Hz */
       bt_os_usleep(100000); /* Wait a moment*/

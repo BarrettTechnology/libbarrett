@@ -303,7 +303,7 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* Do the active controller  */
-      wam->con_active->eval( wam->con_active, wam->wambot->jtorque, 1e-9 * bt_os_rt_get_time() );
+      bt_control_eval( wam->con_active, wam->wambot->jtorque, 1e-9 * bt_os_rt_get_time() );
       bt_os_timestat_trigger(wam->ts,TS_SPLINE);
       
       /* Apply the current joint torques */
