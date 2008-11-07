@@ -36,7 +36,7 @@
 static const char name[] = "joint-space";
 static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
-int is_holding(struct bt_control * base);
+static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base, gsl_vector * position);
 static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);

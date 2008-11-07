@@ -245,6 +245,7 @@ int bt_wam_path_new(struct bt_wam * const wam, const char * const name)
    /* Insert it at the beginning of the path list */
    path->prev = 0;
    path->next = wam->path_list;
+   if (wam->path_list) wam->path_list->prev = path;
    wam->path_list = path;
    
    /* Save is as the path we're currently editing */
@@ -265,13 +266,11 @@ int bt_wam_path_delete(struct bt_wam * const wam, const char * const name)
    /* If there was no path by this name, bork */
    if (!path) return -1;
    
-   /* If we're currently editing a path, forget it */
-   if (wam->path_editing == path) wam->path_editing = 0;
-   
    /* Remove the path from the list */
    if (path->prev) path->prev->next = path->next;
    if (path->next) path->next->prev = path->prev;
-   if (path == wam->path_list) wam->path_list = 0;
+   if (path == wam->path_list) wam->path_list = path->next;
+   if (path == wam->path_editing) wam->path_editing = wam->path_list;
    
    /* Destroy the path */
    free(path->name);
@@ -297,13 +296,13 @@ int bt_wam_path_get_number(const struct bt_wam * const wam, int * const num)
    return 0;
 }
 
-int bt_wam_path_get_name(const struct bt_wam * const wam, const int num, char ** nameptr)
+int bt_wam_path_get_name(const struct bt_wam * const wam, const int idx, char ** nameptr)
 {
    int i;
    struct bt_wam_path * path;
    i = 0;
    for (path = wam->path_list; path; path = path->next)
-      if (i++ == num)
+      if (i++ == idx)
       {
          (*nameptr) = path->name;
          return 0;
@@ -311,7 +310,7 @@ int bt_wam_path_get_name(const struct bt_wam * const wam, const int num, char **
    return -1;
 }
 
-int bt_wam_path_set_editing(struct bt_wam * const wam, char * name)
+int bt_wam_path_editing_set(struct bt_wam * const wam, char * name)
 {
    struct bt_wam_path * path;
    
@@ -327,7 +326,7 @@ int bt_wam_path_set_editing(struct bt_wam * const wam, char * name)
    return 0;
 }
 
-int bt_wam_path_get_editing(const struct bt_wam * const wam, char ** nameptr)
+int bt_wam_path_editing_get(const struct bt_wam * const wam, char ** nameptr)
 {
    if (!wam->path_editing)
       return -1;
@@ -335,7 +334,31 @@ int bt_wam_path_get_editing(const struct bt_wam * const wam, char ** nameptr)
    return 0;
 }
 
+int bt_wam_path_editing_next(struct bt_wam * const wam)
+{
+   if (!wam->path_editing)
+   {
+      wam->path_editing = wam->path_list;
+      return 0;
+   }
+   if (!wam->path_editing->next)
+      return 0;
+   wam->path_editing = wam->path_editing->next;
+   return 0;
+}
 
+int bt_wam_path_editing_prev(struct bt_wam * const wam)
+{
+   if (!wam->path_editing)
+   {
+      wam->path_editing = wam->path_list;
+      return 0;
+   }
+   if (!wam->path_editing->prev)
+      return 0;
+   wam->path_editing = wam->path_editing->prev;
+   return 0;
+}
 
 
 

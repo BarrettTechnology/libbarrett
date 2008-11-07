@@ -39,12 +39,15 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
+#define INPUT_MAX 20
+
 /* ------------------------------------------------------------------------ *
  * Key Grabbing Utility Function, for use with ncurses's getch()            */
 enum btkey {
    BTKEY_UNKNOWN = -2,
    BTKEY_NOKEY = -1,
    BTKEY_ENTER = 10,
+   BTKEY_ESCAPE = 27,
    BTKEY_BACKSPACE = 127,
    BTKEY_UP = 256,
    BTKEY_DOWN = 257,
@@ -59,10 +62,8 @@ enum btkey btkey_get()
    c1 = getch();
    if (c1 == ERR) return BTKEY_NOKEY;
    
-   /* Get number and letter keys */
-   if (c1 >= '0' && c1 <= '9') return c1;
-   if (c1 >= 'A' && c1 <= 'Z') return c1;
-   if (c1 >= 'a' && c1 <= 'z') return c1;
+   /* Get all keyboard characters */
+   if (32 <= c1 && c1 <= 126) return c1;
    
    /* Get special keys */
    switch (c1)
@@ -72,6 +73,7 @@ enum btkey btkey_get()
       /* Get extended keyboard chars (eg arrow keys) */
       case 27:
          c2 = getch();
+         if (c2 == ERR) return BTKEY_ESCAPE;
          if (c2 != 91) return BTKEY_UNKNOWN;
          c3 = getch();
          switch (c3)
@@ -112,6 +114,18 @@ int main(int argc, char ** argv)
       SCREEN_HELP
    } screen;
    
+   /* When in SCREEN_MAIN, what mode are we in? */
+   enum {
+      MODE_PATH_SELECT,
+      MODE_PATH_NEW_NAME_INPUT,
+      MODE_PATH_DELETE_NAME_INPUT,
+      MODE_POINT_SELECT
+   } mode;
+   
+   /* A space for entering characters, and the current index */
+   char input[INPUT_MAX+1];
+   int input_idx;
+   
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
    
@@ -147,16 +161,17 @@ int main(int argc, char ** argv)
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
+   mode = MODE_PATH_SELECT;
    
    /* Register the ctrl-c interrupt handler
     * to close the WAM nicely */
    signal(SIGINT, sigint_handler);
    /* Loop until Ctrl-C is pressed */
-   /*printf("\nPress Ctrl-C to exit...\n");*/
    going = 1;
    
    while(going)
    {
+      
       /* Clear the screen buffer */
       clear();
       
@@ -172,18 +187,11 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
             line++;
             
-            /* Show state controller MODE (joint space, cartesian space) */
+            /* Show controller name (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", wam->con_active->name );
-            
-            /* Show CONSTRAINT */
-#if 0
-            mvprintw(line++, 0, "      State: %s", bt_control_mode_name(wam->con_active->get_mode(wam->con_active)) );
-            line++;
-#endif
             
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
-            line++;
             
             /* Show HOLDING */
             mvprintw(line++, 0, "    Holding: %s", wam->con_active->is_holding(wam->con_active) ? "On" : "Off" );
@@ -214,7 +222,31 @@ int main(int argc, char ** argv)
             }
             line++;
             
-            /* Show CURRENT TEACH POINT */
+            /* Show PATHS */
+            {
+               int i, num;
+               char * editing;
+               char * name;
+               bt_wam_path_get_number(wam,&num);
+               bt_wam_path_editing_get(wam,&editing);
+               mvprintw(line++, 0, "Number of paths: %d", num );
+               for (i=0; i<num; i++)
+               {
+                  if ((err = bt_wam_path_get_name(wam, i, &name)))
+                     syslog(LOG_ERR,"bt_wam_path_get_name(%d) returned %d.",i,err);
+                  if ( name == editing )
+                     mvprintw(line++, 0, " --> %s", name );
+                  else
+                     mvprintw(line++, 0, "     %s", name );
+               }
+            }
+            line++;
+            
+            /* Input area */
+            if (mode == MODE_PATH_NEW_NAME_INPUT)
+               mvprintw(line, 0, "Enter new path name: %s",input);
+            if (mode == MODE_PATH_DELETE_NAME_INPUT)
+               mvprintw(line, 0, "Enter to-delete path name: %s",input);
             
             break;
          case SCREEN_HELP:
@@ -229,23 +261,89 @@ int main(int argc, char ** argv)
       refresh();
       
       /* Grab a key */
-      switch (btkey_get())
+      switch (mode)
       {
-         case 'x':
-         case 'X':
-            going = 0;
-            break;
-         case 'g':
-            bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
-            break;
-         case 'h':
-            if ( wam->con_active->is_holding(wam->con_active) )
-               wam->con_active->idle(wam->con_active);
-            else
-               wam->con_active->hold(wam->con_active);
-            break;
-         default:
-            break;
+         case MODE_PATH_SELECT:
+         switch (btkey_get())
+         {
+            case 'x':
+            case 'X':
+               going = 0;
+               break;
+            case 'g':
+               bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
+               break;
+            case 'h':
+               if ( wam->con_active->is_holding(wam->con_active) )
+                  wam->con_active->idle(wam->con_active);
+               else
+                  wam->con_active->hold(wam->con_active);
+               break;
+            case 'n':
+               /* Grab the name for the new path */
+               input_idx = 0;
+               input[0] = 0;
+               mode = MODE_PATH_NEW_NAME_INPUT;
+               break;
+            case 'd':
+               /* Grab the name for the path to delete */
+               input_idx = 0;
+               input[0] = 0;
+               mode = MODE_PATH_DELETE_NAME_INPUT;
+               break;
+            case 'D':
+               bt_wam_path_delete_all(wam);
+               break;
+            case BTKEY_UP:
+               bt_wam_path_editing_prev(wam);
+               break;
+            case BTKEY_DOWN:
+               bt_wam_path_editing_next(wam);
+               break;
+            default:
+               break;
+         }
+         break;
+         case MODE_PATH_NEW_NAME_INPUT:
+         case MODE_PATH_DELETE_NAME_INPUT:
+         {
+            enum btkey key;
+            key = btkey_get();
+            if ( (   ('A' <= key && key <= 'Z')
+                  || ('a' <= key && key <= 'z')
+                  || ('0' <= key && key <= '9') 
+                  || key == ' ' )
+                && (input_idx < INPUT_MAX) )
+            {
+               input[input_idx] = key;
+               input[input_idx+1] = 0;
+               input_idx++;
+            }
+            if (key == BTKEY_ESCAPE)
+            {
+               mode = MODE_PATH_SELECT;
+            }
+            if (key == BTKEY_BACKSPACE && input_idx > 0)
+            {
+               input_idx--;
+               input[input_idx] = 0;
+            }
+            if (key == BTKEY_ENTER && input_idx > 0)
+            {
+               if (mode == MODE_PATH_NEW_NAME_INPUT)
+               {
+                  if ((err = bt_wam_path_new(wam, input)))
+                     syslog(LOG_ERR,"bt_wam_path_new('%s') returned %d.",input,err);
+               }
+               if (mode == MODE_PATH_DELETE_NAME_INPUT)
+               {
+                  if ((err = bt_wam_path_delete(wam, input)))
+                     syslog(LOG_ERR,"bt_wam_path_delete('%s') returned %d.",input,err);
+               }
+               mode = MODE_PATH_SELECT;
+            }
+         }
+         break;
       }
       
       /* Slow this loop down to about 10Hz */

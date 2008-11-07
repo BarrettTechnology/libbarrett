@@ -156,5 +156,6 @@ AC_CONFIG_FILES([
  src/wam/Makefile
  src/gsl/Makefile
  src/control/Makefile
+ src/path/Makefile
 ])
 AC_OUTPUT

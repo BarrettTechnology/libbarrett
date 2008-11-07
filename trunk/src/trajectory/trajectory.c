@@ -37,7 +37,7 @@ struct bt_trajectory_spline * bt_trajectory_spline_create( gsl_vector * start )
    spline = (struct bt_trajectory_spline *) malloc(sizeof(struct bt_trajectory_spline));
    spline->dimension = start->size;
    
-   /* Add the start poing */
+   /* Add the start point */
    spline->npoints = 1;
    spline->points = (double **) malloc((spline->dimension)*sizeof(double *));
    for (i=0; i<spline->dimension; i++)
