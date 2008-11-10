@@ -55,7 +55,7 @@ struct bt_spline * bt_spline_create( gsl_vector * start )
    return spline;
 }
 
-int bt_spline_add( struct bt_trajectory_* spline, gsl_vector * vec )
+int bt_spline_add( struct bt_spline * spline, gsl_vector * vec )
 {
    int i;
    

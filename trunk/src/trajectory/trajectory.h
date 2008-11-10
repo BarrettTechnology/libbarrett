@@ -21,5 +21,30 @@
 #ifndef BT_TRAJECTORY_H
 #define BT_TRAJECTORY_H
 
+/* Note: trajectories are time-invariant *
+
+/* Bound methods */
+#define bt_trajectory_get_num_points(t) (t->type->get_num_points(t))
+#define bt_trajectory_get_total_time(t) (t->type->get_total_time(t))
+#define bt_trajectory_get_reference(t,time) (t->type->get_reference(t,time))
+
+struct bt_trajectory;
+
+struct bt_trajectory_type
+{
+   char name[20];
+
+   /* Define the asynchronous interface */
+   int (*get_num_points)(struct bt_trajectory * t);
+   int (*get_total_time)(struct bt_trajectory * t);
+
+   /* Define the synchronous interface */
+   int (*get_reference)(struct bt_trajectory * t, double time);
+};
+
+/* A path */
+struct bt_trajectory {
+   const struct bt_trajectory_type * type;
+};
 
 #endif /* BT_TRAJECTORY_H */

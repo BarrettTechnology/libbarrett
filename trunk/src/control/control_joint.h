@@ -30,7 +30,7 @@
 /* Woo basic independent-PID joint controller! */
 struct bt_control_joint
 {
-   /* Include the base function pointers */
+   /* Include the base */
    struct bt_control base;
    
    /* Our current mode */
