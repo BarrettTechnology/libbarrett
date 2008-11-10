@@ -238,6 +238,9 @@ int main(int argc, char ** argv)
             else
                bt_control_hold(wam->con_active);
             break;
+         case 'm':
+            bt_wam_movehome(wam);
+            break;
          default:
             break;
          }

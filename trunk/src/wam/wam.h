@@ -30,13 +30,15 @@
 #include "gravity.h"
 #include "kinematics.h"
 #include "trajectory.h"
+#include "trajectory_move.h"
 #include "control.h"
 #include "control_joint.h"
 
-/* A bt_wam_path has a bt_path and a bt_control, and keeps track of ownership and persistance */
-struct bt_wam_traj_element
+/* A bt_wam_traj_list represents the currently loaded trajectory;
+ * it keeps track of ownership and persistance */
+struct bt_wam_traj_list
 {   
-   struct bt_wam_traj_element * next;
+   struct bt_wam_traj_list * next;
    
    int iown;
    int idelete;
@@ -79,8 +81,8 @@ struct bt_wam
    gsl_matrix * crotation; /* 3x3 rotation matrix, From kinematics (tool) */
    
    /* A WAM has a list of named paths (linked list) */
-   struct bt_wam_path * path_list;
-   struct bt_wam_path * path_editing;
+   struct bt_wam_traj_list * traj_list;
+   struct bt_wam_traj_list * traj_current;
    
 };
 
@@ -97,7 +99,7 @@ void bt_wam_destroy(struct bt_wam * wam);
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
 
-
+int bt_wam_movehome(struct bt_wam * wam);
 
 
 

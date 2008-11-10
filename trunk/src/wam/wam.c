@@ -125,8 +125,8 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
    
    /* Set up defaults */
    wam->gcomp = 0;
-   wam->path_list = 0;
-   wam->path_editing = 0;
+   wam->traj_list = 0;
+   wam->traj_current = 0;
    
    /* Spin off the realtime thread to set everything up */
    helper = helper_create(wam,wamconfig);
@@ -224,6 +224,43 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
    return 0;
 }
 
+int bt_wam_movehome(struct bt_wam * wam)
+{
+   /* Make sure we're in joint mode */
+   wam->con_active = (struct bt_control *) wam->con_joint;
+
+   /* Remove any trajectories in the list */
+   {
+      struct bt_wam_traj_list * traj_list;
+      struct bt_wam_traj_list * traj_list_next;
+      
+      traj_list = wam->traj_list;
+      while (traj_list)
+      {
+         traj_list_next = traj_list->next;
+         /* respect iown, idelete? */
+         bt_trajectory_destroy(traj_list->trajectory);
+         free(traj_list);
+         traj_list = traj_list_next;
+      }
+      wam->traj_list = 0;
+   }
+   
+   /* Make a new trajectory */
+   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
+   if (!wam->traj_list) return -1;
+   wam->traj_list->next = 0;
+   
+   wam->traj_list->trajectory = (struct bt_trajectory *)
+      bt_trajectory_move_create(wam->jposition, wam->jvelocity, wam->wambot->home);
+   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   
+   /* Save this trajectory as the current one, and start it! */
+   bt_trajectory_start(wam->traj_list->trajectory, 1e-9 * bt_os_rt_get_time() );
+   wam->traj_current = wam->traj_list;
+   
+   return 0;
+}
 
 
 
@@ -231,7 +268,9 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 
 
 
-/* Below are separate thread stuffs */
+
+/* ===========================================================================
+ * Below are separate thread stuffs */
 
 void rt_wam(bt_os_thread * thread)
 {
@@ -276,6 +315,8 @@ void rt_wam(bt_os_thread * thread)
    /* Loop until we're told by destroy() to exit */
    while (!bt_os_thread_done(thread))
    {
+      double time;
+      time = 1e-9 * bt_os_rt_get_time();
       wam->count++;
       
       /* Make sure task is still in primary mode,
@@ -302,8 +343,16 @@ void rt_wam(bt_os_thread * thread)
       if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
+      /* If there's an active trajectory, grab the reference into the joint controller */
+      if (wam->traj_current)
+      {
+         bt_trajectory_get_reference(wam->traj_current->trajectory,
+                                     wam->con_joint->reference,
+                                     time);
+      }
+      
       /* Do the active controller  */
-      bt_control_eval( wam->con_active, wam->wambot->jtorque, 1e-9 * bt_os_rt_get_time() );
+      bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
       bt_os_timestat_trigger(wam->ts,TS_SPLINE);
       
       /* Apply the current joint torques */
