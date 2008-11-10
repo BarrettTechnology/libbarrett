@@ -21,8 +21,9 @@ libbt_la_LIBADD = \
   wam/libbtwam.la \
   gsl/libbtgsl.la \
   control/libbtcontrol.la \
-  path/libbtpath.la
+  spline/libbtspline.la \
+  profile/libbtprofile.la
 
 # Subdirectories to make
-SUBDIRS = os bus wambot kinematics gravity interp trajectory log wam gsl control path
+SUBDIRS = os bus wambot kinematics gravity interp trajectory log wam gsl control spline profile
 

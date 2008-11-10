@@ -7,4 +7,4 @@ pkginclude_HEADERS = control.h control_joint.h
 # Source files to complile
 AM_CPPFLAGS = -I../gsl -I../trajectory
 AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-libbtcontrol_la_SOURCES = control.c control_joint.c
+libbtcontrol_la_SOURCES = control_joint.c

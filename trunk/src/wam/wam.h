@@ -33,10 +33,16 @@
 #include "control.h"
 #include "control_joint.h"
 
-struct bt_wam_path
-{
-   /* A path has a controller */
-   struct bt_control * control;  
+/* A bt_wam_path has a bt_path and a bt_control, and keeps track of ownership and persistance */
+struct bt_wam_traj_element
+{   
+   struct bt_wam_traj_element * next;
+   
+   int iown;
+   int idelete;
+   
+   /* The trajectory itself */
+   struct bt_trajectory * trajectory;
    
 };
 

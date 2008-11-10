@@ -192,6 +192,7 @@ int main(int argc, char ** argv)
             
             /* Show JOINT POSTITION + TORQUE */
             mvprintw(line++, 0, "J Position : %s", bt_gsl_vector_sprintf(buf,wam->jposition) );
+            mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
             mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
             line++;
             
