@@ -195,6 +195,8 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
             mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
             line++;
+            mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
+            line++;
             
             /* Show CARTESION POSITION, ROTATION */
             mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );

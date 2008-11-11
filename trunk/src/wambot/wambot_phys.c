@@ -178,7 +178,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       }
       
       /* Attempt to open the system */
-      wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_POS_ONLY );
+      wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_POS_DIFF );
       if (!wambot->bus)
       {
          syslog(LOG_ERR,"%s: Could not create the bus.\n",__func__);

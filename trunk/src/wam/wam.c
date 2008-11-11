@@ -256,7 +256,8 @@ int bt_wam_movehome(struct bt_wam * wam)
    if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
    
    /* Save this trajectory as the current one, and start it! */
-   bt_trajectory_start(wam->traj_list->trajectory, 1e-9 * bt_os_rt_get_time() );
+   bt_control_hold(wam->con_active);
+   wam->traj_current_start_time = 1e-9 * bt_os_rt_get_time();
    wam->traj_current = wam->traj_list;
    
    return 0;
@@ -346,9 +347,21 @@ void rt_wam(bt_os_thread * thread)
       /* If there's an active trajectory, grab the reference into the joint controller */
       if (wam->traj_current)
       {
-         bt_trajectory_get_reference(wam->traj_current->trajectory,
+         double elapsed, total;
+         elapsed = time - wam->traj_current_start_time;
+         bt_trajectory_get_total_time(wam->traj_current->trajectory,
+                                      &total);
+         if (elapsed < total)
+         {
+            bt_trajectory_get_reference(wam->traj_current->trajectory,
                                      wam->con_joint->reference,
-                                     time);
+                                     elapsed);
+         }
+         else
+         {
+            /* Move current to the next trajectory */
+            wam->traj_current = wam->traj_current->next;
+         }
       }
       
       /* Do the active controller  */

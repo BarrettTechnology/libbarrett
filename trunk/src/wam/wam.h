@@ -83,6 +83,7 @@ struct bt_wam
    /* A WAM has a list of named paths (linked list) */
    struct bt_wam_traj_list * traj_list;
    struct bt_wam_traj_list * traj_current;
+   double traj_current_start_time;
    
 };
 
