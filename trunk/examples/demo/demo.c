@@ -181,7 +181,9 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
             
             /* Show HOLDING */
-            mvprintw(line++, 0, "    Holding: %s", bt_control_is_holding(wam->con_active) ? "On" : "Off" );
+            mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
+            
+            mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             line++;
             
             /* Show HAPTICS */
@@ -235,10 +237,10 @@ int main(int argc, char ** argv)
             bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
             break;
          case 'h':
-            if ( bt_control_is_holding(wam->con_active) )
-               bt_control_idle(wam->con_active);
+            if ( bt_wam_is_holding(wam) )
+               bt_wam_idle(wam);
             else
-               bt_control_hold(wam->con_active);
+               bt_wam_hold(wam);
             break;
          case 'm':
             bt_wam_movehome(wam);

@@ -125,6 +125,8 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
    
    /* Set up defaults */
    wam->gcomp = 0;
+   wam->vel = 0.5;
+   wam->acc = 0.5;
    wam->traj_list = 0;
    wam->traj_current = 0;
    
@@ -224,7 +226,39 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
    return 0;
 }
 
-int bt_wam_movehome(struct bt_wam * wam)
+/* Wrappers around the active controller */
+int bt_wam_idle(struct bt_wam * wam)
+{
+   /* Make sure we're not doing any trajectories */
+   wam->traj_current = 0;
+   return bt_control_idle(wam->con_active);
+}
+
+int bt_wam_hold(struct bt_wam * wam)
+{
+   /* Make sure we're not doing any trajectories */
+   wam->traj_current = 0;
+   return bt_control_hold(wam->con_active);
+}
+
+int bt_wam_is_holding(struct bt_wam * wam)
+{
+   return bt_control_is_holding(wam->con_active);
+}
+
+int bt_wam_set_velocity(struct bt_wam * wam, double vel)
+{
+   wam->vel = vel;
+   return 0;
+}
+
+int bt_wam_set_acceleration(struct bt_wam * wam, double acc)
+{
+   wam->acc = acc;
+   return 0;
+}
+
+int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
 {
    /* Make sure we're in joint mode */
    wam->con_active = (struct bt_control *) wam->con_joint;
@@ -252,7 +286,7 @@ int bt_wam_movehome(struct bt_wam * wam)
    wam->traj_list->next = 0;
    
    wam->traj_list->trajectory = (struct bt_trajectory *)
-      bt_trajectory_move_create(wam->jposition, wam->jvelocity, wam->wambot->home);
+      bt_trajectory_move_create(wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
    if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
    
    /* Save this trajectory as the current one, and start it! */
@@ -261,6 +295,16 @@ int bt_wam_movehome(struct bt_wam * wam)
    wam->traj_current = wam->traj_list;
    
    return 0;
+}
+
+int bt_wam_movehome(struct bt_wam * wam)
+{
+   return bt_wam_moveto(wam,wam->wambot->home);
+}
+
+int bt_wam_moveisdone(struct bt_wam * wam)
+{
+   return (wam->traj_current) ? 0 : 1;
 }
 
 

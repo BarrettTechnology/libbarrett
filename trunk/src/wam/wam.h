@@ -69,10 +69,6 @@ struct bt_wam
    struct bt_gravity * grav;
    struct bt_log * log; /* woo datalogger! */
 
-   /* Controllers */
-   struct bt_control * con_active;
-   struct bt_control_joint * con_joint;
-   
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
    gsl_vector * jvelocity; /* From wambot */
@@ -80,11 +76,17 @@ struct bt_wam
    gsl_vector * cposition; /* From kinematics (tool) */
    gsl_matrix * crotation; /* 3x3 rotation matrix, From kinematics (tool) */
    
-   /* A WAM has a list of named paths (linked list) */
+   /* Controllers */
+   struct bt_control * con_active;
+   struct bt_control_joint * con_joint;
+   
+   /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
+   double vel, acc;
+   
+   /* A WAM has a linked list of trajectories */
    struct bt_wam_traj_list * traj_list;
    struct bt_wam_traj_list * traj_current;
    double traj_current_start_time;
-   
 };
 
 /* This function sets up a new WAM,
@@ -100,7 +102,18 @@ void bt_wam_destroy(struct bt_wam * wam);
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
 
+/* These are simple wrappers for the active controller */
+int bt_wam_idle(struct bt_wam * wam);
+int bt_wam_hold(struct bt_wam * wam);
+int bt_wam_is_holding(struct bt_wam * wam);
+
+/* For moves */
+int bt_wam_set_velocity(struct bt_wam * wam, double vel);
+int bt_wam_set_acceleration(struct bt_wam * wam, double acc);
+
+int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);
 int bt_wam_movehome(struct bt_wam * wam);
+int bt_wam_moveisdone(struct bt_wam * wam);
 
 
 

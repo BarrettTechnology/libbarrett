@@ -17,4 +17,6 @@ struct bt_trajectory_move
 };
 
 /* Trajectory-specific create function */
-struct bt_trajectory_move * bt_trajectory_move_create(gsl_vector * pos, gsl_vector * vel, gsl_vector * dest);
+struct bt_trajectory_move * bt_trajectory_move_create(
+   gsl_vector * cur_pos, gsl_vector * cur_vel, gsl_vector * dest,
+   double vel, double acc);

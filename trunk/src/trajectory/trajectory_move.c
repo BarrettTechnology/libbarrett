@@ -19,7 +19,9 @@ static const struct bt_trajectory_type bt_trajectory_move_type = {
 const struct bt_trajectory_type * bt_trajectory_move = &bt_trajectory_move_type;
 
 /* Trajectory-specific create function */
-struct bt_trajectory_move * bt_trajectory_move_create(gsl_vector * pos, gsl_vector * vel, gsl_vector * dest)
+struct bt_trajectory_move * bt_trajectory_move_create(
+   gsl_vector * cur_pos, gsl_vector * cur_vel, gsl_vector * dest,
+   double vel, double acc)
 {
    struct bt_trajectory_move * t;
    t = (struct bt_trajectory_move *) malloc( sizeof(struct bt_trajectory_move) );
@@ -29,16 +31,16 @@ struct bt_trajectory_move * bt_trajectory_move_create(gsl_vector * pos, gsl_vect
    t->base.type = bt_trajectory_move;
    
    /* Make a new spline, starting at the current position */
-   t->spline = bt_spline_create(pos);
+   t->spline = bt_spline_create(cur_pos);
    
    /* Add the destination as a second point */
    bt_spline_add( t->spline, dest );
    
    /* Initialize the spline, using the velocity as the direction */
-   bt_spline_init( t->spline, 0, vel );
+   bt_spline_init( t->spline, 0, cur_vel );
    
    /* Make a new profile, using the spline length */
-   t->profile = bt_profile_create(0.5, 0.5, gsl_blas_dnrm2(vel), t->spline->length);
+   t->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), t->spline->length);
    
    return t;
 }
