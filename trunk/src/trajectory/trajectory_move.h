@@ -8,8 +8,6 @@ struct bt_trajectory_move
    /* Include the base */
    struct bt_trajectory base;
    
-   double start_time;
-   
    /* a bt_trajectory_move has a spline and a profile */
    struct bt_spline * spline;
    struct bt_profile * profile;

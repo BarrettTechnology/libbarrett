@@ -75,7 +75,7 @@ static int get_reference(struct bt_trajectory * base, gsl_vector * ref, double t
    double s;
    t = (struct bt_trajectory_move *) base;
    
-   bt_profile_get( t->profile, &s, time - t->start_time);
+   bt_profile_get( t->profile, &s, time );
    bt_spline_get( t->spline, ref, s );
    
    return 0;
