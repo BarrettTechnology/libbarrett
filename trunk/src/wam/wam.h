@@ -31,6 +31,7 @@
 #include "kinematics.h"
 #include "trajectory.h"
 #include "trajectory_move.h"
+#include "trajectory_teachplay.h"
 #include "control.h"
 #include "control_joint.h"
 
@@ -68,6 +69,7 @@ struct bt_wam
    struct bt_kinematics * kin;
    struct bt_gravity * grav;
    struct bt_log * log; /* woo datalogger! */
+   struct bt_log * ts_log; /* logger for timing statistics */
 
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
@@ -83,10 +85,15 @@ struct bt_wam
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
    double vel, acc;
    
+   /* This is used for both moves and teaches */
+   double start_time;
+   
    /* A WAM has a linked list of trajectories */
    struct bt_wam_traj_list * traj_list;
    struct bt_wam_traj_list * traj_current;
-   double traj_current_start_time;
+   
+   /* Are we currently teaching into the first trajectory in the list? */
+   int teach;
 };
 
 /* This function sets up a new WAM,
@@ -115,6 +122,9 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);
 int bt_wam_movehome(struct bt_wam * wam);
 int bt_wam_moveisdone(struct bt_wam * wam);
 
+int bt_wam_teach_start(struct bt_wam * wam);
+int bt_wam_teach_end(struct bt_wam * wam);
+int bt_wam_playback(struct bt_wam * wam);
 
 
 #endif /* BT_WAM_H */

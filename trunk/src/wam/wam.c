@@ -32,9 +32,12 @@
 
 /* Some global things for timing the threads */
 #define TS \
-   T(UPDATE) T(KINEMATICS) T(LOG) \
-   T(GRAV_ZERO) T(GCOMP) T(SPLINE) T(SETJTOR) \
-   T(MODE_HARD) T(WAIT_PERIOD)
+   T(UPDATE) T(KINEMATICS) \
+   T(GRAV_ZERO) T(GCOMP) \
+   T(TRAJ) T(CONTROL) T(TEACH) \
+   T(SETJTOR) \
+   T(GETP1) T(GETP2) \
+   T(LOG)
 #define T(x) TS_##x,
    enum ts_enum { TS TSNUM };
 #undef T
@@ -129,6 +132,7 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
    wam->acc = 0.5;
    wam->traj_list = 0;
    wam->traj_current = 0;
+   wam->teach = 0;
    
    /* Spin off the realtime thread to set everything up */
    helper = helper_create(wam,wamconfig);
@@ -205,6 +209,7 @@ void bt_wam_destroy(struct bt_wam * wam)
    
    /* ATTEMPT TO Decode the binary log file */
    bt_log_decode("datafile.dat", "dat.oct", 1, 1); /* Woo octave! */
+   bt_log_decode("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
    
    free(wam);
    return;
@@ -280,18 +285,19 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
       wam->traj_list = 0;
    }
    
-   /* Make a new trajectory */
+   /* Make a new trajectory list element */
    wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
    if (!wam->traj_list) return -1;
    wam->traj_list->next = 0;
    
+   /* Make the trajectory itself */
    wam->traj_list->trajectory = (struct bt_trajectory *)
       bt_trajectory_move_create(wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
    if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
    
    /* Save this trajectory as the current one, and start it! */
    bt_control_hold(wam->con_active);
-   wam->traj_current_start_time = 1e-9 * bt_os_rt_get_time();
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
    wam->traj_current = wam->traj_list;
    
    return 0;
@@ -307,6 +313,95 @@ int bt_wam_moveisdone(struct bt_wam * wam)
    return (wam->traj_current) ? 0 : 1;
 }
 
+int bt_wam_teach_start(struct bt_wam * wam)
+{
+   /* Make sure we're in the right mode */
+   if (wam->traj_current) return -1;
+   if (wam->teach) return -1;
+   if (bt_control_is_holding(wam->con_active)) return -1;
+   if (!wam->con_active) return -1;
+   
+   /* Remove any trajectories in the list */
+   {
+      struct bt_wam_traj_list * traj_list;
+      struct bt_wam_traj_list * traj_list_next;
+      
+      traj_list = wam->traj_list;
+      while (traj_list)
+      {
+         traj_list_next = traj_list->next;
+         /* respect iown, idelete? */
+         bt_trajectory_destroy(traj_list->trajectory);
+         free(traj_list);
+         traj_list = traj_list_next;
+      }
+      wam->traj_list = 0;
+   }
+   
+   /* Make a new trajectory list element */
+   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
+   if (!wam->traj_list) return -1;
+   wam->traj_list->next = 0;
+   
+   /* Make the trajectory itself */
+   wam->traj_list->trajectory = (struct bt_trajectory *)
+      bt_trajectory_teachplay_create(wam->con_active->position,"teach");
+   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   
+   /* Set the sync side start_time */
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->teach = 1;
+   
+   return 0;
+}
+
+int bt_wam_teach_end(struct bt_wam * wam)
+{
+   if (!wam->teach) return -1;
+   wam->teach = 0;
+   
+   bt_trajectory_teachplay_save( (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory) );
+   
+   return 0;
+   
+}
+
+int bt_wam_playback(struct bt_wam * wam)
+{
+   struct bt_wam_traj_list * teachplay;
+   gsl_vector * teachplay_start;
+   
+   /* Make sure we're not currently teaching */
+   if (wam->teach) return 1;
+   
+   /* Make sure there's a loaded trajectory_teachplay */
+   if ( wam->traj_list->trajectory->type != bt_trajectory_teachplay)
+      return -1;
+   
+   /* Make a new move, from the current location
+    * to the start of the trajectory */
+   teachplay = wam->traj_list;
+   
+   /* Insert a new trajectory list element */
+   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
+   if (!wam->traj_list) return -1;
+   wam->traj_list->next = teachplay;
+   
+   /* Make the move trajectory itself */
+   bt_trajectory_get_start(teachplay->trajectory,&teachplay_start);
+   wam->traj_list->trajectory = (struct bt_trajectory *)
+      bt_trajectory_move_create(wam->jposition, wam->jvelocity,
+                                   teachplay_start, wam->vel, wam->acc);
+   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   /* Note, we should free more stuff here! */
+   
+   /* Save this trajectory as the current one, and start it! */
+   bt_control_hold(wam->con_active);
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->traj_current = wam->traj_list;
+   
+   return 0;
+}
 
 
 
@@ -361,12 +456,17 @@ void rt_wam(bt_os_thread * thread)
    while (!bt_os_thread_done(thread))
    {
       double time;
+      
+      /* Wait for the next control period ... */
+      bt_os_rt_set_mode_hard();
+      bt_os_rt_task_wait_period();
+      
+      /* Start timing ... */
+      bt_os_timestat_start(wam->ts);
+      
+      /* Get start-of-task time, increment counter */
       time = 1e-9 * bt_os_rt_get_time();
       wam->count++;
-      
-      /* Make sure task is still in primary mode,
-       * and wait until the next control period */
-      bt_os_timestat_start(wam->ts);
       
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
@@ -375,10 +475,6 @@ void rt_wam(bt_os_thread * thread)
       /* Forward kinematics */
       bt_kinematics_eval_forward( wam->kin, wam->wambot->jposition );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
-      
-      /* Log data */
-      bt_log_trigger( wam->log );
-      bt_os_timestat_trigger(wam->ts,TS_LOG);
       
       /* Set the torques to be zero */
       gsl_vector_set_zero( wam->wambot->jtorque );
@@ -392,7 +488,7 @@ void rt_wam(bt_os_thread * thread)
       if (wam->traj_current)
       {
          double elapsed, total;
-         elapsed = time - wam->traj_current_start_time;
+         elapsed = time - wam->start_time;
          bt_trajectory_get_total_time(wam->traj_current->trajectory,
                                       &total);
          if (elapsed < total)
@@ -405,22 +501,50 @@ void rt_wam(bt_os_thread * thread)
          {
             /* Move current to the next trajectory */
             wam->traj_current = wam->traj_current->next;
+            wam->start_time = 1e-9 * bt_os_rt_get_time();
          }
       }
+      bt_os_timestat_trigger(wam->ts,TS_TRAJ);
       
       /* Do the active controller  */
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
-      bt_os_timestat_trigger(wam->ts,TS_SPLINE);
+      bt_os_timestat_trigger(wam->ts,TS_CONTROL);
+      
+      /* If we're teaching, trigger the teach trajectory */
+      if (wam->teach && (((wam->count) & 0x4F) == 0) )
+      {
+         bt_trajectory_teachplay_trigger(
+            (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory),
+            time - wam->start_time );
+      }
+      bt_os_timestat_trigger(wam->ts,TS_TEACH);
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
       
-      /* Wait for the next time ... */
-      bt_os_rt_set_mode_hard();
-      bt_os_timestat_trigger(wam->ts,TS_MODE_HARD);
-      bt_os_rt_task_wait_period();
-      bt_os_timestat_trigger(wam->ts,TS_WAIT_PERIOD);
+      /* TEMP - ask puck 1 for its ID */
+      {
+         long val;
+         bt_bus_get_property( ((struct bt_wambot_phys *)(wam->wambot))->bus, 1,
+                              ((struct bt_wambot_phys *)(wam->wambot))->bus->p->ID,
+                              &val );
+      }
+      bt_os_timestat_trigger(wam->ts,TS_GETP1);
+      
+      /* TEMP - ask puck 2 for its ID */
+      {
+         long val;
+         bt_bus_get_property( ((struct bt_wambot_phys *)(wam->wambot))->bus, 2,
+                              ((struct bt_wambot_phys *)(wam->wambot))->bus->p->ID,
+                              &val );
+      }
+      bt_os_timestat_trigger(wam->ts,TS_GETP2);
+            
+      /* Log data (including timing statistics) */
+      bt_log_trigger( wam->log );
+      bt_log_trigger( wam->ts_log );
+      bt_os_timestat_trigger(wam->ts,TS_LOG);
       
       /* Calculate timing statistics */
       bt_os_timestat_end(wam->ts);
@@ -438,11 +562,13 @@ void rt_wam(bt_os_thread * thread)
 int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
 {
    int err;
+   int i;
    
    wam->wambot = 0;
    wam->kin = 0;
    wam->grav = 0;
    wam->log = 0;
+   wam->ts_log = 0;
    wam->con_joint= 0;
    
    /* Create a wambot object (which sets the dof)
@@ -495,6 +621,25 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       return 1;
    }
    
+   /* Create the ts datalogger */
+   wam->ts_log = bt_log_create( TSNUM+1 );
+   if (!wam->ts_log)
+   {
+      syslog(LOG_ERR,"%s: Could not create ts logger.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   bt_log_addfield( wam->ts_log, wam->ts->start, 1, BT_LOG_ULONGLONG, "TS_START" );
+   for (i=0; i<TSNUM; i++)
+      bt_log_addfield( wam->ts_log, wam->ts->times + i, 1, BT_LOG_ULONGLONG, ts_name[i] );
+   err = bt_log_init( wam->ts_log, 1000, "ts_log.dat");
+   if (err)
+   {
+      syslog(LOG_ERR,"%s: Could not initialize ts logging.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   
    /* Create a joint-space controller */
    wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
@@ -512,11 +657,10 @@ void rt_wam_destroy(struct bt_wam * wam)
 {
    if (wam->con_joint)
       bt_control_joint_destroy(wam->con_joint);
+   if (wam->ts_log)
+      bt_log_destroy(wam->ts_log);
    if (wam->log)
-   {
-      bt_log_off(wam->log); /* Just to make sure! */
       bt_log_destroy(wam->log);
-   }
    if (wam->grav)
       bt_gravity_destroy(wam->grav);
    if (wam->kin)
@@ -536,8 +680,15 @@ void nonrt_thread_function(bt_os_thread * thread)
       {
          /*syslog(LOG_ERR,"Flushing Log Files ...");*/
          bt_log_flush( wam->log );
-         bt_os_usleep(1000000);
       }
+      
+      if (wam->teach)
+      {
+         bt_trajectory_teachplay_flush(
+            (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory) );
+      }
+      
+      bt_os_usleep(1000000);
    }
    
    bt_os_thread_exit( thread );

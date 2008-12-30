@@ -36,7 +36,7 @@
 static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
 static int is_holding(struct bt_control * base);
-static int get_position(struct bt_control * base, gsl_vector * position);
+static int get_position(struct bt_control * base);
 static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
 static const struct bt_control_type bt_control_joint_type = {
@@ -58,11 +58,10 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    c = (struct bt_control_joint *) malloc( sizeof(struct bt_control_joint) );
    n = jposition->size;
    
-   /* Set the type */
+   /* Set the type, and other generic stuff */
    c->base.type = bt_control_joint;
-   
-   /* Set the n */
    c->base.n = n;
+   c->base.position = jposition; /* this points directly in this case */
    
    /* Start uninitialized */
    c->is_holding = 0;
@@ -155,10 +154,9 @@ static int is_holding(struct bt_control * base)
    return c->is_holding ? 1 : 0;
 }
 
-static int get_position(struct bt_control * base, gsl_vector * position)
+/* This already points directly! */
+static int get_position(struct bt_control * base)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
-   gsl_vector_memcpy( position, c->jposition );
    return 0;
 }
 

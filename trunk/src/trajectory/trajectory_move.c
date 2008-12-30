@@ -8,12 +8,14 @@
 static int destroy(struct bt_trajectory * base);
 static int get_num_points(struct bt_trajectory * base);
 static int get_total_time(struct bt_trajectory * base, double * time);
+static int get_start(struct bt_trajectory * base, gsl_vector ** start);
 static int get_reference(struct bt_trajectory * base, gsl_vector * ref, double time);
 static const struct bt_trajectory_type bt_trajectory_move_type = {
    "move",
    &destroy,
    &get_num_points,
    &get_total_time,
+   &get_start,
    &get_reference
 };
 const struct bt_trajectory_type * bt_trajectory_move = &bt_trajectory_move_type;
@@ -66,6 +68,11 @@ static int get_total_time(struct bt_trajectory * base, double * time)
    struct bt_trajectory_move * t;
    t = (struct bt_trajectory_move *) base;
    (*time) = t->profile->time_end;
+   return 0;
+}
+
+static int get_start(struct bt_trajectory * base, gsl_vector ** start)
+{
    return 0;
 }
 

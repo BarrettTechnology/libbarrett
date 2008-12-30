@@ -111,7 +111,12 @@ int bt_spline_init( struct bt_spline * spline,
          diff = spline->points[i][n] - spline->points[i][n-1];
          len += diff * diff;
       }
-      spline->ss[n] = spline->ss[n-1] + sqrt(len);
+      /* FIX ME THE RIGHT WAY! */
+      if (sqrt(len) != 0.0)
+         spline->ss[n] = spline->ss[n-1] + sqrt(len);
+      else
+         spline->ss[n] = spline->ss[n-1] + 0.00001;
+      
    }
    spline->length = spline->ss[spline->npoints-1];
    

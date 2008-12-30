@@ -55,7 +55,7 @@ void main()
     evalDL(&log);
   }
   DLoff(&log);
-  CloseDL(&log);
+  CloseDL(&log);bt_log_addfield( t->log, gsl_vector_ptr(cur_position,i), BT_LOG_DOUBLE, "pos" );
 }
 void loop()
 {
@@ -77,14 +77,15 @@ void loop()
 extern "C"
 {
 #endif/* __cplusplus */
- 
 
+/* Note - one block is like a line, with many fields */
 
 /* Field Types */
 enum bt_log_fieldtype {
   BT_LOG_INT = 0,
   BT_LOG_LONG,
   BT_LOG_LONGLONG,
+  BT_LOG_ULONGLONG,
   BT_LOG_DOUBLE
 };
 
@@ -100,6 +101,12 @@ struct bt_log_data_info
   char name[50]; /*!< null terminated string describing the data. No ','s allowed*/
 };
 
+/* Is one of the buffers full? */
+enum bt_log_full {
+   BT_LOG_FULL_NONE,
+   BT_LOG_FULL_A,
+   BT_LOG_FULL_B
+};
 
 /** Data logging object
 
@@ -118,22 +125,35 @@ Function definitions are in btlogger.h.
 */
 struct bt_log
 {
-  char *DL; /*!< Pointer to current buffer*/
-  char *DLbuffer1; /*!< First data buffer*/
-  char *DLbuffer2;  /*!< Second data buffer*/
   struct bt_log_data_info * data; /*!< list of data information*/
-  size_t data_size; /*!< Total size of one block of data*/
-  int fields; /*!< Number of data_info pieces*/
-  int maxfields; /*!< Total number of data_info structures allocated.*/
+  size_t block_size; /*!< Total size of one block of data*/
+  int num_fields_max; /*!< Total number of data_info structures allocated.*/
+  int num_fields; /*!< Number of data_info pieces*/
+  int initialized;
   
-  int DLidx; /*!<*/
-  int DLwritten;       /*!< 0 all buffers clear, 1 buffer1 ready, 2 buffer2 ready*/
-  int DLctr;
-  int Log_Data;
-  int Log_File_Open; 
-  int buffersize;
-  FILE *DLfile;
-  /*pthread_mutex_t mutex;*/ /*!< Unused*/
+  int num_blocks;
+  int buf_block_idx;
+  char * buf; /*!< Pointer to current buffer*/
+  char * buf_A; /*!< First data buffer*/
+  char * buf_B;  /*!< Second data buffer*/
+  enum bt_log_full full;
+  
+  int chunk_idx;
+  FILE * file;
+};
+
+struct bt_log_read
+{
+  struct bt_log_data_info * data; /*!< list of data information*/
+  size_t block_size; /*!< Total size of one block of data*/
+  int num_fields_max; /*!< Total number of data_info structures allocated.*/
+  int num_fields; /*!< Number of data_info pieces*/
+  int initialized;
+  
+  FILE * file;
+  char * line;
+  size_t line_length;
+  int blocks_read;
 };
 
 
@@ -141,16 +161,25 @@ struct bt_log
 /* public functions */
 struct bt_log * bt_log_create( unsigned int num_fields );
 int bt_log_addfield( struct bt_log * log, void * data, int num, enum bt_log_fieldtype type, char * name);
-int bt_log_init( struct bt_log * log, int size, char * filename);
+int bt_log_init( struct bt_log * log, int num_blocks, char * filename);
 int bt_log_destroy( struct bt_log * log );
-
-int bt_log_on( struct bt_log * log );
-int bt_log_off( struct bt_log * log );
 
 int bt_log_trigger( struct bt_log * log );
 int bt_log_flush( struct bt_log * log );
 
 int bt_log_decode( char * infile, char * outfile, int header, int octave);
+
+
+/* For reading a CSV file */
+
+struct bt_log_read * bt_log_read_create( unsigned int num_fields );
+int bt_log_read_addfield( struct bt_log_read * logread, void * data, int num, enum bt_log_fieldtype type);
+int bt_log_read_init( struct bt_log_read * logread, char * filename, int header);
+int bt_log_read_destroy( struct bt_log_read * logread );
+
+int bt_log_read_get( struct bt_log_read * logread, int * block_num_ptr );
+
+
 
 #ifdef __cplusplus
 }
