@@ -35,17 +35,17 @@
 #include "control.h"
 #include "control_joint.h"
 
-/* A bt_wam_traj_list represents the currently loaded trajectory;
+/* A bt_wam_refgen_list represents the currently loaded refgen;
  * it keeps track of ownership and persistance */
-struct bt_wam_traj_list
+struct bt_wam_refgen_list
 {   
-   struct bt_wam_traj_list * next;
+   struct bt_wam_refgen_list * next;
    
    int iown;
    int idelete;
    
-   /* The trajectory itself */
-   struct bt_trajectory * trajectory;
+   /* The refgen itself */
+   struct bt_refgen * refgen;
    
 };
 
@@ -87,14 +87,16 @@ struct bt_wam
    
    /* This is used for both moves and teaches */
    double start_time;
+   double elapsed_time;
    
    /* A WAM has a linked list of trajectories */
-   struct bt_wam_traj_list * traj_list;
-   struct bt_wam_traj_list * traj_current;
+   struct bt_wam_refgen_list * refgen_list;
+   struct bt_wam_refgen_list * refgen_current;
    
    /* Are we currently teaching into the first trajectory in the list? */
    int teach;
 };
+
 
 /* This function sets up a new WAM,
  * and spins off a wam_thread to control it.

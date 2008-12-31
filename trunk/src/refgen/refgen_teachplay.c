@@ -1,5 +1,5 @@
-#include "trajectory.h"
-#include "trajectory_teachplay.h"
+#include "refgen.h"
+#include "refgen_teachplay.h"
 
 #include <string.h>
 
@@ -7,35 +7,40 @@
 
 #include <gsl/gsl_vector.h>
 
-/* Define the type */
-static int destroy(struct bt_trajectory * base);
-static int get_num_points(struct bt_trajectory * base);
-static int get_total_time(struct bt_trajectory * base, double * time);
-static int get_start(struct bt_trajectory * base, gsl_vector ** start);
-static int get_reference(struct bt_trajectory * base, gsl_vector * ref, double time);
-static const struct bt_trajectory_type bt_trajectory_teachplay_type = {
+/* Define the type (see refgen.h for details) */
+static int destroy(struct bt_refgen * base);
+static int get_start(struct bt_refgen * base, gsl_vector ** start);
+static int get_total_time(struct bt_refgen * base, double * time);
+static int get_num_points(struct bt_refgen * base, int * points);
+static int start(struct bt_refgen * base);
+static int eval(struct bt_refgen * base, gsl_vector * ref);
+static const struct bt_refgen_type bt_refgen_teachplay_type = {
    "teachplay",
    &destroy,
-   &get_num_points,
-   &get_total_time,
    &get_start,
-   &get_reference
+   &get_total_time,
+   &get_num_points,
+   &start,
+   &eval
 };
-const struct bt_trajectory_type * bt_trajectory_teachplay = &bt_trajectory_teachplay_type;
+const struct bt_refgen_type * bt_refgen_teachplay = &bt_refgen_teachplay_type;
 
 /* Trajectory-specific create function */
-struct bt_trajectory_teachplay * bt_trajectory_teachplay_create(
-   gsl_vector * cur_position, char * filename)
+struct bt_refgen_teachplay * bt_refgen_teachplay_create(
+   double * elapsed_time, gsl_vector * cur_position, char * filename)
 {
-   struct bt_trajectory_teachplay * t;
+   struct bt_refgen_teachplay * t;
    int i;
-   t = (struct bt_trajectory_teachplay *) malloc( sizeof(struct bt_trajectory_teachplay) );
+   t = (struct bt_refgen_teachplay *) malloc( sizeof(struct bt_refgen_teachplay) );
    if (!t) return 0;
    
    /* Set the type */
-   t->base.type = bt_trajectory_teachplay;
+   t->base.type = bt_refgen_teachplay;
    
-   /* Set the dof */
+   /* Save the elapsed time */
+   t->elapsed_time = elapsed_time;
+   
+   /* Set the dof */, int * points
    t->n = cur_position->size;
    t->start = gsl_vector_calloc(t->n);
    
@@ -55,7 +60,7 @@ struct bt_trajectory_teachplay * bt_trajectory_teachplay_create(
    return t;
 }
 
-int bt_trajectory_teachplay_trigger(struct bt_trajectory_teachplay * t, double time)
+int bt_refgen_teachplay_trigger(struct bt_refgen_teachplay * t, double time)
 {
    /* Copy in the time */
    t->time = time;
@@ -63,12 +68,12 @@ int bt_trajectory_teachplay_trigger(struct bt_trajectory_teachplay * t, double t
    return bt_log_trigger(t->log);
 }
 
-int bt_trajectory_teachplay_flush(struct bt_trajectory_teachplay * t)
+int bt_refgen_teachplay_flush(struct bt_refgen_teachplay * t)
 {
    return bt_log_flush(t->log);
 }
 
-int bt_trajectory_teachplay_save(struct bt_trajectory_teachplay * t)
+int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
 {
    char * filename_csv;
    struct bt_log_read * logread;
@@ -116,11 +121,11 @@ int bt_trajectory_teachplay_save(struct bt_trajectory_teachplay * t)
    return 0;
 }
 
-/* Interface functions (from trajectory.h) */
-static int destroy(struct bt_trajectory * base)
+/* Interface functions (from refgen.h) */
+static int destroy(struct bt_refgen * base)
 {
-   struct bt_trajectory_teachplay * t;
-   t = (struct bt_trajectory_teachplay *) base;
+   struct bt_refgen_teachplay * t;
+   t = (struct bt_refgen_teachplay *) base;
    if (t->log) bt_log_destroy(t->log);
    if (t->spline) bt_spline_destroy(t->spline);
    if (t->profile) bt_profile_destroy(t->profile);
@@ -130,40 +135,51 @@ static int destroy(struct bt_trajectory * base)
    return 0;
 }
 
-static int get_num_points(struct bt_trajectory * base)
+static int get_start(struct bt_refgen * base, gsl_vector ** start)
 {
-   return 0;
-}
-
-static int get_total_time(struct bt_trajectory * base, double * time)
-{
-   struct bt_trajectory_teachplay * t;
-   t = (struct bt_trajectory_teachplay *) base;
-   if (!t->profile) return -1;
-   (*time) = t->profile->time_end;
-   return 0;
-}
-
-static int get_start(struct bt_trajectory * base, gsl_vector ** start)
-{
-   struct bt_trajectory_teachplay * t;
-   t = (struct bt_trajectory_teachplay *) base;
+   struct bt_refgen_teachplay * t;
+   t = (struct bt_refgen_teachplay *) base;
    
    (*start) = t->start;
    
    return 0;
 }
 
-static int get_reference(struct bt_trajectory * base, gsl_vector * ref, double time)
+static int get_total_time(struct bt_refgen * base, double * time)
 {
-   struct bt_trajectory_teachplay * t;
+   struct bt_refgen_teachplay * t;
+   t = (struct bt_refgen_teachplay *) base;
+   if (!t->profile) return -1;
+   (*time) = t->profile->time_end;
+   return 0;
+}
+
+static int get_num_points(struct bt_refgen * base, int * points)
+{
+   (*points) = 1337; /* Not Implemented (yet!) */
+   return 0;
+}
+
+
+
+static int start(struct bt_refgen * base)
+{
+   return -1; /* Not Implemented */
+}
+
+static int eval(struct bt_refgen * base, gsl_vector * ref)
+{
+   struct bt_refgen_teachplay * t;
    double s;
-   t = (struct bt_trajectory_teachplay *) base;
+   t = (struct bt_refgen_teachplay *) base;
+   
+   if ( *(t->elapsed_time) > t->refgen->time_end )
+      return 1; /* finished */
    
    if (!t->profile) return -1;
    if (!t->spline) return -1;
    
-   bt_profile_get( t->profile, &s, time );
+   bt_profile_get( t->profile, &s, *(t->elapsed_time) );
    bt_spline_get( t->spline, ref, s );
    
    return 0;

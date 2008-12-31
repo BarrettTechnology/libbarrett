@@ -1,10 +1,10 @@
 # The libtool library to make
-noinst_LTLIBRARIES = libbttrajectory.la
+noinst_LTLIBRARIES = libbtrefgen.la
 
 # Header files to include in the package
-pkginclude_HEADERS = trajectory.h trajectory_move.h trajectory_teachplay.h
+pkginclude_HEADERS = refgen.h refgen_move.h refgen_teachplay.h
 
 # Source files to complile
 AM_CPPFLAGS = -I../spline -I../profile -I../log
 AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
-libbttrajectory_la_SOURCES = trajectory_move.c trajectory_teachplay.c
+libbttrajectory_la_SOURCES = refgen_move.c refgen_teachplay.c

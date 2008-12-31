@@ -151,7 +151,7 @@ AC_CONFIG_FILES([
  src/kinematics/Makefile
  src/gravity/Makefile
  src/interp/Makefile
- src/trajectory/Makefile
+ src/refgen/Makefile
  src/log/Makefile
  src/wam/Makefile
  src/gsl/Makefile

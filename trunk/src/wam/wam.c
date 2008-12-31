@@ -130,8 +130,8 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
    wam->gcomp = 0;
    wam->vel = 0.5;
    wam->acc = 0.5;
-   wam->traj_list = 0;
-   wam->traj_current = 0;
+   wam->refgen_list = 0;
+   wam->refgen_current = 0;
    wam->teach = 0;
    
    /* Spin off the realtime thread to set everything up */
@@ -268,37 +268,38 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
    /* Make sure we're in joint mode */
    wam->con_active = (struct bt_control *) wam->con_joint;
 
-   /* Remove any trajectories in the list */
+   /* Remove any refgens in the list */
    {
-      struct bt_wam_traj_list * traj_list;
-      struct bt_wam_traj_list * traj_list_next;
+      struct bt_wam_refgen_list * refgen_list;
+      struct bt_wam_refgen_list * refgen_list_next;
       
-      traj_list = wam->traj_list;
-      while (traj_list)
+      refgen_list = wam->refgen_list;
+      while (refgen_list)
       {
-         traj_list_next = traj_list->next;
+         refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_trajectory_destroy(traj_list->trajectory);
-         free(traj_list);
-         traj_list = traj_list_next;
+         bt_refgen_destroy(refgen_list->refgen);
+         free(refgen_list);
+         refgen_list = refgen_list_next;
       }
-      wam->traj_list = 0;
+      wam->refgen_list = 0;
    }
    
-   /* Make a new trajectory list element */
-   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
-   if (!wam->traj_list) return -1;
-   wam->traj_list->next = 0;
+   /* Make a new refgen list element */
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = 0;
    
-   /* Make the trajectory itself */
-   wam->traj_list->trajectory = (struct bt_trajectory *)
-      bt_trajectory_move_create(wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
-   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   /* Make the refgen itself */
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
+   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    
-   /* Save this trajectory as the current one, and start it! */
+   /* Save this refgen as the current one, and start it! */
    bt_control_hold(wam->con_active);
    wam->start_time = 1e-9 * bt_os_rt_get_time();
-   wam->traj_current = wam->traj_list;
+   bt_refgen_start( wam->refgen_list->refgen );
+   wam->refgen_current = wam->refgen_list;
    
    return 0;
 }
@@ -310,43 +311,43 @@ int bt_wam_movehome(struct bt_wam * wam)
 
 int bt_wam_moveisdone(struct bt_wam * wam)
 {
-   return (wam->traj_current) ? 0 : 1;
+   return (wam->refgen_current) ? 0 : 1;
 }
 
 int bt_wam_teach_start(struct bt_wam * wam)
 {
    /* Make sure we're in the right mode */
-   if (wam->traj_current) return -1;
+   if (wam->refgen_current) return -1;
    if (wam->teach) return -1;
    if (bt_control_is_holding(wam->con_active)) return -1;
    if (!wam->con_active) return -1;
    
-   /* Remove any trajectories in the list */
+   /* Remove any refgens in the list */
    {
-      struct bt_wam_traj_list * traj_list;
-      struct bt_wam_traj_list * traj_list_next;
+      struct bt_wam_refgen_list * refgen_list;
+      struct bt_wam_refgen_list * refgen_list_next;
       
-      traj_list = wam->traj_list;
-      while (traj_list)
+      refgen_list = wam->refgen_list;
+      while (refgen_list)
       {
-         traj_list_next = traj_list->next;
+         refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_trajectory_destroy(traj_list->trajectory);
-         free(traj_list);
-         traj_list = traj_list_next;
+         bt_refgen_destroy(refgen_list->refgen);
+         free(refgen_list);
+         refgen_list = refgen_list_next;
       }
-      wam->traj_list = 0;
+      wam->refgen_list = 0;
    }
    
-   /* Make a new trajectory list element */
-   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
-   if (!wam->traj_list) return -1;
-   wam->traj_list->next = 0;
+   /* Make a new refgen list element */
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = 0;
    
-   /* Make the trajectory itself */
-   wam->traj_list->trajectory = (struct bt_trajectory *)
-      bt_trajectory_teachplay_create(wam->con_active->position,"teach");
-   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   /* Make the refgen itself */
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_teachplay_create(&(wam->elapsed_time), wam->con_active->position,"teach");
+   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    
    /* Set the sync side start_time */
    wam->start_time = 1e-9 * bt_os_rt_get_time();
@@ -360,7 +361,7 @@ int bt_wam_teach_end(struct bt_wam * wam)
    if (!wam->teach) return -1;
    wam->teach = 0;
    
-   bt_trajectory_teachplay_save( (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory) );
+   bt_refgen_teachplay_save( (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
    
    return 0;
    
@@ -368,37 +369,37 @@ int bt_wam_teach_end(struct bt_wam * wam)
 
 int bt_wam_playback(struct bt_wam * wam)
 {
-   struct bt_wam_traj_list * teachplay;
+   struct bt_wam_refgen_list * teachplay;
    gsl_vector * teachplay_start;
    
    /* Make sure we're not currently teaching */
    if (wam->teach) return 1;
    
-   /* Make sure there's a loaded trajectory_teachplay */
-   if ( wam->traj_list->trajectory->type != bt_trajectory_teachplay)
+   /* Make sure there's a loaded refgen_teachplay */
+   if ( wam->refgen_list->refgen->type != bt_refgen_teachplay)
       return -1;
    
    /* Make a new move, from the current location
-    * to the start of the trajectory */
-   teachplay = wam->traj_list;
+    * to the start of the refgen */
+   teachplay = wam->refgen_list;
    
-   /* Insert a new trajectory list element */
-   wam->traj_list = (struct bt_wam_traj_list *) malloc( sizeof(struct bt_wam_traj_list) );
-   if (!wam->traj_list) return -1;
-   wam->traj_list->next = teachplay;
+   /* Insert a new refgen list element */
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = teachplay;
    
-   /* Make the move trajectory itself */
-   bt_trajectory_get_start(teachplay->trajectory,&teachplay_start);
-   wam->traj_list->trajectory = (struct bt_trajectory *)
-      bt_trajectory_move_create(wam->jposition, wam->jvelocity,
+   /* Make the move refgen itself */
+   bt_refgen_get_start(teachplay->refgen,&teachplay_start);
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity,
                                    teachplay_start, wam->vel, wam->acc);
-   if (!wam->traj_list->trajectory) {free(wam->traj_list); wam->traj_list=0; return -1;}
+   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    /* Note, we should free more stuff here! */
    
-   /* Save this trajectory as the current one, and start it! */
+   /* Save this refgen as the current one, and start it! */
    bt_control_hold(wam->con_active);
    wam->start_time = 1e-9 * bt_os_rt_get_time();
-   wam->traj_current = wam->traj_list;
+   bt_refgen_start( wam->refgen_list->refgen );
    
    return 0;
 }
@@ -466,6 +467,8 @@ void rt_wam(bt_os_thread * thread)
       
       /* Get start-of-task time, increment counter */
       time = 1e-9 * bt_os_rt_get_time();
+      if (!wam->count) wam->start_time = time; 
+      wam->elapsed_time = time - wam->start_time;
       wam->count++;
       
       /* Grab the current joint positions */
@@ -484,24 +487,23 @@ void rt_wam(bt_os_thread * thread)
       if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
-      /* If there's an active trajectory, grab the reference into the joint controller */
-      if (wam->traj_current)
+      /* If there's an active trajectory, grab the reference into the joint controller
+       * Note: this is a while loop for the case where the refgen is done,
+       *       and we move on to the next refgen. */
+      while (wam->refgen_current)
       {
-         double elapsed, total;
-         elapsed = time - wam->start_time;
-         bt_trajectory_get_total_time(wam->traj_current->trajectory,
-                                      &total);
-         if (elapsed < total)
+         err = bt_refgen_eval( wam->refgen_current->refgen,
+                               wam->con_joint->reference );
+         if (!err) break;
+         
+         if (err == 1) /* finished */
          {
-            bt_trajectory_get_reference(wam->traj_current->trajectory,
-                                     wam->con_joint->reference,
-                                     elapsed);
-         }
-         else
-         {
-            /* Move current to the next trajectory */
-            wam->traj_current = wam->traj_current->next;
-            wam->start_time = 1e-9 * bt_os_rt_get_time();
+            /* destroy the current refgen? */
+            wam->refgen_current = wam->refgen_current->next;
+            wam->start_time = time;
+            wam->elapsed_time = 0;
+            bt_refgen_start( wam->refgen_current->refgen );
+            /* continue ... */
          }
       }
       bt_os_timestat_trigger(wam->ts,TS_TRAJ);
