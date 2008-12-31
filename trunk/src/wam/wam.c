@@ -235,14 +235,14 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 int bt_wam_idle(struct bt_wam * wam)
 {
    /* Make sure we're not doing any trajectories */
-   wam->traj_current = 0;
+   wam->refgen_current = 0;
    return bt_control_idle(wam->con_active);
 }
 
 int bt_wam_hold(struct bt_wam * wam)
 {
    /* Make sure we're not doing any trajectories */
-   wam->traj_current = 0;
+   wam->refgen_current = 0;
    return bt_control_hold(wam->con_active);
 }
 
@@ -515,9 +515,9 @@ void rt_wam(bt_os_thread * thread)
       /* If we're teaching, trigger the teach trajectory */
       if (wam->teach && (((wam->count) & 0x4F) == 0) )
       {
-         bt_trajectory_teachplay_trigger(
-            (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory),
-            time - wam->start_time );
+         bt_refgen_teachplay_trigger(
+            (struct bt_refgen_teachplay *) (wam->refgen_list->refgen),
+            wam->elapsed_time );
       }
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
       
@@ -686,8 +686,8 @@ void nonrt_thread_function(bt_os_thread * thread)
       
       if (wam->teach)
       {
-         bt_trajectory_teachplay_flush(
-            (struct bt_trajectory_teachplay *) (wam->traj_list->trajectory) );
+         bt_refgen_teachplay_flush(
+            (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
       }
       
       bt_os_usleep(1000000);

@@ -29,9 +29,9 @@
 #include "log.h"
 #include "gravity.h"
 #include "kinematics.h"
-#include "trajectory.h"
-#include "trajectory_move.h"
-#include "trajectory_teachplay.h"
+#include "refgen.h"
+#include "refgen_move.h"
+#include "refgen_teachplay.h"
 #include "control.h"
 #include "control_joint.h"
 

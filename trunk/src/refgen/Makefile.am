@@ -7,4 +7,4 @@ pkginclude_HEADERS = refgen.h refgen_move.h refgen_teachplay.h
 # Source files to complile
 AM_CPPFLAGS = -I../spline -I../profile -I../log
 AM_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
-libbttrajectory_la_SOURCES = refgen_move.c refgen_teachplay.c
+libbtrefgen_la_SOURCES = refgen_move.c refgen_teachplay.c

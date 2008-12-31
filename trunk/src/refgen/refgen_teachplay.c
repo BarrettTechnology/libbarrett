@@ -40,7 +40,7 @@ struct bt_refgen_teachplay * bt_refgen_teachplay_create(
    /* Save the elapsed time */
    t->elapsed_time = elapsed_time;
    
-   /* Set the dof */, int * points
+   /* Set the dof */
    t->n = cur_position->size;
    t->start = gsl_vector_calloc(t->n);
    
@@ -173,7 +173,7 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    double s;
    t = (struct bt_refgen_teachplay *) base;
    
-   if ( *(t->elapsed_time) > t->refgen->time_end )
+   if ( *(t->elapsed_time) > t->profile->time_end )
       return 1; /* finished */
    
    if (!t->profile) return -1;

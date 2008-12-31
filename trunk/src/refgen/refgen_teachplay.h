@@ -1,4 +1,4 @@
-#include "trajectory.h"
+#include "refgen.h"
 
 #include "log.h"
 

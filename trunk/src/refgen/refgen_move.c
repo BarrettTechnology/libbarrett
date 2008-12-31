@@ -73,7 +73,7 @@ static int get_total_time(struct bt_refgen * base, double * time)
 {
    struct bt_refgen_move * t;
    t = (struct bt_refgen_move *) base;
-   (*time) = t->refgen->time_end;
+   (*time) = t->profile->time_end;
    return 0;
 }
 
@@ -94,7 +94,7 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    double s;
    t = (struct bt_refgen_move *) base;
    
-   if ( *(t->elapsed_time) > t->refgen->time_end )
+   if ( *(t->elapsed_time) > t->profile->time_end )
       return 1; /* finished */
    
    bt_profile_get( t->profile, &s, *(t->elapsed_time) );

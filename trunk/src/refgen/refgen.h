@@ -59,7 +59,7 @@
 #define bt_refgen_get_start(t,s) (t->type->get_start(t,s))
 #define bt_refgen_get_total_time(t,time) (t->type->get_total_time(t,time))
 #define bt_refgen_get_num_points(t,p) (t->type->get_num_points(t,p))
-#define bt_refgen_start(t) (t->type->start(t)
+#define bt_refgen_start(t) (t->type->start(t))
 #define bt_refgen_eval(t,ref) (t->type->eval(t,ref))
 
 /* Forward declaration of instance */
