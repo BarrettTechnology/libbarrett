@@ -47,7 +47,7 @@ AS_IF(
       bt_os_ldflags="$bt_os_ldflags -rdynamic"
       bt_os_libs="$bt_os_libs $xeno_libs -lnative"
    ],
-   [test "x$with_rtai" != no],
+   [test "x$with_rtai" != xno],
    [
       # Set up RTAI
       bt_os_cpp="$bt_os_cpp -D_GNU_SOURCE -DRTSYS_RTAI -I/usr/realtime/include"

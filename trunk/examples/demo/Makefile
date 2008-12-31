@@ -22,6 +22,6 @@ demo : demo.o
 	${CC} demo.o ${LDFLAGS} -o demo
 
 clean:
-	rm *~ *.o demo
+	rm -f *~ *.o demo
 
 

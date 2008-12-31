@@ -245,6 +245,15 @@ int main(int argc, char ** argv)
          case 'm':
             bt_wam_movehome(wam);
             break;
+         case 'Y':
+            bt_wam_teach_start(wam);
+            break;
+         case 'y':
+            bt_wam_teach_end(wam);
+            break;
+         case '.':
+            bt_wam_playback(wam);
+            break;
          default:
             break;
          }
