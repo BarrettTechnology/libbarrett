@@ -400,6 +400,7 @@ int bt_wam_playback(struct bt_wam * wam)
    bt_control_hold(wam->con_active);
    wam->start_time = 1e-9 * bt_os_rt_get_time();
    bt_refgen_start( wam->refgen_list->refgen );
+   wam->refgen_current = wam->refgen_list;
    
    return 0;
 }
@@ -499,6 +500,7 @@ void rt_wam(bt_os_thread * thread)
          if (err == 1) /* finished */
          {
             /* destroy the current refgen? */
+            if (!wam->refgen_current->next) break;
             wam->refgen_current = wam->refgen_current->next;
             wam->start_time = time;
             wam->elapsed_time = 0;

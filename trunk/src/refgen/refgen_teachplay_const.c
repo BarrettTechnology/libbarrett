@@ -1,5 +1,5 @@
 #include "refgen.h"
-#include "refgen_teachplay.h"
+#include "refgen_teachplay_const.h"
 
 #include <string.h>
 
@@ -14,7 +14,7 @@ static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
 static int eval(struct bt_refgen * base, gsl_vector * ref);
-static const struct bt_refgen_type bt_refgen_teachplay_type = {
+static const struct bt_refgen_type bt_refgen_teachplay_const_type = {
    "teachplay",
    &destroy,
    &get_start,
@@ -23,10 +23,10 @@ static const struct bt_refgen_type bt_refgen_teachplay_type = {
    &start,
    &eval
 };
-const struct bt_refgen_type * bt_refgen_teachplay = &bt_refgen_teachplay_type;
+const struct bt_refgen_type * bt_refgen_teachplay_const = &bt_refgen_teachplay_const_type;
 
 /* Trajectory-specific create function */
-struct bt_refgen_teachplay * bt_refgen_teachplay_create(
+struct bt_refgen_teachplay_const * bt_refgen_teachplay_const_create(
    double * elapsed_time, gsl_vector * cur_position, char * filename)
 {
    struct bt_refgen_teachplay * t;
@@ -60,7 +60,7 @@ struct bt_refgen_teachplay * bt_refgen_teachplay_create(
    return t;
 }
 
-int bt_refgen_teachplay_trigger(struct bt_refgen_teachplay * t, double time)
+int bt_refgen_teachplay_const_trigger(struct bt_refgen_teachplay_const * t, double time)
 {
    /* Copy in the time */
    t->time = time;
@@ -68,12 +68,12 @@ int bt_refgen_teachplay_trigger(struct bt_refgen_teachplay * t, double time)
    return bt_log_trigger(t->log);
 }
 
-int bt_refgen_teachplay_flush(struct bt_refgen_teachplay * t)
+int bt_refgen_teachplay_const_flush(struct bt_refgen_teachplay_const * t)
 {
    return bt_log_flush(t->log);
 }
 
-int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
+int bt_refgen_teachplay_const_save(struct bt_refgen_teachplay_const * t)
 {
    char * filename_csv;
    struct bt_log_read * logread;
@@ -124,8 +124,8 @@ int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
 /* Interface functions (from refgen.h) */
 static int destroy(struct bt_refgen * base)
 {
-   struct bt_refgen_teachplay * t;
-   t = (struct bt_refgen_teachplay *) base;
+   struct bt_refgen_teachplay_const * t;
+   t = (struct bt_refgen_teachplay_const *) base;
    if (t->log) bt_log_destroy(t->log);
    if (t->spline) bt_spline_destroy(t->spline);
    if (t->profile) bt_profile_destroy(t->profile);
@@ -137,8 +137,8 @@ static int destroy(struct bt_refgen * base)
 
 static int get_start(struct bt_refgen * base, gsl_vector ** start)
 {
-   struct bt_refgen_teachplay * t;
-   t = (struct bt_refgen_teachplay *) base;
+   struct bt_refgen_teachplay_const * t;
+   t = (struct bt_refgen_teachplay_const *) base;
    
    (*start) = t->start;
    
@@ -147,8 +147,8 @@ static int get_start(struct bt_refgen * base, gsl_vector ** start)
 
 static int get_total_time(struct bt_refgen * base, double * time)
 {
-   struct bt_refgen_teachplay * t;
-   t = (struct bt_refgen_teachplay *) base;
+   struct bt_refgen_teachplay_const * t;
+   t = (struct bt_refgen_teachplay_const *) base;
    if (!t->profile) return -1;
    (*time) = t->profile->time_end;
    return 0;
@@ -169,9 +169,9 @@ static int start(struct bt_refgen * base)
 
 static int eval(struct bt_refgen * base, gsl_vector * ref)
 {
-   struct bt_refgen_teachplay * t;
+   struct bt_refgen_teachplay_const * t;
    double s;
-   t = (struct bt_refgen_teachplay *) base;
+   t = (struct bt_refgen_teachplay_const *) base;
    
    if ( *(t->elapsed_time) > t->profile->time_end )
       return 1; /* finished */
