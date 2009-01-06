@@ -39,10 +39,10 @@ struct bt_refgen_move * bt_refgen_move_create(
    t->elapsed_time = elapsed_time;
    
    /* Make a new spline, starting at the current position */
-   t->spline = bt_spline_create(cur_pos);
+   t->spline = bt_spline_create(cur_pos,BT_SPLINE_MODE_ARCLEN);
    
    /* Add the destination as a second point */
-   bt_spline_add( t->spline, dest );
+   bt_spline_add( t->spline, dest, 0.0 ); /* The 0.0 is meaningless for ARCLEN type */
    
    /* Initialize the spline, using the velocity as the direction */
    bt_spline_init( t->spline, 0, cur_vel );

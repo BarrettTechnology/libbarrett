@@ -314,6 +314,12 @@ int bt_wam_moveisdone(struct bt_wam * wam)
    return (wam->refgen_current) ? 0 : 1;
 }
 
+
+int bt_wam_is_teaching(struct bt_wam * wam)
+{
+   return (wam->teach) ? 1 : 0h; 
+}
+
 int bt_wam_teach_start(struct bt_wam * wam)
 {
    /* Make sure we're in the right mode */
@@ -361,6 +367,7 @@ int bt_wam_teach_end(struct bt_wam * wam)
    if (!wam->teach) return -1;
    wam->teach = 0;
    
+   /* We should check that its a teachplay first! */
    bt_refgen_teachplay_save( (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
    
    return 0;
@@ -500,8 +507,8 @@ void rt_wam(bt_os_thread * thread)
          if (err == 1) /* finished */
          {
             /* destroy the current refgen? */
-            if (!wam->refgen_current->next) break;
             wam->refgen_current = wam->refgen_current->next;
+            if (!wam->refgen_current) break;
             wam->start_time = time;
             wam->elapsed_time = 0;
             bt_refgen_start( wam->refgen_current->refgen );

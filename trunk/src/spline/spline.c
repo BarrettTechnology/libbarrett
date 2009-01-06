@@ -29,13 +29,14 @@
 
 /* Public functions */
 
-struct bt_spline * bt_spline_create( gsl_vector * start )
+struct bt_spline * bt_spline_create( gsl_vector * start, enum bt_spline_mode mode )
 {
    int i;
    struct bt_spline * spline;
    
    spline = (struct bt_spline *) malloc(sizeof(struct bt_spline));
    spline->dimension = start->size;
+   spline->mode = mode;
    
    /* Add the start point */
    spline->npoints = 1;
@@ -46,7 +47,15 @@ struct bt_spline * bt_spline_create( gsl_vector * start )
       spline->points[i][0] = gsl_vector_get(start,i);
    }
    
-   spline->ss = 0;
+   /* If the mode is EXTERNAL, compute the ss array in-place
+    * (if it's ARCLEN, we'll compute it at the end) */
+   if (spline->mode == BT_SPLINE_MODE_ARCLEN)
+      spline->ss = 0;
+   else if (spline->mode == BT_SPLINE_MODE_EXTERNAL)
+   {
+      spline->ss = (double *) malloc( 1 * sizeof(double) );
+      spline->ss[0] = 0.0;
+   }
    spline->length = 0.0;
    
    spline->interps = 0;
@@ -55,7 +64,7 @@ struct bt_spline * bt_spline_create( gsl_vector * start )
    return spline;
 }
 
-int bt_spline_add( struct bt_spline * spline, gsl_vector * vec )
+int bt_spline_add( struct bt_spline * spline, gsl_vector * vec, double s )
 {
    int i;
    
@@ -69,6 +78,14 @@ int bt_spline_add( struct bt_spline * spline, gsl_vector * vec )
    {
       spline->points[i] = (double *) realloc(spline->points[i],(spline->npoints+1)*sizeof(double));
       spline->points[i][spline->npoints] = gsl_vector_get(vec,i);
+   }
+   
+   /* If the mode is EXTERNAL, save the ss array in place;
+    * (if it's ARCLEN, we'll compute it at the end) */
+   if (spline->mode == BT_SPLINE_MODE_EXTERNAL)
+   {
+      spline->ss = (double *) realloc( spline->ss, (spline->npoints+1)*sizeof(double) );
+      spline->ss[spline->npoints] = s;
    }
 
    /* Woo, one more point! */
@@ -84,12 +101,12 @@ int bt_spline_init( struct bt_spline * spline,
    int n;
    
    /* Reset the start position if we're asked to */
-   if (start)
+   if (start && (spline->mode == BT_SPLINE_MODE_ARCLEN))
       for (i=0; i<spline->dimension; i++)
          spline->points[i][0] = gsl_vector_get(start,i);
    
    /* Unitize the direction vector if it was passed */
-   if (direction)
+   if (direction && (spline->mode == BT_SPLINE_MODE_ARCLEN))
    {
       if (gsl_blas_dnrm2(direction) == 0)
          direction = 0;
@@ -97,26 +114,29 @@ int bt_spline_init( struct bt_spline * spline,
          gsl_vector_scale( direction, 1.0 / gsl_blas_dnrm2(direction) );
    }
    
-   /* Compute the arc-lengths array ss[] */
-   if (spline->ss) free(spline->ss);
-   spline->ss = (double *) malloc( (spline->npoints) * sizeof(double) );
-   spline->ss[0] = 0.0;
-   for (n=1; n<spline->npoints; n++)
+   /* Compute the arc-lengths array ss[] (if we're in ARCLEN mode) */
+   if (spline->mode == BT_SPLINE_MODE_ARCLEN)
    {
-      double diff;
-      double len;
-      len = 0.0;
-      for (i=0; i<spline->dimension; i++)
+      if (spline->ss) free(spline->ss);
+      spline->ss = (double *) malloc( (spline->npoints) * sizeof(double) );
+      spline->ss[0] = 0.0;
+      for (n=1; n<spline->npoints; n++)
       {
-         diff = spline->points[i][n] - spline->points[i][n-1];
-         len += diff * diff;
+         double diff;
+         double len;
+         len = 0.0;
+         for (i=0; i<spline->dimension; i++)
+         {
+            diff = spline->points[i][n] - spline->points[i][n-1];
+            len += diff * diff;
+         }
+         /* FIX ME THE RIGHT WAY! */
+         if (sqrt(len) != 0.0)
+            spline->ss[n] = spline->ss[n-1] + sqrt(len);
+         else
+            spline->ss[n] = spline->ss[n-1] + 0.00001;
+         
       }
-      /* FIX ME THE RIGHT WAY! */
-      if (sqrt(len) != 0.0)
-         spline->ss[n] = spline->ss[n-1] + sqrt(len);
-      else
-         spline->ss[n] = spline->ss[n-1] + 0.00001;
-      
    }
    spline->length = spline->ss[spline->npoints-1];
    

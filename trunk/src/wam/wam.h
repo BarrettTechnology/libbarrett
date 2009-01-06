@@ -124,6 +124,7 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);
 int bt_wam_movehome(struct bt_wam * wam);
 int bt_wam_moveisdone(struct bt_wam * wam);
 
+int bt_wam_is_teaching(struct bt_wam * wam);
 int bt_wam_teach_start(struct bt_wam * wam);
 int bt_wam_teach_end(struct bt_wam * wam);
 int bt_wam_playback(struct bt_wam * wam);
