@@ -30,7 +30,7 @@
 
 /* Vector cross product.
  * Cannot be performed in-place! */
-int cross( gsl_vector * a, gsl_vector * b, gsl_vector * res )
+static int cross( gsl_vector * a, gsl_vector * b, gsl_vector * res )
 {
    gsl_vector_set( res, 0, gsl_vector_get(a,1)*gsl_vector_get(b,2)
                          - gsl_vector_get(a,2)*gsl_vector_get(b,1) );
@@ -142,7 +142,7 @@ int bt_gravity_eval( struct bt_gravity * grav, gsl_vector * jtorque )
       struct bt_kinematics_link * link;
       link = grav->kin->link[j];
       /* Fill each link's gravity vector */
-      gsl_blas_dgemv(CblasTrans, 1.0, link->rot_to_inertial,
+      gsl_blas_dgemv(CblasTrans, 1.0, link->rot_to_base,
                      grav->world_g, 0.0, grav->g[j]);
       /* Compute each link's torque (T = g x mu) */
       cross( grav->g[j], grav->mu[j], grav->t[j] );

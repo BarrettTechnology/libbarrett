@@ -29,6 +29,15 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
+/* Notes about the kinematics module, for now:
+ *  - There are (ndofs) link frames attached to the (ndofs) moving links,
+ *    indexed by the link[] array.
+ *  - There is one base frame, attached to the base of the robot.
+ *  - There is one toolplate frame, attached to the robot's end tool plate.
+ *
+ *  - FOR NOW, we asssume that the base frame is an inertial frame.
+ */
+
 /* Links are things with attached frames */
 struct bt_kinematics_link {
 
@@ -47,12 +56,13 @@ struct bt_kinematics_link {
    double sin_alpha;
    
    gsl_matrix * trans_to_prev; /* homogeneous transform matrix */
-   gsl_matrix * trans_to_inertial; /* homogeneous transform matrix */
+   gsl_matrix * trans_to_base; /* homogeneous transform matrix */
    
    /* Vector "views" */
    gsl_matrix * rot_to_prev;
-   gsl_matrix * rot_to_inertial;
-   gsl_vector * origin_pos; /* Origin Position, in inertial coords */
+   gsl_matrix * rot_to_base;
+   gsl_vector * axis_z; /* z axis unit vector, in base coords */
+   gsl_vector * origin_pos; /* Origin Position, in base coords */
    
 };
 
@@ -67,15 +77,28 @@ struct bt_kinematics {
    int nlinks;
    struct bt_kinematics_link ** link_array;
    
-   struct bt_kinematics_link * world;
+   struct bt_kinematics_link * base;
    struct bt_kinematics_link ** link; /* Moving links array */
-   struct bt_kinematics_link * tool;
+   struct bt_kinematics_link * toolplate;
+   
+   /* Toolplate Jacobian */
+   gsl_matrix * toolplate_jacobian;
+   
+   /* Temp vectors */
+   gsl_vector * temp_v3;
 };
 
 
 struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs );
 int bt_kinematics_destroy( struct bt_kinematics * kin );
 
-int bt_kinematics_eval_forward( struct bt_kinematics * kin, gsl_vector * jposition );
+/* Evaluate all link transforms, including the toolplate jacobian */
+int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition );
+
+/* Evaluate the jacobian, on link jmax (ndofs for tool), at base-point point
+ * NOTE: eval_forward must have already been computed!
+ * NOTE: jac should be a 6xN matrix */
+int bt_kinematics_eval_jacobian( struct bt_kinematics * kin,
+   int jlimit, gsl_vector * point, gsl_matrix * jac);
 
 #endif /* BT_KINEMATICS_H */

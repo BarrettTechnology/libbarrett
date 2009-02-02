@@ -317,7 +317,7 @@ int bt_wam_moveisdone(struct bt_wam * wam)
 
 int bt_wam_is_teaching(struct bt_wam * wam)
 {
-   return (wam->teach) ? 1 : 0h; 
+   return (wam->teach) ? 1 : 0; 
 }
 
 int bt_wam_teach_start(struct bt_wam * wam)
@@ -448,8 +448,8 @@ void rt_wam(bt_os_thread * thread)
    wam->jposition = wam->wambot->jposition;
    wam->jvelocity = wam->wambot->jvelocity;
    wam->jtorque = wam->wambot->jtorque;
-   wam->cposition = wam->kin->tool->origin_pos;
-   wam->crotation = wam->kin->tool->rot_to_inertial;
+   wam->cposition = wam->kin->toolplate->origin_pos;
+   wam->crotation = wam->kin->toolplate->rot_to_base;
    
    /* Setup is complete! */
    helper->is_setup = 1;
@@ -459,7 +459,6 @@ void rt_wam(bt_os_thread * thread)
    
    /* OK, start the control loop ... */
    bt_os_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
-   bt_os_rt_set_mode_hard();
    
    /* Loop until we're told by destroy() to exit */
    while (!bt_os_thread_done(thread))
@@ -483,8 +482,8 @@ void rt_wam(bt_os_thread * thread)
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
          
-      /* Forward kinematics */
-      bt_kinematics_eval_forward( wam->kin, wam->wambot->jposition );
+      /* Evaluate kinematics */
+      bt_kinematics_eval( wam->kin, wam->wambot->jposition );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
       
       /* Set the torques to be zero */

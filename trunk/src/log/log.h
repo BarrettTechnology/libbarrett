@@ -96,7 +96,7 @@ enum bt_log_fieldtype {
 struct bt_log_data_info
 {
   size_t size; /*!< size of the data being recorded. = sizeof(datatype)*arrayLength*/
-  int type; /*!< 0 = int, 1 = long, 2 = double 3 = long long 4 = btreal*/
+  enum bt_log_fieldtype type; /*!< 0 = int, 1 = long, 2 = double 3 = long long 4 = btreal*/
   void * data; /*!< pointer to the data start*/
   char name[50]; /*!< null terminated string describing the data. No ','s allowed*/
 };
