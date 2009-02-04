@@ -211,6 +211,10 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       {
          gsl_vector_view view;
          
+         link->prev_axis_z = (gsl_vector *) malloc(sizeof(gsl_vector));
+         view = gsl_matrix_subrow( link->trans_to_prev, 2, 0, 3);
+         *(link->prev_axis_z) = view.vector;
+         
          link->prev_origin_pos = (gsl_vector *) malloc(sizeof(gsl_vector));
          view = gsl_matrix_subcolumn( link->trans_to_prev, 3, 0, 3);
          *(link->prev_origin_pos) = view.vector;

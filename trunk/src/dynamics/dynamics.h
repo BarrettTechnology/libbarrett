@@ -58,12 +58,14 @@ struct bt_dynamics_link {
    gsl_vector * alpha; /* angular acceleration of local frame w.r.t. base frame */
    gsl_vector * a;     /* linear acceleration of frame origin */
    
-   gsl_vector * b;     /* axis of rotation of joint */
+   /* A couple of caches, also expressed in local link frame */
+   gsl_vector * omega_prev; /* Previous frame's ang vel in my frame */
+   gsl_vector * f_next;     /* Next frame's force in my frame */
    
    gsl_vector * fnet;
    gsl_vector * tnet;
    gsl_vector * f;     /* force exerted on this link by previous link */
-   gsl_vector * t;     /* torque exerted on this link by previous link */  
+   gsl_vector * t;     /* torque exerted on this link by previous link */
 };
 
 
@@ -91,7 +93,8 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn );
 
 /* Reverse Newton-Euler Algorithm (RNEA)
  * Throw a switch in there for gravity on/off?
- * How to account for base acceleration (even gravity?) */
+ * How to account for base acceleration (even gravity?)
+ * NOTE: This takes ~ 152us on PC104 right now. */
 int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
    gsl_vector * jpos, gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor );
 

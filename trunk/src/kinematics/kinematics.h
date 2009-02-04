@@ -62,7 +62,8 @@ struct bt_kinematics_link {
    
    /* Vector "views" */
    gsl_matrix * rot_to_prev;
-   gsl_vector * prev_origin_pos; /* Origin position, in prev coords */
+   gsl_vector * prev_axis_z; /* My joint's axis of rotation, in my coords */
+   gsl_vector * prev_origin_pos; /* My origin position, in prev coords */
    
    gsl_matrix * rot_to_base;
    gsl_vector * axis_z; /* z axis unit vector, in base coords */

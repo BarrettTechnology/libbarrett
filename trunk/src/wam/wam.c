@@ -35,8 +35,8 @@
    T(UPDATE) T(KINEMATICS) \
    T(GRAV_ZERO) T(GCOMP) \
    T(TRAJ) T(CONTROL) T(TEACH) \
+   T(DYNAMICS) \
    T(SETJTOR) \
-   T(GETP1) T(GETP2) \
    T(LOG)
 #define T(x) TS_##x,
    enum ts_enum { TS TSNUM };
@@ -492,7 +492,7 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_GRAV_ZERO);
      
       /* Do gravity compensation */
-      /*if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );*/
+      if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* If there's an active trajectory, grab the reference into the joint controller
@@ -531,16 +531,17 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
       
       /* Evaluate dynamics */
-      if (wam->gcomp)
-         bt_dynamics_eval_inverse(wam->dyn,
-            wam->wambot->jposition, wam->wambot->jacceleration, wam->wambot->jacceleration,
-            wam->wambot->jtorque );
+      bt_dynamics_eval_inverse(wam->dyn,
+         wam->wambot->jposition, wam->wambot->jacceleration, wam->wambot->jacceleration,
+         wam->wambot->jtorque );
+      bt_os_timestat_trigger(wam->ts,TS_DYNAMICS);
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
       
       /* TEMP - ask puck 1 for its ID */
+#if 0
       {
          long val;
          bt_bus_get_property( ((struct bt_wambot_phys *)(wam->wambot))->bus, 1,
@@ -548,15 +549,7 @@ void rt_wam(bt_os_thread * thread)
                               &val );
       }
       bt_os_timestat_trigger(wam->ts,TS_GETP1);
-      
-      /* TEMP - ask puck 2 for its ID */
-      {
-         long val;
-         bt_bus_get_property( ((struct bt_wambot_phys *)(wam->wambot))->bus, 2,
-                              ((struct bt_wambot_phys *)(wam->wambot))->bus->p->ID,
-                              &val );
-      }
-      bt_os_timestat_trigger(wam->ts,TS_GETP2);
+#endif
             
       /* Log data (including timing statistics) */
       bt_log_trigger( wam->log );

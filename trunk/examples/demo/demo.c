@@ -216,19 +216,6 @@ int main(int argc, char ** argv)
             }
             line++;
             
-            /* Show TOOL PLATE JACOBIAN */
-            mvprintw(line,   0, "C Jacobian :");
-            {
-               int i;
-               gsl_vector_view view;
-               for (i=0; i<6; i++)
-               {
-                  view = gsl_matrix_row(wam->kin->toolplate_jacobian,i);
-                  mvprintw(line++, 13, "%s", bt_gsl_vector_sprintf(buf,&view.vector));
-               }
-            }
-            line++;
-            
             break;
          case SCREEN_HELP:
             line = 0;
