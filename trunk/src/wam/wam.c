@@ -447,6 +447,7 @@ void rt_wam(bt_os_thread * thread)
    /* Set up the easy-access wam vectors */
    wam->jposition = wam->wambot->jposition;
    wam->jvelocity = wam->wambot->jvelocity;
+   wam->jacceleration = wam->wambot->jacceleration;
    wam->jtorque = wam->wambot->jtorque;
    wam->cposition = wam->kin->toolplate->origin_pos;
    wam->crotation = wam->kin->toolplate->rot_to_base;
@@ -491,7 +492,7 @@ void rt_wam(bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_GRAV_ZERO);
      
       /* Do gravity compensation */
-      if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
+      /*if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );*/
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* If there's an active trajectory, grab the reference into the joint controller
@@ -528,6 +529,12 @@ void rt_wam(bt_os_thread * thread)
             wam->elapsed_time );
       }
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
+      
+      /* Evaluate dynamics */
+      if (wam->gcomp)
+         bt_dynamics_eval_inverse(wam->dyn,
+            wam->wambot->jposition, wam->wambot->jacceleration, wam->wambot->jacceleration,
+            wam->wambot->jtorque );
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
@@ -576,6 +583,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    
    wam->wambot = 0;
    wam->kin = 0;
+   wam->dyn = 0;
    wam->grav = 0;
    wam->log = 0;
    wam->ts_log = 0;
@@ -596,6 +604,15 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    if (!wam->kin)
    {
       syslog(LOG_ERR,"%s: Could not create kinematics.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   
+   /* Create a dynamics object */
+   wam->dyn = bt_dynamics_create( config_setting_get_member(wamconfig,"dynamics"), wam->wambot->dof, wam->kin );
+   if (!wam->dyn)
+   {
+      syslog(LOG_ERR,"%s: Could not create dynamics.",__func__);
       rt_wam_destroy(wam);
       return 1;
    }
@@ -673,6 +690,8 @@ void rt_wam_destroy(struct bt_wam * wam)
       bt_log_destroy(wam->log);
    if (wam->grav)
       bt_gravity_destroy(wam->grav);
+   if (wam->dyn)
+      bt_dynamics_destroy(wam->dyn);
    if (wam->kin)
       bt_kinematics_destroy(wam->kin);
    if (wam->wambot)

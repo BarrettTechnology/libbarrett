@@ -27,8 +27,9 @@
 #include "os.h"
 #include "wambot.h"
 #include "log.h"
-#include "gravity.h"
 #include "kinematics.h"
+#include "dynamics.h"
+#include "gravity.h"
 #include "refgen.h"
 #include "refgen_move.h"
 #include "refgen_teachplay.h"
@@ -67,6 +68,7 @@ struct bt_wam
    /* realtime WAM stuff */
    struct bt_wambot * wambot; /* wambot has dof */
    struct bt_kinematics * kin;
+   struct bt_dynamics * dyn;
    struct bt_gravity * grav;
    struct bt_log * log; /* woo datalogger! */
    struct bt_log * ts_log; /* logger for timing statistics */
@@ -74,6 +76,7 @@ struct bt_wam
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
    gsl_vector * jvelocity; /* From wambot */
+   gsl_vector * jacceleration; /* From wambot */
    gsl_vector * jtorque; /* From wambot */
    gsl_vector * cposition; /* From kinematics (tool) */
    gsl_matrix * crotation; /* 3x3 rotation matrix, From kinematics (tool) */

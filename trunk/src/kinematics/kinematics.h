@@ -25,15 +25,17 @@
 
 #include <libconfig.h>
 
-/* btkinematics uses gsl :-) */
+/* bt_kinematics uses gsl :-) */
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
 /* Notes about the kinematics module, for now:
  *  - There are (ndofs) link frames attached to the (ndofs) moving links,
  *    indexed by the link[] array.
- *  - There is one base frame, attached to the base of the robot.
- *  - There is one toolplate frame, attached to the robot's end tool plate.
+ *  - There is one base frame, attached to the base of the robot;
+ *    this is used as a base for recursion.
+ *  - There is one toolplate frame, attached to the robot's end tool plate;
+ *    this is assumed to be rigidly attached to the last moving frame.
  *
  *  - FOR NOW, we asssume that the base frame is an inertial frame.
  */
@@ -60,6 +62,8 @@ struct bt_kinematics_link {
    
    /* Vector "views" */
    gsl_matrix * rot_to_prev;
+   gsl_vector * prev_origin_pos; /* Origin position, in prev coords */
+   
    gsl_matrix * rot_to_base;
    gsl_vector * axis_z; /* z axis unit vector, in base coords */
    gsl_vector * origin_pos; /* Origin Position, in base coords */
@@ -70,8 +74,6 @@ struct bt_kinematics_link {
  * endpoint positions and velocities,
  * etc. */
 struct bt_kinematics {
-   /*struct wam_bot * bot;*/
-   /*gsl_matrix * jacobian;*/ /* Some sort of jacobian? */
    
    int dof;
    int nlinks;

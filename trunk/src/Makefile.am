@@ -14,6 +14,7 @@ libbt_la_LIBADD = \
   $(BT_BUS_LIB) \
   wambot/libbtwambot.la \
   kinematics/libbtkinematics.la \
+  dynamics/libbtdynamics.la \
   gravity/libbtgravity.la \
   interp/libbtinterp.la \
   refgen/libbtrefgen.la \
@@ -25,5 +26,5 @@ libbt_la_LIBADD = \
   profile/libbtprofile.la
 
 # Subdirectories to make
-SUBDIRS = os bus wambot kinematics gravity interp refgen log wam gsl control spline profile
+SUBDIRS = os bus wambot kinematics dynamics gravity interp refgen log wam gsl control spline profile
 

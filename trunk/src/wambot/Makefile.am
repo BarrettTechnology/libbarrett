@@ -3,7 +3,7 @@ noinst_LTLIBRARIES = libbtwambot.la
 
 # What to compile?
 if BT_WAMBOT_PHYSICAL
-CPP_PHYS = -I../bus -I../os
+CPP_PHYS = -I../bus -I../os -I../gsl
 HEADER_PHYS = wambot_phys.h
 SOURCE_PHYS = wambot_phys.c
 endif

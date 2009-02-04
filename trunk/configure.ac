@@ -149,6 +149,7 @@ AC_CONFIG_FILES([
  src/bus/Makefile
  src/wambot/Makefile
  src/kinematics/Makefile
+ src/dynamics/Makefile
  src/gravity/Makefile
  src/interp/Makefile
  src/refgen/Makefile

@@ -1,6 +1,6 @@
 /* ======================================================================== *
  *  Module ............. libbt
- *  File ............... kinematics.h
+ *  File ............... kinematics.c
  *  Author ............. Traveler Hauptman
  *                       Brian Zenowich
  *                       Christopher Dellin
@@ -35,41 +35,9 @@
 
 #include "kinematics.h"
 
+#include "gsl.h"
+
 #include <math.h> /* For sin(), cos() */
-
-/* A convenience function for libconfig, getting a double from a group */
-static int glue_config_double_from_group( config_setting_t * grp, char * name, double * puthere )
-{
-   config_setting_t * setting;
-   setting = config_setting_get_member( grp, name );
-   if (setting == NULL)
-      return -1;
-   switch (config_setting_type(setting))
-   {
-      case CONFIG_TYPE_INT:
-         (*puthere) = (double) config_setting_get_int(setting);
-         break;
-      case CONFIG_TYPE_FLOAT:
-         (*puthere) = config_setting_get_float(setting);
-         break;
-      default:
-         return -2;
-   }
-   return 0;
-}
-
-/* Vector cross product.
- * Cannot be performed in-place! */
-static int cross( gsl_vector * a, gsl_vector * b, gsl_vector * res )
-{
-   gsl_vector_set( res, 0, gsl_vector_get(a,1)*gsl_vector_get(b,2)
-                         - gsl_vector_get(a,2)*gsl_vector_get(b,1) );
-   gsl_vector_set( res, 1, gsl_vector_get(a,2)*gsl_vector_get(b,0)
-                         - gsl_vector_get(a,0)*gsl_vector_get(b,2) );
-   gsl_vector_set( res, 2, gsl_vector_get(a,0)*gsl_vector_get(b,1)
-                         - gsl_vector_get(a,1)*gsl_vector_get(b,0) );
-   return 0;
-}
 
 /* Local function definitions */
 static int eval_trans_to_prev( struct bt_kinematics_link * link );
@@ -145,7 +113,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
             { printf("kin:toolplate not a group!\n"); return 0; }
          
          /* Grab each of the dh parameters */
-         err = glue_config_double_from_group( toolplate_grp, "alpha_pi", &(link->alpha) );
+         err = bt_gsl_config_double_from_group( toolplate_grp, "alpha_pi", &(link->alpha) );
          if (err)
          {
             printf("No alpha_pi in toolplate, or not a number.\n");
@@ -153,7 +121,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          }
          link->alpha *= M_PI;
          
-         err = glue_config_double_from_group( toolplate_grp, "theta_pi", &(link->theta) );
+         err = bt_gsl_config_double_from_group( toolplate_grp, "theta_pi", &(link->theta) );
          if (err)
          {
             printf("No theta_pi in toolplate, or not a number.\n");
@@ -161,14 +129,14 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          }
          link->theta *= M_PI;
          
-         err = glue_config_double_from_group( toolplate_grp, "a", &(link->a) );
+         err = bt_gsl_config_double_from_group( toolplate_grp, "a", &(link->a) );
          if (err)
          {
             printf("No a in link toolplate, or not a number.\n");
             return 0;
          }
          
-         err = glue_config_double_from_group( toolplate_grp, "d", &(link->d) );
+         err = bt_gsl_config_double_from_group( toolplate_grp, "d", &(link->d) );
          if (err)
          {
             printf("No d in link toolplate, or not a number.\n");
@@ -203,7 +171,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          { printf("kin:moving:#%d is bad format\n",j); return 0; }
          
          /* Grab each of the dh parameters */
-         err = glue_config_double_from_group( moving_grp, "alpha_pi", &(link->alpha) );
+         err = bt_gsl_config_double_from_group( moving_grp, "alpha_pi", &(link->alpha) );
          if (err)
          {
             printf("No alpha_pi in link %d, or not a number.\n",j);
@@ -211,14 +179,14 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          }
          link->alpha *= M_PI;
          
-         err = glue_config_double_from_group( moving_grp, "a", &(link->a) );
+         err = bt_gsl_config_double_from_group( moving_grp, "a", &(link->a) );
          if (err)
          {
             printf("No a in link %d, or not a number.\n",j);
             return 0;
          }
          
-         err = glue_config_double_from_group( moving_grp, "d", &(link->d) );
+         err = bt_gsl_config_double_from_group( moving_grp, "d", &(link->d) );
          if (err)
          {
             printf("No d in link %d, or not a number.\n",j);
@@ -242,6 +210,10 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       /* Set up the vector views */
       {
          gsl_vector_view view;
+         
+         link->prev_origin_pos = (gsl_vector *) malloc(sizeof(gsl_vector));
+         view = gsl_matrix_subcolumn( link->trans_to_prev, 3, 0, 3);
+         *(link->prev_origin_pos) = view.vector;
          
          link->axis_z = (gsl_vector *) malloc(sizeof(gsl_vector));
          view = gsl_matrix_subcolumn( link->trans_to_base, 2, 0, 3);
@@ -291,6 +263,7 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
    free(kin->link_array);
    gsl_matrix_free(kin->toolplate_jacobian);
    free(kin->temp_v3);
+   free(kin);
    return 0;
 }
 
@@ -343,7 +316,8 @@ int bt_kinematics_eval_jacobian( struct bt_kinematics * kin,
          /* Jvj = z_(j-1) x (point - o_(j-1)) */
          gsl_vector_memcpy( kin->temp_v3, point );
          gsl_vector_sub( kin->temp_v3, kin->link[j-1]->origin_pos );
-         cross( kin->link[j-1]->axis_z, kin->temp_v3, &Jvj.vector );
+         gsl_vector_set_zero( &Jvj.vector );
+         bt_gsl_cross( kin->link[j-1]->axis_z, kin->temp_v3, &Jvj.vector );
 
          /* Jwj = z(j-1) */
          gsl_vector_memcpy( &Jwj.vector, kin->link[j-1]->axis_z );

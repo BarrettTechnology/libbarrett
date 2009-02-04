@@ -23,13 +23,14 @@
 #include "wambot_phys.h"
 
 #include "bus.h"
+#include "gsl.h"
 
 #include <math.h> /* For floor() */
 
 /* For matrix inverse operations, etc */
 #include <gsl/gsl_linalg.h>
 
-/* For fasat matrix multiplication */
+/* For fast matrix multiplication */
 #include <gsl/gsl_blas.h>
 
 /* Read config files for the wam stuff */
@@ -38,69 +39,6 @@
 
 static int update( struct bt_wambot * base );
 static int setjtor( struct bt_wambot * base );
-
-/* A couple of convenience / glue functions from gsl to libconfig */
-static int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
-{
-   int i;
-   config_setting_t * child;
-   child = config_setting_get_member( parent, name );
-   if (child == NULL) return -1;
-   if (   config_setting_type(child) != CONFIG_TYPE_ARRAY
-       && config_setting_type(child) != CONFIG_TYPE_LIST ) return -1;
-   if (config_setting_length(child) != vec->size) return -1;
-   for (i=0; i<vec->size; i++)
-   {
-      config_setting_t * element;
-      element = config_setting_get_elem(child,i);
-      switch (config_setting_type(element))
-      {
-         case CONFIG_TYPE_INT:
-            gsl_vector_set(vec,i,config_setting_get_int(element));
-            break;
-         case CONFIG_TYPE_FLOAT:
-            gsl_vector_set(vec,i,config_setting_get_float(element));
-            break;
-         default:
-            return -1;
-      }
-   }
-   return 0;
-}
-static int glue_fill_matrix(gsl_matrix * mat, config_setting_t * parent, const char * name)
-{
-   int i, j;
-   config_setting_t * rows;
-   rows = config_setting_get_member( parent, name );
-   if (rows == NULL) return -1;
-   if (config_setting_type(rows) != CONFIG_TYPE_LIST) return -1;
-   if (config_setting_length(rows) != mat->size1) return -1;
-   for (i=0; i<mat->size1; i++)
-   {
-      config_setting_t * row;
-      row = config_setting_get_elem(rows,i);
-      if (   config_setting_type(row) != CONFIG_TYPE_ARRAY
-          && config_setting_type(row) != CONFIG_TYPE_LIST ) return -1;
-      if (config_setting_length(row) != mat->size2) return -1;
-      for (j=0; j<mat->size2; j++)
-      {
-         config_setting_t * element;
-         element = config_setting_get_elem(row,j);
-         switch (config_setting_type(element))
-         {
-            case CONFIG_TYPE_INT:
-               gsl_matrix_set(mat,i,j,config_setting_get_int(element));
-               break;
-            case CONFIG_TYPE_FLOAT:
-               gsl_matrix_set(mat,i,j,config_setting_get_float(element));
-               break;
-            default:
-               return -1;
-         }
-      }
-   }
-   return 0;
-}
 
 /* Zero the pucks */
 int DefineWAMpos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
@@ -221,11 +159,11 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
      
    /* parse from config file */
    /* NOTE - DO BETTER ERROR CHECKING HERE! */
-   err = glue_fill_vector(base->home, config, "home");
+   err = bt_gsl_fill_vector(base->home, config, "home");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
-   err = glue_fill_vector(wambot->zeromag, config, "zeromag");
+   err = bt_gsl_fill_vector(wambot->zeromag, config, "zeromag");
    if (err) { printf("No zeromag entry found.\n"); }
-   err = glue_fill_matrix(wambot->j2mp, config, "j2mp");
+   err = bt_gsl_fill_matrix(wambot->j2mp, config, "j2mp");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
      
    /* Calculate the constant cache elements (matrix inverses) */
