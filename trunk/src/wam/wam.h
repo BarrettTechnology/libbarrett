@@ -34,7 +34,7 @@
 #include "refgen_move.h"
 #include "refgen_teachplay.h"
 #include "control.h"
-#include "control_joint.h"
+#include "control_joint_legacy.h"
 
 /* A bt_wam_refgen_list represents the currently loaded refgen;
  * it keeps track of ownership and persistance */
@@ -83,7 +83,7 @@ struct bt_wam
    
    /* Controllers */
    struct bt_control * con_active;
-   struct bt_control_joint * con_joint;
+   struct bt_control_joint_legacy * con_joint_legacy;
    
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
    double vel, acc;

@@ -32,10 +32,13 @@
 
 /* Some global things for timing the threads */
 #define TS \
-   T(UPDATE) T(KINEMATICS) \
-   T(GRAV_ZERO) T(GCOMP) \
-   T(TRAJ) T(CONTROL) T(TEACH) \
+   T(UPDATE) \
+   T(KINEMATICS) \
+   T(REFGEN) \
+   T(CONTROL) \
    T(DYNAMICS) \
+   T(TEACH) \
+   T(GCOMP) \
    T(SETJTOR) \
    T(LOG)
 #define T(x) TS_##x,
@@ -266,7 +269,7 @@ int bt_wam_set_acceleration(struct bt_wam * wam, double acc)
 int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
 {
    /* Make sure we're in joint mode */
-   wam->con_active = (struct bt_control *) wam->con_joint;
+   wam->con_active = (struct bt_control *) wam->con_joint_legacy;
 
    /* Remove any refgens in the list */
    {
@@ -438,7 +441,7 @@ void rt_wam(bt_os_thread * thread)
    }
    
    /* Set the active controller to joint-space */
-   wam->con_active = (struct bt_control *) wam->con_joint;
+   wam->con_active = (struct bt_control *) wam->con_joint_legacy;
    
    /* Set velocity safety limit to 2.0 m/s */
    bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, SAFETY_PUCK_ID,
@@ -483,17 +486,12 @@ void rt_wam(bt_os_thread * thread)
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
          
-      /* Evaluate kinematics */
+      /* Evaluate kinematics
+       * NOTE: Should this be common for all refgens/controllers?
+       *       It's definitely needed for Barrett Dynamics,
+       *       but this is encapsulated in Controllers right now ... */
       bt_kinematics_eval( wam->kin, wam->wambot->jposition );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
-      
-      /* Set the torques to be zero */
-      gsl_vector_set_zero( wam->wambot->jtorque );
-      bt_os_timestat_trigger(wam->ts,TS_GRAV_ZERO);
-     
-      /* Do gravity compensation */
-      if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
-      bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* If there's an active trajectory, grab the reference into the joint controller
        * Note: this is a while loop for the case where the refgen is done,
@@ -501,7 +499,7 @@ void rt_wam(bt_os_thread * thread)
       while (wam->refgen_current)
       {
          err = bt_refgen_eval( wam->refgen_current->refgen,
-                               wam->con_joint->reference );
+                               wam->con_joint_legacy->reference );
          if (!err) break;
          
          if (err == 1) /* finished */
@@ -515,12 +513,21 @@ void rt_wam(bt_os_thread * thread)
             /* continue ... */
          }
       }
-      bt_os_timestat_trigger(wam->ts,TS_TRAJ);
+      bt_os_timestat_trigger(wam->ts,TS_REFGEN);
       
-      /* Do the active controller  */
+      /* Do the active controller */
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
       bt_os_timestat_trigger(wam->ts,TS_CONTROL);
       
+#if 0
+      /* Evaluate inverse dynamics to go acc -> torqe */
+      bt_dynamics_eval_inverse(wam->dyn,
+         wam->wambot->jacceleration, wam->wambot->jacceleration,
+         wam->wambot->jtorque );
+      bt_os_timestat_trigger(wam->ts,TS_DYNAMICS);
+#endif
+      
+      /* SPECIAL BARRETT CASE */
       /* If we're teaching, trigger the teach trajectory */
       if (wam->teach && (((wam->count) & 0x4F) == 0) )
       {
@@ -530,11 +537,9 @@ void rt_wam(bt_os_thread * thread)
       }
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
       
-      /* Evaluate dynamics */
-      bt_dynamics_eval_inverse(wam->dyn,
-         wam->wambot->jposition, wam->wambot->jacceleration, wam->wambot->jacceleration,
-         wam->wambot->jtorque );
-      bt_os_timestat_trigger(wam->ts,TS_DYNAMICS);
+      /* Do gravity compensation (if flagged) */
+      if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
+      bt_os_timestat_trigger(wam->ts,TS_GCOMP);
       
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
@@ -580,7 +585,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->grav = 0;
    wam->log = 0;
    wam->ts_log = 0;
-   wam->con_joint= 0;
+   wam->con_joint_legacy= 0;
    
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
@@ -661,9 +666,9 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    }
    
    /* Create a joint-space controller */
-   wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
+   wam->con_joint_legacy = bt_control_joint_legacy_create(config_setting_get_member(wamconfig,"control_joint_legacy"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
-   if (!wam->con_joint)
+   if (!wam->con_joint_legacy)
    {
       syslog(LOG_ERR,"%s: Could not create joint-space controller.",__func__);
       rt_wam_destroy(wam);
@@ -675,8 +680,8 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
 
 void rt_wam_destroy(struct bt_wam * wam)
 {
-   if (wam->con_joint)
-      bt_control_joint_destroy(wam->con_joint);
+   if (wam->con_joint_legacy)
+      bt_control_joint_legacy_destroy(wam->con_joint_legacy);
    if (wam->ts_log)
       bt_log_destroy(wam->ts_log);
    if (wam->log)

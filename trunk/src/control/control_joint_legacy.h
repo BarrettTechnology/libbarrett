@@ -28,7 +28,7 @@
 #include <libconfig.h>
 
 /* Woo basic independent-PID joint controller! */
-struct bt_control_joint
+struct bt_control_joint_legacy
 {
    /* Include the base */
    struct bt_control base;
@@ -59,5 +59,5 @@ struct bt_control_joint
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
-void bt_control_joint_destroy(struct bt_control_joint * c);
+struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
+void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c);

@@ -66,6 +66,12 @@ struct bt_dynamics_link {
    gsl_vector * tnet;
    gsl_vector * f;     /* force exerted on this link by previous link */
    gsl_vector * t;     /* torque exerted on this link by previous link */
+   
+   /* Jacobian computed at the center-of-mass (used for JSIM calc) */
+   gsl_matrix * com_jacobian;
+   gsl_matrix * com_jacobian_linear; /* Matrix view of linear jacobian (upper half) */
+   gsl_matrix * com_jacobian_angular; /* Matrix view of angular jacobian (lower half) */
+   
 };
 
 
@@ -80,10 +86,19 @@ struct bt_dynamics {
    
    struct bt_dynamics_link * base;
    struct bt_dynamics_link ** link; /* Moving links array */
+   struct bt_dynamics_link * toolplate;
+   
+   /* Yay JSIM! */
+   gsl_matrix * jsim;
    
    /* Temporary Vectors */
    gsl_vector * temp1_v3;
    gsl_vector * temp2_v3;
+   
+   /* Temporary Matrices */
+   gsl_matrix * temp3x3_1;
+   gsl_matrix * temp3x3_2;
+   gsl_matrix * temp3xn_1;
 };
 
 
@@ -96,6 +111,10 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn );
  * How to account for base acceleration (even gravity?)
  * NOTE: This takes ~ 152us on PC104 right now. */
 int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
-   gsl_vector * jpos, gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor );
+   gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor );
+
+/* Calculate the JSIM based on the explicit formulation
+ * in Spong pg 254 */
+int bt_dynamics_eval_jsim( struct bt_dynamics * dyn );
 
 #endif /* BT_DYNAMICS_H */

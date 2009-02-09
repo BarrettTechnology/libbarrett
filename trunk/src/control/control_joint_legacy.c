@@ -24,7 +24,7 @@
  * ======================================================================== */
 
 #include "control.h"
-#include "control_joint.h"
+#include "control_joint_legacy.h"
 
 #include "gsl.h"
 
@@ -39,8 +39,8 @@ static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base);
 static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
-static const struct bt_control_type bt_control_joint_type = {
-   "joint-space",
+static const struct bt_control_type bt_control_joint_legacy_type = {
+   "joint-space-legacy",
    &idle,
    &hold,
    &is_holding,
@@ -48,18 +48,18 @@ static const struct bt_control_type bt_control_joint_type = {
    &set_reference,
    &eval
 };
-const struct bt_control_type * bt_control_joint = &bt_control_joint_type;
+const struct bt_control_type * bt_control_joint_legacy = &bt_control_joint_legacy_type;
 
 /* Controller-specific functions */
-struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity)
+struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity)
 {
    int n;
-   struct bt_control_joint * c;
-   c = (struct bt_control_joint *) malloc( sizeof(struct bt_control_joint) );
+   struct bt_control_joint_legacy * c;
+   c = (struct bt_control_joint_legacy *) malloc( sizeof(struct bt_control_joint_legacy) );
    n = jposition->size;
    
    /* Set the type, and other generic stuff */
-   c->base.type = bt_control_joint;
+   c->base.type = bt_control_joint_legacy;
    c->base.n = n;
    c->base.position = jposition; /* this points directly in this case */
    
@@ -117,7 +117,7 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config, gsl
    return c;
 }
 
-void bt_control_joint_destroy(struct bt_control_joint * c)
+void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c)
 {
    if (c->reference) gsl_vector_free(c->reference);
    if (c->Kp) gsl_vector_free(c->Kp);
@@ -132,7 +132,7 @@ void bt_control_joint_destroy(struct bt_control_joint * c)
 
 static int idle(struct bt_control * base)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
    /* Do we need to stop doing anything? */
    c->is_holding = 0;
    return 0;
@@ -140,7 +140,7 @@ static int idle(struct bt_control * base)
 
 static int hold(struct bt_control * base)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
    gsl_vector_memcpy(c->reference,c->jposition);
    gsl_vector_set_zero(c->integrator);
    c->last_time_saved = 0;
@@ -150,7 +150,7 @@ static int hold(struct bt_control * base)
 
 static int is_holding(struct bt_control * base)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
    return c->is_holding ? 1 : 0;
 }
 
@@ -162,7 +162,7 @@ static int get_position(struct bt_control * base)
 
 static int set_reference(struct bt_control * base, gsl_vector * reference)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
    gsl_vector_memcpy( c->reference, reference );
    return 0;
 }
@@ -332,7 +332,7 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
 /* RT - Evaluate */
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
 {
-   struct bt_control_joint * c = (struct bt_control_joint *) base;
+   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
    
    /* Do PID position control with the current reference */
    if (c->is_holding)

@@ -41,7 +41,7 @@
 
 /* Local function definitions */
 static int eval_trans_to_prev( struct bt_kinematics_link * link );
-static int eval_trans_to_base( struct bt_kinematics_link * link );
+static int eval_trans_to_world( struct bt_kinematics_link * link );
 
 struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs )
 {
@@ -53,7 +53,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    
    /* Create the links array */
    kin->dof = ndofs;
-   kin->nlinks = 1 + ndofs + 1; /* base and toolplate! */
+   kin->nlinks = 1 + ndofs + 1 + 1; /* base, toolplate, and tool */
    kin->link_array = (struct bt_kinematics_link **)
       malloc(kin->nlinks*sizeof(struct bt_kinematics_link *));
    for (i=0; i<kin->nlinks; i++)
@@ -61,7 +61,8 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          malloc(sizeof(struct bt_kinematics_link));
    kin->base = kin->link_array[0];
    kin->link = kin->link_array + 1;
-   kin->toolplate = kin->link_array[kin->nlinks - 1];
+   kin->toolplate = kin->link_array[kin->nlinks - 2];
+   kin->tool = kin->link_array[kin->nlinks - 1];
    
    /* Make sure we have an appropriate configuration for moving links */
    moving = config_setting_get_member( kinconfig, "moving" );
@@ -79,28 +80,20 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       link = kin->link_array[i];
       
       /* Set up next, prev ptrs */
-      link->prev = (link == kin->base)      ? 0 : kin->link_array[i-1];
-      link->next = (link == kin->toolplate) ? 0 : kin->link_array[i+1];
+      link->prev = (link == kin->base) ? 0 : kin->link_array[i-1];
+      link->next = (link == kin->tool) ? 0 : kin->link_array[i+1];
       
       /* DH-Parameters from config file */
       if (link == kin->base)
-      {
-         /* Initialize base link */
-         /* For now, don't read world stuff from the config file */
-         link->alpha = 0.0;
-         link->theta = 0.0;
-         link->a = 0.0;
-         link->d = 0.0;
-         
-         /* Evaluate a few cache things */
-         link->cos_alpha = cos(link->alpha);
-         link->sin_alpha = sin(link->alpha);
-         
+      {         
+         /* Set the base-to-world transform to the identity by default */
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          gsl_matrix_set_identity( link->trans_to_prev );
          
-         link->trans_to_base = gsl_matrix_calloc(4,4);
-         gsl_matrix_set_identity( link->trans_to_base );
+         /* Our transform to the previous frame is equivalent to
+          * the transform to the world frame. */
+         link->trans_to_world = link->trans_to_prev;
+         
       }
       else if (link == kin->toolplate)
       {
@@ -113,35 +106,17 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
             { printf("kin:toolplate not a group!\n"); return 0; }
          
          /* Grab each of the dh parameters */
-         err = bt_gsl_config_double_from_group( toolplate_grp, "alpha_pi", &(link->alpha) );
-         if (err)
+         if (  ( err = bt_gsl_config_double_from_group(toolplate_grp,"alpha_pi",&(link->alpha)) )
+            || ( err = bt_gsl_config_double_from_group(toolplate_grp,"theta_pi",&(link->theta)) )
+            || ( err = bt_gsl_config_double_from_group(toolplate_grp,       "a",&(link->a)    ) )
+            || ( err = bt_gsl_config_double_from_group(toolplate_grp,       "d",&(link->d)    ) )
+            )
          {
-            printf("No alpha_pi in toolplate, or not a number.\n");
+            printf("No alpha_pi, theta_pi, a, and/or d in toolplate, or not a number.\n");
             return 0;
          }
          link->alpha *= M_PI;
-         
-         err = bt_gsl_config_double_from_group( toolplate_grp, "theta_pi", &(link->theta) );
-         if (err)
-         {
-            printf("No theta_pi in toolplate, or not a number.\n");
-            return 0;
-         }
          link->theta *= M_PI;
-         
-         err = bt_gsl_config_double_from_group( toolplate_grp, "a", &(link->a) );
-         if (err)
-         {
-            printf("No a in link toolplate, or not a number.\n");
-            return 0;
-         }
-         
-         err = bt_gsl_config_double_from_group( toolplate_grp, "d", &(link->d) );
-         if (err)
-         {
-            printf("No d in link toolplate, or not a number.\n");
-            return 0;
-         }
          
          /* Evaluate a few cache things */
          link->cos_alpha = cos(link->alpha);
@@ -156,7 +131,15 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          gsl_matrix_set( link->trans_to_prev, 3,3, 1.0 );
          eval_trans_to_prev( link );
          
-         link->trans_to_base = gsl_matrix_calloc(4,4);
+         link->trans_to_world = gsl_matrix_calloc(4,4);
+      }
+      else if (link == kin->tool)
+      {
+         /* By default, the tool is at the toolplate */
+         link->trans_to_prev = gsl_matrix_calloc(4,4);
+         gsl_matrix_set_identity( link->trans_to_prev );
+         
+         link->trans_to_world = gsl_matrix_calloc(4,4);
       }
       else
       {
@@ -171,27 +154,15 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          { printf("kin:moving:#%d is bad format\n",j); return 0; }
          
          /* Grab each of the dh parameters */
-         err = bt_gsl_config_double_from_group( moving_grp, "alpha_pi", &(link->alpha) );
-         if (err)
+         if (  ( err = bt_gsl_config_double_from_group(moving_grp,"alpha_pi",&(link->alpha)) )
+            || ( err = bt_gsl_config_double_from_group(moving_grp,       "a",&(link->a)    ) )
+            || ( err = bt_gsl_config_double_from_group(moving_grp,       "d",&(link->d)    ) )
+            )
          {
-            printf("No alpha_pi in link %d, or not a number.\n",j);
+            printf("No alpha_pi, a, and/or d in link %d, or not a number.\n",j);
             return 0;
          }
          link->alpha *= M_PI;
-         
-         err = bt_gsl_config_double_from_group( moving_grp, "a", &(link->a) );
-         if (err)
-         {
-            printf("No a in link %d, or not a number.\n",j);
-            return 0;
-         }
-         
-         err = bt_gsl_config_double_from_group( moving_grp, "d", &(link->d) );
-         if (err)
-         {
-            printf("No d in link %d, or not a number.\n",j);
-            return 0;
-         }
          
          /* Evaluate a few cache things */
          link->cos_alpha = cos(link->alpha);
@@ -204,7 +175,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          gsl_matrix_set( link->trans_to_prev, 2,3, link->d );
          gsl_matrix_set( link->trans_to_prev, 3,3, 1.0 );
          
-         link->trans_to_base = gsl_matrix_calloc(4,4);
+         link->trans_to_world = gsl_matrix_calloc(4,4);
       }
       
       /* Set up the vector views */
@@ -220,11 +191,11 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          *(link->prev_origin_pos) = view.vector;
          
          link->axis_z = (gsl_vector *) malloc(sizeof(gsl_vector));
-         view = gsl_matrix_subcolumn( link->trans_to_base, 2, 0, 3);
+         view = gsl_matrix_subcolumn( link->trans_to_world, 2, 0, 3);
          *(link->axis_z) = view.vector;
          
          link->origin_pos = (gsl_vector *) malloc(sizeof(gsl_vector));
-         view = gsl_matrix_subcolumn( link->trans_to_base, 3, 0, 3);
+         view = gsl_matrix_subcolumn( link->trans_to_world, 3, 0, 3);
          *(link->origin_pos) = view.vector;
       }
       /* Set up the matrix views */
@@ -235,14 +206,14 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          view = gsl_matrix_submatrix( link->trans_to_prev, 0,0, 3,3 );
          *(link->rot_to_prev) = view.matrix;
          
-         link->rot_to_base = (gsl_matrix *) malloc(sizeof(gsl_matrix));
-         view = gsl_matrix_submatrix( link->trans_to_base, 0,0, 3,3 );
-         *(link->rot_to_base) = view.matrix;
+         link->rot_to_world = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+         view = gsl_matrix_submatrix( link->trans_to_world, 0,0, 3,3 );
+         *(link->rot_to_world) = view.matrix;
       }
    }
    
    /* Make the toolplate jacobian matrix */
-   kin->toolplate_jacobian = gsl_matrix_alloc( 6, ndofs );
+   kin->tool_jacobian = gsl_matrix_alloc( 6, ndofs );
    
    /* Make temporary vectors */
    kin->temp_v3 = gsl_vector_alloc(3);
@@ -258,14 +229,14 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
       struct bt_kinematics_link * link;
       link = kin->link_array[i];
       gsl_matrix_free(link->trans_to_prev);
-      gsl_matrix_free(link->trans_to_base);
+      gsl_matrix_free(link->trans_to_world);
       free(link->origin_pos);
       free(link->rot_to_prev);
-      free(link->rot_to_base);
+      free(link->rot_to_world);
       free(link);
    }
    free(kin->link_array);
-   gsl_matrix_free(kin->toolplate_jacobian);
+   gsl_matrix_free(kin->tool_jacobian);
    free(kin->temp_v3);
    free(kin);
    return 0;
@@ -288,16 +259,20 @@ int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition )
       /* Step 2: Evaluate the to_prev transform */
       eval_trans_to_prev( link );
       
-      /* Step 3: Evaluate the to_inertial transform */
-      eval_trans_to_base( link );
+      /* Step 3: Evaluate the to_world transform */
+      eval_trans_to_world( link );
    }
    
-   /* Also evaluate to_base for the tool (no theta) */
-   eval_trans_to_base( kin->toolplate );
+   /* Also evaluate to_world for the tool (static to_prev) */
+   eval_trans_to_world( kin->toolplate );
    
-   /* Calculate the toolplate jacobian */
+   /* Allow user to change tool transform here? (callback?) */
+   eval_trans_to_world( kin->tool );
+   
+   /* Calculate the tool jacobian 
+    * (gives vel of tool in world coords) */
    bt_kinematics_eval_jacobian( kin,
-      kin->dof, kin->toolplate->origin_pos, kin->toolplate_jacobian );
+      kin->dof, kin->tool->origin_pos, kin->tool_jacobian );
    
    return 0;
 }
@@ -361,13 +336,13 @@ static int eval_trans_to_prev( struct bt_kinematics_link * link )
 }
 
 /* Note - assume this isn't the world link */
-static int eval_trans_to_base( struct bt_kinematics_link * link )
+static int eval_trans_to_world( struct bt_kinematics_link * link )
 {   
    /* Matrix Multiply */
    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0,
-                  link->prev->trans_to_base,
+                  link->prev->trans_to_world,
                   link->trans_to_prev,
-                  0.0, link->trans_to_base);
+                  0.0, link->trans_to_world);
    return 0;
 }
 

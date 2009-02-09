@@ -26,6 +26,26 @@
 
 #include "gsl.h"
 
+/* Private functions */
+static int eval_inverse_forward( struct bt_dynamics * dyn,
+                                 struct bt_dynamics_link * link,
+                                 struct bt_kinematics_link * kin_link,
+                                 double vel, double acc );
+
+static int eval_inverse_backward( struct bt_dynamics * dyn,
+                                  struct bt_dynamics_link * link,
+                                  struct bt_kinematics_link * kin_link,
+                                  double * torque );
+
+/* These fixed versions assume vel and acc are zero? */
+static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
+                                       struct bt_dynamics_link * link,
+                                       struct bt_kinematics_link * kin_link );
+static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
+                                        struct bt_dynamics_link * link,
+                                        struct bt_kinematics_link * kin_link,
+                                        double * torque );
+
 struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs, struct bt_kinematics * kin )
 {
    int err;
@@ -40,7 +60,7 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
    
    /* Create the links array */
    dyn->dof = ndofs;
-   dyn->nlinks = 1 + ndofs; /* base! */
+   dyn->nlinks = 1 + ndofs + 1; /* base, toolplate */
    dyn->link_array = (struct bt_dynamics_link **)
       malloc(dyn->nlinks*sizeof(struct bt_dynamics_link *));
    for (i=0; i<dyn->nlinks; i++)
@@ -48,6 +68,7 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          malloc(sizeof(struct bt_dynamics_link));
    dyn->base = dyn->link_array[0];
    dyn->link = dyn->link_array + 1;
+   dyn->toolplate = dyn->link_array[dyn->nlinks - 1];
    
    /* Make sure we have an appropriate configuration for moving links */
    moving = config_setting_get_member( dynconfig, "moving" );
@@ -65,8 +86,8 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
       link = dyn->link_array[i];
       
       /* Set up next, prev ptrs */
-      link->prev = (link == dyn->base)      ? 0 : dyn->link_array[i-1];
-      link->next = (i == dyn->nlinks - 1 )  ? 0 : dyn->link_array[i+1];
+      link->prev = (link == dyn->base)     ? 0 : dyn->link_array[i-1];
+      link->next = (i == dyn->nlinks - 1 ) ? 0 : dyn->link_array[i+1];
       
       /* Read inertial parameters from config file */
       if (link == dyn->base)
@@ -81,7 +102,7 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->omega = gsl_vector_calloc(3);
          link->alpha = gsl_vector_calloc(3);
          link->a = gsl_vector_calloc(3);
-         gsl_vector_set( link->a, 2, 9.81 );
+         /*gsl_vector_set( link->a, 2, 9.81 );*/
          
          link->omega_prev = gsl_vector_calloc(3);
          link->f_next = gsl_vector_calloc(3);
@@ -92,6 +113,38 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->f = gsl_vector_calloc(3);
          link->t = gsl_vector_calloc(3);
          
+         /* This definitely doesn't matter */
+         link->com_jacobian = 0;
+         link->com_jacobian_linear = 0;
+         link->com_jacobian_angular = 0;
+      }
+      else if (link == dyn->toolplate)
+      {
+         /* None of these are ever used ... */
+         link->mass = 0.0;
+         link->com = gsl_vector_calloc(3);
+         link->I = gsl_matrix_calloc(3,3);
+         
+         /* Initialize the base accelerations, etc to 0
+          * for starting-point of RNEA */
+         link->omega = gsl_vector_calloc(3);
+         link->alpha = gsl_vector_calloc(3);
+         link->a = gsl_vector_calloc(3);
+         /*gsl_vector_set( link->a, 2, 9.81 );*/
+         
+         link->omega_prev = gsl_vector_calloc(3);
+         link->f_next = gsl_vector_calloc(3);
+         
+         /* These don't matter */
+         link->fnet = gsl_vector_calloc(3);
+         link->tnet = gsl_vector_calloc(3);
+         link->f = gsl_vector_calloc(3);
+         link->t = gsl_vector_calloc(3);
+         
+         /* This definitely doesn't matter */
+         link->com_jacobian = 0;
+         link->com_jacobian_linear = 0;
+         link->com_jacobian_angular = 0;
       }
       else
       {
@@ -144,12 +197,32 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->tnet = gsl_vector_calloc(3);
          link->f = gsl_vector_calloc(3);
          link->t = gsl_vector_calloc(3);
+         
+         /* Allocate space for the COM-jacobian */
+         link->com_jacobian = gsl_matrix_alloc(dyn->dof,dyn->dof);
+         
+         /* Allocate matrix views into COM jacobian */
+         {
+            gsl_matrix_view view;
+            
+            link->com_jacobian_linear = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+            view = gsl_matrix_submatrix( link->com_jacobian, 0,0, 3,dyn->dof );
+            *(link->com_jacobian_linear) = view.matrix;
+            
+            link->com_jacobian_angular = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+            view = gsl_matrix_submatrix( link->com_jacobian, 3,0, 3,dyn->dof );
+            *(link->com_jacobian_angular) = view.matrix;
+         }
       }   
    }
    
    /* Make temporary vectors */
    dyn->temp1_v3 = gsl_vector_alloc(3);
    dyn->temp2_v3 = gsl_vector_alloc(3);
+   
+   /* Make temporary matrices */
+   dyn->temp_3x3 = gsl_matrix_alloc(3,3);
+   dyn->temp_3xn = gsl_matrix_alloc(3,dyn->dof);
    
    return dyn;
 }
@@ -177,18 +250,24 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn )
       gsl_vector_free(link->f);
       gsl_vector_free(link->t);
       
+      gsl_matrix_free(link->com_jacobian);
+      
       free(link);
    }
    free(dyn->link_array);
+   
    free(dyn->temp1_v3);
    free(dyn->temp2_v3);
+   free(dyn->temp_3x3);
+   free(dyn->temp_3xn);
+   
    free(dyn);
    return 0;
 }
 
 /* NOTE: This takes ~ 152us on PC104 right now. */
 int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
-   gsl_vector * jpos, gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor )
+   gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor )
 {
    int j;
    
@@ -198,158 +277,342 @@ int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
    /* Iterate from the base to the toolplate */
    for (j=0; j<dyn->dof; j++)
    {
-      struct bt_dynamics_link * link;
-      struct bt_kinematics_link * kin_link;
-      link = dyn->link[j];
-      kin_link = dyn->kin->link[j];
-      
-      /* STEP 1: Calculate omega (this link's angular velocity) */
-      
-      /* First, bring the previous link's omega into our frame
-       * omega = (R^(j-1)_j)^T omega_(j-1) */
-      gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
-                      link->prev->omega,
-                      0.0, link->omega );
-      /* Make a copy for the cache */
-      gsl_vector_memcpy( link->omega_prev, link->omega );
-      
-      /* Last, add in my joint's velocity
-       * omega += qdot_j axis */
-      gsl_blas_daxpy( gsl_vector_get(jvel,j), kin_link->prev_axis_z,
-                      link->omega );
-      
-      /* STEP 2: Calculate alpha (this link's angular acceleration) */
-      
-      /* First, bring the previous link's alpha into our frame
-       * alpha = (R^(j-1)_j)^T alpha_(j-1) */
-      gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
-                      link->prev->alpha,
-                      0.0, link->alpha );
-      
-      /* Next, add in my joint's acceleration
-       * alpha += qdotdot_j axis */
-      gsl_blas_daxpy( gsl_vector_get(jacc,j), kin_link->prev_axis_z,
-                      link->alpha );
-      
-      /* Last, add in the weird cross-product
-       * between the previous link's angular velocity
-       * and my net angular velocity
-       * alpha += (omega_prev) x (qdot_j axis) */      
-      gsl_vector_set_zero( dyn->temp2_v3 );
-      gsl_blas_daxpy( gsl_vector_get(jvel,j), kin_link->prev_axis_z,
-                      dyn->temp2_v3 );
-      bt_gsl_cross( link->omega_prev, dyn->temp2_v3,
-                    link->alpha );
-      
-      /* STEP 3: Calculate a (linear acceleration of origin of frame) */
-      
-      /* First, copy the previous link's acceleration
-       * a^(j-1) = a_(j-1) */
-      gsl_vector_memcpy( dyn->temp1_v3, link->prev->a );
-      
-      /* Next, copy in the acc due to the previous angular acceleration
-       * a^(j-1) += alpha_(j-1) x r^(j-1)_j */
-      bt_gsl_cross( link->prev->alpha, kin_link->prev_origin_pos,
-                    dyn->temp1_v3 );
-      
-      /* Next, copy in the weird velocity components
-       * t2 = omega_(j-1) x r^(j-1)_j */
-      gsl_vector_set_zero( dyn->temp2_v3 );
-      bt_gsl_cross( link->prev->omega, kin_link->prev_origin_pos,
-                    dyn->temp2_v3 );
-      /* a^(j-1) += omega_(j-1) x t2 */
-      bt_gsl_cross( link->prev->omega, dyn->temp2_v3,
-                    dyn->temp1_v3 );
-      
-      /* Last, bring it into my coordimate frame
-       * a^j = (R^(j-1)_j)^T a^(j-1) */
-      gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
-                      dyn->temp1_v3,
-                      0.0, link->a );
-
+      eval_inverse_forward( dyn, dyn->link[j], dyn->kin->link[j],
+                            gsl_vector_get(jvel,j),
+                            gsl_vector_get(jacc,j) );      
    }
    
+   /* Evaluate the vels/accs of the fixed toolplate frame */
+   eval_inverse_forward_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
+   
+   /* OK, now we have omega, alpha, and a calculated for all moving links,
+    * but not for the toolplate frame or the tool frame. */
    /* Potentially call some callback to calculate the tool inverse dynamics */
+   
+   /* Evaluate the forces of the massless fixed toolplate frame
+    * (this produces 0 since the toolplate is the last frame ATM) */
+   eval_inverse_backwards_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
    
    for (j=dyn->dof-1; j>=0; j--)
    {
-      struct bt_dynamics_link * link;
-      struct bt_kinematics_link * kin_link;
+      eval_inverse_backward( dyn, dyn->link[j], dyn->kin->link[j],
+                             gsl_vector_ptr(jtor,j) )
+   }
+   
+   return 0;
+}
+
+static int eval_inverse_forward( struct bt_dynamics * dyn,
+                                 struct bt_dynamics_link * link,
+                                 struct bt_kinematics_link * kin_link,
+                                 double vel, double acc )
+{
+   /* STEP 1: Calculate omega (this link's angular velocity) */
+   
+   /* First, bring the previous link's omega into our frame
+    * omega = (R^(j-1)_j)^T omega_(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   link->prev->omega,
+                   0.0, link->omega );
+   /* Make a copy for the cache */
+   gsl_vector_memcpy( link->omega_prev, link->omega );
+   
+   /* Last, add in my joint's velocity
+    * omega += qdot_j axis */
+   gsl_blas_daxpy( vel, kin_link->prev_axis_z,
+                   link->omega );
+   
+   /* STEP 2: Calculate alpha (this link's angular acceleration) */
+   
+   /* First, bring the previous link's alpha into our frame
+    * alpha = (R^(j-1)_j)^T alpha_(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   link->prev->alpha,
+                   0.0, link->alpha );
+   
+   /* Next, add in my joint's acceleration
+    * alpha += qdotdot_j axis */
+   gsl_blas_daxpy( acc, kin_link->prev_axis_z,
+                   link->alpha );
+   
+   /* Last, add in the weird cross-product
+    * between the previous link's angular velocity
+    * and my net angular velocity
+    * alpha += (omega_prev) x (qdot_j axis) */
+   gsl_vector_set_zero( dyn->temp2_v3 );
+   gsl_blas_daxpy( vel, kin_link->prev_axis_z,
+                   dyn->temp2_v3 );
+   bt_gsl_cross( link->omega_prev, dyn->temp2_v3,
+                 link->alpha );
+   
+   /* STEP 3: Calculate a (linear acceleration of origin of frame) */
+   
+   /* First, copy the previous link's acceleration
+    * a^(j-1) = a_(j-1) */
+   gsl_vector_memcpy( dyn->temp1_v3, link->prev->a );
+   
+   /* Next, copy in the acc due to the previous angular acceleration
+    * a^(j-1) += alpha_(j-1) x r^(j-1)_j */
+   bt_gsl_cross( link->prev->alpha, kin_link->prev_origin_pos,
+                 dyn->temp1_v3 );
+   
+   /* Next, copy in the weird velocity components
+    * t2 = omega_(j-1) x r^(j-1)_j */
+   gsl_vector_set_zero( dyn->temp2_v3 );
+   bt_gsl_cross( link->prev->omega, kin_link->prev_origin_pos,
+                 dyn->temp2_v3 );
+   /* a^(j-1) += omega_(j-1) x t2 */
+   bt_gsl_cross( link->prev->omega, dyn->temp2_v3,
+                 dyn->temp1_v3 );
+   
+   /* Last, bring it into my coordimate frame
+    * a^j = (R^(j-1)_j)^T a^(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   dyn->temp1_v3,
+                   0.0, link->a );
+   
+   return 0;
+};
+
+
+static int eval_inverse_backward( struct bt_dynamics * dyn,
+                                  struct bt_dynamics_link * link,
+                                  struct bt_kinematics_link * kin_link,
+                                  double * torque )
+{
+   /* STEP 1: Calculate the net force on the link
+    * (note, we sum all the accelerations first) */
+   
+   /* First, copy in the acceleration
+    * fnet/m = a */
+   gsl_vector_memcpy( link->fnet, link->a );
+   
+   /* Next, add in the angular acceleration at the com
+    * fnet/m += alpha x com */
+   bt_gsl_cross( link->alpha, link->com,
+                 link->fnet );
+   
+   /* Next, add in the weird velocity terms
+    * fnet/m += omega x (omega x com) */
+   gsl_vector_set_zero( dyn->temp2_v3 );
+   bt_gsl_cross( link->omega, link->com,
+                 dyn->temp2_v3 );
+   bt_gsl_cross( link->omega, dyn->temp2_v3,
+                 link->fnet );
+   
+   /* Last, scale by the mass
+    * fnet = fnet/m * m */
+   gsl_blas_dscal( link->mass, link->fnet );
+   
+   /* STEP 2: Calculate the net torque (moment) on the link */
+   
+   /* First, copy in the moment of inertia * angular acceleration
+    * tnet = I alpha */
+   gsl_blas_dgemv( CblasNoTrans, 1.0, link->I,
+                   link->alpha,
+                   0.0, link->tnet );
+   
+   /* Last, copy in the weird velocity terms
+    * tnet += omega x (I omega) */
+   gsl_blas_dgemv( CblasNoTrans, 1.0, link->I,
+                   link->omega,
+                   0.0, dyn->temp2_v3 );
+   bt_gsl_cross( link->omega, dyn->temp2_v3,
+                 link->tnet );
+   
+   /* STEP 3: Calculate the force exerted on link j through joint j */
+   gsl_vector_memcpy( link->f, link->fnet );
+   if (link->next)
+   {
+      /* Add in the next link's force into our frame
+       * (put in cache first) */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
+                      link->next->f,
+                      0.0, link->f_next );
+      gsl_blas_daxpy( 1.0, link->f_next,
+                      link->f );
+   }
+      
+   /* STEP 4: Calculate the moment exerted in link j through joint j */
+   gsl_vector_memcpy( link->t, link->tnet );
+   /* Add in the torque from the force at the com */
+   bt_gsl_cross( link->com, link->fnet,
+                 link->t );
+   if (link->next)
+   {
+      /* Add in the next link's moment into our frame  */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
+                      link->next->t,
+                      1.0, link->t );
+      /* Add in the next link's force at the endpoint */
+      bt_gsl_cross( kin_link->next->prev_origin_pos, link->f_next,
+                    link->t );
+   }
+   
+   /* Get the component of the torque in the axis direction */
+   gsl_blas_ddot( kin_link->prev_axis_z, link->t,
+                  torque );
+   
+   return 0;
+}
+
+
+
+static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
+                                       struct bt_dynamics_link * link,
+                                       struct bt_kinematics_link * kin_link )
+{
+   /* STEP 1: Calculate omega (this link's angular velocity) */
+   
+   /* First, bring the previous link's omega into our frame
+    * omega = (R^(j-1)_j)^T omega_(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   link->prev->omega,
+                   0.0, link->omega );
+   /* Make a copy for the cache */
+   gsl_vector_memcpy( link->omega_prev, link->omega );
+   
+   /* Last, add in my joint's velocity
+    * omega += qdot_j axis = 0 (fixed) */
+   
+   /* STEP 2: Calculate alpha (this link's angular acceleration) */
+   
+   /* First, bring the previous link's alpha into our frame
+    * alpha = (R^(j-1)_j)^T alpha_(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   link->prev->alpha,
+                   0.0, link->alpha );
+   
+   /* Next, add in my joint's acceleration
+    * alpha += qdotdot_j axis = 0 (fixed) */
+   
+   /* Last, add in the weird cross-product
+    * between the previous link's angular velocity
+    * and my net angular velocity
+    * alpha += (omega_prev) x (qdot_j axis) = 0 (fixed) */
+   
+   /* STEP 3: Calculate a (linear acceleration of origin of frame) */
+   
+   /* First, copy the previous link's acceleration
+    * a^(j-1) = a_(j-1) */
+   gsl_vector_memcpy( dyn->temp1_v3, link->prev->a );
+   
+   /* Next, copy in the acc due to the previous angular acceleration
+    * a^(j-1) += alpha_(j-1) x r^(j-1)_j */
+   bt_gsl_cross( link->prev->alpha, kin_link->prev_origin_pos,
+                 dyn->temp1_v3 );
+   
+   /* Next, copy in the weird velocity components
+    * t2 = omega_(j-1) x r^(j-1)_j */
+   gsl_vector_set_zero( dyn->temp2_v3 );
+   bt_gsl_cross( link->prev->omega, kin_link->prev_origin_pos,
+                 dyn->temp2_v3 );
+   /* a^(j-1) += omega_(j-1) x t2 */
+   bt_gsl_cross( link->prev->omega, dyn->temp2_v3,
+                 dyn->temp1_v3 );
+   
+   /* Last, bring it into my coordimate frame
+    * a^j = (R^(j-1)_j)^T a^(j-1) */
+   gsl_blas_dgemv( CblasTrans, 1.0, kin_link->rot_to_prev,
+                   dyn->temp1_v3,
+                   0.0, link->a );
+   
+   return 0;
+};
+
+static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
+                                        struct bt_dynamics_link * link,
+                                        struct bt_kinematics_link * kin_link )
+{
+   /* STEP 1: Calculate the net force on the link
+    * (note, we sum all the accelerations first)
+    * fnet = 0 (fixed, 0 mass) */
+   
+   /* STEP 2: Calculate the net torque (moment) on the link
+    * tnet = 0 (fixed, 0 mass) */
+   
+   /* STEP 3: Calculate the force exerted on link j through joint j */
+   gsl_vector_set_zero( link->f );
+   if (link->next)
+   {
+      /* Add in the next link's force into our frame
+       * (put in cache first) */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
+                      link->next->f,
+                      0.0, link->f_next );
+      gsl_blas_daxpy( 1.0, link->f_next,
+                      link->f );
+   }
+      
+   /* STEP 4: Calculate the moment exerted in link j through joint j */
+   gsl_vector_set_zero( link->t );
+   /* Add in the torque from the force at the com
+    * = 0 (fixed, no mass )*/
+   if (link->next)
+   {
+      /* Add in the next link's moment into our frame  */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
+                      link->next->t,
+                      1.0, link->t );
+      /* Add in the next link's force at the endpoint */
+      bt_gsl_cross( kin_link->next->prev_origin_pos, link->f_next,
+                    link->t );
+   }
+   
+   return 0;
+}
+
+
+int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
+{
+   int j;
+   
+   /* Zero the JSIM */
+   gsl_matrix_set_zero( dyn->jsim );
+   
+   for (j=0; j<dyn->dof; j++)
+   {
+      bt_dynamics_link * link;
+      bt_kinematics_link * kin_link;
+      
       link = dyn->link[j];
       kin_link = dyn->kin->link[j];
       
-      /* STEP 1: Calculate the net force on the link
-       * (note, we sum all the accelerations first) */
+      /* First, calculate each moving link's Jacobian at the COM */
       
-      /* First, copy in the acceleration
-       * fnet/m = a */
-      gsl_vector_memcpy( link->fnet, link->a );
+      /* Get the COM in world coords */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->rot_to_world,
+                      link->com,
+                      0.0, dyn->temp1_v3 );
       
-      /* Next, add in the angular acceleration at the com
-       * fnet/m += alpha x com */
-      bt_gsl_cross( link->alpha, link->com,
-                    link->fnet );
+      /* Evaluate the jacobian at the link's COM point */
+      bt_kinematics_eval_jacobian( dyn->kin, j+1, dyn->temp1_v3,
+                                   link->com_jacobian );
       
-      /* Next, add in the weird velocity terms
-       * fnet/m += omega x (omega x com) */
-      gsl_vector_set_zero( dyn->temp2_v3 );
-      bt_gsl_cross( link->omega, link->com,
-                    dyn->temp2_v3 );
-      bt_gsl_cross( link->omega, dyn->temp2_v3,
-                    link->fnet );
+      /* Add in the linear velocity component */
+      gsl_blas_dgemm( CblasTrans, CblasNoTrans,
+                      link->com_jacobian_linear, link->com_jacobian_linear,
+                      link->mass,
+                      1.0, dyn->jsim );
       
-      /* Last, scale by the mass
-       * fnet = fnet/m * m */
-      gsl_blas_dscal( link->mass, link->fnet );
+      /* The angular velocity component needs some work ... */
       
-      /* STEP 2: Calculate the net torque (moment) on the link */
-      
-      /* First, copy in the moment of inertia * angular acceleration
-       * tnet = I alpha */
-      gsl_blas_dgemv( CblasNoTrans, 1.0, link->I,
-                      link->alpha,
-                      0.0, link->tnet );
-      
-      /* Last, copy in the weird velocity terms
-       * tnet += omega x (I omega) */
-      gsl_blas_dgemv( CblasNoTrans, 1.0, link->I,
-                      link->omega,
-                      0.0, dyn->temp2_v3 );
-      bt_gsl_cross( link->omega, dyn->temp2_v3,
-                    link->tnet );
-      
-      /* STEP 3: Calculate the force exerted on link j through joint j */
-      gsl_vector_memcpy( link->f, link->fnet );
-      if (link->next)
-      {
-         /* Add in the next link's force into our frame
-          * (put in cache first) */
-         gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
-                         link->next->f,
-                         0.0, link->f_next );
-         gsl_blas_daxpy( 1.0, link->f_next,
-                         link->f );
-      }
-         
-      /* STEP 4: Calculate the moment exerted in link j through joint j */
-      gsl_vector_memcpy( link->t, link->tnet );
-      /* Add in the torque from the force at the com */
-      bt_gsl_cross( link->com, link->fnet,
-                    link->t );
-      if (link->next)
-      {
-         /* Add in the next link's moment into our frame  */
-         gsl_blas_dgemv( CblasNoTrans, 1.0, kin_link->next->rot_to_prev,
-                         link->next->t,
-                         1.0, link->t );
-         /* Add in the next link's force at the endpoint */
-         bt_gsl_cross( kin_link->next->prev_origin_pos, link->f_next,
-                       link->t );
-      }
-      
-      /* Get the component of the torque in the axis direction */
-      gsl_blas_ddot( kin_link->prev_axis_z, link->t,
-                     gsl_vector_ptr(jtor,j) );
+      /* Do I x R^T */
+      gsl_blas_dgemm( CblasNoTrans, CblasTrans,
+                      link->I, kin_link->rot_to_world, 1.0,
+                      0.0, dyn->temp3x3_1 );
+      /* Do R x (IxR^T) (AAH OVERLAP!) */
+      gsl_blas_dgemm( CblasNoTrans, CblasNoTrans,
+                      kin_link->rot_to_world, dyn->temp3x3_1, 1.0,
+                      0.0, dyn->temp3x3_2 );
+      /* Do (RxIxR^T) x Jw */
+      gsl_blas_dgemm( CblasNoTrans, CblasNoTrans,
+                      dyn->temp3x3_2, dyn->com_jacobian_angular, 1.0,
+                      0.0, dyn->temp3xn_1 );
+      /* Do Jw^T x (RxIxR^TxJw) */
+      gsl_blas_dgemm( CblasTrans, CblasNoTrans,
+                      dyn->com_jacobian_angular, dyn->temp3xn_1, 1.0,
+                      1.0, dyn->jsim );
    }
    
    return 0;
