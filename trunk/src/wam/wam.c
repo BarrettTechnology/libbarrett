@@ -519,14 +519,6 @@ void rt_wam(bt_os_thread * thread)
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
       bt_os_timestat_trigger(wam->ts,TS_CONTROL);
       
-#if 0
-      /* Evaluate inverse dynamics to go acc -> torqe */
-      bt_dynamics_eval_inverse(wam->dyn,
-         wam->wambot->jacceleration, wam->wambot->jacceleration,
-         wam->wambot->jtorque );
-      bt_os_timestat_trigger(wam->ts,TS_DYNAMICS);
-#endif
-      
       /* SPECIAL BARRETT CASE */
       /* If we're teaching, trigger the teach trajectory */
       if (wam->teach && (((wam->count) & 0x4F) == 0) )
@@ -585,7 +577,8 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->grav = 0;
    wam->log = 0;
    wam->ts_log = 0;
-   wam->con_joint_legacy= 0;
+   wam->con_joint = 0;
+   wam->con_joint_legacy = 0;
    
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
@@ -666,11 +659,21 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    }
    
    /* Create a joint-space controller */
+   wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
+                                            wam->wambot->jposition, wam->wambot->jvelocity);
+   if (!wam->con_joint)
+   {
+      syslog(LOG_ERR,"%s: Could not create joint-space controller.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   
+   /* Create a legacy joint-space controller */
    wam->con_joint_legacy = bt_control_joint_legacy_create(config_setting_get_member(wamconfig,"control_joint_legacy"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
    if (!wam->con_joint_legacy)
    {
-      syslog(LOG_ERR,"%s: Could not create joint-space controller.",__func__);
+      syslog(LOG_ERR,"%s: Could not create legacy joint-space controller.",__func__);
       rt_wam_destroy(wam);
       return 1;
    }
@@ -680,6 +683,8 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
 
 void rt_wam_destroy(struct bt_wam * wam)
 {
+   if (wam->con_joint)
+      bt_control_joint_destroy(wam->con_joint);
    if (wam->con_joint_legacy)
       bt_control_joint_legacy_destroy(wam->con_joint_legacy);
    if (wam->ts_log)

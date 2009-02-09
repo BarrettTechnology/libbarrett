@@ -83,6 +83,7 @@ struct bt_wam
    
    /* Controllers */
    struct bt_control * con_active;
+   struct bt_control_joint * con_joint;
    struct bt_control_joint_legacy * con_joint_legacy;
    
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/

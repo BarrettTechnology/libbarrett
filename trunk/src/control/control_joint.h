@@ -1,6 +1,6 @@
 /* ======================================================================== *
  *  Module ............. libbt
- *  File ............... control_joint_legacy.h
+ *  File ............... control_joint.h
  *  Author ............. Traveler Hauptman
  *                       Brian Zenowich
  *                       Sam Clanton
@@ -25,10 +25,15 @@
 
 #include "control.h"
 
+#include "dynamics.h"
+
 #include <libconfig.h>
 
+/* This controller controls on joint position by outputing a joint
+ * acceleration through the standard Barrett RNEA implementation. */
+
 /* Woo basic independent-PID joint controller! */
-struct bt_control_joint_legacy
+struct bt_control_joint
 {
    /* Include the base */
    struct bt_control base;
@@ -36,9 +41,14 @@ struct bt_control_joint_legacy
    /* Our current mode */
    int is_holding;
    
+   struct bt_dynamics * dyn;
+   
    /* Saved pointers to external vectors we need */
    gsl_vector * jposition;
    gsl_vector * jvelocity;
+   
+   /* To be computed as intermediate control output */
+   gsl_vector * jacceleration;
    
    /* We must maintain places for asynchronous communication;
     * these can be in any format we want */
@@ -59,5 +69,6 @@ struct bt_control_joint_legacy
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
-void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c);
+struct bt_control_joint * bt_control_joint_legacy_create(config_setting_t * config,
+   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity);
+void bt_control_joint_destroy(struct bt_control_joint * c);
