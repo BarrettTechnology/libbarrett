@@ -37,7 +37,6 @@ static int idle(struct bt_control * base);
 static int hold(struct bt_control * base);
 static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base);
-static int set_reference(struct bt_control * base, gsl_vector * reference);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
 static const struct bt_control_type bt_control_joint_legacy_type = {
    "joint-space-legacy",
@@ -45,7 +44,6 @@ static const struct bt_control_type bt_control_joint_legacy_type = {
    &hold,
    &is_holding,
    &get_position,
-   &set_reference,
    &eval
 };
 const struct bt_control_type * bt_control_joint_legacy = &bt_control_joint_legacy_type;
@@ -62,6 +60,7 @@ struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t
    c->base.type = bt_control_joint_legacy;
    c->base.n = n;
    c->base.position = jposition; /* this points directly in this case */
+   c->base.reference = gsl_vector_calloc(n);
    
    /* Start uninitialized */
    c->is_holding = 0;
@@ -71,7 +70,6 @@ struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t
    c->jvelocity = jvelocity;
    
    /* Create owned-by-me vectors */
-   c->reference = gsl_vector_calloc(n);
    c->Kp = gsl_vector_calloc(n);
    c->Ki = gsl_vector_calloc(n);
    c->Kd = gsl_vector_calloc(n);
@@ -119,7 +117,7 @@ struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t
 
 void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c)
 {
-   if (c->reference) gsl_vector_free(c->reference);
+   if (c->base.reference) gsl_vector_free(c->base.reference);
    if (c->Kp) gsl_vector_free(c->Kp);
    if (c->Ki) gsl_vector_free(c->Ki);
    if (c->Kd) gsl_vector_free(c->Kd);
@@ -141,7 +139,7 @@ static int idle(struct bt_control * base)
 static int hold(struct bt_control * base)
 {
    struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
-   gsl_vector_memcpy(c->reference,c->jposition);
+   gsl_vector_memcpy(base->reference,base->position);
    gsl_vector_set_zero(c->integrator);
    c->last_time_saved = 0;
    c->is_holding = 1;
@@ -160,13 +158,6 @@ static int get_position(struct bt_control * base)
    return 0;
 }
 
-static int set_reference(struct bt_control * base, gsl_vector * reference)
-{
-   struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
-   gsl_vector_memcpy( c->reference, reference );
-   return 0;
-}
-
 /* RT - Evaluate */
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
 {
@@ -181,8 +172,8 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
          c->last_time_saved = 1;
       }
       /* Compute the error */
-      gsl_vector_memcpy( c->temp1, c->jposition );
-      gsl_vector_sub( c->temp1, c->reference );
+      gsl_vector_memcpy( c->temp1, c->base.position );
+      gsl_vector_sub( c->temp1, c->base.reference );
       /* Increment integrator */
       gsl_vector_memcpy( c->temp2, c->temp1 );
       gsl_vector_scale( c->temp2, time - c->last_time );

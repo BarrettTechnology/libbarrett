@@ -37,14 +37,14 @@ static int eval_inverse_backward( struct bt_dynamics * dyn,
                                   struct bt_kinematics_link * kin_link,
                                   double * torque );
 
-/* These fixed versions assume vel and acc are zero? */
+/* These fixed versions assume vel and acc are zero,
+ * and just translate the forces/torques back to the previous joint */
 static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
                                        struct bt_dynamics_link * link,
                                        struct bt_kinematics_link * kin_link );
 static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
                                         struct bt_dynamics_link * link,
-                                        struct bt_kinematics_link * kin_link,
-                                        double * torque );
+                                        struct bt_kinematics_link * kin_link );
 
 struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs, struct bt_kinematics * kin )
 {
@@ -199,7 +199,7 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->t = gsl_vector_calloc(3);
          
          /* Allocate space for the COM-jacobian */
-         link->com_jacobian = gsl_matrix_alloc(dyn->dof,dyn->dof);
+         link->com_jacobian = gsl_matrix_alloc(6,dyn->dof);
          
          /* Allocate matrix views into COM jacobian */
          {
@@ -221,8 +221,9 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
    dyn->temp2_v3 = gsl_vector_alloc(3);
    
    /* Make temporary matrices */
-   dyn->temp_3x3 = gsl_matrix_alloc(3,3);
-   dyn->temp_3xn = gsl_matrix_alloc(3,dyn->dof);
+   dyn->temp3x3_1 = gsl_matrix_alloc(3,3);
+   dyn->temp3x3_2 = gsl_matrix_alloc(3,3);
+   dyn->temp3xn_1 = gsl_matrix_alloc(3,dyn->dof);
    
    return dyn;
 }
@@ -250,7 +251,12 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn )
       gsl_vector_free(link->f);
       gsl_vector_free(link->t);
       
-      gsl_matrix_free(link->com_jacobian);
+      if (link->com_jacobian)
+      {
+         gsl_matrix_free(link->com_jacobian);
+         free(link->com_jacobian_linear);
+         free(link->com_jacobian_angular);
+      }
       
       free(link);
    }
@@ -258,8 +264,9 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn )
    
    free(dyn->temp1_v3);
    free(dyn->temp2_v3);
-   free(dyn->temp_3x3);
-   free(dyn->temp_3xn);
+   free(dyn->temp3x3_1);
+   free(dyn->temp3x3_2);
+   free(dyn->temp3xn_1);
    
    free(dyn);
    return 0;
@@ -286,17 +293,17 @@ int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
    eval_inverse_forward_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
    
    /* OK, now we have omega, alpha, and a calculated for all moving links,
-    * but not for the toolplate frame or the tool frame. */
+    * and the toolplate frame, but not for the tool frame. */
    /* Potentially call some callback to calculate the tool inverse dynamics */
    
    /* Evaluate the forces of the massless fixed toolplate frame
     * (this produces 0 since the toolplate is the last frame ATM) */
-   eval_inverse_backwards_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
+   eval_inverse_backward_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
    
    for (j=dyn->dof-1; j>=0; j--)
    {
       eval_inverse_backward( dyn, dyn->link[j], dyn->kin->link[j],
-                             gsl_vector_ptr(jtor,j) )
+                             gsl_vector_ptr(jtor,j) );
    }
    
    return 0;
@@ -360,7 +367,7 @@ static int eval_inverse_forward( struct bt_dynamics * dyn,
     * t2 = omega_(j-1) x r^(j-1)_j */
    gsl_vector_set_zero( dyn->temp2_v3 );
    bt_gsl_cross( link->prev->omega, kin_link->prev_origin_pos,
-                 dyn->temp2_v3 );
+                 dyn->temp2_v3 ); 
    /* a^(j-1) += omega_(j-1) x t2 */
    bt_gsl_cross( link->prev->omega, dyn->temp2_v3,
                  dyn->temp1_v3 );
@@ -372,7 +379,7 @@ static int eval_inverse_forward( struct bt_dynamics * dyn,
                    0.0, link->a );
    
    return 0;
-};
+}
 
 
 static int eval_inverse_backward( struct bt_dynamics * dyn,
@@ -518,7 +525,7 @@ static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
                    0.0, link->a );
    
    return 0;
-};
+}
 
 static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
                                         struct bt_dynamics_link * link,
@@ -572,8 +579,8 @@ int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
    
    for (j=0; j<dyn->dof; j++)
    {
-      bt_dynamics_link * link;
-      bt_kinematics_link * kin_link;
+      struct bt_dynamics_link * link;
+      struct bt_kinematics_link * kin_link;
       
       link = dyn->link[j];
       kin_link = dyn->kin->link[j];
@@ -591,27 +598,31 @@ int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
       
       /* Add in the linear velocity component */
       gsl_blas_dgemm( CblasTrans, CblasNoTrans,
-                      link->com_jacobian_linear, link->com_jacobian_linear,
                       link->mass,
+                      link->com_jacobian_linear, link->com_jacobian_linear,
                       1.0, dyn->jsim );
       
       /* The angular velocity component needs some work ... */
       
       /* Do I x R^T */
       gsl_blas_dgemm( CblasNoTrans, CblasTrans,
-                      link->I, kin_link->rot_to_world, 1.0,
+                      1.0,
+                      link->I, kin_link->rot_to_world,
                       0.0, dyn->temp3x3_1 );
       /* Do R x (IxR^T) (AAH OVERLAP!) */
       gsl_blas_dgemm( CblasNoTrans, CblasNoTrans,
-                      kin_link->rot_to_world, dyn->temp3x3_1, 1.0,
+                      1.0,
+                      kin_link->rot_to_world, dyn->temp3x3_1,
                       0.0, dyn->temp3x3_2 );
       /* Do (RxIxR^T) x Jw */
       gsl_blas_dgemm( CblasNoTrans, CblasNoTrans,
-                      dyn->temp3x3_2, dyn->com_jacobian_angular, 1.0,
+                      1.0,
+                      dyn->temp3x3_2, link->com_jacobian_angular,
                       0.0, dyn->temp3xn_1 );
       /* Do Jw^T x (RxIxR^TxJw) */
       gsl_blas_dgemm( CblasTrans, CblasNoTrans,
-                      dyn->com_jacobian_angular, dyn->temp3xn_1, 1.0,
+                      1.0,
+                      link->com_jacobian_angular, dyn->temp3xn_1,
                       1.0, dyn->jsim );
    }
    

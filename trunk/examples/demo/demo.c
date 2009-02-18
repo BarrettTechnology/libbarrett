@@ -46,6 +46,7 @@
 enum btkey {
    BTKEY_UNKNOWN = -2,
    BTKEY_NOKEY = -1,
+   BTKEY_TAB = 9,
    BTKEY_ENTER = 10,
    BTKEY_ESCAPE = 27,
    BTKEY_BACKSPACE = 127,
@@ -68,8 +69,10 @@ enum btkey btkey_get()
    /* Get special keys */
    switch (c1)
    {
-      case 10: return BTKEY_ENTER;
-      case 127: return BTKEY_BACKSPACE;
+      case BTKEY_TAB:
+      case BTKEY_ENTER:
+      case BTKEY_BACKSPACE:
+            return c1;
       /* Get extended keyboard chars (eg arrow keys) */
       case 27:
          c2 = getch();
@@ -85,6 +88,7 @@ enum btkey btkey_get()
             default: return BTKEY_UNKNOWN;
          }
       default:
+         syslog(LOG_ERR,"Unknown Key: %d\n",c1);
          return BTKEY_UNKNOWN;
    }
 }
@@ -173,10 +177,10 @@ int main(int argc, char ** argv)
             /* Show HEADER */
             mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
             line++;
-            
+
             /* Show controller name (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", wam->con_active->type->name );
-            
+
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
             
@@ -187,7 +191,7 @@ int main(int argc, char ** argv)
             
             mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
             line++;
-            
+
             /* Show HAPTICS */
             
             /* Show TRAJECTORY */
@@ -199,9 +203,10 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
             mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
             line++;
+#if 0
             mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
             line++;
-            
+#endif
             /* Show CARTESION POSITION, ROTATION */
             mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );
             mvprintw(line,   0, "C Rotation :");
@@ -215,7 +220,7 @@ int main(int argc, char ** argv)
                }
             }
             line++;
-            
+
             break;
          case SCREEN_HELP:
             line = 0;
@@ -234,6 +239,9 @@ int main(int argc, char ** argv)
          case 'x':
          case 'X':
             going = 0;
+            break;
+         case BTKEY_TAB:
+            bt_wam_controller_toggle(wam);
             break;
          case 'g':
             bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );

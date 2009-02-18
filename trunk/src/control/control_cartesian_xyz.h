@@ -1,6 +1,6 @@
 /* ======================================================================== *
  *  Module ............. libbt
- *  File ............... control_joint_legacy.h
+ *  File ............... control_cartesian_xyz.h
  *  Author ............. Traveler Hauptman
  *                       Brian Zenowich
  *                       Sam Clanton
@@ -25,10 +25,15 @@
 
 #include "control.h"
 
+#include "dynamics.h"
+
 #include <libconfig.h>
 
-/* Woo basic independent-PID joint controller! */
-struct bt_control_joint_legacy
+/* This controller controls on Cartesian translational position
+ * (X, Y, and Z axes), ignoring rotation.  It uses the RNEA and
+ * applies a force a the Cartesian end-tip. */
+
+struct bt_control_cartesian_xyz
 {
    /* Include the base */
    struct bt_control base;
@@ -36,11 +41,21 @@ struct bt_control_joint_legacy
    /* Our current mode */
    int is_holding;
    
-   /* Saved pointers to external vectors we need */
+   struct bt_kinematics * kin;
+   struct bt_dynamics * dyn;
+   
+   /* Saved pointers to external vectors we need
+    (for evaulating RNEA) */
    gsl_vector * jposition;
    gsl_vector * jvelocity;
    
-   /* Owned by me, each an n-vector */
+   /* The linear tool jacobian */
+   gsl_matrix * tool_jacobian_linear;
+   
+   /* To be computed as intermediate control output */
+   gsl_vector * force;
+   
+   /* Owned by me, each a 3-vector */
    gsl_vector * Kp;
    gsl_vector * Ki;
    gsl_vector * Kd;
@@ -55,5 +70,7 @@ struct bt_control_joint_legacy
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
-void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c);
+struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting_t * config,
+   struct bt_kinematics * kin,
+   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity);
+void bt_control_cartesian_xyz_destroy(struct bt_control_cartesian_xyz * c);

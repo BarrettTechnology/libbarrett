@@ -187,7 +187,7 @@ void bt_wam_destroy(struct bt_wam * wam)
       wam->rt_thread->done = 1;
       bt_os_usleep(30000); /* We can actually check for this! */
    }
-   
+
    /* Print timer means and variances */
    if (wam->ts)
    {
@@ -209,11 +209,11 @@ void bt_wam_destroy(struct bt_wam * wam)
       
       /* Destroy the timestat (eventually) */
    }
-   
+
    /* ATTEMPT TO Decode the binary log file */
    bt_log_decode("datafile.dat", "dat.oct", 1, 1); /* Woo octave! */
    bt_log_decode("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
-   
+
    free(wam);
    return;
 }
@@ -231,6 +231,22 @@ int bt_wam_isgcomp(struct bt_wam * wam)
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 {
    wam->gcomp = onoff ? 1 : 0;
+   return 0;
+}
+
+int bt_wam_controller_toggle(struct bt_wam * wam)
+{
+   int i;
+   
+   for (i=0; i<wam->con_num; i++)
+   if (wam->con_list[i] == wam->con_active)
+   {
+      if (i+1 < wam->con_num)
+         wam->con_active = wam->con_list[i+1];
+      else
+         wam->con_active = wam->con_list[0];
+      break;
+   }
    return 0;
 }
 
@@ -268,9 +284,6 @@ int bt_wam_set_acceleration(struct bt_wam * wam, double acc)
 
 int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
 {
-   /* Make sure we're in joint mode */
-   wam->con_active = (struct bt_control *) wam->con_joint_legacy;
-
    /* Remove any refgens in the list */
    {
       struct bt_wam_refgen_list * refgen_list;
@@ -453,7 +466,7 @@ void rt_wam(bt_os_thread * thread)
    wam->jacceleration = wam->wambot->jacceleration;
    wam->jtorque = wam->wambot->jtorque;
    wam->cposition = wam->kin->toolplate->origin_pos;
-   wam->crotation = wam->kin->toolplate->rot_to_base;
+   wam->crotation = wam->kin->toolplate->rot_to_world;
    
    /* Setup is complete! */
    helper->is_setup = 1;
@@ -481,7 +494,7 @@ void rt_wam(bt_os_thread * thread)
       if (!wam->count) wam->start_time = time; 
       wam->elapsed_time = time - wam->start_time;
       wam->count++;
-      
+
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
@@ -499,7 +512,7 @@ void rt_wam(bt_os_thread * thread)
       while (wam->refgen_current)
       {
          err = bt_refgen_eval( wam->refgen_current->refgen,
-                               wam->con_joint_legacy->reference );
+                               wam->con_active->reference );
          if (!err) break;
          
          if (err == 1) /* finished */
@@ -515,10 +528,12 @@ void rt_wam(bt_os_thread * thread)
       }
       bt_os_timestat_trigger(wam->ts,TS_REFGEN);
       
+      gsl_vector_set_zero( wam->wambot->jtorque );
+
       /* Do the active controller */
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
       bt_os_timestat_trigger(wam->ts,TS_CONTROL);
-      
+
       /* SPECIAL BARRETT CASE */
       /* If we're teaching, trigger the teach trajectory */
       if (wam->teach && (((wam->count) & 0x4F) == 0) )
@@ -528,11 +543,11 @@ void rt_wam(bt_os_thread * thread)
             wam->elapsed_time );
       }
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
-      
+ 
       /* Do gravity compensation (if flagged) */
       if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
-      
+  
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
@@ -579,6 +594,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->ts_log = 0;
    wam->con_joint = 0;
    wam->con_joint_legacy = 0;
+   wam->con_list = 0;
    
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
@@ -657,9 +673,10 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-   
+
    /* Create a joint-space controller */
    wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
+                                            wam->dyn,
                                             wam->wambot->jposition, wam->wambot->jvelocity);
    if (!wam->con_joint)
    {
@@ -667,7 +684,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-   
+
    /* Create a legacy joint-space controller */
    wam->con_joint_legacy = bt_control_joint_legacy_create(config_setting_get_member(wamconfig,"control_joint_legacy"),
                                             wam->wambot->jposition, wam->wambot->jvelocity);
@@ -678,15 +695,36 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       return 1;
    }
    
+   /* Create a Cartesian-xyz-space controller */
+   wam->con_cartesian_xyz = bt_control_cartesian_xyz_create(config_setting_get_member(wamconfig,"control_cartesian_xyz"),
+                                            wam->kin, wam->dyn,
+                                            wam->wambot->jposition, wam->wambot->jvelocity);
+   if (!wam->con_cartesian_xyz)
+   {
+      syslog(LOG_ERR,"%s: Could not create Cartesian-xyz-space controller.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   
+   wam->con_list = (struct bt_control **) malloc((3)*sizeof(struct bt_control *));
+   wam->con_list[0] = (struct bt_control *) wam->con_joint;
+   wam->con_list[1] = (struct bt_control *) wam->con_cartesian_xyz;
+   wam->con_list[2] = (struct bt_control *) wam->con_joint_legacy;
+   wam->con_num = 3;
+   
    return 0;
 }
 
 void rt_wam_destroy(struct bt_wam * wam)
 {
+   if (wam->con_list)
+      free(wam->con_list);
    if (wam->con_joint)
       bt_control_joint_destroy(wam->con_joint);
    if (wam->con_joint_legacy)
       bt_control_joint_legacy_destroy(wam->con_joint_legacy);
+   if (wam->con_cartesian_xyz)
+      bt_control_cartesian_xyz_destroy(wam->con_cartesian_xyz);
    if (wam->ts_log)
       bt_log_destroy(wam->ts_log);
    if (wam->log)

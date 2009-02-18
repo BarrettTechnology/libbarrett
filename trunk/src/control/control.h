@@ -38,7 +38,6 @@
 #define bt_control_hold(c) (c->type->hold(c))
 #define bt_control_is_holding(c) (c->type->is_holding(c))
 #define bt_control_get_position(c) (c->type->get_position(c))
-#define bt_control_set_reference(c,r) (c->type->set_reference(c,r))
 #define bt_control_eval(c,j,t) (c->type->eval(c,j,t))
 
 struct bt_control;
@@ -56,7 +55,6 @@ struct bt_control_type
    /* Note - these getting/setting functions should be mutex safe! */
    int (*get_position)(struct bt_control * c);
    /* Eventually a get_velocity? */
-   int (*set_reference)(struct bt_control * c, gsl_vector * reference);
    
    /* RT - Evaluate, put resulting torque in torque */
    int (*eval)(struct bt_control * c, gsl_vector * jtorque, double time);
@@ -66,6 +64,7 @@ struct bt_control {
    const struct bt_control_type * type;
    int n; /* number of dimensions to be controlled */
    gsl_vector * position;
+   gsl_vector * reference;
 };
 
 #endif /* BT_CONTROL_H */

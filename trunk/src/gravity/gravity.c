@@ -142,7 +142,7 @@ int bt_gravity_eval( struct bt_gravity * grav, gsl_vector * jtorque )
       struct bt_kinematics_link * link;
       link = grav->kin->link[j];
       /* Fill each link's gravity vector */
-      gsl_blas_dgemv(CblasTrans, 1.0, link->rot_to_base,
+      gsl_blas_dgemv(CblasTrans, 1.0, link->rot_to_world,
                      grav->world_g, 0.0, grav->g[j]);
       /* Compute each link's torque (T = g x mu) */
       cross( grav->g[j], grav->mu[j], grav->t[j] );

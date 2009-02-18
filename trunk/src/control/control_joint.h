@@ -32,7 +32,6 @@
 /* This controller controls on joint position by outputing a joint
  * acceleration through the standard Barrett RNEA implementation. */
 
-/* Woo basic independent-PID joint controller! */
 struct bt_control_joint
 {
    /* Include the base */
@@ -50,10 +49,6 @@ struct bt_control_joint
    /* To be computed as intermediate control output */
    gsl_vector * jacceleration;
    
-   /* We must maintain places for asynchronous communication;
-    * these can be in any format we want */
-   gsl_vector * reference; /* Saved on set_reference() */
-   
    /* Owned by me, each an n-vector */
    gsl_vector * Kp;
    gsl_vector * Ki;
@@ -69,6 +64,6 @@ struct bt_control_joint
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint * bt_control_joint_legacy_create(config_setting_t * config,
+struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
    struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity);
 void bt_control_joint_destroy(struct bt_control_joint * c);

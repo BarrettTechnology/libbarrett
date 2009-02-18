@@ -34,6 +34,8 @@
 #include "refgen_move.h"
 #include "refgen_teachplay.h"
 #include "control.h"
+#include "control_joint.h"
+#include "control_cartesian_xyz.h"
 #include "control_joint_legacy.h"
 
 /* A bt_wam_refgen_list represents the currently loaded refgen;
@@ -83,8 +85,12 @@ struct bt_wam
    
    /* Controllers */
    struct bt_control * con_active;
+   struct bt_control ** con_list;
+   int con_num;
+   /* We also keep a list of all the controllers we have */
    struct bt_control_joint * con_joint;
    struct bt_control_joint_legacy * con_joint_legacy;
+   struct bt_control_cartesian_xyz * con_cartesian_xyz;
    
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
    double vel, acc;
@@ -93,7 +99,7 @@ struct bt_wam
    double start_time;
    double elapsed_time;
    
-   /* A WAM has a linked list of trajectories */
+   /* A WAM has a linked list of refgens */
    struct bt_wam_refgen_list * refgen_list;
    struct bt_wam_refgen_list * refgen_current;
    
@@ -114,6 +120,8 @@ void bt_wam_destroy(struct bt_wam * wam);
 
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
+
+int bt_wam_controller_toggle(struct bt_wam * wam);
 
 /* These are simple wrappers for the active controller */
 int bt_wam_idle(struct bt_wam * wam);

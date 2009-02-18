@@ -229,7 +229,8 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
       struct bt_kinematics_link * link;
       link = kin->link_array[i];
       gsl_matrix_free(link->trans_to_prev);
-      gsl_matrix_free(link->trans_to_world);
+      if (link != kin->base)
+         gsl_matrix_free(link->trans_to_world);
       free(link->origin_pos);
       free(link->rot_to_prev);
       free(link->rot_to_world);
