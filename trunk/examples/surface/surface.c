@@ -1,17 +1,14 @@
 /* ======================================================================== *
- *  Module ............. demo
- *  File ............... demo.c
+ *  Module ............. surface
+ *  File ............... surface.c
  *  Author ............. Traveler Hauptman
  *                       Brian Zenowich
  *                       Christopher Dellin
- *  Creation Date ...... 14 Oct 2005
+ *  Creation Date ...... 18 Feb 2009
  *                                                                          *
  *  **********************************************************************  *
  *                                                                          *
  *  NOTES:
- *    This is the primary WAM demo application. It shows off many
- *    features of the WAM library.
- *    This application is also used for diagnostics and testing.
  *
  *  REVISION HISTORY:
  *    2008 Sept 16 - CD
@@ -36,10 +33,165 @@
 #include <libbt/wam.h>
 #include <libbt/gsl.h>
 
+/* We also manufacture our own refgens! */
+#include <libbt/refgen.h>
+
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_blas.h>
 
 #define INPUT_MAX 20
+
+#define SURF_A_RADIUS (0.0005)
+#define SURF_B_RADIUS (0.0005)
+
+/* Here we define our own refgen */
+struct refgen_surface
+{
+   /* Include the base */
+   struct bt_refgen base;
+   gsl_vector * cpos; /* current, saved */
+   
+   gsl_vector * start; /* mine, constant */
+   gsl_vector * temp; /* test 3-vector to try */
+   
+   /* 2-D parameters */
+   double a;
+   double b;
+};
+
+static int destroy(struct bt_refgen * base);
+static int get_start(struct bt_refgen * base, gsl_vector ** start);
+static int get_total_time(struct bt_refgen * base, double * time);
+static int get_num_points(struct bt_refgen * base, int * points);
+static int start(struct bt_refgen * base);
+static int eval(struct bt_refgen * base, gsl_vector * ref);
+static const struct bt_refgen_type refgen_surface_type = {
+   "surface",
+   &destroy,
+   &get_start,
+   &get_total_time,
+   &get_num_points,
+   &start,
+   &eval
+};
+const struct bt_refgen_type * refgen_surface = &refgen_surface_type;
+
+/* Generic parameterization */
+void func(double a, double b, gsl_vector * pos)
+{
+   double r2;
+   r2 = a*a + b*b;
+   gsl_vector_set(pos,0,a+0.5);
+   gsl_vector_set(pos,1,b);
+   if (r2 < 0.04)
+      gsl_vector_set(pos,2, -4*r2);
+   else
+      gsl_vector_set(pos,2, -4*0.04);
+}
+
+/* Functions */
+struct refgen_surface * refgen_surface_create(gsl_vector * cpos)
+{
+   struct refgen_surface * r;
+   r = (struct refgen_surface *) malloc(sizeof(struct refgen_surface));
+   if (!r) return 0;
+   r->base.type = refgen_surface;
+   
+   /* save the cartesian position */
+   r->cpos = cpos;
+   
+   r->start = gsl_vector_calloc(3);
+   func( 0.0, 0.0, r->start );
+   
+   r->temp = gsl_vector_alloc(3);
+   
+   return r;
+}
+static int destroy(struct bt_refgen * base)
+{
+   struct refgen_surface * r = (struct refgen_surface *) base;
+   gsl_vector_free(r->start);
+   gsl_vector_free(r->temp);
+   free(r);
+   return 0;
+}
+static int get_start(struct bt_refgen * base, gsl_vector ** start)
+{
+   struct refgen_surface * r = (struct refgen_surface *) base;
+   (*start) = r->start;
+   return 0;
+}
+static int get_total_time(struct bt_refgen * base, double * time)
+{
+   (*time) = 0.0;
+   return 0;
+}
+static int get_num_points(struct bt_refgen * base, int * points)
+{
+   (*points) = 1;
+   return 0;
+}
+static int start(struct bt_refgen * base)
+{
+   struct refgen_surface * r = (struct refgen_surface *) base;
+   r->a = 0.0;
+   r->b = 0.0;
+   return 0;
+}
+static int eval(struct bt_refgen * base, gsl_vector * ref)
+{
+   int i;
+   double a, b;
+   double error;
+   double new_a_error, new_b_error;
+   double a_radius, b_radius;
+   struct refgen_surface * r = (struct refgen_surface *) base;
+   /* We have r->cpos, the current position */
+   
+   /* Our initial best guess is a, b. */
+   a = r->a;
+   b = r->b;
+   
+   a_radius = SURF_A_RADIUS;
+   b_radius = SURF_B_RADIUS;
+   
+   /* Do a binary search through parameters (a,b) */
+   for (i=0; i<5; i++)
+   {
+      /* Evaluate current error */
+      func(a,b, r->temp);
+      gsl_blas_daxpy( -1.0, r->cpos, r->temp );
+      error = gsl_blas_dnrm2( r->temp );
+      
+      /* Test a */
+      func(a+a_radius,b, r->temp);
+      gsl_blas_daxpy( -1.0, r->cpos, r->temp );
+      new_a_error = gsl_blas_dnrm2( r->temp );
+      
+      /* Test b */
+      func(a,b+b_radius, r->temp);
+      gsl_blas_daxpy( -1.0, r->cpos, r->temp );
+      new_b_error = gsl_blas_dnrm2( r->temp );
+      
+      a_radius /= 2;
+      b_radius /= 2;
+      
+      /* Adjust parameters */
+      if (new_a_error < error) a += a_radius;
+      else                     a -= a_radius;
+      
+      if (new_b_error < error) b += b_radius;
+      else                     b -= b_radius;
+   }
+     
+   func(a,b,ref);
+   
+   r->a = a;
+   r->b = b;
+   
+   return 0;
+}
 
 /* ------------------------------------------------------------------------ *
  * Key Grabbing Utility Function, for use with ncurses's getch()            */
@@ -112,6 +264,8 @@ int main(int argc, char ** argv)
    struct config_t cfg;
    struct bt_wam * wam;
    
+   struct refgen_surface * surf;
+   
    /* What to display? */
    enum {
       SCREEN_MAIN,
@@ -150,6 +304,13 @@ int main(int argc, char ** argv)
       printf("Could not open the WAM.\n");
       exit(-1);
    }
+   
+   /* Make my "surface" refgen */
+   surf = refgen_surface_create(wam->cposition);
+   
+   /* Manually set the tool kinematics info
+    * (eventually this should come from a config file) */
+   gsl_matrix_set(wam->kin->tool->trans_to_prev, 2,3, 0.208); /* chuck w/ black rod */
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
@@ -205,10 +366,7 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
             mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
             line++;
-#if 0
-            mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
-            line++;
-#endif
+
             /* Show CARTESION POSITION, ROTATION */
             mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );
             mvprintw(line,   0, "C Rotation :");
@@ -265,6 +423,10 @@ int main(int argc, char ** argv)
             break;
          case '.':
             bt_wam_playback(wam);
+            break;
+         case 'i':
+            /* Inject our surface refgen! */
+            bt_wam_refgen_use(wam,(struct bt_refgen *)surf);
             break;
          default:
             break;

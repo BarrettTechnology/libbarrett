@@ -128,6 +128,10 @@ int bt_wam_idle(struct bt_wam * wam);
 int bt_wam_hold(struct bt_wam * wam);
 int bt_wam_is_holding(struct bt_wam * wam);
 
+/* Refgen commands */
+const char * bt_wam_get_current_refgen_name(struct bt_wam * wam);
+int bt_wam_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen);
+
 /* For moves */
 int bt_wam_set_velocity(struct bt_wam * wam, double vel);
 int bt_wam_set_acceleration(struct bt_wam * wam, double acc);

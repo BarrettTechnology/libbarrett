@@ -331,7 +331,7 @@ static int eval_trans_to_prev( struct bt_kinematics_link * link )
    gsl_matrix_set( link->trans_to_prev, 0,2,  sin_theta * link->sin_alpha );
    gsl_matrix_set( link->trans_to_prev, 1,2, -cos_theta * link->sin_alpha );
    gsl_matrix_set( link->trans_to_prev, 0,3,  cos_theta * link->a );
-   gsl_matrix_set( link->trans_to_prev, 0,3,  sin_theta * link->a );
+   gsl_matrix_set( link->trans_to_prev, 1,3,  sin_theta * link->a );
    
    return 0;
 }

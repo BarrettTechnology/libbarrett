@@ -48,6 +48,10 @@
    char * ts_name[] = { TS 0 };
 #undef T
 
+static char str_none[] = "(none)";
+
+/* NOTE - the functions below should be STATIC! */
+
 /* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
  * calls rt_wam_create() and rm_wam_destroy() appropriately. */
 void rt_wam(bt_os_thread * thread);
@@ -270,6 +274,74 @@ int bt_wam_is_holding(struct bt_wam * wam)
    return bt_control_is_holding(wam->con_active);
 }
 
+const char * bt_wam_get_current_refgen_name(struct bt_wam * wam)
+{
+   if (!wam->refgen_current)
+      return str_none;
+   else
+      return wam->refgen_current->refgen->type->name;
+}
+
+int bt_wam_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen)
+{
+   struct bt_wam_refgen_list * refgen_list_element;
+   gsl_vector * refgen_start;
+   
+   /* Make sure we're in the right mode */
+   if (wam->refgen_current) return -1;
+   if (wam->teach) return -1;
+   if (!wam->con_active) return -1;
+   
+   /* Remove any refgens in the list */
+   {
+      struct bt_wam_refgen_list * refgen_list;
+      struct bt_wam_refgen_list * refgen_list_next;
+      
+      refgen_list = wam->refgen_list;
+      while (refgen_list)
+      {
+         refgen_list_next = refgen_list->next;
+         /* respect iown, idelete? */
+         bt_refgen_destroy(refgen_list->refgen);
+         free(refgen_list);
+         refgen_list = refgen_list_next;
+      }
+      wam->refgen_list = 0;
+   }
+   
+   /* Make a new refgen list element for the refgen */
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = 0;
+   wam->refgen_list->refgen = refgen;
+   
+   /* Insert the move list element before the refgen */
+   refgen_list_element = wam->refgen_list;
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = refgen_list_element;
+   
+   /* Get the refgen starting point */
+   bt_refgen_get_start(refgen,&refgen_start);
+   
+   /* Create the move refgen itself */
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_move_create(&(wam->elapsed_time),
+                            wam->con_active->position, 0,
+                            refgen_start, wam->vel, wam->acc);
+   
+   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
+   /* Note, we should free more stuff here! */
+   
+   /* Save this refgen as the current one, and start it! */
+   bt_control_hold(wam->con_active);
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   bt_refgen_start( wam->refgen_list->refgen );
+   wam->refgen_current = wam->refgen_list;
+   
+   return 0;   
+}
+
 int bt_wam_set_velocity(struct bt_wam * wam, double vel)
 {
    wam->vel = vel;
@@ -413,9 +485,16 @@ int bt_wam_playback(struct bt_wam * wam)
    
    /* Make the move refgen itself */
    bt_refgen_get_start(teachplay->refgen,&teachplay_start);
+#if 0
    wam->refgen_list->refgen = (struct bt_refgen *)
       bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity,
                                    teachplay_start, wam->vel, wam->acc);
+#endif
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_move_create(&(wam->elapsed_time),
+                            wam->con_active->position, 0,
+                            teachplay_start, wam->vel, wam->acc);
+   
    if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    /* Note, we should free more stuff here! */
    
@@ -465,8 +544,8 @@ void rt_wam(bt_os_thread * thread)
    wam->jvelocity = wam->wambot->jvelocity;
    wam->jacceleration = wam->wambot->jacceleration;
    wam->jtorque = wam->wambot->jtorque;
-   wam->cposition = wam->kin->toolplate->origin_pos;
-   wam->crotation = wam->kin->toolplate->rot_to_world;
+   wam->cposition = wam->kin->tool->origin_pos;
+   wam->crotation = wam->kin->tool->rot_to_world;
    
    /* Setup is complete! */
    helper->is_setup = 1;

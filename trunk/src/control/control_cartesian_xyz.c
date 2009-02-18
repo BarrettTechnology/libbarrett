@@ -63,7 +63,7 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
    /* Set the type, and other generic stuff */
    c->base.type = bt_control_cartesian_xyz;
    c->base.n = 3;
-   c->base.position = kin->toolplate->origin_pos;
+   c->base.position = kin->tool->origin_pos;
    c->base.reference = gsl_vector_calloc(3);
    
    /* Start uninitialized */

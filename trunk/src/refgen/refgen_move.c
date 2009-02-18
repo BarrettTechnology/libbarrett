@@ -48,7 +48,10 @@ struct bt_refgen_move * bt_refgen_move_create(
    bt_spline_init( t->spline, 0, cur_vel );
    
    /* Make a new profile, using the spline length */
-   t->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), t->spline->length);
+   if (cur_vel)
+      t->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), t->spline->length);
+   else
+      t->profile = bt_profile_create(vel, acc, 0, t->spline->length);
    
    return t;
 }
