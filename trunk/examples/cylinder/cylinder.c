@@ -42,9 +42,6 @@
 
 #define INPUT_MAX 20
 
-#define SURF_A_RADIUS (0.0005)
-#define SURF_B_RADIUS (0.0005)
-
 /* ------------------------------------------------------------------------ *
  * Key Grabbing Utility Function, for use with ncurses's getch()            */
 enum btkey {

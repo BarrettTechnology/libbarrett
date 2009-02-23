@@ -1,5 +1,12 @@
 
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_blas.h>
+
 #include "refgen_cylinder.h"
+
+#define SURF_A_RADIUS (0.0005)
+#define SURF_B_RADIUS (0.0005)
 
 static int destroy(struct bt_refgen * base);
 static int get_start(struct bt_refgen * base, gsl_vector ** start);

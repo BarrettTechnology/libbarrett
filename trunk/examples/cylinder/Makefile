@@ -18,8 +18,8 @@ LDFLAGS += -lbt -lgsl -lgslcblas -lconfig -lcurses
 
 # OK; Link stuff:
 
-cylinder : cylinder.o
-	${CC} cylinder.o ${LDFLAGS} -o cylinder
+cylinder : cylinder.o refgen_cylinder.o
+	${CC} cylinder.o refgen_cylinder.o ${LDFLAGS} -o cylinder
 
 clean:
 	rm -f *~ *.o cylinder
