@@ -33,6 +33,5 @@ struct bt_refgen_teachplay
 /* refgen-specific creation function */
 struct bt_refgen_teachplay * bt_refgen_teachplay_create(
    double * elapsed_time, gsl_vector * cur_position, char * filename);
-int bt_refgen_teachplay_trigger(struct bt_refgen_teachplay * t, double time);
 int bt_refgen_teachplay_flush(struct bt_refgen_teachplay * t);
 int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t);

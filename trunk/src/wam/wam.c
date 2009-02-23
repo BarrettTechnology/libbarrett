@@ -455,11 +455,59 @@ int bt_wam_teach_end(struct bt_wam * wam)
    if (!wam->teach) return -1;
    wam->teach = 0;
    
-   /* We should check that its a teachplay first! */
+   /* We should check that it's a teachplay first! */
    bt_refgen_teachplay_save( (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
    
    return 0;
    
+}
+
+int bt_wam_teach_start_custom(struct bt_wam * wam, struct bt_refgen * refgen)
+{
+   /* Make sure we're in the right mode */
+   if (wam->refgen_current) return -1;
+   if (wam->teach) return -1;
+   if (bt_control_is_holding(wam->con_active)) return -1;
+   if (!wam->con_active) return -1;
+   
+   /* Remove any refgens in the list */
+   {
+      struct bt_wam_refgen_list * refgen_list;
+      struct bt_wam_refgen_list * refgen_list_next;
+      
+      refgen_list = wam->refgen_list;
+      while (refgen_list)
+      {
+         refgen_list_next = refgen_list->next;
+         /* respect iown, idelete? */
+         bt_refgen_destroy(refgen_list->refgen);
+         free(refgen_list);
+         refgen_list = refgen_list_next;
+      }
+      wam->refgen_list = 0;
+   }
+   
+   /* Make a new refgen list element */
+   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
+   if (!wam->refgen_list) return -1;
+   wam->refgen_list->next = 0;
+   
+   /* Insert the already-made itself */
+   wam->refgen_list->refgen = refgen;
+   
+   /* Set the sync side start_time */
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->teach = 1;
+   
+   return 0;
+}
+
+int bt_wam_teach_end_custom(struct bt_wam * wam)
+{
+   if (!wam->teach) return -1;
+   wam->teach = 0;
+   
+   return 0;
 }
 
 int bt_wam_playback(struct bt_wam * wam)
@@ -613,14 +661,10 @@ void rt_wam(bt_os_thread * thread)
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
       bt_os_timestat_trigger(wam->ts,TS_CONTROL);
 
-      /* SPECIAL BARRETT CASE */
-      /* If we're teaching, trigger the teach trajectory */
+      /* If we're teaching, trigger the teach trajectory
+       * (eventually we want to adjust the trigger rate?) */
       if (wam->teach && (((wam->count) & 0x4F) == 0) )
-      {
-         bt_refgen_teachplay_trigger(
-            (struct bt_refgen_teachplay *) (wam->refgen_list->refgen),
-            wam->elapsed_time );
-      }
+         bt_refgen_trigger( wam->refgen_list->refgen );
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
  
       /* Do gravity compensation (if flagged) */

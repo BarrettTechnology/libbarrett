@@ -11,6 +11,7 @@ static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
 static int eval(struct bt_refgen * base, gsl_vector * ref);
+static int trigger(struct bt_refgen * base);
 static const struct bt_refgen_type bt_refgen_move_type = {
    "move",
    &destroy,
@@ -18,7 +19,8 @@ static const struct bt_refgen_type bt_refgen_move_type = {
    &get_total_time,
    &get_num_points,
    &start,
-   &eval
+   &eval,
+   &trigger
 };
 const struct bt_refgen_type * bt_refgen_move = &bt_refgen_move_type;
 
@@ -104,4 +106,9 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    bt_spline_get( t->spline, ref, s );
    
    return 0;
+}
+
+static int trigger(struct bt_refgen * base)
+{
+   return -1;
 }

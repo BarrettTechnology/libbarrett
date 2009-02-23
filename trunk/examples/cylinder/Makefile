@@ -1,10 +1,10 @@
-### Makefile for the "surface" WAM program
+### Makefile for the "cylinder" WAM example program
 
 CC = gcc
 
 CFLAGS += -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 
-default: surface
+default: cylinder
 
 # Link against btos for realtime stuff:
 CFLAGS += -I/usr/local/include
@@ -18,10 +18,8 @@ LDFLAGS += -lbt -lgsl -lgslcblas -lconfig -lcurses
 
 # OK; Link stuff:
 
-surface : surface.o
-	${CC} surface.o ${LDFLAGS} -o surface
+cylinder : cylinder.o
+	${CC} cylinder.o ${LDFLAGS} -o cylinder
 
 clean:
-	rm -f *~ *.o surface
-
-
+	rm -f *~ *.o cylinder

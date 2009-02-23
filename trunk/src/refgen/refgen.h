@@ -60,7 +60,9 @@
 #define bt_refgen_get_total_time(t,time) (t->type->get_total_time(t,time))
 #define bt_refgen_get_num_points(t,p) (t->type->get_num_points(t,p))
 #define bt_refgen_start(t) (t->type->start(t))
+
 #define bt_refgen_eval(t,ref) (t->type->eval(t,ref))
+#define bt_refgen_trigger(t) (t->type->trigger(t))
 
 /* Forward declaration of instance */
 struct bt_refgen;
@@ -120,6 +122,9 @@ struct bt_refgen_type
     * Return 1 for "finished"
     */
    int (*eval)(struct bt_refgen * t, gsl_vector * ref);
+   
+   /* For triggering teachable refgens */
+   int (*trigger)(struct bt_refgen * t);
 };
 
 /* A refgen instance */

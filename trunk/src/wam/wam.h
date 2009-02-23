@@ -145,6 +145,10 @@ int bt_wam_teach_start(struct bt_wam * wam);
 int bt_wam_teach_end(struct bt_wam * wam);
 int bt_wam_playback(struct bt_wam * wam);
 
+/* These are if you have your own refgen that you want to use */
+int bt_wam_teach_start_custom(struct bt_wam * wam, struct bt_refgen * refgen);
+int bt_wam_teach_end_custom(struct bt_wam * wam);
+
 
 #endif /* BT_WAM_H */
 

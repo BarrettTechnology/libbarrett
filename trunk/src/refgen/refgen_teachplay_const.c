@@ -14,6 +14,7 @@ static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
 static int eval(struct bt_refgen * base, gsl_vector * ref);
+static int trigger(struct bt_refgen * bas);
 static const struct bt_refgen_type bt_refgen_teachplay_const_type = {
    "teachplay_const",
    &destroy,
@@ -21,7 +22,8 @@ static const struct bt_refgen_type bt_refgen_teachplay_const_type = {
    &get_total_time,
    &get_num_points,
    &start,
-   &eval
+   &eval,
+   &trigger
 };
 const struct bt_refgen_type * bt_refgen_teachplay_const = &bt_refgen_teachplay_const_type;
 
@@ -58,14 +60,6 @@ struct bt_refgen_teachplay_const * bt_refgen_teachplay_const_create(
    bt_log_init( t->log, 1000, filename );
    
    return t;
-}
-
-int bt_refgen_teachplay_const_trigger(struct bt_refgen_teachplay_const * t, double time)
-{
-   /* Copy in the time */
-   t->time = time;
-   /* Trigger the logger */
-   return bt_log_trigger(t->log);
 }
 
 int bt_refgen_teachplay_const_flush(struct bt_refgen_teachplay_const * t)
@@ -183,4 +177,14 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    bt_spline_get( t->spline, ref, s );
    
    return 0;
+}
+
+static int trigger(struct bt_refgen * base)
+{
+   struct bt_refgen_teachplay_const * t;
+   t = (struct bt_refgen_teachplay_const *) base;
+   /* Copy in the time */
+   t->time = *(t->elapsed_time);
+   /* Trigger the logger */
+   return bt_log_trigger(t->log);
 }
