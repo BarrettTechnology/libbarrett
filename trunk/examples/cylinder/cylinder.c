@@ -113,7 +113,8 @@ int main(int argc, char ** argv)
    struct config_t cfg;
    struct bt_wam * wam;
    
-   struct refgen_cylinder * surf;
+   /* My refgen_cylinder */
+   struct refgen_cylinder * cyl = 0;
    
    /* What to display? */
    enum {
@@ -155,7 +156,7 @@ int main(int argc, char ** argv)
    }
    
    /* Make my "surface" refgen */
-   surf = refgen_cylinder_create(wam->cposition);
+   /*surf = refgen_cylinder_create(wam->cposition);*/
    
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
@@ -204,6 +205,16 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
             line++;
 
+            /* Show cylinder refgen stuff */
+            if (cyl)
+            {
+               mvprintw(line++, 0, "   unit: %s", bt_gsl_vector_sprintf(buf,cyl->unit) );
+               mvprintw(line++, 0, "  h_max: %lf", cyl->h_max );
+               mvprintw(line++, 0, "      h: %lf", cyl->h );
+               mvprintw(line++, 0, "  theta: %lf", cyl->theta );
+               line++;
+            }
+            
             /* Show HAPTICS */
             
             /* Show TRAJECTORY */
@@ -273,10 +284,31 @@ int main(int argc, char ** argv)
          case '.':
             bt_wam_playback(wam);
             break;
+         /* cyl refgen stuff */
+         case 't': /* top of the cylinder */
+            /* Make the cyl refgen if it doesn't exist */
+            if (!cyl) cyl = refgen_cylinder_create(wam->cposition);
+            refgen_cylinder_set_top(cyl);
+            break;
+         case 'b': /* bottom of the cylinder */
+            /* Make the cyl refgen if it doesn't exist */
+            if (!cyl) cyl = refgen_cylinder_create(wam->cposition);
+            refgen_cylinder_set_bottom(cyl);
+            break;
+         case 'R': /* record the radius function of height */
+            if (!cyl) break;
+            bt_wam_teach_start_custom(wam,(struct bt_refgen *)cyl);
+            break;
+         case 'r': /* end record */
+            if (!cyl) break;
+            bt_wam_teach_end_custom(wam);
+            refgen_cylinder_init(cyl);
+            break;
          case 'i':
             /* Inject our surface refgen! */
-            bt_wam_refgen_use(wam,(struct bt_refgen *)surf);
+            bt_wam_refgen_use(wam,(struct bt_refgen *)cyl);
             break;
+          /* end cyl refgen stuff */  
          default:
             break;
          }

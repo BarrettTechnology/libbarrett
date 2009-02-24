@@ -45,7 +45,6 @@ struct bt_wam_refgen_list
    struct bt_wam_refgen_list * next;
    
    int iown;
-   int idelete;
    
    /* The refgen itself */
    struct bt_refgen * refgen;

@@ -302,7 +302,8 @@ int bt_wam_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen)
       {
          refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_refgen_destroy(refgen_list->refgen);
+         if (refgen_list->iown)
+            bt_refgen_destroy(refgen_list->refgen);
          free(refgen_list);
          refgen_list = refgen_list_next;
       }
@@ -366,7 +367,8 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
       {
          refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_refgen_destroy(refgen_list->refgen);
+         if (refgen_list->iown)
+            bt_refgen_destroy(refgen_list->refgen);
          free(refgen_list);
          refgen_list = refgen_list_next;
       }
@@ -426,7 +428,8 @@ int bt_wam_teach_start(struct bt_wam * wam)
       {
          refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_refgen_destroy(refgen_list->refgen);
+         if (refgen_list->iown)
+            bt_refgen_destroy(refgen_list->refgen);
          free(refgen_list);
          refgen_list = refgen_list_next;
       }
@@ -480,7 +483,8 @@ int bt_wam_teach_start_custom(struct bt_wam * wam, struct bt_refgen * refgen)
       {
          refgen_list_next = refgen_list->next;
          /* respect iown, idelete? */
-         bt_refgen_destroy(refgen_list->refgen);
+         if (refgen_list->iown)
+            bt_refgen_destroy(refgen_list->refgen);
          free(refgen_list);
          refgen_list = refgen_list_next;
       }

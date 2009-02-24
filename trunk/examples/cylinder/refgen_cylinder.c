@@ -1,12 +1,23 @@
 
+#include <stdlib.h>
+#include <math.h>
+
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 
-#include "refgen_cylinder.h"
+#include <syslog.h>
 
-#define SURF_A_RADIUS (0.0005)
-#define SURF_B_RADIUS (0.0005)
+#include "refgen_cylinder.h"
+#include "libbt/gsl.h"
+
+#define RES (0.001)
+
+/* compute the unit vector and h_max */
+static int compute_unit(struct refgen_cylinder * r);
+
+#define RADIUS_H (0.0005)
+#define RADIUS_CIRCUM (0.0005)
 
 static int destroy(struct bt_refgen * base);
 static int get_start(struct bt_refgen * base, gsl_vector ** start);
@@ -28,16 +39,17 @@ static const struct bt_refgen_type refgen_cylinder_type = {
 const struct bt_refgen_type * refgen_cylinder = &refgen_cylinder_type;
 
 /* Generic parameterization */
-void func(double a, double b, gsl_vector * pos)
+void func(struct refgen_cylinder * r, double h, double theta, gsl_vector * pos)
 {
-   double r2;
-   r2 = a*a + b*b;
-   gsl_vector_set(pos,0,a+0.5);
-   gsl_vector_set(pos,1,b);
-   if (r2 < 0.04)
-      gsl_vector_set(pos,2, -4*r2);
-   else
-      gsl_vector_set(pos,2, -4*0.04);
+   double rad;
+   rad = gsl_interp_eval( r->interp, r->hs, r->rs, h, r->acc );
+   
+   gsl_vector_memcpy( pos, r->bottom );
+   
+   gsl_blas_daxpy( h, r->unit, pos );
+   
+   gsl_blas_daxpy( rad * cos(theta), r->e1, pos );
+   gsl_blas_daxpy( rad * sin(theta), r->e2, pos );
 }
 
 /* Functions */
@@ -51,20 +63,137 @@ struct refgen_cylinder * refgen_cylinder_create(gsl_vector * cpos)
    /* save the cartesian position */
    r->cpos = cpos;
    
-   r->start = gsl_vector_calloc(3);
-   func( 0.0, 0.0, r->start );
+   r->top = 0;
+   r->bottom = 0;
+   r->unit = gsl_vector_calloc(3);
+   r->h_max = 0;
+   r->e1 = gsl_vector_calloc(3);
+   r->e2 = gsl_vector_calloc(3);
+   
+   r->func_sz = 0;
+   r->hs = 0;
+   r->rs = 0;
    
    r->temp = gsl_vector_alloc(3);
    
+   r->interp = 0;
+   r->acc = 0;
+   
+   r->start = gsl_vector_calloc(3);
+   
    return r;
 }
+
+/* Functions for setting the top and bottom positions */
+int refgen_cylinder_set_top(struct refgen_cylinder * r)
+{
+   if (!r->top) r->top = gsl_vector_calloc(3);
+   gsl_vector_memcpy(r->top,r->cpos);
+   if (r->bottom) return compute_unit(r);
+   return 0;
+}
+int refgen_cylinder_set_bottom(struct refgen_cylinder * r)
+{
+   if (!r->bottom) r->bottom = gsl_vector_calloc(3);
+   gsl_vector_memcpy(r->bottom,r->cpos);
+   if (r->top) return compute_unit(r);
+   return 0;
+}
+static int compute_unit(struct refgen_cylinder * r)
+{
+   int i;
+   double len;
+   
+   /* Compute r->unit and r->h_max */
+   gsl_blas_dcopy( r->top, r->unit );
+   gsl_blas_daxpy( -1.0, r->bottom, r->unit );
+   r->h_max = gsl_blas_dnrm2(r->unit);
+   gsl_blas_dscal( 1.0/r->h_max, r->unit );
+   
+   /* Compute e1 and e2 */
+   gsl_vector_set_zero(r->e2);
+   gsl_vector_set_zero(r->temp);
+   gsl_vector_set( r->temp, 0, 1.0 );
+   
+   bt_gsl_cross( r->unit, r->temp, r->e2 );
+   len = gsl_blas_dnrm2(r->e2);
+   gsl_blas_dscal( 1.0/len, r->e2 );
+   
+   gsl_vector_set_zero(r->e1);
+   bt_gsl_cross( r->e2, r->unit, r->e1 );
+   
+   /* Allocate memory for r->hs and r->rs */
+   if (r->hs) free(r->hs);
+   if (r->rs) free(r->rs);
+   if (r->rs_set) free(r->rs_set);
+   r->func_sz = (int) floor(r->h_max / RES) + 1;
+   r->hs = (double *) malloc( r->func_sz * sizeof(double) );
+   r->rs = (double *) malloc( r->func_sz * sizeof(double) );
+   r->rs_set = (char *) malloc( r->func_sz );
+   
+   /* Fill in r->hs and r->rs_set */
+   for (i=0; i<r->func_sz; i++)
+   {
+      r->hs[i] = (RES/2) + (i * RES);
+      r->rs_set[i] = 0;
+   }
+   
+   return 0;
+}
+
+int refgen_cylinder_init(struct refgen_cylinder * r)
+{
+   int oi; /* old index */
+   int ni; /* old index */
+   
+   /* Eliminate any un-set values in the arrays */
+   ni = 0;
+   for (oi=0; oi<r->func_sz; oi++)
+   {
+      if (r->rs_set[oi])
+      {
+         /* Copy the values */
+         r->hs[ni] = r->hs[oi];
+         r->rs[ni] = r->rs[oi];
+         ni++;
+      }
+   }
+   r->func_sz = ni;
+   free(r->rs_set);
+   r->rs_set = 0;
+   r->hs = (double *) realloc( r->hs, r->func_sz * sizeof(double) );
+   r->rs = (double *) realloc( r->rs, r->func_sz * sizeof(double) );
+   
+   /* Create a gsl interpolator for the h -> r function */
+   if (r->interp) gsl_interp_free(r->interp);
+   if (r->acc) gsl_interp_accel_free(r->acc);
+   r->interp = gsl_interp_alloc( gsl_interp_cspline, r->func_sz );
+   
+   gsl_interp_init( r->interp, r->hs, r->rs, r->func_sz );
+   r->acc = gsl_interp_accel_alloc();
+   
+   /* Compute the start vector */
+   func(r, r->h_max, 0.0, r->start);
+   
+   return 0;
+}
+
 
 /* Generic refgen functions */
 static int destroy(struct bt_refgen * base)
 {
    struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   gsl_vector_free(r->start);
+   if (r->top) gsl_vector_free(r->top);
+   if (r->bottom) gsl_vector_free(r->bottom);
+   gsl_vector_free(r->e1);
+   gsl_vector_free(r->e2);
+   if (r->hs) free(r->hs);
+   if (r->rs) free(r->rs);
    gsl_vector_free(r->temp);
+   if (r->interp) gsl_interp_free(r->interp);
+   if (r->acc) gsl_interp_accel_free(r->acc);
+   
+   gsl_vector_free(r->start);
    free(r);
    return 0;
 }
@@ -87,65 +216,104 @@ static int get_num_points(struct bt_refgen * base, int * points)
 static int start(struct bt_refgen * base)
 {
    struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   r->a = 0.0;
-   r->b = 0.0;
+   r->h = r->h_max;
+   r->theta = 0.0;
    return 0;
 }
 static int eval(struct bt_refgen * base, gsl_vector * ref)
 {
    int i;
-   double a, b;
+   double h, theta;
    double error;
-   double new_a_error, new_b_error;
-   double a_radius, b_radius;
+   double new_h_error, new_theta_error;
+   double radius_h, radius_theta;
+   double rad;
    struct refgen_cylinder * r = (struct refgen_cylinder *) base;
    /* We have r->cpos, the current position */
    
-   /* Our initial best guess is a, b. */
-   a = r->a;
-   b = r->b;
+   /* Our initial best guess is h, theta. */
+   h = r->h;
+   theta = r->theta;
    
-   a_radius = SURF_A_RADIUS;
-   b_radius = SURF_B_RADIUS;
+   /* Get current radius */
+   rad = gsl_interp_eval( r->interp, r->hs, r->rs, h, r->acc );
    
-   /* Do a binary search through parameters (a,b) */
+   radius_h = RADIUS_H;
+   radius_theta = RADIUS_CIRCUM / rad;
+   
+   /* Do a binary search through parameters (h,theta) */
    for (i=0; i<5; i++)
    {
       /* Evaluate current error */
-      func(a,b, r->temp);
+      func(r,h,theta, r->temp);
       gsl_blas_daxpy( -1.0, r->cpos, r->temp );
       error = gsl_blas_dnrm2( r->temp );
       
       /* Test a */
-      func(a+a_radius,b, r->temp);
+      func(r,h+radius_h,theta, r->temp);
       gsl_blas_daxpy( -1.0, r->cpos, r->temp );
-      new_a_error = gsl_blas_dnrm2( r->temp );
+      new_h_error = gsl_blas_dnrm2( r->temp );
       
       /* Test b */
-      func(a,b+b_radius, r->temp);
+      func(r,h,theta+radius_theta, r->temp);
       gsl_blas_daxpy( -1.0, r->cpos, r->temp );
-      new_b_error = gsl_blas_dnrm2( r->temp );
+      new_theta_error = gsl_blas_dnrm2( r->temp );
       
-      a_radius /= 2;
-      b_radius /= 2;
+      radius_h /= 2;
+      radius_theta /= 2;
       
       /* Adjust parameters */
-      if (new_a_error < error) a += a_radius;
-      else                     a -= a_radius;
+      if (new_h_error < error) h += radius_h;
+      else                     h -= radius_h;
       
-      if (new_b_error < error) b += b_radius;
-      else                     b -= b_radius;
+      if (new_theta_error < error) theta += radius_theta;
+      else                         theta -= radius_theta;
    }
-     
-   func(a,b,ref);
    
-   r->a = a;
-   r->b = b;
+   /* Respect bounds on h, theta */
+   if (h < 0)        h = 0;
+   if (h > r->h_max) h = r->h_max;
+   if (theta < 0) theta += 2 * 3.14159265358979;
+   if (theta > 2 * 3.14159265358979) theta -= 2 * 3.14159265358979;
+     
+   func(r,h,theta,ref);
+   
+   r->h = h;
+   r->theta = theta;
    
    return 0;
 }
 
 static int trigger(struct bt_refgen * base)
 {
-   return -1;
+   struct refgen_cylinder * r;
+   double h;
+   double bb; /* length of b squared */
+   double rad;
+   int i;
+   
+   r = (struct refgen_cylinder *) base;
+   
+   /* Get the current h and r */
+   gsl_blas_dcopy( r->cpos, r->temp );
+   gsl_blas_daxpy( -1.0, r->bottom, r->temp );
+   gsl_blas_ddot( r->temp, r->unit, &h);
+   gsl_blas_ddot( r->temp, r->temp, &bb );
+   rad = sqrt( bb - h*h );
+   
+   /* Ignore if h is out of range */
+   if (h < 0 || r->h_max < h)
+      return 0;
+   
+   /* Lookup the index for h */
+   i = (int) floor(h / RES);
+   if ( !r->rs_set[i] )
+   {
+      r->rs[i] = rad;
+      r->rs_set[i] = 1;
+   }
+   else if ( r->rs[i] > rad )
+      r->rs[i] = rad;
+   
+   return 0;
 }
