@@ -91,6 +91,8 @@ struct bt_kinematics {
    
    /* Toolplate Jacobian */
    gsl_matrix * tool_jacobian;
+   gsl_matrix * tool_jacobian_linear; /* matrix view */
+   gsl_vector * tool_velocity;
    
    /* Temp vectors */
    gsl_vector * temp_v3;
@@ -101,7 +103,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
 int bt_kinematics_destroy( struct bt_kinematics * kin );
 
 /* Evaluate all link transforms, including the toolplate jacobian */
-int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition );
+int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_vector * jvelocity );
 
 /* Evaluate the jacobian, on link jlimit (ndofs for tool), at base-point point
  * NOTE: eval_forward must have already been computed!

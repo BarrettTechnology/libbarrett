@@ -44,13 +44,16 @@ struct bt_control_cartesian_xyz
    struct bt_kinematics * kin;
    struct bt_dynamics * dyn;
    
+   /* The position is in base.position */
+   gsl_vector * cvelocity;
+   
    /* Saved pointers to external vectors we need
     (for evaulating RNEA) */
-   gsl_vector * jposition;
-   gsl_vector * jvelocity;
+   /*gsl_vector * jposition;
+   gsl_vector * jvelocity;*/
    
    /* The linear tool jacobian */
-   gsl_matrix * tool_jacobian_linear;
+   /*gsl_matrix * tool_jacobian_linear;*/
    
    /* To be computed as intermediate control output */
    gsl_vector * force;
@@ -71,6 +74,5 @@ struct bt_control_cartesian_xyz
 
 /* The controller-specific create/destroy functions */
 struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting_t * config,
-   struct bt_kinematics * kin,
-   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity);
+   struct bt_kinematics * kin, struct bt_dynamics * dyn);
 void bt_control_cartesian_xyz_destroy(struct bt_control_cartesian_xyz * c);

@@ -212,8 +212,16 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       }
    }
    
-   /* Make the toolplate jacobian matrix */
+   /* Make the toolplate jacobian matrix, view, and tool velocity */
    kin->tool_jacobian = gsl_matrix_alloc( 6, ndofs );
+   {
+      gsl_matrix_view view;
+      
+      kin->tool_jacobian_linear = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+      view = gsl_matrix_submatrix( kin->tool_jacobian, 0,0, 3,ndofs );
+      *(kin->tool_jacobian_linear) = view.matrix;
+   }
+   kin->tool_velocity = gsl_vector_alloc( 3 );
    
    /* Make temporary vectors */
    kin->temp_v3 = gsl_vector_alloc(3);
@@ -238,12 +246,14 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
    }
    free(kin->link_array);
    gsl_matrix_free(kin->tool_jacobian);
+   free(kin->tool_jacobian_linear);
+   gsl_vector_free(kin->tool_velocity);
    free(kin->temp_v3);
    free(kin);
    return 0;
 }
 
-int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition )
+int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_vector * jvelocity )
 {
    int j;
    
@@ -274,6 +284,10 @@ int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition )
     * (gives vel of tool in world coords) */
    bt_kinematics_eval_jacobian( kin,
       kin->dof, kin->tool->origin_pos, kin->tool_jacobian );
+   /* Calculate the tool Cartesian velocity */
+   gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_linear,
+                   jvelocity,
+                   0.0, kin->tool_velocity );
    
    return 0;
 }

@@ -214,9 +214,11 @@ void bt_wam_destroy(struct bt_wam * wam)
       /* Destroy the timestat (eventually) */
    }
 
+#if 0
    /* ATTEMPT TO Decode the binary log file */
    bt_log_decode("datafile.dat", "dat.oct", 1, 1); /* Woo octave! */
    bt_log_decode("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
+#endif
 
    free(wam);
    return;
@@ -597,6 +599,7 @@ void rt_wam(bt_os_thread * thread)
    wam->jacceleration = wam->wambot->jacceleration;
    wam->jtorque = wam->wambot->jtorque;
    wam->cposition = wam->kin->tool->origin_pos;
+   wam->cvelocity = wam->kin->tool_velocity;
    wam->crotation = wam->kin->tool->rot_to_world;
    
    /* Setup is complete! */
@@ -634,7 +637,7 @@ void rt_wam(bt_os_thread * thread)
        * NOTE: Should this be common for all refgens/controllers?
        *       It's definitely needed for Barrett Dynamics,
        *       but this is encapsulated in Controllers right now ... */
-      bt_kinematics_eval( wam->kin, wam->wambot->jposition );
+      bt_kinematics_eval( wam->kin, wam->wambot->jposition, wam->wambot->jvelocity );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
       
       /* If there's an active trajectory, grab the reference into the joint controller
@@ -824,8 +827,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    
    /* Create a Cartesian-xyz-space controller */
    wam->con_cartesian_xyz = bt_control_cartesian_xyz_create(config_setting_get_member(wamconfig,"control_cartesian_xyz"),
-                                            wam->kin, wam->dyn,
-                                            wam->wambot->jposition, wam->wambot->jvelocity);
+                                            wam->kin, wam->dyn );
    if (!wam->con_cartesian_xyz)
    {
       syslog(LOG_ERR,"%s: Could not create Cartesian-xyz-space controller.",__func__);

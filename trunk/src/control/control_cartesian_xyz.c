@@ -54,8 +54,7 @@ const struct bt_control_type * bt_control_cartesian_xyz = &bt_control_cartesian_
 
 /* Controller-specific functions */
 struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting_t * config,
-   struct bt_kinematics * kin,
-   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity)
+   struct bt_kinematics * kin, struct bt_dynamics * dyn)
 {
    struct bt_control_cartesian_xyz * c;
    c = (struct bt_control_cartesian_xyz *) malloc( sizeof(struct bt_control_cartesian_xyz) );
@@ -73,11 +72,13 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
    c->dyn = dyn;
    
    /* Save pointers to external input vectors */
-   c->jposition = jposition;
-   c->jvelocity = jvelocity;
+   c->cvelocity = kin->tool_velocity;
+   /*c->jposition = jposition;
+   c->jvelocity = jvelocity;*/
    
    c->force = gsl_vector_calloc(3);
-   
+
+#if 0
    {
       gsl_matrix_view view;
       
@@ -85,6 +86,7 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
       view = gsl_matrix_submatrix( kin->tool_jacobian, 0,0, 3,dyn->dof );
       *(c->tool_jacobian_linear) = view.matrix;
    }
+#endif
    
    /* Create owned-by-me vectors */
    c->Kp = gsl_vector_calloc(3);
@@ -134,7 +136,7 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
 
 void bt_control_cartesian_xyz_destroy(struct bt_control_cartesian_xyz * c)
 {
-   if (c->tool_jacobian_linear) free(c->tool_jacobian_linear);
+   /*if (c->tool_jacobian_linear) free(c->tool_jacobian_linear);*/
    if (c->force) gsl_vector_free(c->force);
    if (c->base.reference) gsl_vector_free(c->base.reference);
    if (c->Kp) gsl_vector_free(c->Kp);
@@ -210,14 +212,12 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
       gsl_vector_mul( c->temp2, c->Ki );
       gsl_vector_sub( c->force, c->temp2 );
       /* Copy in D term */
-#if 0
-      gsl_vector_memcpy( c->temp2, c->jvelocity );
+      gsl_vector_memcpy( c->temp2, c->cvelocity );
       gsl_vector_mul( c->temp2, c->Kd );
       gsl_vector_sub( c->force, c->temp2 );
-#endif
 
       /* Multiply by the Jacobian-transpose at the tool */
-      gsl_blas_dgemv( CblasTrans, 1.0, c->tool_jacobian_linear,
+      gsl_blas_dgemv( CblasTrans, 1.0, c->kin->tool_jacobian_linear,
                       c->force,
                       1.0, jtorque );
 

@@ -160,7 +160,7 @@ int main(int argc, char ** argv)
    
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
-   gsl_matrix_set(wam->kin->tool->trans_to_prev, 2,3, 0.208); /* chuck w/ black rod */
+   gsl_matrix_set(wam->kin->tool->trans_to_prev, 2,3, 0.183); /* chuck w/ little haptic ball */
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
@@ -229,6 +229,7 @@ int main(int argc, char ** argv)
 
             /* Show CARTESION POSITION, ROTATION */
             mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );
+            mvprintw(line++, 0, "C Velocity : %s", bt_gsl_vector_sprintf(buf,wam->cvelocity) );
             mvprintw(line,   0, "C Rotation :");
             {
                int i;
@@ -304,11 +305,16 @@ int main(int argc, char ** argv)
             bt_wam_teach_end_custom(wam);
             refgen_cylinder_init(cyl);
             break;
-         case 'i':
-            /* Inject our surface refgen! */
+         case 'u': /* Use our surface refgen! */
+            if (!cyl) break;
             bt_wam_refgen_use(wam,(struct bt_refgen *)cyl);
             break;
-          /* end cyl refgen stuff */  
+         case 'd': /* Discard */
+            if (!cyl) break;
+            bt_refgen_destroy((struct bt_refgen *)cyl);
+            cyl = 0;
+            break;
+         /* end cyl refgen stuff */  
          default:
             break;
          }
