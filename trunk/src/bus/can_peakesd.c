@@ -116,8 +116,8 @@ struct can_device
    int iterator;
 };
 
-int accept[MAX_FILTERS];
-int mask[MAX_FILTERS];
+static int accept[MAX_FILTERS];
+static int mask[MAX_FILTERS];
 
 static int max_property;
 void can_set_max_property(int prop)
@@ -128,15 +128,16 @@ void can_set_max_property(int prop)
 /*==============================*
  * PRIVATE Function Prototypes  *
  *==============================*/
-int compile(int property, long longVal, unsigned char *data, int *dataLen);
-int parseMessage(int id, int len, unsigned char *messageData, int *node, int *property, int *ispackedpos, long *value);
-int canReadMsg(struct can_device * dev, int *id, int *len, unsigned char *data, int blocking);
-int canSendMsg(struct can_device * dev, int id, char len, unsigned char *data, int blocking);
+static int compile(int property, long longVal, unsigned char *data, int *dataLen);
+static int parseMessage(int id, int len, unsigned char *messageData, int *node, int *property, int *ispackedpos, long *value);
+static int canReadMsg(struct can_device * dev, int *id, int *len, unsigned char *data, int blocking);
+static int canSendMsg(struct can_device * dev, int id, char len, unsigned char *data, int blocking);
 
 /*==============================*
  * Functions                    *
  *==============================*/
-void allowMessage(struct can_device * dev, int id, int mask)
+#ifdef CANTYPE_ESD
+static void allowMessage(struct can_device * dev, int id, int mask)
 {
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
    /*Allows all messages*/
@@ -150,7 +151,7 @@ void allowMessage(struct can_device * dev, int id, int mask)
          canIdAdd(dev->handle, i);
 #endif
 }
-
+#endif
 
 
 
@@ -795,7 +796,7 @@ int can_iterate_next(struct can_device * dev,
     \return 1 for <illegal message header> (syslog output is generated)
  
 */
-int parseMessage(
+static int parseMessage(
    /* Input */
    int id                      /** The message ID */,
    int len                     /** The data payload length */,
@@ -870,7 +871,7 @@ int parseMessage(
     \return non-zero, otherwise
    
 */
-int compile(
+static int compile(
    int property        /** The property being compiled (use the enumerations in btcan.h) */,
    long longVal        /** The value to set the property to */,
    unsigned char *data /** A pointer to a character buffer in which to build the data payload */,

@@ -21,6 +21,10 @@
  * ======================================================================== */
 
 #include "wam.h"
+#include "wam_custom.h"
+#include "wam_internal.h"
+
+#include "gsl.h"
 
 #include "wambot_phys.h"
 
@@ -29,6 +33,8 @@
 #include <math.h>     /* For sqrt() */
 
 #include <libconfig.h>
+
+#define WAMCONFIGDIR "/etc/wam/"
 
 /* Some global things for timing the threads */
 #define TS \
@@ -50,17 +56,19 @@
 
 static char str_none[] = "(none)";
 
-/* NOTE - the functions below should be STATIC! */
+/* local function prototypes */
+
+static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_t * wamconfig);
 
 /* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
  * calls rt_wam_create() and rm_wam_destroy() appropriately. */
-void rt_wam(bt_os_thread * thread);
-int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig);
-void rt_wam_destroy(struct bt_wam * wam);
+static void rt_wam(bt_os_thread * thread);
+static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig);
+static void rt_wam_destroy(struct bt_wam * wam);
 
 /* Here's the WAM non-realtime thread, which takes care of logging,
  * and perhaps some other things. */
-void nonrt_thread_function(bt_os_thread * thread);
+static void nonrt_thread_function(bt_os_thread * thread);
 
 /* The setup helper is for communication between the non-realtime create()
  * function and the realtime rt_wam() setup function. */
@@ -88,8 +96,44 @@ static void helper_destroy(struct setup_helper * helper)
    return;
 }
 
+struct bt_wam * bt_wam_create(char * wamname)
+{
+   struct bt_wam * wam;
+   
+   /* Does it have a '/' character in it? */
+   
+   {
+      /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
+      char filename[100];
+      int err;
+      struct config_t cfg;
+      
+      strcpy(filename,WAMCONFIGDIR);
+      strcat(filename,wamname);
+      strcat(filename,".config");
+      
+      config_init(&cfg);
+      syslog(LOG_ERR,"Attempting to open '%s' ...",filename);
+      err = config_read_file(&cfg,filename);
+      if (err == CONFIG_TRUE)
+      {
+         wam = bt_wam_create_from_config(wamname, config_lookup(&cfg,"wam"));
+         config_destroy(&cfg);
+         return wam;
+      }
+      
+      syslog(LOG_ERR,"libconfig error: %s, line %d\n",
+             config_error_text(&cfg), config_error_line(&cfg));
+      config_destroy(&cfg);
+   }
+   
+   /* OK, no local WAM by that name was found. Try to open over the network ... */
+   
+   return 0;
+}
+
 /* Here are the non-realtime create/destroy functions */
-struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
+static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_t * wamconfig)
 {
    struct bt_wam * wam;
    struct setup_helper * helper;
@@ -112,7 +156,11 @@ struct bt_wam * bt_wam_create(config_setting_t * wamconfig)
       syslog(LOG_ERR,"%s: No memory for a new WAM.",__func__);
       return 0;
    }
-    
+   
+   /* Save the name */
+   strncpy(wam->name, wamname, WAM_NAME_SIZE);
+   wam->name[WAM_NAME_SIZE] = '\0'; /* Not sure if we need this ... */
+   
    wam->count = 0;
    
    /* Spin off the non-realtime log-saving thread */
@@ -226,6 +274,42 @@ void bt_wam_destroy(struct bt_wam * wam)
 
 
 
+/* String formatting functions */
+char * bt_wam_str_jposition(struct bt_wam * wam, char * buf)
+{
+   return bt_gsl_vector_sprintf(buf,wam->jposition);
+}
+char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf)
+{
+   return bt_gsl_vector_sprintf(buf,wam->jvelocity);
+}
+char * bt_wam_str_jtorque(struct bt_wam * wam, char * buf)
+{
+   return bt_gsl_vector_sprintf(buf,wam->jtorque);
+}
+char * bt_wam_str_cposition(struct bt_wam * wam, char * buf)
+{
+   return bt_gsl_vector_sprintf(buf,wam->cposition);
+}
+char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf)
+{
+   gsl_vector_view view;
+   view = gsl_matrix_row(wam->crotation,0);
+   return bt_gsl_vector_sprintf(buf,&view.vector);
+}
+char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf)
+{
+   gsl_vector_view view;
+   view = gsl_matrix_row(wam->crotation,1);
+   return bt_gsl_vector_sprintf(buf,&view.vector);
+}
+char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
+{
+   gsl_vector_view view;
+   view = gsl_matrix_row(wam->crotation,2);
+   return bt_gsl_vector_sprintf(buf,&view.vector);
+}
+
 
 
 /* Here are the asynchronous WAM functions */
@@ -274,6 +358,14 @@ int bt_wam_hold(struct bt_wam * wam)
 int bt_wam_is_holding(struct bt_wam * wam)
 {
    return bt_control_is_holding(wam->con_active);
+}
+
+const char * bt_wam_get_current_controller_name(struct bt_wam * wam)
+{
+   if (!wam->con_active)
+      return str_none;
+   else
+      return wam->con_active->type->name;
 }
 
 const char * bt_wam_get_current_refgen_name(struct bt_wam * wam)
@@ -570,7 +662,7 @@ int bt_wam_playback(struct bt_wam * wam)
 /* ===========================================================================
  * Below are separate thread stuffs */
 
-void rt_wam(bt_os_thread * thread)
+static void rt_wam(bt_os_thread * thread)
 {
    int err;
    struct setup_helper * helper = (struct setup_helper *) thread->data;
@@ -711,7 +803,7 @@ void rt_wam(bt_os_thread * thread)
 }
 
 /* realtime WAM initialization stuff */
-int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
+static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
 {
    int err;
    int i;
@@ -844,7 +936,7 @@ int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    return 0;
 }
 
-void rt_wam_destroy(struct bt_wam * wam)
+static void rt_wam_destroy(struct bt_wam * wam)
 {
    if (wam->con_list)
       free(wam->con_list);
@@ -869,7 +961,7 @@ void rt_wam_destroy(struct bt_wam * wam)
 }
 
 
-void nonrt_thread_function(bt_os_thread * thread)
+static void nonrt_thread_function(bt_os_thread * thread)
 {
    struct bt_wam * wam = (struct bt_wam *) thread->data;
    

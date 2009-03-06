@@ -30,11 +30,10 @@
 /* Package Dependencies */
 #include <curses.h>
 #include <syslog.h>
-#include <libconfig.h>
 
 /* Include the high-level WAM header file */
 #include <libbt/wam.h>
-#include <libbt/gsl.h>
+#include <libbt/os.h> /* for bt_os_usleep() */
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
@@ -105,11 +104,8 @@ void sigint_handler()
 
 /* Program entry point */
 int main(int argc, char ** argv)
-{
-   int err;
-   
+{   
    /* Stuff for starting up the WAM */
-   struct config_t cfg;
    struct bt_wam * wam;
    
    /* What to display? */
@@ -133,20 +129,12 @@ int main(int argc, char ** argv)
    
    /* Look for (-q) or (-ns) flags?? */
    
-   /* Open the config file */
-   config_init(&cfg);
-   err = config_read_file(&cfg,"../wam.config");
-   if (err != CONFIG_TRUE)
-   {
-      syslog(LOG_ERR,"libconfig error: %s, line %d\n",
-             config_error_text(&cfg), config_error_line(&cfg));
-      exit(-1);
-   }
-   
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create(config_lookup(&cfg,"wam"));
+   wam = bt_wam_create("wam4");
    if (!wam)
    {
+      endwin();
+      closelog();
       printf("Could not open the WAM.\n");
       exit(-1);
    }
@@ -179,7 +167,7 @@ int main(int argc, char ** argv)
             line++;
 
             /* Show controller name (joint space, cartesian space) */
-            mvprintw(line++, 0, " Controller: %s", wam->con_active->type->name );
+            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam) );
 
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
@@ -201,26 +189,21 @@ int main(int argc, char ** argv)
             /* Show NAME */
             
             /* Show JOINT POSTITION + TORQUE */
-            mvprintw(line++, 0, "J Position : %s", bt_gsl_vector_sprintf(buf,wam->jposition) );
-            mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
-            mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
+            mvprintw(line++, 0, "J Position : %s", bt_wam_str_jposition(wam,buf) );
+            mvprintw(line++, 0, "J Velocity : %s", bt_wam_str_jvelocity(wam,buf) );
+            mvprintw(line++, 0, "J Torque   : %s", bt_wam_str_jtorque(wam,buf) );
             line++;
 #if 0
             mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
             line++;
 #endif
             /* Show CARTESION POSITION, ROTATION */
-            mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );
+            mvprintw(line++, 0, "C Position : %s", bt_wam_str_cposition(wam,buf) );
+            
             mvprintw(line,   0, "C Rotation :");
-            {
-               int i;
-               gsl_vector_view view;
-               for (i=0; i<3; i++)
-               {
-                  view = gsl_matrix_row(wam->crotation,i);
-                  mvprintw(line++, 13, "%s", bt_gsl_vector_sprintf(buf,&view.vector));
-               }
-            }
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r1(wam,buf) );
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r2(wam,buf) );
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r3(wam,buf) );
             line++;
 
             break;
@@ -276,9 +259,6 @@ int main(int argc, char ** argv)
    
    /* Close the WAM */
    bt_wam_destroy(wam);
-   
-   /* Deallocate the configuration */
-   config_destroy(&cfg);
    
    /* Close ncurses */
    endwin();
