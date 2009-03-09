@@ -34,6 +34,10 @@
 
 #include <libconfig.h>
 
+/* Here's a cheat to get rid of duplicate thread names */
+static int thdi = 0;
+static char thdname[5];
+
 #define WAMCONFIGDIR "/etc/wam/"
 
 /* Some global things for timing the threads */
@@ -62,13 +66,13 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
 
 /* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
  * calls rt_wam_create() and rm_wam_destroy() appropriately. */
-static void rt_wam(bt_os_thread * thread);
+static void rt_wam(struct bt_os_thread * thread);
 static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig);
 static void rt_wam_destroy(struct bt_wam * wam);
 
 /* Here's the WAM non-realtime thread, which takes care of logging,
  * and perhaps some other things. */
-static void nonrt_thread_function(bt_os_thread * thread);
+static void nonrt_thread_function(struct bt_os_thread * thread);
 
 /* The setup helper is for communication between the non-realtime create()
  * function and the realtime rt_wam() setup function. */
@@ -164,13 +168,15 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
    wam->count = 0;
    
    /* Spin off the non-realtime log-saving thread */
-   wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, "LOG", 10, nonrt_thread_function, (void *)wam);
+   sprintf(thdname,"LOG%d",thdi);
+   wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, thdname, 10, nonrt_thread_function, (void *)wam);
    if (!wam->nonrt_thread)
    {
       syslog(LOG_ERR,"%s: Could not create non-realtime thread.",__func__);
       bt_wam_destroy(wam);
       return 0;
    }
+   syslog(LOG_ERR,"nonrt spun, named %s",thdname);
    
    /* Set up the timer */
    wam->ts = bt_os_timestat_create(TSNUM);
@@ -197,7 +203,9 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       bt_wam_destroy(wam);
       return 0;
    }
-   wam->rt_thread = bt_os_thread_create(BT_OS_RT, "WAM", 90, rt_wam, (void *)helper);
+   sprintf(thdname,"WAM%d",thdi);
+   syslog(LOG_ERR,"spinning thread |%s| ...",thdname);
+   wam->rt_thread = bt_os_thread_create(BT_OS_RT, thdname, 90, rt_wam, (void *)helper);
    if (!wam->rt_thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime thread.",__func__);
@@ -205,6 +213,8 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       bt_wam_destroy(wam);
       return 0;
    }
+   
+   syslog(LOG_ERR,"... done.");
    
    /* Wait until the thread is done starting */
    while (!helper->is_setup)
@@ -219,6 +229,8 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       return 0;
    }
    
+   thdi++;
+   
    /* Success! */
    helper_destroy(helper);
    return wam;
@@ -227,18 +239,13 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
 void bt_wam_destroy(struct bt_wam * wam)
 {
    /* Tell the non-realtime thread to exit */
-   if (wam->nonrt_thread)
-   {
-      wam->nonrt_thread->done = 1;
-      bt_os_usleep(30000); /* We can actually check for this! */
-   }
+   bt_os_thread_stop(wam->nonrt_thread);
    
    /* Tell the realtime thread to exit */
-   if (wam->rt_thread)
-   {
-      wam->rt_thread->done = 1;
-      bt_os_usleep(30000); /* We can actually check for this! */
-   }
+   bt_os_thread_stop(wam->rt_thread);
+   
+   bt_os_thread_destroy(wam->nonrt_thread);
+   bt_os_thread_destroy(wam->rt_thread);
 
    /* Print timer means and variances */
    if (wam->ts)
@@ -662,11 +669,14 @@ int bt_wam_playback(struct bt_wam * wam)
 /* ===========================================================================
  * Below are separate thread stuffs */
 
-static void rt_wam(bt_os_thread * thread)
+static void rt_wam(struct bt_os_thread * thread)
 {
    int err;
-   struct setup_helper * helper = (struct setup_helper *) thread->data;
-   struct bt_wam * wam = helper->wam;
+   struct setup_helper * helper;
+   struct bt_wam * wam;
+   
+   helper = (struct setup_helper *) thread->data;
+   wam = helper->wam;
    
    /* Initialize the WAM data structure (wambot, kinematics, gravity, etc) */
    err = rt_wam_create(helper->wam, helper->config);
@@ -724,7 +734,7 @@ static void rt_wam(bt_os_thread * thread)
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
-         
+
       /* Evaluate kinematics
        * NOTE: Should this be common for all refgens/controllers?
        *       It's definitely needed for Barrett Dynamics,
@@ -753,7 +763,7 @@ static void rt_wam(bt_os_thread * thread)
          }
       }
       bt_os_timestat_trigger(wam->ts,TS_REFGEN);
-      
+
       gsl_vector_set_zero( wam->wambot->jtorque );
 
       /* Do the active controller */
@@ -769,7 +779,7 @@ static void rt_wam(bt_os_thread * thread)
       /* Do gravity compensation (if flagged) */
       if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
-  
+
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
@@ -783,13 +793,13 @@ static void rt_wam(bt_os_thread * thread)
                               &val );
       }
       bt_os_timestat_trigger(wam->ts,TS_GETP1);
-#endif
+
             
       /* Log data (including timing statistics) */
       bt_log_trigger( wam->log );
       bt_log_trigger( wam->ts_log );
       bt_os_timestat_trigger(wam->ts,TS_LOG);
-      
+#endif
       /* Calculate timing statistics */
       bt_os_timestat_end(wam->ts);
    }
@@ -816,8 +826,9 @@ static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->ts_log = 0;
    wam->con_joint = 0;
    wam->con_joint_legacy = 0;
+   wam->con_cartesian_xyz = 0;
    wam->con_list = 0;
-   
+ 
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
    wam->wambot = (struct bt_wambot *) bt_wambot_phys_create( config_setting_get_member(wamconfig,"wambot") );
@@ -836,7 +847,7 @@ static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-   
+
    /* Create a dynamics object */
    wam->dyn = bt_dynamics_create( config_setting_get_member(wamconfig,"dynamics"), wam->wambot->dof, wam->kin );
    if (!wam->dyn)
@@ -854,7 +865,7 @@ static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
       rt_wam_destroy(wam);
       return 1;
    }
-   
+
    /* Create a datalogger
     * For now, we're just logging pos and accelerations */
    wam->log = bt_log_create( 3 );
@@ -932,7 +943,7 @@ static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
    wam->con_list[1] = (struct bt_control *) wam->con_cartesian_xyz;
    wam->con_list[2] = (struct bt_control *) wam->con_joint_legacy;
    wam->con_num = 3;
-   
+
    return 0;
 }
 
@@ -954,14 +965,14 @@ static void rt_wam_destroy(struct bt_wam * wam)
       bt_gravity_destroy(wam->grav);
    if (wam->dyn)
       bt_dynamics_destroy(wam->dyn);
+
    if (wam->kin)
       bt_kinematics_destroy(wam->kin);
    if (wam->wambot)
       bt_wambot_phys_destroy((struct bt_wambot_phys *)wam->wambot);
 }
 
-
-static void nonrt_thread_function(bt_os_thread * thread)
+static void nonrt_thread_function(struct bt_os_thread * thread)
 {
    struct bt_wam * wam = (struct bt_wam *) thread->data;
    

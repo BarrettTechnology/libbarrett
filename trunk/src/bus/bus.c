@@ -223,6 +223,7 @@ int bt_bus_destroy( struct bt_bus * bus )
       if (bus->puck[i]) free(bus->puck[i]);
    free(bus->puck);
    if (bus->safety_puck) free(bus->safety_puck);
+   can_destroy(bus->dev);
    free(bus);
    return 0;
 }

@@ -229,6 +229,8 @@ int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
    if (wambot->macceleration) gsl_vector_free( wambot->macceleration );
    if (wambot->mtorque) gsl_vector_free( wambot->mtorque );
    
+   bt_bus_destroy(wambot->bus);
+   
    free(wambot);
    return 0;
 }

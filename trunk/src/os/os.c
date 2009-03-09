@@ -449,14 +449,14 @@ name is only used by xenomai in realtime
 */
 
 
-bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
-                                 int priority, void (*funcptr)(bt_os_thread *), void * data)
+struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
+                                 int priority, void (*funcptr)(struct bt_os_thread *), void * data)
 /*bt_os_thread * bt_os_thread_create(int priority, void * function, void * args)*/
 {
-   bt_os_thread * thd;
+   struct bt_os_thread * thd;
    
    /* Allocate space for a new thread */
-   thd = (bt_os_thread *) malloc(sizeof(bt_os_thread));
+   thd = (struct bt_os_thread *) malloc(sizeof(struct bt_os_thread));
    
    /* Save the extra stuff for the thread ..
     * Note that we need to do this /before/ we spin off the thread,
@@ -528,7 +528,7 @@ bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
 
 
 /* All this does (for now!) is free memory */
-int bt_os_thread_destroy(bt_os_thread * thd)
+int bt_os_thread_destroy(struct bt_os_thread * thd)
 {
    bt_os_mutex_destroy( thd->mutex );
    
@@ -548,7 +548,7 @@ int bt_os_thread_destroy(bt_os_thread * thd)
 
 
 /* See btthread_stop() */
-BTINLINE int bt_os_thread_done(bt_os_thread * thd)
+BTINLINE int bt_os_thread_done(struct bt_os_thread * thd)
 {
    int done;
    bt_os_mutex_lock( thd->mutex );
@@ -578,7 +578,7 @@ void mythread(void* args)
 */
 
 
-BTINLINE void bt_os_thread_stop(bt_os_thread * thd)
+BTINLINE void bt_os_thread_stop(struct bt_os_thread * thd)
 {
    bt_os_mutex_lock( thd->mutex );
    thd->done = 1;
@@ -599,7 +599,7 @@ BTINLINE void bt_os_thread_stop(bt_os_thread * thd)
 /** Call pthread_exit() on this btthread object.
 \internal chk'd TH 051101
 */
-BTINLINE void bt_os_thread_exit(bt_os_thread * thd)
+BTINLINE void bt_os_thread_exit(struct bt_os_thread * thd)
 {
 #ifdef RTSYS_XENOMAI
    if (thd->type == BT_OS_RT)

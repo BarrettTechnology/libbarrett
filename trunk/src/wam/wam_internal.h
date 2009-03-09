@@ -59,11 +59,11 @@ struct bt_wam
 
    /* The WAM control stuff is in a separate realtime thread;
     * this is for synchronization. */
-   bt_os_thread * rt_thread;
+   struct bt_os_thread * rt_thread;
    
    /* We also have a non-realtime thread,
     * which just cleans up log files and the like */
-   bt_os_thread * nonrt_thread;
+   struct bt_os_thread * nonrt_thread;
    
    struct bt_os_timestat * ts; /* For timing things */
    

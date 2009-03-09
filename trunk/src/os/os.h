@@ -162,7 +162,8 @@ struct bt_os_thread;
 
 /* This is for realtime threads
  * If not Xenomai, the structure will be the same as btthread */
-typedef struct bt_os_thread {
+struct bt_os_thread
+{
    /* Some architecture-specific thread data */
    void * sys;
    /*
@@ -174,7 +175,6 @@ typedef struct bt_os_thread {
    struct sched_param param;
 #endif
    */
-   
 
    enum bt_os_rt_type type;
    int priority; /*Priority this thread was created at*/
@@ -191,15 +191,16 @@ typedef struct bt_os_thread {
 
    bt_os_rtime actual_period, proc_time;
 
-} bt_os_thread;
+};
 
 /* Functions for operating on threads */
-bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
-                                 int priority, void (*funcptr)(bt_os_thread *), void * data);
-int bt_os_thread_destroy(bt_os_thread * thd);
-BTINLINE int bt_os_thread_done(bt_os_thread * thd); /*ret !0 when time to kill*/
-BTINLINE void bt_os_thread_stop(bt_os_thread * thd); /*set done = 1;*/
-BTINLINE void bt_os_thread_exit(bt_os_thread * thd);
+struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * name,
+                                 int priority, void (*funcptr)(struct bt_os_thread *), void * data);
+                                 
+int bt_os_thread_destroy(struct bt_os_thread * thd);
+BTINLINE int bt_os_thread_done(struct bt_os_thread * thd); /*ret !0 when time to kill*/
+BTINLINE void bt_os_thread_stop(struct bt_os_thread * thd); /*set done = 1;*/
+BTINLINE void bt_os_thread_exit(struct bt_os_thread * thd);
 
 
 /*RT Abstractions */
