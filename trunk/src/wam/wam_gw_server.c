@@ -60,14 +60,27 @@ struct func_definition
    enum func_type type;
 };
 
-/* Note: bt_wam_create() is dealt with separately */
+/* Note: bt_wam_create() and bt_wam_destroy() are handled separately */
 static struct func_definition funcs[] = 
 {
-   {(void (*)())&bt_wam_isgcomp,     "bt_wam_isgcomp",     FUNC_TYPE_INT_FROM_WAM},
-   {(void (*)())&bt_wam_setgcomp,    "bt_wam_setgcomp",    FUNC_TYPE_INT_FROM_WAM_INT},
-   {(void (*)())&bt_wam_teach_start, "bt_wam_teach_start", FUNC_TYPE_INT_FROM_WAM},
-   {(void (*)())&bt_wam_teach_end,   "bt_wam_teach_end",   FUNC_TYPE_INT_FROM_WAM},
-   {(void (*)())&bt_wam_playback,    "bt_wam_playback",    FUNC_TYPE_INT_FROM_WAM},
+   {(void (*)())&bt_wam_str_jposition,    "bt_wam_str_jposition",    FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_jvelocity,    "bt_wam_str_jvelocity",    FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_jtorque,      "bt_wam_str_jtorque",      FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_cposition,    "bt_wam_str_cposition",    FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_crotation_r1, "bt_wam_str_crotation_r1", FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_crotation_r2, "bt_wam_str_crotation_r2", FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_str_crotation_r3, "bt_wam_str_crotation_r3", FUNC_TYPE_STR_FROM_WAM},
+   {(void (*)())&bt_wam_isgcomp,          "bt_wam_isgcomp",          FUNC_TYPE_INT_FROM_WAM},
+   {(void (*)())&bt_wam_setgcomp,         "bt_wam_setgcomp",         FUNC_TYPE_INT_FROM_WAM_INT},
+   
+   {(void (*)())&bt_wam_idle,             "bt_wam_idle",             FUNC_TYPE_INT_FROM_WAM},
+   {(void (*)())&bt_wam_hold,             "bt_wam_hold",             FUNC_TYPE_INT_FROM_WAM},
+   
+   {(void (*)())&bt_wam_movehome,         "bt_wam_movehome",         FUNC_TYPE_INT_FROM_WAM},
+   
+   {(void (*)())&bt_wam_teach_start,      "bt_wam_teach_start",      FUNC_TYPE_INT_FROM_WAM},
+   {(void (*)())&bt_wam_teach_end,        "bt_wam_teach_end",        FUNC_TYPE_INT_FROM_WAM},
+   {(void (*)())&bt_wam_playback,         "bt_wam_playback",         FUNC_TYPE_INT_FROM_WAM},
    {0,{0},0}
 };
 
@@ -455,6 +468,15 @@ static int msg_parse(struct bt_wam_gw_server * gw, int conn, char * msg)
             ret = (*(int (*)(struct bt_wam *, int))(funcs[i].func))(wam, an_int);
             /* Return the result */
             sprintf(gw->writebuf,"{\"result\":%d}\n",ret);
+            write( gw->conns[conn].sock, gw->writebuf, strlen(gw->writebuf) );
+            /* What should we do with this error??? */
+            json_object_put(req);
+            return 0;
+         case FUNC_TYPE_STR_FROM_WAM:
+            /* Cast and call! */
+            (*(char * (*)(struct bt_wam *, char *))(funcs[i].func))(wam,gw->strbuf);
+            /* Return the result */
+            sprintf(gw->writebuf,"{\"result\":%s}\n",gw->strbuf);
             write( gw->conns[conn].sock, gw->writebuf, strlen(gw->writebuf) );
             /* What should we do with this error??? */
             json_object_put(req);

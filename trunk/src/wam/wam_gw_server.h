@@ -41,7 +41,8 @@ struct bt_wam_gw_server
    int listener;
    
    /*struct printbuf * pb;*/
-   char writebuf[101];
+   char writebuf[201];
+   char strbuf[101]; /* For library functions that return strings */
 
    /* List of open connections */
    struct connection * conns;

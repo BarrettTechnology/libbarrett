@@ -34,9 +34,13 @@ class JsonClient:
       self.col_grav_gcomp_off = gtk.Button('Gravity Comp Off')
       self.col_grav_gcomp_off.connect('clicked',self.gcomp_off)
       self.col_grav.pack_start(self.col_grav_gcomp_off)
+      # Idle button
+      self.col_grav_idle = gtk.Button('Controller Idle')
+      self.col_grav_idle.connect('clicked',self.do_idle)
+      self.col_grav.pack_start(self.col_grav_idle)
       # Hold button
-      self.col_grav_hold = gtk.Button('Toggle Controller Hold')
-      self.col_grav_hold.connect('clicked',self.toggle_hold)
+      self.col_grav_hold = gtk.Button('Controller Hold')
+      self.col_grav_hold.connect('clicked',self.do_hold)
       self.col_grav.pack_start(self.col_grav_hold)
       
       ## Make the teach column
@@ -81,7 +85,7 @@ class JsonClient:
       self.s.connect(('localhost',1338))
       
       # Attempt to open wam15
-      q = '{"method":"bt_wam_create","params":["wam15"]}\n'
+      q = '{"method":"bt_wam_create","params":["wam4"]}\n'
       print 'sending:', q
       self.s.send(q)
       print 'received:', self.s.recv(100)
@@ -95,30 +99,33 @@ class JsonClient:
       return False
    
    def destroy(self, widget, data=None):
-      self.go('{"method":"bt_wam_destroy","params":["wam15"]}\n')
+      self.go('{"method":"bt_wam_destroy","params":["wam4"]}\n')
       self.s.close()
       gtk.main_quit()
       
    def gcomp_on(self, widget, data=None):
-      self.go('{"method":"bt_wam_setgcomp","params":["wam15",1]}\n')
+      self.go('{"method":"bt_wam_setgcomp","params":["wam4",1]}\n')
    
    def gcomp_off(self, widget, data=None):
-      self.go('{"method":"bt_wam_setgcomp","params":["wam15",0]}\n')
+      self.go('{"method":"bt_wam_setgcomp","params":["wam4",0]}\n')
    
-   def toggle_hold(self, widget, data=None):
-      print 'toggle hold'
+   def do_idle(self, widget, data=None):
+      self.go('{"method":"bt_wam_idle","params":["wam4"]}\n')
+   
+   def do_hold(self, widget, data=None):
+      self.go('{"method":"bt_wam_hold","params":["wam4"]}\n')
    
    def teach_start(self, widget, data=None):
-      self.go('{"method":"bt_wam_teach_start","params":["wam15"]}\n')
+      self.go('{"method":"bt_wam_teach_start","params":["wam4"]}\n')
    
    def teach_end(self, widget, data=None):
-      self.go('{"method":"bt_wam_teach_end","params":["wam15"]}\n')
+      self.go('{"method":"bt_wam_teach_end","params":["wam4"]}\n')
    
    def teach_playback(self, widget, data=None):
-      self.go('{"method":"bt_wam_playback","params":["wam15"]}\n')
+      self.go('{"method":"bt_wam_playback","params":["wam4"]}\n')
    
    def move_home(self, widget, data=None):
-      print 'move home'
+      self.go('{"method":"bt_wam_movehome","params":["wam4"]}\n')
       
    def quit_button(self, widget, data=None):
       if not self.quit_request(self.window,None):
