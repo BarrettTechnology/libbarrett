@@ -227,6 +227,7 @@ struct bt_os_timestat {
    bt_os_rtime * sumsqs;
 };
 struct bt_os_timestat * bt_os_timestat_create(int numchans);
+int bt_os_timestat_destroy(struct bt_os_timestat * ts);
 void bt_os_timestat_start(struct bt_os_timestat * ts);
 void bt_os_timestat_trigger(struct bt_os_timestat * ts, int chan);
 void bt_os_timestat_end(struct bt_os_timestat * ts);

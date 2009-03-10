@@ -53,31 +53,87 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
    config_setting_t * moving;
    struct bt_dynamics * dyn;
    
-   dyn = (struct bt_dynamics *) malloc( sizeof(struct bt_dynamics) );
+   /* Check arguments */
+   if (dynconfig == 0) return 0;
    
-   /* Save the kinematics link */
+   dyn = (struct bt_dynamics *) malloc( sizeof(struct bt_dynamics) );
+   if (!dyn)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
+   
+   /* Initialize */
    dyn->kin = kin;
+   dyn->link_array = 0;
+   dyn->base = 0;
+   dyn->link = 0;
+   dyn->toolplate = 0;
+   dyn->jsim = 0;
+   dyn->temp1_v3 = 0;
+   dyn->temp2_v3 = 0;
+   dyn->temp3x3_1 = 0;
+   dyn->temp3x3_2 = 0;
+   dyn->temp3xn_1 = 0;
    
    /* Create the links array */
    dyn->dof = ndofs;
    dyn->nlinks = 1 + ndofs + 1; /* base, toolplate */
    dyn->link_array = (struct bt_dynamics_link **)
       malloc(dyn->nlinks*sizeof(struct bt_dynamics_link *));
+   if (!dyn->link_array)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    for (i=0; i<dyn->nlinks; i++)
-      dyn->link_array[i] = (struct bt_dynamics_link *)
+      dyn->link_array[i] = 0;
+   for (i=0; i<dyn->nlinks; i++)
+   {
+      struct bt_dynamics_link * link;
+      link = (struct bt_dynamics_link *)
          malloc(sizeof(struct bt_dynamics_link));
+      if (!link)
+      {
+         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         bt_dynamics_destroy(dyn);
+         return 0;
+      }
+      /* Initialize */
+      link->next = 0;
+      link->prev = 0;
+      link->com = 0;
+      link->I = 0;
+      link->omega = 0;
+      link->alpha = 0;
+      link->a = 0;
+      link->omega_prev = 0;
+      link->f_next = 0;
+      link->fnet = 0;
+      link->tnet = 0;
+      link->f = 0;
+      link->t = 0;
+      link->com_jacobian = 0;
+      link->com_jacobian_linear = 0;
+      link->com_jacobian_angular = 0;
+      /* Save */
+      dyn->link_array[i] = link;
+   }
+   /* Set some pointers */
    dyn->base = dyn->link_array[0];
    dyn->link = dyn->link_array + 1;
    dyn->toolplate = dyn->link_array[dyn->nlinks - 1];
    
    /* Make sure we have an appropriate configuration for moving links */
-   moving = config_setting_get_member( dynconfig, "moving" );
-   if (moving == NULL) { printf("No dyn:moving in wam.config\n"); return 0; }
-   if (config_setting_type(moving) != CONFIG_TYPE_LIST)
-      { printf("dyn:moving not a list\n"); return 0; }
-   if (config_setting_length(moving) != ndofs)
-      { printf("Expected %d links, but found %d.\n",
-               ndofs, config_setting_length(moving)); return 0; }
+   if (   !(moving = config_setting_get_member(dynconfig,"moving"))
+       ||  (config_setting_type(moving) != CONFIG_TYPE_LIST)
+       ||  (config_setting_length(moving) != ndofs)
+   ) {
+      syslog(LOG_ERR,"%s: dyn:moving not a list with %d elements.",__func__,ndofs);
+      bt_kinematics_destroy(kin);
+      return 0;
+   }
    
    /* Initialize each link */
    for (i=0; i<dyn->nlinks; i++)
@@ -102,7 +158,6 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->omega = gsl_vector_calloc(3);
          link->alpha = gsl_vector_calloc(3);
          link->a = gsl_vector_calloc(3);
-         /*gsl_vector_set( link->a, 2, 9.81 );*/
          
          link->omega_prev = gsl_vector_calloc(3);
          link->f_next = gsl_vector_calloc(3);
@@ -112,6 +167,26 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->tnet = gsl_vector_calloc(3);
          link->f = gsl_vector_calloc(3);
          link->t = gsl_vector_calloc(3);
+         
+         /* Do memory checks */
+         if (   !link->com
+             || !link->I
+             || !link->omega
+             || !link->alpha
+             || !link->a
+             || !link->omega_prev
+             || !link->f_next
+             || !link->fnet
+             || !link->tnet
+             || !link->f
+             || !link->t
+         ) {
+            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
+         
+         /*gsl_vector_set( link->a, 2, 9.81 );*/
          
          /* This definitely doesn't matter */
          link->com_jacobian = 0;
@@ -130,7 +205,6 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->omega = gsl_vector_calloc(3);
          link->alpha = gsl_vector_calloc(3);
          link->a = gsl_vector_calloc(3);
-         /*gsl_vector_set( link->a, 2, 9.81 );*/
          
          link->omega_prev = gsl_vector_calloc(3);
          link->f_next = gsl_vector_calloc(3);
@@ -140,6 +214,26 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->tnet = gsl_vector_calloc(3);
          link->f = gsl_vector_calloc(3);
          link->t = gsl_vector_calloc(3);
+         
+         /* Do memory checks */
+         if (   !link->com
+             || !link->I
+             || !link->omega
+             || !link->alpha
+             || !link->a
+             || !link->omega_prev
+             || !link->f_next
+             || !link->fnet
+             || !link->tnet
+             || !link->f
+             || !link->t
+         ) {
+            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
+         
+         /*gsl_vector_set( link->a, 2, 9.81 );*/
          
          /* This definitely doesn't matter */
          link->com_jacobian = 0;
@@ -153,36 +247,17 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          
          j = i-1; /* (There's one base frame) */
          
-         /* Get the link #j group */
+         /* Get the link #j moving group */
          link_grp = config_setting_get_elem( moving, j );
          if (config_setting_type(link_grp) != CONFIG_TYPE_GROUP)
-         { printf("kin:moving:#%d is bad format\n",j); return 0; }
-         
-         /* Read the mass */
-         err = bt_gsl_config_double_from_group( link_grp, "mass", &(link->mass) );
-         if (err)
          {
-            printf("dyn: No mass in link, or not a number.\n");
+            syslog(LOG_ERR,"%s: dyn:moving:#%d not a group.",__func__,j);
+            bt_dynamics_destroy(dyn);
             return 0;
          }
-         
-         /* Read the center of mass vector */
+
          link->com = gsl_vector_alloc(3);
-         err = bt_gsl_fill_vector(link->com, link_grp, "com");
-         if (err)
-         {
-            printf("dyn: No com in link, or not a 3-element vector.\n");
-            return 0;
-         }
-         
-         /* Read the inertia matrix */
          link->I = gsl_matrix_alloc(3,3);
-         err = bt_gsl_fill_matrix(link->I, link_grp, "I");
-         if (err)
-         {
-            printf("dyn: No I in link, or not a 3x3-element matrix.\n");
-            return 0;
-         }
          
          /* Allocate space for ac, omega, alpha */
          link->omega = gsl_vector_calloc(3);
@@ -198,32 +273,125 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
          link->f = gsl_vector_calloc(3);
          link->t = gsl_vector_calloc(3);
          
+         /* Do memory checks */
+         if (   !link->com
+             || !link->I
+             || !link->omega
+             || !link->alpha
+             || !link->a
+             || !link->omega_prev
+             || !link->f_next
+             || !link->fnet
+             || !link->tnet
+             || !link->f
+             || !link->t
+         ) {
+            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
+         
          /* Allocate space for the COM-jacobian */
          link->com_jacobian = gsl_matrix_alloc(6,dyn->dof);
+         if (!link->com_jacobian)
+         {
+            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
          
          /* Allocate matrix views into COM jacobian */
          {
             gsl_matrix_view view;
             
             link->com_jacobian_linear = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+            if (!link->com_jacobian_linear)
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               bt_dynamics_destroy(dyn);
+               return 0;
+            }
             view = gsl_matrix_submatrix( link->com_jacobian, 0,0, 3,dyn->dof );
             *(link->com_jacobian_linear) = view.matrix;
             
             link->com_jacobian_angular = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+            if (!link->com_jacobian_angular)
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               bt_dynamics_destroy(dyn);
+               return 0;
+            }
             view = gsl_matrix_submatrix( link->com_jacobian, 3,0, 3,dyn->dof );
             *(link->com_jacobian_angular) = view.matrix;
+         }
+         
+         /* Read the mass */
+         err = bt_gsl_config_double_from_group( link_grp, "mass", &(link->mass) );
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: No mass in link, or not a number.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
+         
+         /* Read the center of mass vector */
+         err = bt_gsl_fill_vector(link->com, link_grp, "com");
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: No com in link, or not a number.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
+         }
+         
+         /* Read the inertia matrix */
+         err = bt_gsl_fill_matrix(link->I, link_grp, "I");
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: No I in link, or not a number.",__func__);
+            bt_dynamics_destroy(dyn);
+            return 0;
          }
       }   
    }
    
    /* Make temporary vectors */
    dyn->temp1_v3 = gsl_vector_alloc(3);
+   if (!dyn->temp1_v3)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    dyn->temp2_v3 = gsl_vector_alloc(3);
+   if (!dyn->temp2_v3)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    
    /* Make temporary matrices */
    dyn->temp3x3_1 = gsl_matrix_alloc(3,3);
+   if (!dyn->temp3x3_1)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    dyn->temp3x3_2 = gsl_matrix_alloc(3,3);
+   if (!dyn->temp3x3_2)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    dyn->temp3xn_1 = gsl_matrix_alloc(3,dyn->dof);
+   if (!dyn->temp3xn_1)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_dynamics_destroy(dyn);
+      return 0;
+   }
    
    return dyn;
 }
@@ -231,43 +399,62 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
 int bt_dynamics_destroy( struct bt_dynamics * dyn )
 {
    int i;
+   
+   if (dyn->temp1_v3)
+      gsl_vector_free(dyn->temp1_v3);
+   if (dyn->temp2_v3)
+      gsl_vector_free(dyn->temp2_v3);
+   if (dyn->temp3x3_1)
+      gsl_matrix_free(dyn->temp3x3_1);
+   if (dyn->temp3x3_2)
+      gsl_matrix_free(dyn->temp3x3_2);
+   if (dyn->temp3xn_1)
+      gsl_matrix_free(dyn->temp3xn_1);
+   
    for (i=0; i<dyn->nlinks; i++)
+   if (dyn->link_array[i])
    {
       struct bt_dynamics_link * link;
       link = dyn->link_array[i];
       
-      gsl_vector_free(link->com);
-      gsl_matrix_free(link->I);
+      if (link->com)
+         gsl_vector_free(link->com);
+      if (link->I)
+         gsl_matrix_free(link->I);
       
-      gsl_vector_free(link->omega);
-      gsl_vector_free(link->alpha);
-      gsl_vector_free(link->a);
+      if (link->omega)
+         gsl_vector_free(link->omega);
+      if (link->alpha)
+         gsl_vector_free(link->alpha);
+      if (link->a)
+         gsl_vector_free(link->a);
       
-      gsl_vector_free(link->omega_prev);
-      gsl_vector_free(link->f_next);
+      if (link->omega_prev)
+         gsl_vector_free(link->omega_prev);
+      if (link->f_next)
+         gsl_vector_free(link->f_next);
       
-      gsl_vector_free(link->fnet);
-      gsl_vector_free(link->tnet);
-      gsl_vector_free(link->f);
-      gsl_vector_free(link->t);
+      if (link->fnet)
+         gsl_vector_free(link->fnet);
+      if (link->tnet)
+         gsl_vector_free(link->tnet);
+      if (link->f)
+         gsl_vector_free(link->f);
+      if (link->t)
+         gsl_vector_free(link->t);
       
       if (link->com_jacobian)
-      {
          gsl_matrix_free(link->com_jacobian);
+      if (link->com_jacobian_linear)
          free(link->com_jacobian_linear);
+      if (link->com_jacobian_angular)
          free(link->com_jacobian_angular);
-      }
       
       free(link);
    }
-   free(dyn->link_array);
    
-   free(dyn->temp1_v3);
-   free(dyn->temp2_v3);
-   free(dyn->temp3x3_1);
-   free(dyn->temp3x3_2);
-   free(dyn->temp3xn_1);
-   
+   if (dyn->link_array)
+      free(dyn->link_array);
    free(dyn);
    return 0;
 }

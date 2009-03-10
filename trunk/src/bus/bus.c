@@ -37,7 +37,8 @@
 #include <stdlib.h> /* For malloc(), free() */
 
 /* Private functions */
-static struct bt_bus_properties * initPropertyDefs(long firmwareVersion);
+static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
+static int prop_defs_destroy(struct bt_bus_properties * p);
 static int retrieve_puck_accelerations( struct bt_bus * bus );
 static int retrieve_puck_positions( struct bt_bus * bus );
 
@@ -65,18 +66,24 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
 {
    struct bt_bus * bus;
    bus = (struct bt_bus *) malloc(sizeof(struct bt_bus));
+   if (!bus)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
    
    /* Initialize */
+   bus->dev = 0;
    bus->port = 0;
    bus->num_pucks = 0;
    bus->pucks_size = 0;
-   bus->puck = NULL;
-   bus->safety_puck = NULL;
-   bus->p = NULL;
+   bus->puck = 0;
+   bus->safety_puck = 0;
+   bus->p = 0;
    bus->first_pos = 1;
    bus->first_acc = 1;
    bus->groups_size = 0;
-   bus->group = NULL;
+   bus->group = 0;
    
    /* Save parameters */
    bus->update_type = update_type;
@@ -121,26 +128,45 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
       can_iterate_start(bus->dev);
       while (can_iterate_next(bus->dev,&id,&status))
       {
+         /* Initialize proprty definitions */
          if (!(bus->p))
          {
             long fw_vers;
             /* error? */
             can_get_property(bus->dev, id, 0, &fw_vers); /* Get the firmware version*/
-            bus->p = initPropertyDefs(fw_vers);
+            bus->p = prop_defs_create(fw_vers);
+            if (!bus->p)
+            {
+               syslog(LOG_ERR,"%s: Could not initialize property definitions.",__func__);
+               bt_bus_destroy(bus);
+               return 0;
+            }
          }
          if (id == SAFETY_PUCK_ID)
          {
             struct bt_bus_safety_puck * puck;
+            if (bus->safety_puck)
+            {
+               syslog(LOG_ERR,"%s: More than one safety puck found!.",__func__);
+               bt_bus_destroy(bus);
+               return 0;
+            }
             if (status != STATUS_READY)
             {
                syslog(LOG_ERR,
-                      "The safety module on port %d is not functioning properly",
-                      bus->port);
+                      "%s: The safety module on port %d is not functioning properly",
+                      __func__,bus->port);
                break;
             }
             /* Make a new safety puck */
             syslog(LOG_ERR,"Found a safety puck!\n");
             puck = (struct bt_bus_safety_puck *) malloc(sizeof(struct bt_bus_safety_puck));
+            if (!puck)
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               bt_bus_destroy(bus);
+               return 0;
+            }
             puck->id = id;
             bus->safety_puck = puck;
          }
@@ -159,8 +185,14 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             }
             /* Make a new puck */
             puck = (struct bt_bus_puck *) malloc(sizeof(struct bt_bus_puck));
+            if (!puck)
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               bt_bus_destroy(bus);
+               return 0;
+            }
             puck->id = id;
-            /* Make sure the puck is in IDLE mode*/
+            /* Make sure the puck is in IDLE mode */
             can_set_property(bus->dev, id, bus->p->MODE, FALSE, MODE_IDLE);
             /* Fill the puck structure */
             can_get_property(bus->dev, id, bus->p->CTS, &reply);
@@ -198,6 +230,12 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             {
                struct bt_bus_group * group;
                group = (struct bt_bus_group *) malloc(sizeof(struct bt_bus_group));
+               if (!group)
+               {
+                  syslog(LOG_ERR,"%s: Out of memory.",__func__);
+                  bt_bus_destroy(bus);
+                  return 0;
+               }
                parr_set_group(&(bus->group), &(bus->groups_size), puck->gid, group );
             }
             
@@ -219,11 +257,15 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
 int bt_bus_destroy( struct bt_bus * bus )
 {
    int i;
+   if (bus->p) prop_defs_destroy(bus->p);
+   if (bus->safety_puck) free(bus->safety_puck);
+   for (i=0; i<bus->groups_size; i++)
+      if (bus->group[i]) free(bus->group[i]);
+   if (bus->group) free(bus->group);
    for (i=0; i<bus->pucks_size; i++)
       if (bus->puck[i]) free(bus->puck[i]);
-   free(bus->puck);
-   if (bus->safety_puck) free(bus->safety_puck);
-   can_destroy(bus->dev);
+   if (bus->puck) free(bus->puck);
+   if (bus->dev) can_destroy(bus->dev);
    free(bus);
    return 0;
 }
@@ -450,12 +492,17 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
    return 0;
 }
 
-static struct bt_bus_properties * initPropertyDefs(long firmwareVersion)
+static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
 {
    struct bt_bus_properties * p;
    int i;
    
    p = (struct bt_bus_properties *) malloc(sizeof(struct bt_bus_properties));
+   if (!p)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
    
    i = 0;
    if(firmwareVersion < 40)
@@ -734,6 +781,12 @@ static struct bt_bus_properties * initPropertyDefs(long firmwareVersion)
    can_set_max_property(p->PROP_END);
    
    return p;
+}
+
+static int prop_defs_destroy(struct bt_bus_properties * p)
+{
+   free(p);
+   return 0;
 }
 
 /*======================================================================*

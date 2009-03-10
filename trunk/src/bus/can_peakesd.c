@@ -158,19 +158,34 @@ static void allowMessage(struct can_device * dev, int id, int mask)
 
 struct can_device * can_create(int port)
 {
-   long  retvalue;
+   long  err;
 #ifdef CANTYPE_PEAKISA
    long  pPort;
    int   pIrq;
 #endif
-   /*int   i;*/
 
    /*btrt_mutex_create(&commMutex);
    //btrt_mutex_init(&commMutex[bus]);*/
    struct can_device * dev;
    dev = (struct can_device *) malloc(sizeof(struct can_device));
+   if (!dev)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
+    
+   /* Initialize */
+   dev->handle = 0;
+   dev->mutex = 0;
+   dev->iterator = 0;
     
    dev->mutex = bt_os_mutex_create(BT_OS_RT);
+   if (!dev->mutex)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      can_destroy(dev);
+      return 0;
+   }
    
    /*assign ports and irqs to buses *needs to be updated to read ports from cat /proc/pcan/*/
 #ifdef CANTYPE_PEAKISA
@@ -186,45 +201,41 @@ struct can_device * can_create(int port)
    }
    else
    {
-      syslog(LOG_ERR, "initCAN: incorrect bus number, cannot open port %d", port);
-      return NULL;
+      syslog(LOG_ERR, "%s: incorrect bus number, cannot open port %d", __func__,port);
+      can_destroy(dev);
+      return 0;
    }
 
    dev->handle = CAN_Open(HW_ISA_SJA, pPort, pIrq);
    if (!dev->handle)
    {
-      syslog(LOG_ERR, "initCAN(): CAN_Open(): cannot open device with");
-      syslog(LOG_ERR, "type=isa, port=%ld, irq=%d", pPort, pIrq);
-      bt_os_mutex_destroy(dev->mutex);
-      free(dev);
-      return NULL;
+      syslog(LOG_ERR, "%s: CAN_Open(): cannot open device with type=isa, port=%ld, irq=%d", __func__, pPort, pIrq);
+      can_destroy(dev);
+      return 0;
    }
-#endif
+#endif /* CANTYPE_PEAKISA */
 
 #ifdef CANTYPE_PEAKPCI
    dev->handle = CAN_Open(HW_PCI, (port + 1));
    if (dev->handle)
    {
-      syslog(LOG_ERR, "initCAN(): CAN_Open(): cannot open device with");
-      syslog(LOG_ERR, "type=pci, port=%d", port);
-      bt_os_mutex_destroy(dev->mutex);
-      free(dev);
-      return NULL;
+      syslog(LOG_ERR, "%s: CAN_Open(): cannot open device with type=pci, port=%d", __func__, port);
+      can_destroy(dev);
+      return 0;
    }
-#endif
+#endif /* CANTYPE_PEAKPCI */
       
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
 
    /* Clear Status */
    CAN_Status(dev->handle);
 
-   retvalue = CAN_Init(dev->handle, CAN_BAUD_1M, CAN_INIT_TYPE_ST);
-   if (retvalue)
+   err = CAN_Init(dev->handle, CAN_BAUD_1M, CAN_INIT_TYPE_ST);
+   if (err)
    {
-      syslog(LOG_ERR, "initCAN(): CAN_Init() failed with %d", errno);
-      bt_os_mutex_destroy(dev->mutex);
-      free(dev);
-      return NULL;
+      syslog(LOG_ERR, "%s: CAN_Init() failed with %d,", __func__,errno);
+      can_destroy(dev);
+      return 0;
    }
    
    CAN_ResetFilter(dev->handle);
@@ -234,29 +245,27 @@ struct can_device * can_create(int port)
 
 #ifdef CANTYPE_ESD
    /*Opening can for esd.*/
-   retvalue = canOpen(port, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT, RX_TIMEOUT, &(dev->handle));
+   err = canOpen(port, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT, RX_TIMEOUT, &(dev->handle));
    /*retvalue = canOpen(bus, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT, RX_TIMEOUT, &canDev[bus]);*/
-   if(retvalue != NTCAN_SUCCESS)
+   if(err != NTCAN_SUCCESS)
    {
-      syslog(LOG_ERR, "initCAN(): canOpen() failed with error %ld", retvalue);
-      bt_os_mutex_destroy(dev->mutex);
-      free(dev);
-      return NULL;
+      syslog(LOG_ERR, "%s: canOpen() failed with error %ld", __func__, err);
+      can_destroy(dev);
+      return 0;
    }
 
-   retvalue = canSetBaudrate(dev->handle, 0); /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
-   if(retvalue != 0)
+   err = canSetBaudrate(dev->handle, 0); /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
+   if(err != 0)
    {
-      syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld", retvalue);
-      bt_os_mutex_destroy(dev->mutex);
-      free(dev);
-      return NULL;
+      syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld", err);
+      can_destroy(dev);
+      return 0;
    }
    
    allowMessage(dev, 0x0000, 0x03E0); /* Messages sent directly to host*/
    allowMessage(dev, 0x0403, 0x03E0); /* Group 3 messages*/
    allowMessage(dev, 0x0406, 0x03E0); /* Group 6 messages*/
-#endif
+#endif /* CANTYPE_ESD */
 #if 0
    /* Intialize filter/mask */
    for(i = 0; i < MAX_FILTERS; i++){
@@ -294,6 +303,7 @@ void can_destroy(struct can_device * dev)
 #endif
    bt_os_mutex_destroy(dev->mutex);
    free(dev);
+   return;
 }
 
 

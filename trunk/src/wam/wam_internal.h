@@ -23,8 +23,6 @@
 #ifndef BT_WAM_INTERNAL_H
 #define BT_WAM_INTERNAL_H
 
-#define WAM_NAME_SIZE (30)
-
 /* Include the bt libraries */
 #include "os.h"
 #include "wambot.h"
@@ -39,6 +37,10 @@
 #include "control_joint.h"
 #include "control_cartesian_xyz.h"
 #include "control_joint_legacy.h"
+
+#define WAMCONFIGDIR "/etc/wam/"
+#define WAMCONFIGDIRLEN (70)
+#define WAMNAMELEN (30)
 
 /* A bt_wam_refgen_list represents the currently loaded refgen;
  * it keeps track of ownership and persistance */
@@ -55,7 +57,7 @@ struct bt_wam_refgen_list
 
 struct bt_wam
 {
-   char name[WAM_NAME_SIZE+1];
+   char name[WAMNAMELEN+1];
 
    /* The WAM control stuff is in a separate realtime thread;
     * this is for synchronization. */

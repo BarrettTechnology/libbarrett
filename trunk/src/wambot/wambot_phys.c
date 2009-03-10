@@ -70,7 +70,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
 {
    int err;
    struct bt_wambot_phys * wambot;
-   struct bt_wambot * base;
+   int n;
    
    /* Check arguments */
    if (config == 0) return 0;
@@ -82,16 +82,15 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       return 0;
    }
-   base = (struct bt_wambot *) wambot;
     
    /* Initialize to zeros */
-   base->jtorque = 0;
-   base->jposition = 0;
-   base->jvelocity = 0;
-   base->jacceleration = 0;
-   base->home = 0;
-   base->update = &update;
-   base->setjtor = &setjtor;
+   wambot->base.jtorque = 0;
+   wambot->base.jposition = 0;
+   wambot->base.jvelocity = 0;
+   wambot->base.jacceleration = 0;
+   wambot->base.home = 0;
+   wambot->base.update = &update;
+   wambot->base.setjtor = &setjtor;
    
    wambot->bus = 0;
    wambot->zeromag = 0;
@@ -108,9 +107,9 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       config_setting_t * setting;
       
       setting = config_setting_get_member( config, "bus" );
-      if (setting == 0)
+      if (!setting)
       {
-         syslog(LOG_ERR,"%s: No bus in configuration.\n",__func__);
+         syslog(LOG_ERR,"%s: No bus in configuration.",__func__);
          bt_wambot_phys_destroy(wambot);
          return 0;
       }
@@ -119,47 +118,53 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_POS_DIFF );
       if (!wambot->bus)
       {
-         syslog(LOG_ERR,"%s: Could not create the bus.\n",__func__);
+         syslog(LOG_ERR,"%s: Could not create the bus.",__func__);
          bt_wambot_phys_destroy(wambot);
          return 0;
       }
 
       /* Grab the degrees-of-freedom */
       if ( !(setting = config_setting_get_member(config,"dof"))
-          || !(base->dof = config_setting_get_int(setting) ) )
+          || !(wambot->base.dof = config_setting_get_int(setting) ) )
       {
-         syslog(LOG_ERR,"%s: No (or zero) dof in configuration.\n",__func__);
+         syslog(LOG_ERR,"%s: No (or zero) dof in configuration.",__func__);
          bt_wambot_phys_destroy(wambot);
          return 0; 
       }
    }
    
+   n = wambot->base.dof;
+   
    /* Make sure we have pucks with the IDs we expect */
-
-   /* Communication with actuators */
-   base->jtorque = gsl_vector_calloc( base->dof );
-   base->jposition = gsl_vector_calloc( base->dof );
-   base->jvelocity = gsl_vector_calloc( base->dof );
-   base->jacceleration = gsl_vector_calloc( base->dof );
    
-   /* Physical properties to be read from config file */
-   base->home = gsl_vector_calloc( base->dof );
-   wambot->zeromag = gsl_vector_calloc( base->dof );
-   wambot->j2mp = gsl_matrix_calloc(base->dof, base->dof);
+   /* Allocate vectors */
+   if ( 0
+       /* Communication with actuators */
+       || !( wambot->base.jtorque       = gsl_vector_calloc(n) )
+       || !( wambot->base.jposition     = gsl_vector_calloc(n) )
+       || !( wambot->base.jvelocity     = gsl_vector_calloc(n) )
+       || !( wambot->base.jacceleration = gsl_vector_calloc(n) )
+       /* Physical properties to be read from config file */
+       || !( wambot->base.home          = gsl_vector_calloc(n) )
+       || !( wambot->zeromag            = gsl_vector_calloc(n) )
+       || !( wambot->j2mp             = gsl_matrix_calloc(n,n) )
+       /* Constant cache stuff computed from config file stuff above */
+       || !( wambot->m2jp             = gsl_matrix_calloc(n,n) )
+       || !( wambot->j2mt             = gsl_matrix_calloc(n,n) )
+       /* temporary storage locations */
+       || !( wambot->mposition          = gsl_vector_calloc(n) ) /*rad*/
+       || !( wambot->mvelocity          = gsl_vector_calloc(n) ) /*rad/s*/
+       || !( wambot->macceleration      = gsl_vector_calloc(n) ) /*rad/s/s*/
+       || !( wambot->mtorque            = gsl_vector_calloc(n) ) /*Nm*/
+   ) {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_wambot_phys_destroy(wambot);
+      return 0;
+   }
    
-   /* Constant cache stuff computed from config file stuff above */
-   wambot->m2jp = gsl_matrix_calloc(base->dof, base->dof);
-   wambot->j2mt = gsl_matrix_calloc(base->dof, base->dof);
-   
-   /* temporary storage locations */
-   wambot->mposition = gsl_vector_calloc( base->dof ); /*rad*/
-   wambot->mvelocity = gsl_vector_calloc( base->dof ); /*rad/s*/
-   wambot->macceleration = gsl_vector_calloc( base->dof ); /*rad/s/s*/
-   wambot->mtorque = gsl_vector_calloc( base->dof ); /*Nm*/
-     
-   /* parse from config file */
+   /* Parse values from config file */
    /* NOTE - DO BETTER ERROR CHECKING HERE! */
-   err = bt_gsl_fill_vector(base->home, config, "home");
+   err = bt_gsl_fill_vector(wambot->base.home, config, "home");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
    err = bt_gsl_fill_vector(wambot->zeromag, config, "zeromag");
    if (err) { printf("No zeromag entry found.\n"); }
@@ -172,8 +177,21 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       gsl_permutation * p;
       int signum;
       
-      lu = gsl_matrix_alloc(base->dof, base->dof);
-      p = gsl_permutation_alloc(base->dof);
+      lu = gsl_matrix_alloc(n, n);
+      if (!lu)
+      {
+         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         bt_wambot_phys_destroy(wambot);
+         return 0;
+      }
+      p = gsl_permutation_alloc(n);
+      if (!p)
+      {
+         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         gsl_matrix_free(lu);
+         bt_wambot_phys_destroy(wambot);
+         return 0;
+      }
       
       /* m2jp = inv(j2mp) */
       gsl_matrix_memcpy(lu,wambot->j2mp);
@@ -190,6 +208,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    }
     
    /* note - SetEngrUnits() defaults to 1; we shouldn't touch it here. */
+   
    {
       /* Zero the WAM */
       long reply;
@@ -198,7 +217,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       if(reply) {
          syslog(LOG_ERR, "WAM was already zeroed");
       } else {
-         DefineWAMpos(wambot, base->home); /* Assume we're exactly home */
+         DefineWAMpos(wambot, wambot->base.home); /* Assume we're exactly home */
          bt_bus_set_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, 1, 1);
          /*SetByID(wam->bus, SAFETY_MODULE, ZERO, 1);*/ /* 0 = Joint velocity, 1 = Tip velocity */
          syslog(LOG_ERR, "WAM zeroed by application");
@@ -211,6 +230,8 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
 int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
 {
    struct bt_wambot * base = (struct bt_wambot *) wambot;
+   
+   /* Free vectors */
    
    if (base->jtorque) gsl_vector_free( base->jtorque );
    if (base->jposition) gsl_vector_free( base->jposition );
@@ -229,7 +250,8 @@ int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
    if (wambot->macceleration) gsl_vector_free( wambot->macceleration );
    if (wambot->mtorque) gsl_vector_free( wambot->mtorque );
    
-   bt_bus_destroy(wambot->bus);
+   if (wambot->bus)
+      bt_bus_destroy(wambot->bus);
    
    free(wambot);
    return 0;

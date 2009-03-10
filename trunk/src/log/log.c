@@ -223,12 +223,13 @@ int bt_log_destroy( struct bt_log * log )
 
       fwrite(log->buf, log->block_size, log->buf_block_idx, log->file);  /*Write all the data in binary form*/
       log->chunk_idx++;                                        /*ncrement the record index*/
+      
+      free(log->buf_A);
+      free(log->buf_B);
+      fclose(log->file);
    }
    
    free(log->data);
-   free(log->buf_A);
-   free(log->buf_B);
-   fclose(log->file);
    free(log);
    return 0;
 }
@@ -297,7 +298,7 @@ int bt_log_flush( struct bt_log * log )
    
    if (!log->initialized)
    {
-      syslog(LOG_ERR,"bt_log_flush: logger not yet initialized.");
+      syslog(LOG_ERR,"%s: logger not yet initialized.",__func__);
       return -1;
    }
    

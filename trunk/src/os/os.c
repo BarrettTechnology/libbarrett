@@ -457,6 +457,11 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
    
    /* Allocate space for a new thread */
    thd = (struct bt_os_thread *) malloc(sizeof(struct bt_os_thread));
+   if (!thd)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
    
    /* Save the extra stuff for the thread ..
     * Note that we need to do this /before/ we spin off the thread,
@@ -470,8 +475,16 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
    thd->period = 0.0; /* Here just in case we want to wait_period in non-real-time mode */
    thd->last_called = 0;
 #endif
-   thd->mutex = bt_os_mutex_create(type);
+   thd->mutex = 0;
    thd->type = type;
+   
+   thd->mutex = bt_os_mutex_create(type);
+   if (!thd->mutex)
+   {
+      syslog(LOG_ERR,"%s: Could not create thread mutex.",__func__);
+      bt_os_thread_destroy(thd);
+      return 0;
+   }
    
    /* Initialize sys-dependent stuff */
 #ifdef RTSYS_XENOMAI
@@ -480,18 +493,26 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
       int ret;
       RT_TASK * sys;
       sys = (RT_TASK *) malloc(sizeof(RT_TASK));
+      if (!sys)
+      {
+         syslog(LOG_ERR, "%s: Out of memory.", __func__);
+         bt_os_thread_destroy(thd);
+         return 0;
+      } 
       thd->sys = (void *)sys;
       ret = rt_task_create(sys, name, 0, priority, T_JOINABLE);
       if(ret)
       {
-         syslog(LOG_ERR, "btthread_xenomai_create: Could not create task! %d", ret);
-         exit(-1);
+         syslog(LOG_ERR, "%s: Could not create task! %d", __func__,ret);
+         bt_os_thread_destroy(thd);
+         return 0;
       }
       ret = rt_task_start(sys, (void (*)(void *))funcptr, (void *)thd);
       if(ret)
       {
-         syslog(LOG_ERR, "btthread_xenomai_create: Could not start task! %d", ret);
-         exit(-1);
+         syslog(LOG_ERR, "%s: Could not start task! %d", __func__,ret);
+         bt_os_thread_destroy(thd);
+         return 0;
       }
    }
    else
@@ -499,6 +520,12 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
    {
       struct pthd * sys;
       sys = (struct pthd *) malloc(sizeof(struct pthd));
+      if (!sys)
+      {
+         syslog(LOG_ERR, "%s: Out of memory.", __func__);
+         bt_os_thread_destroy(thd);
+         return 0;
+      }
       pthread_attr_init(&( sys->attr ));
       pthread_attr_setschedpolicy( &(sys->attr), SCHED_FIFO);
       pthread_attr_getschedparam( &(sys->attr), &(sys->param));
@@ -508,11 +535,11 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
       
       pthread_create(&(sys->thd_id), &(sys->attr),
                      (void * (*)(void *))funcptr, (void *)thd);
-      syslog(LOG_ERR,"Made thread ID: %d",(int)sys->thd_id);
-      if (sys->thd_id == -1)
+      if ((int)sys->thd_id == -1)
       {
-         syslog(LOG_ERR,"btthread_create:Couldn't start control thread!");
-         exit(-1);
+         syslog(LOG_ERR, "%s: Couldn't start thread.", __func__);
+         bt_os_thread_destroy(thd);
+         return 0;
       }
    }
    
@@ -523,6 +550,7 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
       exit(-1);
    }
 #endif
+   
    return thd;
 }
 
@@ -530,10 +558,12 @@ struct bt_os_thread * bt_os_thread_create(enum bt_os_rt_type type, const char * 
 /* All this does (for now!) is free memory */
 int bt_os_thread_destroy(struct bt_os_thread * thd)
 {
-   bt_os_mutex_destroy( thd->mutex );
+   if (thd->mutex)
+      bt_os_mutex_destroy(thd->mutex);
    
-   free( thd->sys );
-   free( thd );
+   if (thd->sys)
+      free(thd->sys);
+   
 
 #ifdef RTSYS_NONE
    if (thread_list_remove(thd))
@@ -543,6 +573,7 @@ int bt_os_thread_destroy(struct bt_os_thread * thd)
    }
 #endif
    
+   free(thd);
    return 0;
 }
 
@@ -788,6 +819,16 @@ struct bt_os_timestat * bt_os_timestat_create(int numchans)
    }
    
    return ts;
+}
+int bt_os_timestat_destroy(struct bt_os_timestat * ts)
+{
+   free(ts->start);
+   free(ts->mins);
+   free(ts->maxs);
+   free(ts->sums);
+   free(ts->sumsqs);
+   free(ts);
+   return 0;
 }
 void bt_os_timestat_start(struct bt_os_timestat * ts)
 {

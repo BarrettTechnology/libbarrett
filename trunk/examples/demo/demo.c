@@ -103,194 +103,168 @@ void sigint_handler()
    going = 0;
 }
 
-void print_mallinfo(struct mallinfo * mi)
-{
-   printf("-------------------\n");
-   printf("   arena: %d\n",mi->arena);
-   printf(" ordblks: %d\n",mi->ordblks);
-   printf("   hblks: %d\n",mi->hblks);
-   printf("  hblkhd: %d\n",mi->hblkhd);
-   printf("uordblks: %d\n",mi->uordblks);
-   printf("fordblks: %d\n",mi->fordblks);
-   printf("keepcost: %d\n",mi->keepcost);
-   return;
-}
-
 /* Program entry point */
 int main(int argc, char ** argv)
 {
-   int i;
-   struct mallinfo mi;
-   
-   mi = mallinfo();
-   print_mallinfo(&mi);
-   
-   for (i=0; i<10; i++)
+   /* Stuff for starting up the WAM */
+   struct bt_wam * wam;
+
+   /* What to display? */
+   enum {
+      SCREEN_MAIN,
+      SCREEN_HELP
+   } screen;
+
+   /* Lock memory */
+   mlockall(MCL_CURRENT | MCL_FUTURE);
+
+   /* Initialize syslog */
+   openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
+
+   /* Initialize ncurses */
+   initscr();
+   cbreak();
+   noecho();
+   timeout(0);
+   clear();
+   /* Look for (-q) or (-ns) flags?? */
+
+   /* Open the WAM (or WAMs!) */
+   wam = bt_wam_create("wam4");
+   if (!wam)
    {
-
-      /* Stuff for starting up the WAM */
-      struct bt_wam * wam;
-
-      /* What to display? */
-      enum {
-         SCREEN_MAIN,
-         SCREEN_HELP
-      } screen;
-
-      /* Lock memory */
-      mlockall(MCL_CURRENT | MCL_FUTURE);
-
-      /* Initialize syslog */
-      openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
-
-      /* Initialize ncurses */
-      /*initscr();
-      cbreak();
-      noecho();
-      timeout(0);
-      clear();*/
-      /* Look for (-q) or (-ns) flags?? */
-
-      /* Open the WAM (or WAMs!) */
-      wam = bt_wam_create("wam4");
-      if (!wam)
-      {
-         /*endwin();*/
-         closelog();
-         printf("Could not open the WAM.\n");
-         exit(-1);
-      }
-
-      /* Start the demo program ... */
-      screen = SCREEN_MAIN;
-
-      /* Register the ctrl-c interrupt handler
-       * to close the WAM nicely */
-      signal(SIGINT, sigint_handler);
-      /* Loop until Ctrl-C is pressed */
-      going = 0;
-
-      while(going)
-      {
-         
-         /* Clear the screen buffer */
-         clear();
-         
-         /* Display the display or help screen */
-         switch (screen)
-         {
-            int line;
-            char buf[256];
-            case SCREEN_MAIN:
-               line = 0;
-               
-               /* Show HEADER */
-               mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
-               line++;
-
-               /* Show controller name (joint space, cartesian space) */
-               mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam) );
-
-               /* Show GRAVTIY COMPENSATION */
-               mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
-               
-               /* Show HOLDING */
-               mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
-               
-               mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam) );
-               
-               mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
-               
-               mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
-               line++;
-
-               /* Show HAPTICS */
-               
-               /* Show TRAJECTORY */
-               
-               /* Show NAME */
-               
-               /* Show JOINT POSTITION + TORQUE */
-               mvprintw(line++, 0, "J Position : %s", bt_wam_str_jposition(wam,buf) );
-               mvprintw(line++, 0, "J Velocity : %s", bt_wam_str_jvelocity(wam,buf) );
-               mvprintw(line++, 0, "J Torque   : %s", bt_wam_str_jtorque(wam,buf) );
-               line++;
-      #if 0
-               mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
-               line++;
-      #endif
-               /* Show CARTESION POSITION, ROTATION */
-               mvprintw(line++, 0, "C Position : %s", bt_wam_str_cposition(wam,buf) );
-               
-               mvprintw(line,   0, "C Rotation :");
-               mvprintw(line++, 13, "%s", bt_wam_str_crotation_r1(wam,buf) );
-               mvprintw(line++, 13, "%s", bt_wam_str_crotation_r2(wam,buf) );
-               mvprintw(line++, 13, "%s", bt_wam_str_crotation_r3(wam,buf) );
-               line++;
-
-               break;
-            case SCREEN_HELP:
-               line = 0;
-               mvprintw(line++, 0, "Help Screen - (press 'h' to toggle)");
-               line++;
-               mvprintw(line++, 0, "g - toggle gravity compensation");
-               break;
-         }
-         
-         /* Display the screen */
-         refresh();
-         
-         /* Grab a key */
-         switch (btkey_get())
-         {
-            case 'x':
-            case 'X':
-               going = 0;
-               break;
-            case BTKEY_TAB:
-               bt_wam_controller_toggle(wam);
-               break;
-            case 'g':
-               bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
-               break;
-            case 'h':
-               if ( bt_wam_is_holding(wam) )
-                  bt_wam_idle(wam);
-               else
-                  bt_wam_hold(wam);
-               break;
-            case 'm':
-               bt_wam_movehome(wam);
-               break;
-            case 'Y':
-               bt_wam_teach_start(wam);
-               break;
-            case 'y':
-               bt_wam_teach_end(wam);
-               break;
-            case '.':
-               bt_wam_playback(wam);
-               break;
-            default:
-               break;
-            }
-         
-         /* Slow this loop down to about 10Hz */
-         bt_os_usleep(100000); /* Wait a moment*/
-      }
-
-      /* Close the WAM */
-      bt_wam_destroy(wam);
-
-      /* Close ncurses */
       /*endwin();*/
-
-      /* Close syslog */
       closelog();
-
-      mi = mallinfo();
-      print_mallinfo(&mi);
-      
+      printf("Could not open the WAM.\n");
+      exit(-1);
    }
+
+   /* Start the demo program ... */
+   screen = SCREEN_MAIN;
+
+   /* Register the ctrl-c interrupt handler
+    * to close the WAM nicely */
+   signal(SIGINT, sigint_handler);
+   /* Loop until Ctrl-C is pressed */
+   going = 1;
+
+   while(going)
+   {
+      
+      /* Clear the screen buffer */
+      clear();
+      
+      /* Display the display or help screen */
+      switch (screen)
+      {
+         int line;
+         char buf[256];
+         case SCREEN_MAIN:
+            line = 0;
+            
+            /* Show HEADER */
+            mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
+            line++;
+
+            /* Show controller name (joint space, cartesian space) */
+            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam) );
+
+            /* Show GRAVTIY COMPENSATION */
+            mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
+            
+            /* Show HOLDING */
+            mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
+            
+            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam) );
+            
+            mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
+            
+            mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
+            line++;
+
+            /* Show HAPTICS */
+            
+            /* Show TRAJECTORY */
+            
+            /* Show NAME */
+            
+            /* Show JOINT POSTITION + TORQUE */
+            mvprintw(line++, 0, "J Position : %s", bt_wam_str_jposition(wam,buf) );
+            mvprintw(line++, 0, "J Velocity : %s", bt_wam_str_jvelocity(wam,buf) );
+            mvprintw(line++, 0, "J Torque   : %s", bt_wam_str_jtorque(wam,buf) );
+            line++;
+   #if 0
+            mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
+            line++;
+   #endif
+            /* Show CARTESION POSITION, ROTATION */
+            mvprintw(line++, 0, "C Position : %s", bt_wam_str_cposition(wam,buf) );
+            
+            mvprintw(line,   0, "C Rotation :");
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r1(wam,buf) );
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r2(wam,buf) );
+            mvprintw(line++, 13, "%s", bt_wam_str_crotation_r3(wam,buf) );
+            line++;
+
+            break;
+         case SCREEN_HELP:
+            line = 0;
+            mvprintw(line++, 0, "Help Screen - (press 'h' to toggle)");
+            line++;
+            mvprintw(line++, 0, "g - toggle gravity compensation");
+            break;
+      }
+      
+      /* Display the screen */
+      refresh();
+      
+      /* Grab a key */
+      switch (btkey_get())
+      {
+         case 'x':
+         case 'X':
+            going = 0;
+            break;
+         case BTKEY_TAB:
+            bt_wam_controller_toggle(wam);
+            break;
+         case 'g':
+            bt_wam_setgcomp(wam, bt_wam_isgcomp(wam) ? 0 : 1 );
+            break;
+         case 'h':
+            if ( bt_wam_is_holding(wam) )
+               bt_wam_idle(wam);
+            else
+               bt_wam_hold(wam);
+            break;
+         case 'm':
+            bt_wam_movehome(wam);
+            break;
+         case 'Y':
+            bt_wam_teach_start(wam);
+            break;
+         case 'y':
+            bt_wam_teach_end(wam);
+            break;
+         case '.':
+            bt_wam_playback(wam);
+            break;
+         default:
+            break;
+         }
+      
+      /* Slow this loop down to about 10Hz */
+      bt_os_usleep(100000); /* Wait a moment*/
+   }
+
+   /* Close the WAM */
+   bt_wam_destroy(wam);
+
+   /* Close ncurses */
+   endwin();
+
+   /* Close syslog */
+   closelog();
+
    return 0;
 }

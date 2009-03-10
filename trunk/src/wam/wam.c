@@ -34,19 +34,12 @@
 
 #include <libconfig.h>
 
-/* Here's a cheat to get rid of duplicate thread names */
-static int thdi = 0;
-static char thdname[5];
-
-#define WAMCONFIGDIR "/etc/wam/"
-
 /* Some global things for timing the threads */
 #define TS \
    T(UPDATE) \
    T(KINEMATICS) \
    T(REFGEN) \
    T(CONTROL) \
-   T(DYNAMICS) \
    T(TEACH) \
    T(GCOMP) \
    T(SETJTOR) \
@@ -108,7 +101,7 @@ struct bt_wam * bt_wam_create(char * wamname)
    
    {
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
-      char filename[100];
+      char filename[WAMCONFIGDIRLEN+WAMNAMELEN+1];
       int err;
       struct config_t cfg;
       
@@ -133,6 +126,7 @@ struct bt_wam * bt_wam_create(char * wamname)
    
    /* OK, no local WAM by that name was found. Try to open over the network ... */
    
+   /* No wam found.*/
    return 0;
 }
 
@@ -141,13 +135,6 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
 {
    struct bt_wam * wam;
    struct setup_helper * helper;
-   
-   /* Check command-line arguments */
-   if (!wamconfig)
-   {
-      syslog(LOG_ERR,"%s: No WAM configuration given.",__func__);
-      return 0;
-   }
    
    /* Set up realtime stuff */
    /* Allow hard real time process scheduling for non-root users */
@@ -161,23 +148,41 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       return 0;
    }
    
-   /* Save the name */
-   strncpy(wam->name, wamname, WAM_NAME_SIZE);
-   wam->name[WAM_NAME_SIZE] = '\0'; /* Not sure if we need this ... */
-   
+   /* Initialize the wam */
+   strncpy(wam->name, wamname, WAMNAMELEN);
+   wam->name[WAMNAMELEN] = '\0'; /* Not sure if we need this ... */
+   wam->gcomp = 0;
+   wam->vel = 0.5;
+   wam->acc = 0.5;
+   wam->refgen_list = 0;
+   wam->refgen_current = 0;
+   wam->teach = 0;
    wam->count = 0;
+   wam->ts = 0;
+   wam->rt_thread = 0;
+   wam->nonrt_thread = 0;
    
+   /* Initialize the realtime stuff */
+   wam->wambot = 0;
+   wam->kin = 0;
+   wam->dyn = 0;
+   wam->grav = 0;
+   wam->log = 0;
+   wam->ts_log = 0;
+   wam->con_joint = 0;
+   wam->con_joint_legacy = 0;
+   wam->con_cartesian_xyz = 0;
+   wam->con_list = 0;
+
    /* Spin off the non-realtime log-saving thread */
-   sprintf(thdname,"LOG%d",thdi);
-   wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, thdname, 10, nonrt_thread_function, (void *)wam);
+   wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, "NONRTT", 10, nonrt_thread_function, (void *)wam);
    if (!wam->nonrt_thread)
    {
       syslog(LOG_ERR,"%s: Could not create non-realtime thread.",__func__);
       bt_wam_destroy(wam);
       return 0;
    }
-   syslog(LOG_ERR,"nonrt spun, named %s",thdname);
-   
+
    /* Set up the timer */
    wam->ts = bt_os_timestat_create(TSNUM);
    if (!wam->ts)
@@ -187,14 +192,6 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       return 0;
    }
    
-   /* Set up defaults */
-   wam->gcomp = 0;
-   wam->vel = 0.5;
-   wam->acc = 0.5;
-   wam->refgen_list = 0;
-   wam->refgen_current = 0;
-   wam->teach = 0;
-   
    /* Spin off the realtime thread to set everything up */
    helper = helper_create(wam,wamconfig);
    if (!helper)
@@ -203,9 +200,7 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       bt_wam_destroy(wam);
       return 0;
    }
-   sprintf(thdname,"WAM%d",thdi);
-   syslog(LOG_ERR,"spinning thread |%s| ...",thdname);
-   wam->rt_thread = bt_os_thread_create(BT_OS_RT, thdname, 90, rt_wam, (void *)helper);
+   wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);
    if (!wam->rt_thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime thread.",__func__);
@@ -214,8 +209,6 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
       return 0;
    }
    
-   syslog(LOG_ERR,"... done.");
-   
    /* Wait until the thread is done starting */
    while (!helper->is_setup)
       bt_os_usleep(10000);
@@ -223,13 +216,11 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
    /* Check for setup failure */
    if (helper->setup_failed)
    {
-      syslog(LOG_ERR,"%s: WAM Setup failed.",__func__);
+      syslog(LOG_ERR,"%s: WAM realtime setup failed.",__func__);
       helper_destroy(helper);
       bt_wam_destroy(wam);
       return 0;
    }
-   
-   thdi++;
    
    /* Success! */
    helper_destroy(helper);
@@ -239,13 +230,18 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
 void bt_wam_destroy(struct bt_wam * wam)
 {
    /* Tell the non-realtime thread to exit */
-   bt_os_thread_stop(wam->nonrt_thread);
+   if (wam->nonrt_thread)
+   {
+      bt_os_thread_stop(wam->nonrt_thread);
+      bt_os_thread_destroy(wam->nonrt_thread);
+   }
    
    /* Tell the realtime thread to exit */
-   bt_os_thread_stop(wam->rt_thread);
-   
-   bt_os_thread_destroy(wam->nonrt_thread);
-   bt_os_thread_destroy(wam->rt_thread);
+   if (wam->rt_thread)
+   {
+      bt_os_thread_stop(wam->rt_thread);
+      bt_os_thread_destroy(wam->rt_thread);
+   }
 
    /* Print timer means and variances */
    if (wam->ts)
@@ -266,7 +262,8 @@ void bt_wam_destroy(struct bt_wam * wam)
                 ((int)(mins[i]))/1000,       ((int)(mins[i]))%1000,
                 ((int)(maxs[i]))/1000,       ((int)(maxs[i]))%1000 );
       
-      /* Destroy the timestat (eventually) */
+      /* Destroy the timestat */
+      bt_os_timestat_destroy(wam->ts);
    }
 
 #if 0
@@ -684,6 +681,7 @@ static void rt_wam(struct bt_os_thread * thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime WAM stuff.",__func__);
       helper->setup_failed = 1;
+      helper->is_setup = 1;
       bt_os_thread_exit( thread );
       return;
    }
@@ -694,6 +692,7 @@ static void rt_wam(struct bt_os_thread * thread)
    /* Set velocity safety limit to 2.0 m/s */
    bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, SAFETY_PUCK_ID,
                        ((struct bt_wambot_phys *)(wam->wambot))->bus->p->VL2, 1, 2.0 * 0x1000);
+   /* CHECK RETURN VALUE */
    
    /* Set up the easy-access wam vectors */
    wam->jposition = wam->wambot->jposition;
@@ -712,6 +711,7 @@ static void rt_wam(struct bt_os_thread * thread)
    
    /* OK, start the control loop ... */
    bt_os_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
+   /* CHECK RETURN VALUE */
    
    /* Loop until we're told by destroy() to exit */
    while (!bt_os_thread_done(thread))
@@ -730,7 +730,7 @@ static void rt_wam(struct bt_os_thread * thread)
       if (!wam->count) wam->start_time = time; 
       wam->elapsed_time = time - wam->start_time;
       wam->count++;
-
+      
       /* Grab the current joint positions */
       bt_wambot_update( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_UPDATE);
@@ -784,8 +784,8 @@ static void rt_wam(struct bt_os_thread * thread)
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
       
-      /* TEMP - ask puck 1 for its ID */
 #if 0
+      /* TEMP - ask puck 1 for its ID */
       {
          long val;
          bt_bus_get_property( ((struct bt_wambot_phys *)(wam->wambot))->bus, 1,
@@ -793,13 +793,13 @@ static void rt_wam(struct bt_os_thread * thread)
                               &val );
       }
       bt_os_timestat_trigger(wam->ts,TS_GETP1);
-
+#endif
             
       /* Log data (including timing statistics) */
       bt_log_trigger( wam->log );
       bt_log_trigger( wam->ts_log );
       bt_os_timestat_trigger(wam->ts,TS_LOG);
-#endif
+      
       /* Calculate timing statistics */
       bt_os_timestat_end(wam->ts);
    }
@@ -817,17 +817,6 @@ static int rt_wam_create(struct bt_wam * wam, config_setting_t * wamconfig)
 {
    int err;
    int i;
-   
-   wam->wambot = 0;
-   wam->kin = 0;
-   wam->dyn = 0;
-   wam->grav = 0;
-   wam->log = 0;
-   wam->ts_log = 0;
-   wam->con_joint = 0;
-   wam->con_joint_legacy = 0;
-   wam->con_cartesian_xyz = 0;
-   wam->con_list = 0;
  
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
@@ -965,7 +954,6 @@ static void rt_wam_destroy(struct bt_wam * wam)
       bt_gravity_destroy(wam->grav);
    if (wam->dyn)
       bt_dynamics_destroy(wam->dyn);
-
    if (wam->kin)
       bt_kinematics_destroy(wam->kin);
    if (wam->wambot)
@@ -995,6 +983,4 @@ static void nonrt_thread_function(struct bt_os_thread * thread)
    
    bt_os_thread_exit( thread );
 }
-
-
 
