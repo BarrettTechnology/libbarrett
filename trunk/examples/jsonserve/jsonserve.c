@@ -32,7 +32,10 @@
 /* Woo JSON! */
 #include <json/json.h>
 
-#include <libbt/wam_gw_server.h>
+/*#include <libbt/wam_gw_server.h>*/
+#include <libbt/rpc.h>
+#include <libbt/rpc_tcpjson.h>
+#include <libbt/wam_rpc.h>
 
 /* We have a global flag and signal handler
  * to allow the user to close the program
@@ -46,7 +49,7 @@ void sigint_handler()
 /* Program entry point */
 int main(int argc, char ** argv)
 {
-   struct bt_wam_gw_server * gw;
+   struct bt_rpc_server * rpc;
    
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -54,34 +57,25 @@ int main(int argc, char ** argv)
    /* Initialize syslog */
    openlog("wamgwd", LOG_CONS | LOG_NDELAY, LOG_USER);
    
-   gw = bt_wam_gw_server_create();
-   if (!gw)
+   rpc = bt_rpc_server_create();
+   if (!rpc)
    {
-      printf("could not create wam gw server.\n");
+      printf("could not create rpc server.\n");
       exit(-1);
    }
+   
+   /* Set up the RPC server */
+   bt_rpc_server_add_interface(rpc, bt_wam_rpc);
+   bt_rpc_server_add_listener(rpc, bt_rpc_tcpjson);
 
    /* Loop until Control+C ... */
    going = 1;
    while (going)
    {
-      fd_set read_set;
-      FD_ZERO(&read_set);
-      
-      bt_wam_gw_server_fdset(gw, &read_set);
-
-      /* Wait for activity ... */
-      if (select(FD_SETSIZE, &read_set, NULL, NULL, NULL) < 0)
-      {
-         printf("select() error!");
-         going = 0;
-         break;
-      }
-      
-      bt_wam_gw_server_handle(gw, &read_set);
+      bt_rpc_server_select(rpc);
    }
 
-   bt_wam_gw_server_destroy(gw);
+   bt_rpc_server_destroy(rpc);
    
    /* Close syslog */
    closelog();

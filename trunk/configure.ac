@@ -159,5 +159,6 @@ AC_CONFIG_FILES([
  src/control/Makefile
  src/spline/Makefile
  src/profile/Makefile
+ src/rpc/Makefile
 ])
 AC_OUTPUT
