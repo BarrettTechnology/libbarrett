@@ -19,12 +19,16 @@
 #define bt_rpc_listener_callee_create(l) ((l)->type->listener_callee_create((l)))
 #define bt_rpc_callee_destroy(c) ((c)->type->callee_destroy(c))
 #define bt_rpc_callee_handle(c,s) ((c)->type->callee_handle(c,s))
+#define bt_rpc_caller_create(rt,h) ((rt)->caller_create(h))
+#define bt_rpc_caller_destroy(c) ((c)->type->caller_destroy(c))
+#define bt_rpc_caller_handle(c,fs,f,...) ((c)->type->caller_handle(c,fs,f,__VA_ARGS__))
 
 /* Forward declaration of instances */
 struct bt_rpc_listener;
 struct bt_rpc_callee;
 struct bt_rpc_caller;
 struct bt_rpc_server;
+struct bt_rpc_interface_funcs;
 
 struct bt_rpc_type
 {
@@ -40,6 +44,10 @@ struct bt_rpc_type
    int (* callee_destroy)(struct bt_rpc_callee *);
    int (* callee_handle)(struct bt_rpc_callee *, struct bt_rpc_server *);
    
+   /* Caller functions */
+   struct bt_rpc_caller * (* caller_create)(char * host);
+   int (* caller_destroy)(struct bt_rpc_caller *);
+   int (* caller_handle)(struct bt_rpc_caller *, const struct bt_rpc_interface_funcs * funcs, const char * function, ...);
 };
 
 /* An rpc_listener instance */
@@ -53,7 +61,10 @@ struct bt_rpc_callee
    const struct bt_rpc_type * type;
    int fd;
 };
-
+struct bt_rpc_caller
+{
+   const struct bt_rpc_type * type;
+};
 
 
 
@@ -82,18 +93,12 @@ struct bt_rpc_interface_funcs
    const struct bt_rpc_interface_func * list;
 };
 
-struct bt_rpc_object
-{
-   char name[30];
-   void * vptr;
-};
-
 struct bt_rpc_interface
 {
    const struct bt_rpc_interface_funcs * funcs;
    
    /* We maintain a list of objects created */
-   struct bt_rpc_object ** objects;
+   void ** objects;
    int objects_num;
 };
 
@@ -116,6 +121,10 @@ struct bt_rpc_server
    int callees_num;
 };
 
+/* Functions for caller creation */
+const struct bt_rpc_type * bt_rpc_type_search(char * prefix);
+
+/* Functions for bt_rcp_server */
 struct bt_rpc_server * bt_rpc_server_create();
 int bt_rpc_server_destroy(struct bt_rpc_server * server);
 int bt_rpc_server_add_interface(struct bt_rpc_server * server, const struct bt_rpc_interface_funcs * interface_funcs);
@@ -123,10 +132,10 @@ int bt_rpc_server_add_listener(struct bt_rpc_server * server, const struct bt_rp
 int bt_rpc_server_select(struct bt_rpc_server * server);
 
 /* These are used by callees to do things */
-struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * server, char * funcname);
-const struct bt_rpc_interface_func * bt_rpc_interface_func_lookup(struct bt_rpc_interface * interface, char * funcname);
-int bt_rpc_interface_add_object(struct bt_rpc_interface * interface, char * name, void * vptr);
-void * bt_rpc_interface_lookup_object(struct bt_rpc_interface * interface, char * name);
-int bt_rpc_interface_remove_object(struct bt_rpc_interface * interface, char * name);
+struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * server, const char * funcname);
+const struct bt_rpc_interface_func * bt_rpc_interface_func_lookup(const struct bt_rpc_interface_funcs * funcs, const char * funcname);
+int bt_rpc_interface_object_add(struct bt_rpc_interface * interface, void * vptr);
+int bt_rpc_interface_object_check(struct bt_rpc_interface * interface, void * vptr);
+int bt_rpc_interface_object_remove(struct bt_rpc_interface * interface, void * vptr);
 
 #endif /* BT_RPC_H */

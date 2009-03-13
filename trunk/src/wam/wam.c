@@ -51,11 +51,11 @@
    char * ts_name[] = { TS 0 };
 #undef T
 
-static char str_none[] = "(none)";
+static char proxy_err[] = "(proxy-err)";
 
 /* local function prototypes */
 
-static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_t * wamconfig);
+static struct bt_wam * bt_wam_local_create(char * wamname, config_setting_t * wamconfig);
 
 /* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
  * calls rt_wam_create() and rm_wam_destroy() appropriately. */
@@ -95,15 +95,39 @@ static void helper_destroy(struct setup_helper * helper)
 
 struct bt_wam * bt_wam_create(char * wamname)
 {
-   struct bt_wam * wam;
-   
    /* Does it have a '/' character in it? */
+   char rpctype[100]; /* TODO size */
+   char * sep;
+   char * host;
+   char * rname;
    
+   strcpy(rpctype,wamname);
+   host = 0;
+   rname = 0;
+   
+   sep = strchr(rpctype,':');
+   if (sep && sep[1] == '/' && sep[2] == '/')
+   {
+      *sep = '\0';
+      host = sep + 3;
+      
+      sep = strchr(host,'/');
+      if (sep)
+      {
+         *sep = '\0';
+         rname = sep + 1;
+      }
+   }
+   
+   if (!rname)
    {
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
       char filename[WAMCONFIGDIRLEN+WAMNAMELEN+1];
       int err;
       struct config_t cfg;
+      struct bt_wam * wam;
+      
+      syslog(LOG_ERR,"%s: Opening local wam %s.",__func__,wamname);
       
       strcpy(filename,WAMCONFIGDIR);
       strcat(filename,wamname);
@@ -114,7 +138,7 @@ struct bt_wam * bt_wam_create(char * wamname)
       err = config_read_file(&cfg,filename);
       if (err == CONFIG_TRUE)
       {
-         wam = bt_wam_create_from_config(wamname, config_lookup(&cfg,"wam"));
+         wam = bt_wam_local_create(wamname, config_lookup(&cfg,"wam"));
          config_destroy(&cfg);
          return wam;
       }
@@ -123,15 +147,66 @@ struct bt_wam * bt_wam_create(char * wamname)
              config_error_text(&cfg), config_error_line(&cfg));
       config_destroy(&cfg);
    }
-   
+   else
    /* OK, no local WAM by that name was found. Try to open over the network ... */
+   {
+      int err;
+      const struct bt_rpc_type * rpc_type;
+      struct bt_rpc_caller * rpc_caller;
+      void * obj;
+      struct bt_wam_proxy * wam_proxy;
+      
+      syslog(LOG_ERR,"%s: Opening remote wam, rcp %s, host %s, rname %s.",
+             __func__,rpctype,host,rname);
+      
+      /* Find an rpc type that matches */
+      rpc_type = bt_rpc_type_search(rpctype);
+      if (!rpc_type)
+      {
+         syslog(LOG_ERR,"%s: Could not find rpc type.",__func__);
+         return 0;
+      }
+      
+      /* Create the caller */
+      rpc_caller = bt_rpc_caller_create(rpc_type,host);
+      if (!rpc_caller)
+      {
+         syslog(LOG_ERR,"%s: Could not create caller.",__func__);
+         return 0;
+      }
+      
+      /* Create wam_proxy object, save caller, obj */
+      wam_proxy = (struct bt_wam_proxy *) malloc(sizeof(struct bt_wam_proxy));
+      if (!wam_proxy)
+      {
+         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         bt_rpc_caller_destroy(rpc_caller);
+         return 0;
+      }
+      
+      /* Attempt to open the remote wam */
+      err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_create",rname,&obj);
+      if (err || !obj)
+      {
+         syslog(LOG_ERR,"%s: Could not open remote WAM.",__func__);
+         free(wam_proxy);
+         bt_rpc_caller_destroy(rpc_caller);
+         return 0;
+      }
+      
+      /* Initialize */
+      wam_proxy->type = BT_WAM_PROXY;
+      wam_proxy->caller = rpc_caller;
+      wam_proxy->obj = obj;
+      return (struct bt_wam *)wam_proxy;
+   }
    
    /* No wam found.*/
    return 0;
 }
 
 /* Here are the non-realtime create/destroy functions */
-static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_t * wamconfig)
+static struct bt_wam * bt_wam_local_create(char * wamname, config_setting_t * wamconfig)
 {
    struct bt_wam * wam;
    struct setup_helper * helper;
@@ -151,6 +226,7 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
    /* Initialize the wam */
    strncpy(wam->name, wamname, WAMNAMELEN);
    wam->name[WAMNAMELEN] = '\0'; /* Not sure if we need this ... */
+   wam->type = BT_WAM_LOCAL;
    wam->gcomp = 0;
    wam->vel = 0.5;
    wam->acc = 0.5;
@@ -227,8 +303,16 @@ static struct bt_wam * bt_wam_create_from_config(char * wamname, config_setting_
    return wam;
 }
 
-void bt_wam_destroy(struct bt_wam * wam)
+int bt_wam_destroy(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    /* Tell the non-realtime thread to exit */
    if (wam->nonrt_thread)
    {
@@ -273,7 +357,7 @@ void bt_wam_destroy(struct bt_wam * wam)
 #endif
 
    free(wam);
-   return;
+   return 0;
 }
 
 
@@ -281,35 +365,93 @@ void bt_wam_destroy(struct bt_wam * wam)
 /* String formatting functions */
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+
    return bt_gsl_vector_sprintf(buf,wam->jposition);
 }
+
 char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    return bt_gsl_vector_sprintf(buf,wam->jvelocity);
 }
+
 char * bt_wam_str_jtorque(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    return bt_gsl_vector_sprintf(buf,wam->jtorque);
 }
+
 char * bt_wam_str_cposition(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    return bt_gsl_vector_sprintf(buf,wam->cposition);
 }
+
 char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf)
 {
    gsl_vector_view view;
+   
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    view = gsl_matrix_row(wam->crotation,0);
    return bt_gsl_vector_sprintf(buf,&view.vector);
 }
+
 char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf)
 {
    gsl_vector_view view;
+   
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    view = gsl_matrix_row(wam->crotation,1);
    return bt_gsl_vector_sprintf(buf,&view.vector);
 }
+
 char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
 {
    gsl_vector_view view;
+   
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    view = gsl_matrix_row(wam->crotation,2);
    return bt_gsl_vector_sprintf(buf,&view.vector);
 }
@@ -319,11 +461,27 @@ char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
 /* Here are the asynchronous WAM functions */
 int bt_wam_isgcomp(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    return wam->gcomp;
 }
 
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,onoff,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    wam->gcomp = onoff ? 1 : 0;
    return 0;
 }
@@ -331,6 +489,13 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 int bt_wam_controller_toggle(struct bt_wam * wam)
 {
    int i;
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
    
    for (i=0; i<wam->con_num; i++)
    if (wam->con_list[i] == wam->con_active)
@@ -347,6 +512,14 @@ int bt_wam_controller_toggle(struct bt_wam * wam)
 /* Wrappers around the active controller */
 int bt_wam_idle(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    /* Make sure we're not doing any trajectories */
    wam->refgen_current = 0;
    return bt_control_idle(wam->con_active);
@@ -354,6 +527,14 @@ int bt_wam_idle(struct bt_wam * wam)
 
 int bt_wam_hold(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    /* Make sure we're not doing any trajectories */
    wam->refgen_current = 0;
    return bt_control_hold(wam->con_active);
@@ -361,29 +542,55 @@ int bt_wam_hold(struct bt_wam * wam)
 
 int bt_wam_is_holding(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    return bt_control_is_holding(wam->con_active);
 }
 
-const char * bt_wam_get_current_controller_name(struct bt_wam * wam)
+char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    if (!wam->con_active)
-      return str_none;
+      strcpy(buf,"(none)");
    else
-      return wam->con_active->type->name;
+      strcpy(buf,wam->con_active->type->name);
+   return buf;
 }
 
-const char * bt_wam_get_current_refgen_name(struct bt_wam * wam)
+char * bt_wam_get_current_refgen_name(struct bt_wam * wam, char * buf)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,wam,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+   
    if (!wam->refgen_current)
-      return str_none;
+      strcpy(buf,"(none)");
    else
-      return wam->refgen_current->refgen->type->name;
+      strcpy(buf,wam->refgen_current->refgen->type->name);
+   return buf;
 }
 
 int bt_wam_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen)
 {
    struct bt_wam_refgen_list * refgen_list_element;
    gsl_vector * refgen_start;
+
+   if (wam->type == BT_WAM_PROXY) return -1; /* Could not forward over RPC */
    
    /* Make sure we're in the right mode */
    if (wam->refgen_current) return -1;
@@ -443,18 +650,36 @@ int bt_wam_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen)
 
 int bt_wam_set_velocity(struct bt_wam * wam, double vel)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,vel,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    wam->vel = vel;
    return 0;
 }
 
 int bt_wam_set_acceleration(struct bt_wam * wam, double acc)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,acc,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    wam->acc = acc;
    return 0;
 }
 
 int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
 {
+   if (wam->type == BT_WAM_PROXY) return -1; /* Could not forward over RPC */
+   
    /* Remove any refgens in the list */
    {
       struct bt_wam_refgen_list * refgen_list;
@@ -494,22 +719,54 @@ int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest)
 
 int bt_wam_movehome(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    return bt_wam_moveto(wam,wam->wambot->home);
 }
 
 int bt_wam_moveisdone(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    return (wam->refgen_current) ? 0 : 1;
 }
 
 
 int bt_wam_is_teaching(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    return (wam->teach) ? 1 : 0; 
 }
 
 int bt_wam_teach_start(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    /* Make sure we're in the right mode */
    if (wam->refgen_current) return -1;
    if (wam->teach) return -1;
@@ -553,6 +810,14 @@ int bt_wam_teach_start(struct bt_wam * wam)
 
 int bt_wam_teach_end(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
    if (!wam->teach) return -1;
    wam->teach = 0;
    
@@ -565,6 +830,8 @@ int bt_wam_teach_end(struct bt_wam * wam)
 
 int bt_wam_teach_start_custom(struct bt_wam * wam, struct bt_refgen * refgen)
 {
+   if (wam->type == BT_WAM_PROXY) return -1; /* Could not forward over RPC */
+   
    /* Make sure we're in the right mode */
    if (wam->refgen_current) return -1;
    if (wam->teach) return -1;
@@ -606,6 +873,8 @@ int bt_wam_teach_start_custom(struct bt_wam * wam, struct bt_refgen * refgen)
 
 int bt_wam_teach_end_custom(struct bt_wam * wam)
 {
+   if (wam->type == BT_WAM_PROXY) return -1; /* Could not forward over RPC */
+   
    if (!wam->teach) return -1;
    wam->teach = 0;
    
@@ -614,8 +883,16 @@ int bt_wam_teach_end_custom(struct bt_wam * wam)
 
 int bt_wam_playback(struct bt_wam * wam)
 {
-   struct bt_wam_refgen_list * teachplay;
    gsl_vector * teachplay_start;
+   struct bt_wam_refgen_list * teachplay;
+   
+   if (wam->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
    
    /* Make sure we're not currently teaching */
    if (wam->teach) return 1;

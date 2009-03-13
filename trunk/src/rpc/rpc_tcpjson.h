@@ -15,6 +15,7 @@
 #define PORT 1338
 #define BUFLEN 1023 /* No requests are allowed to be longer than this */
 
+const struct bt_rpc_type bt_rpc_tcpjson_type;
 const struct bt_rpc_type * bt_rpc_tcpjson;
 
 /* A listener instance */
@@ -32,4 +33,12 @@ struct bt_rpc_tcpjson_callee
    
    char writebuf[201]; /* For sending things back */
    char strbuf[101]; /* For library functions that return strings */
+};
+
+struct bt_rpc_tcpjson_caller
+{
+   struct bt_rpc_caller base;
+   int fd;
+   char buf[BUFLEN+1];
+   int buf_already;
 };

@@ -18,7 +18,26 @@
 #include <string.h>
 
 #include "rpc.h"
+#include "rpc_tcpjson.h"
 
+/* List of available types */
+static const struct bt_rpc_type * type_list[] =
+{
+   &bt_rpc_tcpjson_type,
+   0
+};
+
+/* Functions for caller creation */
+const struct bt_rpc_type * bt_rpc_type_search(char * prefix)
+{
+   int i;
+   for (i=0; type_list[i]; i++)
+   if (strcmp(prefix,type_list[i]->name)==0)
+      return type_list[i];
+   return 0;
+}
+
+/* Define what a server is */
 struct bt_rpc_server * bt_rpc_server_create()
 {
    struct bt_rpc_server * s;
@@ -184,15 +203,28 @@ int bt_rpc_server_select(struct bt_rpc_server * s)
    for (i=0; i<s->callees_num; i++)
    if (FD_ISSET(s->callees[i]->fd,&read_set))
    {
-      bt_rpc_callee_handle(s->callees[i],s);
+      err = bt_rpc_callee_handle(s->callees[i],s);
+      if (err == 1)
+      {
+         int j;
+         bt_rpc_callee_destroy(s->callees[i]);
+         for (j=i; j<s->callees_num-1; j++)
+            s->callees[j] = s->callees[j+1];
+         if (s->callees_num > 1)
+            s->callees = (struct bt_rpc_callee **) realloc(s->callees,
+                                                        (s->callees_num-1)*sizeof(struct bt_rpc_callee *));
+         else
+            free(s->callees);
+         /* Handle errors here? */
+         s->callees_num--;
+      }
       /* Handle errors? */
-      /* Handle closes? */
    }
    
    return 0;
 }
 
-struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * s, char * funcname)
+struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * s, const char * funcname)
 {
    int i;
    for (i=0; i<s->interfaces_num; i++)
@@ -201,69 +233,55 @@ struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * 
    return 0;
 }
 
-const struct bt_rpc_interface_func * bt_rpc_interface_func_lookup(struct bt_rpc_interface * interface, char * funcname)
+const struct bt_rpc_interface_func * bt_rpc_interface_func_lookup(const struct bt_rpc_interface_funcs * funcs, const char * funcname)
 {
    int i;
-   for (i=0; interface->funcs->list[i].ptr; i++)
-   if (strcmp(funcname,interface->funcs->list[i].name)==0)
-      return &(interface->funcs->list[i]);
+   for (i=0; funcs->list[i].ptr; i++)
+   if (strcmp(funcname,funcs->list[i].name)==0)
+      return &(funcs->list[i]);
    return 0;
 }
 
-int bt_rpc_interface_add_object(struct bt_rpc_interface * interface, char * name, void * vptr)
+int bt_rpc_interface_object_add(struct bt_rpc_interface * interface, void * vptr)
 {
-   struct bt_rpc_object * o;
-   /* Attempt to make the object */
-   o = (struct bt_rpc_object *) malloc(sizeof(struct bt_rpc_object));
-   if (!o)
-   {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return -1;
-   }
-   /* Initialize */
-   strncpy(o->name,name,29);
-   o->vptr = vptr;
    /* Extend the storage array */
    if (!interface->objects_num)
-      interface->objects = (struct bt_rpc_object **) malloc(sizeof(struct bt_rpc_object *));
+      interface->objects = (void **) malloc(sizeof(void *));
    else
-      interface->objects = (struct bt_rpc_object **) realloc(interface->objects,
-                                                            (interface->objects_num+1)*
-                                                            sizeof(struct bt_rpc_object *));
+      interface->objects = (void **) realloc(interface->objects,
+                                             (interface->objects_num+1)*sizeof(void *));
    if (!interface->objects)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      free(o);
       return -1;
    }
    /* Save the object */
-   interface->objects[interface->objects_num] = o;
+   interface->objects[interface->objects_num] = vptr;
    interface->objects_num++;
    return 0;
 }
 
-void * bt_rpc_interface_lookup_object(struct bt_rpc_interface * interface, char * name)
+int bt_rpc_interface_object_check(struct bt_rpc_interface * interface, void * vptr)
 {
    int i;
    for (i=0; i<interface->objects_num; i++)
-   if (strcmp(interface->objects[i]->name,name)==0)
-      return interface->objects[i]->vptr;
-   return 0;
+   if (vptr == interface->objects[i])
+      return 0;
+   return -1; /* Not found */
 }
 
-int bt_rpc_interface_remove_object(struct bt_rpc_interface * interface, char * name)
+int bt_rpc_interface_object_remove(struct bt_rpc_interface * interface, void * vptr)
 {
    int i;
    for (i=0; i<interface->objects_num; i++)
-   if (strcmp(interface->objects[i]->name,name)==0)
+   if (vptr == interface->objects[i])
    {
       int j;
       for (j=i; j<interface->objects_num-1; j++)
-         interface->objects[j] = interface->objects[j]+1;
+         interface->objects[j] = interface->objects[j+1];
       if (interface->objects_num > 1)
-         interface->objects = (struct bt_rpc_object **) realloc(interface->objects,
-                                                                (interface->objects_num-1)*
-                                                            sizeof(struct bt_rpc_object));
+         interface->objects = (void **) realloc(interface->objects,
+                                                (interface->objects_num-1)*sizeof(void *));
       else
          free(interface->objects);
       /* Ignore error? */

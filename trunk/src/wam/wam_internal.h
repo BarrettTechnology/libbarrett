@@ -37,10 +37,32 @@
 #include "control_joint.h"
 #include "control_cartesian_xyz.h"
 #include "control_joint_legacy.h"
+#include "rpc.h"
+#include "wam_rpc.h"
 
 #define WAMCONFIGDIR "/etc/wam/"
 #define WAMCONFIGDIRLEN (70)
 #define WAMNAMELEN (30)
+
+/* Shortcut for proxy stuff */
+#define bt_wam_proxy_handle(f,w,...) \
+   bt_rpc_caller_handle(((struct bt_wam_proxy *)(w))->caller,bt_wam_rpc, \
+                        (f),((struct bt_wam_proxy *)(w))->obj,__VA_ARGS__)
+
+enum bt_wam_type
+{
+   BT_WAM_LOCAL,
+   BT_WAM_PROXY
+};
+
+struct bt_wam_proxy
+{
+   /* This tells us if it's a local or RPC proxy wam */
+   enum bt_wam_type type;
+   
+   struct bt_rpc_caller * caller;
+   void * obj;
+};
 
 /* A bt_wam_refgen_list represents the currently loaded refgen;
  * it keeps track of ownership and persistance */
@@ -57,7 +79,10 @@ struct bt_wam_refgen_list
 
 struct bt_wam
 {
-   char name[WAMNAMELEN+1];
+   /* This tells us if it's a local or RPC proxy wam */
+   enum bt_wam_type type;
+   
+   char name[WAMNAMELEN+1]; /* Do we even need this? */
 
    /* The WAM control stuff is in a separate realtime thread;
     * this is for synchronization. */

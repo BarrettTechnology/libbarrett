@@ -29,10 +29,6 @@
 /* Package Dependencies */
 #include <syslog.h>
 
-/* Woo JSON! */
-#include <json/json.h>
-
-/*#include <libbt/wam_gw_server.h>*/
 #include <libbt/rpc.h>
 #include <libbt/rpc_tcpjson.h>
 #include <libbt/wam_rpc.h>

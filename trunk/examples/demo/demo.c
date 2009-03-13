@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
    mlockall(MCL_CURRENT | MCL_FUTURE);
 
    /* Initialize syslog */
-   openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
+   openlog("demo", LOG_CONS | LOG_NDELAY, LOG_USER);
 
    /* Initialize ncurses */
    initscr();
@@ -130,7 +130,7 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
 
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create("wam4");
+   wam = bt_wam_create("tcp+json://localhost/wam4");
    if (!wam)
    {
       /*endwin();*/
@@ -167,15 +167,15 @@ int main(int argc, char ** argv)
             line++;
 
             /* Show controller name (joint space, cartesian space) */
-            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam) );
-
+            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam,buf) );
+            
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
             
             /* Show HOLDING */
             mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
             
-            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam) );
+            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
             
             mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             
