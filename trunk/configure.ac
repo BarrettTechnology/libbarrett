@@ -144,22 +144,5 @@ AC_PROG_LIBTOOL
 # Woo!
 AC_CONFIG_FILES([
  Makefile
- src/Makefile
- src/os/Makefile
- src/bus/Makefile
- src/wambot/Makefile
- src/kinematics/Makefile
- src/dynamics/Makefile
- src/gravity/Makefile
- src/interp/Makefile
- src/refgen/Makefile
- src/log/Makefile
- src/wam/Makefile
- src/gsl/Makefile
- src/control/Makefile
- src/spline/Makefile
- src/profile/Makefile
- src/rpc/Makefile
- bindings/Makefile
 ])
 AC_OUTPUT
