@@ -122,6 +122,7 @@ struct bt_rpc_server
 };
 
 /* Functions for caller creation */
+struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...);
 const struct bt_rpc_type * bt_rpc_type_search(char * prefix);
 
 /* Functions for bt_rcp_server */

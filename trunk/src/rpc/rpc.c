@@ -16,26 +16,50 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdarg.h>     /* For variadics */
 
 #include "rpc.h"
 #include "rpc_tcpjson.h"
 
-/* List of available types */
-static const struct bt_rpc_type * type_list[] =
+struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...)
 {
-   &bt_rpc_tcpjson_type,
-   0
-};
-
-/* Functions for caller creation */
-const struct bt_rpc_type * bt_rpc_type_search(char * prefix)
-{
-   int i;
-   for (i=0; type_list[i]; i++)
-   if (strcmp(prefix,type_list[i]->name)==0)
-      return type_list[i];
-   return 0;
+   va_list ap;
+   char prefix[100]; /* TODO: length */
+   char * host;
+   char * sep;
+   struct bt_rpc_type * rpc_type;
+   
+   /* Find something like prefix://host */
+   host = 0;
+   strcpy(prefix,prefixhost);
+   sep = strchr(prefix,':');
+   if (sep && sep[1] == '/' && sep[2] == '/')
+   {
+      sep[0] = '\0';
+      host = sep + 3;
+   }
+   if (!host)
+   {
+      syslog(LOG_ERR,"%s: \"%s\" not in prefix://host format.",__func__,prefixhost);
+      return 0;
+   }
+   
+   /* Attempt to find type among those listed */
+   va_start(ap, prefixhost);
+   while ((rpc_type = va_arg(ap,struct bt_rpc_type *)))
+      if (strcmp(prefix,rpc_type->name)==0)
+         break;
+   va_end(ap);
+   if (!rpc_type)
+   {
+      syslog(LOG_ERR,"%s: Could not find RPC to match prefix \"%s\".",__func__,prefix);
+      return 0;
+   }
+    
+    /* Create the caller */
+    return bt_rpc_caller_create(rpc_type,host);
 }
+
 
 /* Define what a server is */
 struct bt_rpc_server * bt_rpc_server_create()

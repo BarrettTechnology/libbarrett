@@ -130,6 +130,7 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
 
    /* Open the WAM (or WAMs!) */
+   /*wam = bt_wam_create("wam4");*/
    wam = bt_wam_create("tcp+json://localhost/wam4");
    if (!wam)
    {

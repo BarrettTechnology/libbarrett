@@ -15,7 +15,6 @@
 #define PORT 1338
 #define BUFLEN 1023 /* No requests are allowed to be longer than this */
 
-const struct bt_rpc_type bt_rpc_tcpjson_type;
 const struct bt_rpc_type * bt_rpc_tcpjson;
 
 /* A listener instance */

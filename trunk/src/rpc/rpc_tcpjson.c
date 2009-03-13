@@ -36,9 +36,7 @@ static struct bt_rpc_caller * caller_create(char * host);
 static int caller_destroy(struct bt_rpc_caller *);
 static int caller_handle(struct bt_rpc_caller *, const struct bt_rpc_interface_funcs * funcs, const char * function, ...);
 
-/* TODO: I'll try not making this constant
- * Make bt_wam initialize the caller itself, by passing the type pointers! */
-const struct bt_rpc_type bt_rpc_tcpjson_type = {
+static const struct bt_rpc_type bt_rpc_tcpjson_type = {
    "tcp+json",
    &listener_create,
    &listener_destroy,

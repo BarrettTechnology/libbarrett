@@ -55,10 +55,15 @@ enum bt_wam_type
    BT_WAM_PROXY
 };
 
+struct bt_wam
+{
+   enum bt_wam_type type;
+};
+
 struct bt_wam_proxy
 {
    /* This tells us if it's a local or RPC proxy wam */
-   enum bt_wam_type type;
+   struct bt_wam base;
    
    struct bt_rpc_caller * caller;
    void * obj;
@@ -77,10 +82,10 @@ struct bt_wam_refgen_list
    
 };
 
-struct bt_wam
+struct bt_wam_local
 {
    /* This tells us if it's a local or RPC proxy wam */
-   enum bt_wam_type type;
+   struct bt_wam base;
    
    char name[WAMNAMELEN+1]; /* Do we even need this? */
 

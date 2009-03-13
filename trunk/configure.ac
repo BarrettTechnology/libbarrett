@@ -88,7 +88,7 @@ AS_IF(
 AM_CONDITIONAL([BT_WAMBOT_PHYSICAL],[test "$with_wambot_physical" = yes])
 AM_CONDITIONAL([BT_WAMBOT_SIMULATED],[test "$with_wambot_simulated" = yes])
 
-# Only compile bt_bus of physical is set
+# Only compile bt_bus if physical is set
 AM_CONDITIONAL([BT_BUS_ENABLE],[test "$with_wambot_physical" = yes])
 
 
@@ -160,5 +160,6 @@ AC_CONFIG_FILES([
  src/spline/Makefile
  src/profile/Makefile
  src/rpc/Makefile
+ bindings/Makefile
 ])
 AC_OUTPUT
