@@ -57,7 +57,7 @@ static char proxy_err[] = "(proxy-err)";
 
 /* local function prototypes */
 
-static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_t * wamconfig);
+static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_t * wamconfig, int opts);
 
 /* Here's the WAM realtime thread; it is only one thread, rt_wam(), which
  * calls rt_wam_create() and rm_wam_destroy() appropriately. */
@@ -96,6 +96,11 @@ static void helper_destroy(struct setup_helper * helper)
 }
 
 struct bt_wam * bt_wam_create(char * wamname)
+{
+   return bt_wam_create_opt(wamname,0);
+}
+
+struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
 {
    /* Does it have a '/' character in it? */
    char prefixhost[100]; /* TODO size */
@@ -139,7 +144,7 @@ struct bt_wam * bt_wam_create(char * wamname)
       err = config_read_file(&cfg,filename);
       if (err == CONFIG_TRUE)
       {
-         wam = bt_wam_local_create(wamname, config_lookup(&cfg,"wam"));
+         wam = bt_wam_local_create(wamname, config_lookup(&cfg,"wam"), opts);
          config_destroy(&cfg);
          return (struct bt_wam *)wam;
       }
@@ -179,7 +184,7 @@ struct bt_wam * bt_wam_create(char * wamname)
       }
       
       /* Attempt to open the remote wam */
-      err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_create",rname,&obj);
+      err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_create_opt",rname,opts,&obj);
       if (err || !obj)
       {
          syslog(LOG_ERR,"%s: Could not open remote WAM.",__func__);
@@ -200,7 +205,7 @@ struct bt_wam * bt_wam_create(char * wamname)
 }
 
 /* Here are the non-realtime create/destroy functions */
-static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_t * wamconfig)
+static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_t * wamconfig, int opts)
 {
    struct bt_wam_local * wam;
    struct setup_helper * helper;
@@ -221,6 +226,7 @@ static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_
    wam->base.type = BT_WAM_LOCAL;
    strncpy(wam->name, wamname, WAMNAMELEN);
    wam->name[WAMNAMELEN] = '\0'; /* Not sure if we need this ... */
+   wam->loop_go = 1;
    wam->gcomp = 0;
    wam->vel = 0.5;
    wam->acc = 0.5;
@@ -231,6 +237,10 @@ static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_
    wam->ts = 0;
    wam->rt_thread = 0;
    wam->nonrt_thread = 0;
+   
+   /* Set anything in options */
+   if (opts & BT_WAM_OPT_NO_LOOP_START)
+      wam->loop_go = 0;
    
    /* Initialize the realtime stuff */
    wam->wambot = 0;
@@ -355,6 +365,36 @@ int bt_wam_destroy(struct bt_wam * wam_base)
    return 0;
 }
 
+
+int bt_wam_loop_start(struct bt_wam * wam_base)
+{
+   struct bt_wam_local * wam = (struct bt_wam_local *)wam_base;
+   if (wam_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam_base,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
+   wam->loop_go = 1;
+   return 0;
+}
+
+int bt_wam_loop_stop(struct bt_wam * wam_base)
+{
+   struct bt_wam_local * wam = (struct bt_wam_local *)wam_base;
+   if (wam_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,wam_base,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
+   wam->loop_go = 0;
+   return 0;
+}
 
 
 /* String formatting functions */
@@ -1020,6 +1060,9 @@ static void rt_wam(struct bt_os_thread * thread)
       /* Wait for the next control period ... */
       bt_os_rt_set_mode_hard();
       bt_os_rt_task_wait_period();
+      
+      /* Skip the loop if we're not told to go */
+      if (!wam->loop_go) continue;
       
       /* Start timing ... */
       bt_os_timestat_start(wam->ts);

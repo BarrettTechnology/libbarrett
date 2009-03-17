@@ -88,6 +88,8 @@ struct bt_wam_local
    struct bt_wam base;
    
    char name[WAMNAMELEN+1]; /* Do we even need this? */
+   
+   int loop_go;
 
    /* The WAM control stuff is in a separate realtime thread;
     * this is for synchronization. */

@@ -65,7 +65,10 @@ pkginclude_HEADERS += src/control/control.h \
                       src/control/control_cartesian_xyz.h
 
 # Source files to complile
-src_libbtcontrol_la_CPPFLAGS = -Isrc/gsl -Isrc/trajectory -Isrc/dynamics -Isrc/kinematics
+src_libbtcontrol_la_CPPFLAGS = -Isrc/gsl \
+                               -Isrc/trajectory \
+                               -Isrc/dynamics \
+                               -Isrc/kinematics
 src_libbtcontrol_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtcontrol_la_SOURCES = src/control/control_joint_legacy.c \
                               src/control/control_joint.c \
@@ -80,7 +83,8 @@ noinst_LTLIBRARIES += src/libbtdynamics.la
 pkginclude_HEADERS += src/dynamics/dynamics.h
 
 # Source files to complile
-src_libbtdynamics_la_CPPFLAGS = -Isrc/gsl -Isrc/kinematics
+src_libbtdynamics_la_CPPFLAGS = -Isrc/gsl \
+                                -Isrc/kinematics
 src_libbtdynamics_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtdynamics_la_SOURCES = src/dynamics/dynamics.c
 
@@ -93,7 +97,11 @@ noinst_LTLIBRARIES += src/libbtgravity.la
 pkginclude_HEADERS += src/gravity/gravity.h
 
 # Source files to complile
-src_libbtgravity_la_CPPFLAGS = -Isrc/os -Isrc/sys -Isrc/bot -Isrc/kinematics -Isrc/gsl
+src_libbtgravity_la_CPPFLAGS = -Isrc/os \
+                               -Isrc/sys \
+                               -Isrc/bot \
+                               -Isrc/kinematics \
+                               -Isrc/gsl
 src_libbtgravity_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtgravity_la_SOURCES = src/gravity/gravity.c
 
@@ -184,7 +192,9 @@ pkginclude_HEADERS += src/refgen/refgen.h \
                       src/refgen/refgen_teachplay.h
 
 # Source files to complile
-src_libbtrefgen_la_CPPFLAGS = -Isrc/spline -Isrc/profile -Isrc/log
+src_libbtrefgen_la_CPPFLAGS = -Isrc/spline \
+                              -Isrc/profile \
+                              -Isrc/log
 src_libbtrefgen_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
 src_libbtrefgen_la_SOURCES = src/refgen/refgen_move.c \
                              src/refgen/refgen_teachplay_const.c \
@@ -200,7 +210,6 @@ pkginclude_HEADERS += src/rpc/rpc.h \
                       src/rpc/rpc_tcpjson.h
 
 # Source files to complile
-#src_libbtrpc_la_CPPFLAGS = -Isrc/spline -Isrc/profile -Isrc/log
 # Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
 #src_libbtrpc_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-variadic-macros
 src_libbtrpc_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror
@@ -233,7 +242,19 @@ pkginclude_HEADERS += src/wam/wam.h \
 
 # Source files to complile
 # Note - remove os.h dep from sys.h ...
-src_libbtwam_la_CPPFLAGS = -Isrc/gsl -Isrc/os -Isrc/bus -Isrc/wambot -Isrc/kinematics -Isrc/dynamics -Isrc/gravity -Isrc/refgen -Isrc/log -Isrc/control -Isrc/spline -Isrc/profile -Isrc/rpc
+src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
+                           -Isrc/os \
+                           -Isrc/bus \
+                           -Isrc/wambot \
+                           -Isrc/kinematics \
+                           -Isrc/dynamics \
+                           -Isrc/gravity \
+                           -Isrc/refgen \
+                           -Isrc/log \
+                           -Isrc/control \
+                           -Isrc/spline \
+                           -Isrc/profile \
+                           -Isrc/rpc
 # Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
 #src_libbtwam_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long -Wno-variadic-macros
 src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
@@ -270,6 +291,34 @@ src_libbtwambot_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-lo
 src_libbtwambot_la_SOURCES = src/wambot/wambot.c \
                              $(SOURCE_PHYS) \
                              $(SOURCE_SIM)
+
+##############################################
+
+# Also, make the legacy stuff
+
+lib_LTLIBRARIES += legacy/libbtlegacy.la
+
+pkginclude_HEADERS += legacy/wam/wam_legacy.h
+
+legacy_libbtlegacy_la_CPPFLAGS = -Isrc/gsl \
+                                 -Isrc/os \
+                                 -Isrc/bus \
+                                 -Isrc/wambot \
+                                 -Isrc/kinematics \
+                                 -Isrc/dynamics \
+                                 -Isrc/gravity \
+                                 -Isrc/refgen \
+                                 -Isrc/log \
+                                 -Isrc/control \
+                                 -Isrc/spline \
+                                 -Isrc/profile \
+                                 -Isrc/rpc \
+                                 -Isrc/wam
+# Damn variadic macros ...
+legacy_libbtlegacy_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+legacy_libbtlegacy_la_SOURCES = legacy/wam/wam_legacy.c
+
+##############################################
 
 # Make the libwam library itself
 SUBDIRS = . bindings/python

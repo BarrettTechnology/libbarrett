@@ -30,15 +30,24 @@
 /* The opaque WAM structure */
 struct bt_wam;
 
+/* WAM options */
+enum bt_wam_opt {
+   BT_WAM_OPT_NO_LOOP_START = 1
+};
+
 /* This function sets up a new WAM,
  * and spins off a wam_thread to control it.
  *
  * return values:
  *   0 (null pointer) - config or memory failure */
 struct bt_wam * bt_wam_create(char * wamname);
+struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts);
 
 /* Close communication with a WAM */
 int bt_wam_destroy(struct bt_wam * wam);
+
+int bt_wam_loop_start(struct bt_wam * wam);
+int bt_wam_loop_stop(struct bt_wam * wam);
 
 /* String formatting functions */
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf);
