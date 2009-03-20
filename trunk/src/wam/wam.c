@@ -365,7 +365,6 @@ int bt_wam_destroy(struct bt_wam * wam_base)
    return 0;
 }
 
-
 int bt_wam_loop_start(struct bt_wam * wam_base)
 {
    struct bt_wam_local * wam = (struct bt_wam_local *)wam_base;
