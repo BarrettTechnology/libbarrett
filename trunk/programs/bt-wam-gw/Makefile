@@ -1,4 +1,4 @@
-### Makefile for the "jsonserve" WAM program
+### Makefile for the "bt-wam-gw" WAM daemon
 
 CC = gcc
 
@@ -6,7 +6,7 @@ CC = gcc
 # For select() in sys/types.h ...
 CFLAGS += -pedantic-errors -Wall -Werror -Wno-long-long
 
-default: jsonserve
+default: bt-wam-gw
 
 # Link against btos for realtime stuff:
 CFLAGS += -I/usr/local/include
@@ -20,10 +20,10 @@ LDFLAGS += -lbt -lgsl -lgslcblas -lconfig -lcurses -ljson
 
 # OK; Link stuff:
 
-jsonserve : jsonserve.o
-	${CC} jsonserve.o ${LDFLAGS} -o jsonserve
+bt-wam-gw : bt-wam-gw.o
+	${CC} bt-wam-gw.o ${LDFLAGS} -o bt-wam-gw
 
 clean:
-	rm -f *~ *.o jsonserve
+	rm -f *~ *.o bt-wam-gw
 
 

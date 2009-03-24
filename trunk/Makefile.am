@@ -12,6 +12,7 @@
 lib_LTLIBRARIES = src/libbt.la
 
 # All the libraries to not be installed ...
+src_libbt_la_SOURCES =
 src_libbt_la_LIBADD =
 noinst_LTLIBRARIES =
 pkginclude_HEADERS =
@@ -117,7 +118,7 @@ src_libbtgsl_la_SOURCES = src/gsl/gsl.c
 ####### BT_INTERP
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/xxxxxxxxxx.la
+src_libbt_la_LIBADD += src/libbtinterp.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtinterp.la

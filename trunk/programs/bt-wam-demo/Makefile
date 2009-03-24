@@ -1,10 +1,10 @@
-### Makefile for the "demo" WAM program
+### Makefile for the "bt-wam-demo" WAM program
 
 CC = gcc
 
 CFLAGS += -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 
-default: demo
+default: bt-wam-demo
 
 # Link against btos for realtime stuff:
 CFLAGS += -I/usr/local/include
@@ -18,10 +18,10 @@ LDFLAGS += -lbt -lgsl -lgslcblas -lconfig -lcurses -ljson
 
 # OK; Link stuff:
 
-demo : demo.o
-	${CC} demo.o ${LDFLAGS} -o demo
+bt-wam-demo : bt-wam-demo.o
+	${CC} bt-wam-demo.o ${LDFLAGS} -o bt-wam-demo
 
 clean:
-	rm -f *~ *.o demo
+	rm -f *~ *.o bt-wam-demo
 
 
