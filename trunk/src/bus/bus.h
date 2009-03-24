@@ -45,11 +45,10 @@
 
 /* Todo - prefix these names */
 
+#if 0
 /*! bcastGroup */
 enum {
-   WHOLE_ARM = 0,
-   LOWER_ARM = -1,
-   UPPER_ARM = -2
+   
 };
 
 enum {
@@ -59,22 +58,9 @@ enum {
    ROLE_WRAPTOR = 3
 };
 
-/*! Control_mode states */
-enum {
-   MODE_IDLE = 0,
-   MODE_DUTY = 1,
-   MODE_TORQUE = 2,
-   MODE_PID = 3,
-   MODE_VELOCITY = 4,
-   MODE_TRAPEZOIDAL = 5
-};
 
-enum {
-   STATUS_OFFLINE = -1,
-   STATUS_RESET = 0,
-   STATUS_ERR = 1,
-   STATUS_READY = 2
-};
+
+
 
 enum {
    DEG = 0,        /* 0-360        */
@@ -101,6 +87,7 @@ enum {
    ERR_READ_ONLY = 0,
    ERR_OUT_OF_RANGE = 1
 };
+#endif
 
 
 
@@ -160,7 +147,7 @@ struct bt_bus
    
    /* Note - eventually, this can be a union
     *        of different device types */
-   struct can_device * dev;
+   struct bt_bus_can_device * dev;
    
    /* A bus has a number of actuator pucks */
    int num_pucks;
@@ -181,11 +168,6 @@ struct bt_bus
    bt_os_rtime update_last;
 };
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif/* __cplusplus */
-
 struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_type update_type );
 int bt_bus_destroy( struct bt_bus * bus );
 
@@ -194,7 +176,6 @@ int bt_bus_set_torques( struct bt_bus * bus );
 
 int bt_bus_set_property(struct bt_bus * bus, int id, int property, int verify, long value);
 int bt_bus_get_property(struct bt_bus * bus, int id, int property, long *reply);
-int bt_bus_can_clearmsg(struct bt_bus * bus);
 
 /* Wooo property definitions! */
 struct bt_bus_properties
@@ -353,9 +334,6 @@ struct bt_bus_properties
    int LCTC;
 };
 
-#ifdef __cplusplus
-}
-#endif/* __cplusplus */
 #endif/* BT_BUS_H */
  
 

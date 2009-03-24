@@ -263,10 +263,8 @@ static int update( struct bt_wambot * base )
    struct bt_wambot_phys * wambot = (struct bt_wambot_phys *) base;
    int j;
    
-   /* Clear CAN bus of any unwanted messages */
-   bt_bus_can_clearmsg( wambot->bus );
-   
-   /* Grab the data into the btsys actuator structs */
+   /* Grab the data into the btsys actuator structs
+    * (note that this calls bt_bus_can_clearmsg() for us) */
    bt_bus_update( wambot->bus );
    
    /* Copy the data from the actuator structs to the mposition vector */

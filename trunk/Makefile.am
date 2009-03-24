@@ -47,8 +47,7 @@ pkginclude_HEADERS += src/bus/bus.h
 src_libbtbus_la_CPPFLAGS = -Isrc/os -D@BT_BUS_CANTYPE@
 src_libbtbus_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtbus_la_SOURCES = src/bus/bus.c \
-                          src/bus/can_peakesd.c \
-                          src/bus/can.h
+                          src/bus/bus_can.c
 src_libbtbus_la_LIBADD = @BT_BUS_LIBS@
 
 endif

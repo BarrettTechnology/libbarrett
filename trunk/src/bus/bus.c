@@ -29,12 +29,36 @@
 
 #include "bus.h"
 
-#include "can.h"
+#include "bus_can.h"
 #include "os.h"
 
 #include <string.h>
 #include <syslog.h>
 #include <stdlib.h> /* For malloc(), free() */
+
+/* Broadcast Groups */
+enum {
+   WHOLE_ARM = 0,
+   LOWER_ARM = -1,
+   UPPER_ARM = -2
+};
+
+enum {
+   STATUS_OFFLINE = -1,
+   STATUS_RESET = 0,
+   STATUS_ERR = 1,
+   STATUS_READY = 2
+};
+
+/*! Control_mode states */
+enum {
+   MODE_IDLE = 0,
+   MODE_DUTY = 1,
+   MODE_TORQUE = 2,
+   MODE_PID = 3,
+   MODE_VELOCITY = 4,
+   MODE_TRAPEZOIDAL = 5
+};
 
 /* Private functions */
 static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
@@ -65,6 +89,8 @@ PARR_SET_FUNC(group,struct bt_bus_group)
 struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_type update_type )
 {
    struct bt_bus * bus;
+   
+   /* Create */
    bus = (struct bt_bus *) malloc(sizeof(struct bt_bus));
    if (!bus)
    {
@@ -84,8 +110,6 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    bus->first_acc = 1;
    bus->groups_size = 0;
    bus->group = 0;
-   
-   /* Save parameters */
    bus->update_type = update_type;
    bus->update_count = 0;
    
@@ -106,7 +130,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    }
    
    /* Initialize CAN on the port */
-   bus->dev = can_create(bus->port);
+   bus->dev = bt_bus_can_create(bus->port);
    if(!(bus->dev))
    {
       syslog(LOG_ERR, "Could not initialize can bus port %d", bus->port);
@@ -118,22 +142,22 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    syslog(LOG_ERR, "Waking all pucks");
    /* wakePuck(bus_number, GROUPID(WHOLE_ARM)); */
    /* Must use '5' for STAT*/
-   can_set_property(bus->dev, GROUPID(WHOLE_ARM), 5, FALSE, STATUS_READY);
+   bt_bus_can_set_property(bus->dev, GROUPID(WHOLE_ARM), 5, 0, STATUS_READY);
    bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
    
    /* Iterate through all the pucks */
    {
       int id;
       int status;
-      can_iterate_start(bus->dev);
-      while (can_iterate_next(bus->dev,&id,&status))
+      bt_bus_can_iterate_start(bus->dev);
+      while (bt_bus_can_iterate_next(bus->dev,&id,&status))
       {
          /* Initialize proprty definitions */
          if (!(bus->p))
          {
             long fw_vers;
             /* error? */
-            can_get_property(bus->dev, id, 0, &fw_vers); /* Get the firmware version*/
+            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers); /* Get the firmware version*/
             bus->p = prop_defs_create(fw_vers);
             if (!bus->p)
             {
@@ -180,7 +204,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
                syslog(LOG_ERR, "Waking puck %d", id);
                /*wakePuck(bus->dev, id);*/
                /* Must use '5' for STAT*/
-               can_set_property(bus->dev, id, 5, FALSE, STATUS_READY);
+               bt_bus_can_set_property(bus->dev, id, 5, 0, STATUS_READY);
                bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
             }
             /* Make a new puck */
@@ -193,15 +217,15 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             }
             puck->id = id;
             /* Make sure the puck is in IDLE mode */
-            can_set_property(bus->dev, id, bus->p->MODE, FALSE, MODE_IDLE);
+            bt_bus_can_set_property(bus->dev, id, bus->p->MODE, 0, MODE_IDLE);
             /* Fill the puck structure */
-            can_get_property(bus->dev, id, bus->p->CTS, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply);
             puck->counts_per_rev = reply;
-            can_get_property(bus->dev, id, bus->p->IPNM, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply);
             puck->puckI_per_Nm = reply; /* Aah, this is a double! */
-            can_get_property(bus->dev, id, bus->p->PIDX, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->PIDX, &reply);
             puck->order = reply-1;
-            can_get_property(bus->dev, id, bus->p->GRPB, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->GRPB, &reply);
             puck->gid = reply;
             
             syslog(LOG_ERR,"Puck: ID=%d CTS=%d IPNM=%.2f PIDX=%d GRPB=%d",
@@ -265,7 +289,7 @@ int bt_bus_destroy( struct bt_bus * bus )
    for (i=0; i<bus->pucks_size; i++)
       if (bus->puck[i]) free(bus->puck[i]);
    if (bus->puck) free(bus->puck);
-   if (bus->dev) can_destroy(bus->dev);
+   if (bus->dev) bt_bus_can_destroy(bus->dev);
    free(bus);
    return 0;
 }
@@ -278,6 +302,9 @@ int bt_bus_update( struct bt_bus * bus )
    bt_os_rtime rtime;
    struct bt_bus_puck * p;
    double dt;
+   
+   /* Clear CAN bus of any unwanted messages */
+   bt_bus_can_clearmsg( bus->dev );
    
    /* Retrieve the time */
    rtime = bt_os_rt_get_time();
@@ -346,7 +373,7 @@ int bt_bus_set_torques( struct bt_bus * bus )
          else
             data[i] = 0;
       }
-      can_set_torques(bus->dev, gid, data, bus->p->TORQ);
+      bt_bus_can_set_torques(bus->dev, gid, data, bus->p->TORQ);
    }
    
    return 0;
@@ -354,46 +381,17 @@ int bt_bus_set_torques( struct bt_bus * bus )
 
 int bt_bus_set_property(struct bt_bus * bus, int id, int property, int verify, long value)
 {
-   return can_set_property(bus->dev, id, property, verify, value);
+   if (property > bus->p->PROP_END)
+      return 1;
+   return bt_bus_can_set_property(bus->dev, id, property, verify, value);
 }
 
 int bt_bus_get_property(struct bt_bus * bus, int id, int property, long *reply)
 {
-   return can_get_property(bus->dev, id, property, reply);
+   if (property > bus->p->PROP_END)
+      return 1;
+   return bt_bus_can_get_property(bus->dev, id, property, reply);
 }
-
-int bt_bus_can_clearmsg(struct bt_bus * bus)
-{
-   return can_clearmsg(bus->dev);
-}
-
-
-#if 0
-/* Convenience functions */
-/* Append/insert to a pointer array */
-static int nullr_set(void *** rp, int * sz, int i, void * x )
-{
-   int j;
-   /* Make the nullr bigger if necessary */
-   if (i >= *sz)
-   {
-      if (*sz == 0)
-         *rp = (void **) malloc((i+1)*sizeof(void *));
-      else
-         *rp = (void **) realloc(*rp,(i+1)*sizeof(void *));
-      if(!*rp) return -1;
-      /* Fill with nulls if necessary */
-      for (j=*sz; j<i; j++)
-         (*rp)[j] = 0;
-      /* Set the new size */
-      *sz = i+1;
-   }
-   /* Set the ith value */
-   (*rp)[i] = x;
-   return 0;
-}
-#endif
-
 
 static int retrieve_puck_positions( struct bt_bus * bus )
 {
@@ -408,7 +406,7 @@ static int retrieve_puck_positions( struct bt_bus * bus )
       data[i] = 0x80000000;
    
    /* Perform the btcan broadcast to get positions (group 0) */
-   can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->AP);
+   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->AP);
    
    /* Unpack from data into the pucks array */
    for (i=0; i<bus->pucks_size; i++) if ( (p = bus->puck[i]) )
@@ -456,7 +454,7 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
       data[i] = 0x80000000;
    
    /* Update acceleration w/ broadcast */
-   can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->MECH); /* CHANGE TO 'A' */
+   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->MECH); /* CHANGE TO 'A' */
    
    /* Unpack from data into the pucks array */
    for (i=0; i<bus->pucks_size; i++) if ((p = bus->puck[i]))
@@ -777,8 +775,6 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->AP = p->P; /* Handle parameter name change*/
       p->TENSION = p->FET1;
    }
-   
-   can_set_max_property(p->PROP_END);
    
    return p;
 }
