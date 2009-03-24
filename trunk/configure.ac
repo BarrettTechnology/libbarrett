@@ -1,7 +1,6 @@
 AC_INIT([libbt], [0.1], [cd@barrett.com])
 AC_CONFIG_HEADERS([config.h])
 
-
 # Note, these are automake warnings, not compiler ones
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 

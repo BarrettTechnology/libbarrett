@@ -1,41 +1,27 @@
-# Let's try something different.
+# Things set by ./configure:
+#  - BT_BUS_ENABLE
+#  - @BT_BUS_CANTYPE@
+#  - @BT_BUS_LIBS@
+#  - @BT_OS_CPP@
+#  - @BT_OS_LDFLAGS@
+#  - @BT_OS_LIBS@
 
 ####### LIBBT
 
 # The library to make 
 lib_LTLIBRARIES = src/libbt.la
 
-# Any source files?
-src_libbt_la_SOURCES =
-
-if BT_BUS_ENABLE
-BT_BUS_LIB = src/libbtbus.la
-endif
-
-src_libbt_la_LIBADD = \
-  $(BT_BUS_LIB) \
-  src/libbtcontrol.la \
-  src/libbtdynamics.la \
-  src/libbtgravity.la \
-  src/libbtgsl.la \
-  src/libbtinterp.la \
-  src/libbtkinematics.la \
-  src/libbtlog.la \
-  src/libbtos.la \
-  src/libbtprofile.la \
-  src/libbtrefgen.la \
-  src/libbtrpc.la \
-  src/libbtspline.la \
-  src/libbtwam.la \
-  src/libbtwambot.la
-
 # All the libraries to not be installed ...
+src_libbt_la_LIBADD =
 noinst_LTLIBRARIES =
 pkginclude_HEADERS =
 
 ######## BT_BUS
 
 if BT_BUS_ENABLE
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtbus.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtbus.la
@@ -53,6 +39,9 @@ src_libbtbus_la_LIBADD = @BT_BUS_LIBS@
 endif
 
 ####### BT_CONTROL
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtcontrol.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtcontrol.la
@@ -75,6 +64,9 @@ src_libbtcontrol_la_SOURCES = src/control/control_joint_legacy.c \
 
 ####### BT_DYNAMICS
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtdynamics.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtdynamics.la
 
@@ -88,6 +80,9 @@ src_libbtdynamics_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-
 src_libbtdynamics_la_SOURCES = src/dynamics/dynamics.c
 
 ####### BT_GRAVITY
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtgravity.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtgravity.la
@@ -106,6 +101,9 @@ src_libbtgravity_la_SOURCES = src/gravity/gravity.c
 
 ####### BT_GSL
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtgsl.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtgsl.la
 
@@ -118,6 +116,9 @@ src_libbtgsl_la_SOURCES = src/gsl/gsl.c
 
 ####### BT_INTERP
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/xxxxxxxxxx.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtinterp.la
 
@@ -129,6 +130,9 @@ src_libbtinterp_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-lo
 src_libbtinterp_la_SOURCES = src/interp/interp.c
 
 ####### BT_KINEMATICS
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtkinematics.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtkinematics.la
@@ -143,6 +147,9 @@ src_libbtkinematics_la_SOURCES = src/kinematics/kinematics.c
 
 ####### BT_LOG
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtlog.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtlog.la
 
@@ -154,6 +161,9 @@ src_libbtlog_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtlog_la_SOURCES = src/log/log.c
 
 ####### BT_OS
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtos.la
 
 noinst_LTLIBRARIES += src/libbtos.la
 
@@ -168,6 +178,9 @@ src_libbtos_la_LIBADD = @BT_OS_LIBS@
 
 ####### BT_PROFILE
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtprofile.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtprofile.la
 
@@ -180,6 +193,9 @@ src_libbtprofile_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
 src_libbtprofile_la_SOURCES = src/profile/profile.c
 
 ####### BT_REFGEN
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtrefgen.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtrefgen.la
@@ -201,6 +217,9 @@ src_libbtrefgen_la_SOURCES = src/refgen/refgen_move.c \
 
 ####### BT_RPC
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtrpc.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtrpc.la
 
@@ -217,6 +236,9 @@ src_libbtrpc_la_SOURCES = src/rpc/rpc.c \
 
 ####### BT_SPLINE
 
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtspline.la
+
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtspline.la
 
@@ -229,6 +251,9 @@ src_libbtspline_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
 src_libbtspline_la_SOURCES = src/spline/spline.c
 
 ####### BT_WAM
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtwam.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtwam.la
@@ -261,6 +286,9 @@ src_libbtwam_la_SOURCES = src/wam/wam.c \
                           src/wam/wam_rpc.c
 
 ####### BT_WAMBOT
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtwambot.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtwambot.la
@@ -319,5 +347,5 @@ legacy_libbtlegacy_la_SOURCES = legacy/wam/wam_legacy.c
 
 ##############################################
 
-# Make the libwam library itself
+# Also, make the bindings
 SUBDIRS = . bindings/python
