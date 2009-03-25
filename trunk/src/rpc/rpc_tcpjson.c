@@ -321,6 +321,30 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          json_object_put(req);
          return 0;
 #endif
+      case BT_RPC_FUNC_OBJ_CREATE:
+         /* Check for one string, one int parameter */
+         if (json_object_array_length(params)!=0)
+         {
+            syslog(LOG_ERR,"%s: Request does not have zero parameters.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Cast and call the create funcion */
+         vptr = (*(void * (*)())(func->ptr))();
+         /* Save the object into the interface, if it was created */
+         if (vptr)
+            bt_rpc_interface_object_add(interface, vptr);
+         /* Return success, with the object pointer */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":%d}\n",(int)vptr);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          /* Check for one string, one int parameter */
          if (json_object_array_length(params)!=2)
@@ -433,7 +457,38 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
             return -1;
          }
          /* Cast and call the function */
-         (*(int (*)(void *,char *))(func->ptr))(vptr,c->strbuf);
+         (*(char * (*)(void *,char *))(func->ptr))(vptr,c->strbuf);
+         /* Return success */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":\"%s\"}\n",c->strbuf);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
+      case BT_RPC_FUNC_STR_OBJ_INT:
+         /* Check for one int (vptr) parameter, one int parameter */
+         if (json_object_array_length(params)!=2)
+         {
+            syslog(LOG_ERR,"%s: Request does not have one parameter.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         vptr = (void *) json_object_get_int(json_object_array_get_idx(params,0));
+         myint2 = json_object_get_int(json_object_array_get_idx(params,1));
+         /* Check object */
+         err = bt_rpc_interface_object_check(interface, vptr);
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: Could not find object.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Cast and call the function */
+         (*(char * (*)(void *,int,char *))(func->ptr))(vptr,myint2,c->strbuf);
          /* Return success */
          {
             int err;
@@ -585,6 +640,9 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          sprintf(cr->buf,"{'method':'%s','params':['%s']}\n", function, mystr);
          break;
 #endif
+      case BT_RPC_FUNC_OBJ_CREATE:
+         sprintf(cr->buf,"{'method':'%s','params':[]}\n", function);
+         break;
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          mystr = va_arg(ap, char *);
          myint = va_arg(ap, int);
@@ -596,6 +654,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          vptr = va_arg(ap, void *);
          sprintf(cr->buf,"{'method':'%s','params':[%d]}\n", function, (int)vptr);
          break;
+      case BT_RPC_FUNC_STR_OBJ_INT:
       case BT_RPC_FUNC_INT_OBJ_INT:
          vptr = va_arg(ap, void *);
          myint = va_arg(ap, int);
@@ -686,6 +745,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          *((void **)result) = vptr;
          break;
 #endif
+      case BT_RPC_FUNC_OBJ_CREATE:
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          vptr = (void *) json_object_get_int(json_object_object_get(req,"result"));
          *((void **)result) = vptr;
@@ -697,6 +757,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          *((int *)result) = myint;
          break;
       case BT_RPC_FUNC_STR_OBJ:
+      case BT_RPC_FUNC_STR_OBJ_INT:
          mystr = json_object_get_string(json_object_object_get(req,"result"));
          /* TODO check length! */
          strcpy((char *)result,mystr);

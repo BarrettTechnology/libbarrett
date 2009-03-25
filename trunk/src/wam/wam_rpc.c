@@ -58,6 +58,18 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_teach_start,       "bt_wam_teach_start",       BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_teach_end,         "bt_wam_teach_end",         BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_playback,          "bt_wam_playback",          BT_RPC_FUNC_INT_OBJ},
+   
+   /* WAM list stuff */
+   {(void (*)())&bt_wam_list_create,       "bt_wam_list_create",       BT_RPC_FUNC_OBJ_CREATE},
+   {(void (*)())&bt_wam_list_destroy,      "bt_wam_list_destroy",      BT_RPC_FUNC_INT_OBJ_DESTROY},
+   
+   {(void (*)())&bt_wam_list_get_num,      "bt_wam_list_get_num",      BT_RPC_FUNC_INT_OBJ},
+   {(void (*)())&bt_wam_list_get_name,     "bt_wam_list_get_name",     BT_RPC_FUNC_STR_OBJ_INT},
+   {(void (*)())&bt_wam_list_get_status,   "bt_wam_list_get_status",   BT_RPC_FUNC_INT_OBJ_INT},
+   {(void (*)())&bt_wam_list_get_pid,      "bt_wam_list_get_pid",      BT_RPC_FUNC_INT_OBJ_INT},
+   {(void (*)())&bt_wam_list_get_programname,
+                                           "bt_wam_list_get_programname",
+                                                                       BT_RPC_FUNC_STR_OBJ_INT},
    {0,{0},0}
 };
 static const struct bt_rpc_interface_funcs interface =

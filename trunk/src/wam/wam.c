@@ -20,6 +20,21 @@
  *
  * ======================================================================== */
 
+#include <stdlib.h> /* For popen(), pclose() */
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
+#include <math.h>     /* For sqrt() */
+
+#include <dirent.h>   /* For directories */
+#include <fcntl.h>    /* For open() */
+#include <sys/stat.h> /* For file permissions */
+#include <unistd.h>    /* For close(), getpid() */
+#include <sys/types.h> /* For getpid() */
+
+#include <libconfig.h>
+#include <syslog.h>
+
 #include "wam.h"
 #include "wam_custom.h"
 #include "wam_internal.h"
@@ -30,11 +45,7 @@
 
 #include "wambot_phys.h"
 
-#include <string.h>
-#include <syslog.h>
-#include <math.h>     /* For sqrt() */
 
-#include <libconfig.h>
 
 /* Some global things for timing the threads */
 #define TS \
@@ -54,6 +65,7 @@
 #undef T
 
 static char proxy_err[] = "(proxy-err)";
+
 
 /* local function prototypes */
 
@@ -129,6 +141,8 @@ struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
    {
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
       char filename[WAMCONFIGDIRLEN+WAMNAMELEN+1];
+      char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
+      char lockfiletxt[12];
       int err;
       struct config_t cfg;
       struct bt_wam_local * wam;
@@ -142,16 +156,39 @@ struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
       config_init(&cfg);
       syslog(LOG_ERR,"Attempting to open '%s' ...",filename);
       err = config_read_file(&cfg,filename);
-      if (err == CONFIG_TRUE)
+      if (err != CONFIG_TRUE)
       {
-         wam = bt_wam_local_create(wamname, config_lookup(&cfg,"wam"), opts);
+         syslog(LOG_ERR,"libconfig error: %s, line %d\n",
+             config_error_text(&cfg), config_error_line(&cfg));
          config_destroy(&cfg);
-         return (struct bt_wam *)wam;
+         /* Failure */
+         return 0;
       }
       
-      syslog(LOG_ERR,"libconfig error: %s, line %d\n",
-             config_error_text(&cfg), config_error_line(&cfg));
+      /* Check lock file */
+      strcpy(lockfilename,WAMLOCKDIR);
+      strcat(lockfilename,wamname);
+      err = open(lockfilename,
+                 O_WRONLY | O_CREAT | O_EXCL,
+                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+      if (err == -1)
+      {
+         syslog(LOG_ERR,"%s: Lock file could not be created. Already in use?",__func__);
+         config_destroy(&cfg);
+         return 0;
+      }
+      
+      /* Write the PID to the file, close the file */
+      sprintf(lockfiletxt,"%10d\n",getpid());
+      write(err,lockfiletxt,11);
+      close(err);
+
+      wam = bt_wam_local_create(wamname, config_lookup(&cfg,"wam"), opts);
+      
+      /* Check if failed, unlink lock file */
+      
       config_destroy(&cfg);
+      return (struct bt_wam *)wam;
    }
    else
    /* OK, no local WAM by that name was found. Try to open over the network ... */
@@ -308,8 +345,10 @@ static struct bt_wam_local * bt_wam_local_create(char * wamname, config_setting_
 }
 
 int bt_wam_destroy(struct bt_wam * wam_base)
-{
+{  
    struct bt_wam_local * wam = (struct bt_wam_local *)wam_base;
+   char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
+   
    if (wam_base->type == BT_WAM_PROXY)
    {
       int myint;
@@ -361,7 +400,13 @@ int bt_wam_destroy(struct bt_wam * wam_base)
    bt_log_decode("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
 #endif
 
+   /* Delete the lock file */
+   strcpy(lockfilename,WAMLOCKDIR);
+   strcat(lockfilename,wam->name);
+   unlink(lockfilename);
+   
    free(wam);
+   
    return 0;
 }
 
@@ -1325,3 +1370,272 @@ static void nonrt_thread_function(struct bt_os_thread * thread)
    bt_os_thread_exit( thread );
 }
 
+
+
+
+/* WAM List stuff ---------------------------------------- */
+
+/* Local function prototypes */
+struct bt_wam_list_local * bt_wam_list_create_local();
+
+struct bt_wam_list * bt_wam_list_create(char * wamloc)
+{
+   int err;
+   struct bt_wam_list_proxy * list_proxy;
+   struct bt_rpc_caller * rpc_caller;
+   void * obj;
+   
+   /* Handle the local case */
+   if (!wamloc || strlen(wamloc) == 0)
+   {
+      struct bt_wam_list_local * list;
+      list = bt_wam_list_create_local();
+      return (struct bt_wam_list *)list;
+   }
+   
+   syslog(LOG_ERR,"%s: Opening remote wam list, rcp prefixhost %s.",__func__,wamloc);
+   
+   /* Create the caller */
+   rpc_caller = bt_rpc_caller_search_create(wamloc,
+                                            bt_rpc_tcpjson,
+                                            0);
+   if (!rpc_caller)
+   {
+      syslog(LOG_ERR,"%s: Could not create caller.",__func__);
+      return 0;
+   }
+   
+   /* Create wam_proxy object, save caller, obj */
+   list_proxy = (struct bt_wam_list_proxy *) malloc(sizeof(struct bt_wam_list_proxy));
+   if (!list_proxy)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_rpc_caller_destroy(rpc_caller);
+      return 0;
+   }
+   
+   /* Attempt to open the remote wam list */
+   err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_list_create",&obj);
+   if (err || !obj)
+   {
+      syslog(LOG_ERR,"%s: Could not open remote WAM list.",__func__);
+      free(list_proxy);
+      bt_rpc_caller_destroy(rpc_caller);
+      return 0;
+   }
+   
+   /* Initialize */
+   list_proxy->base.type = BT_WAM_PROXY;
+   list_proxy->caller = rpc_caller;
+   list_proxy->obj = obj;
+   return (struct bt_wam_list *)list_proxy;
+}
+
+struct bt_wam_list_local * bt_wam_list_create_local()
+{
+   struct bt_wam_list_local * list;
+   DIR * etcwam;
+   struct dirent * file;
+   
+   /* Create */
+   list = (struct bt_wam_list_local *) malloc(sizeof(struct bt_wam_list_local));
+   if (!list)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      return 0;
+   }
+   
+   /* Initialize */
+   list->base.type = BT_WAM_LOCAL;
+   list->entries = 0;
+   list->num = 0;
+   
+   /* Open the /etc/wam directory */
+   etcwam = opendir(WAMCONFIGDIR);
+   if (!etcwam)
+   {
+      syslog(LOG_ERR,"%s: Directory %s not found.",__func__,WAMCONFIGDIR);
+      return list;
+   }
+   
+   /* Note: this is not thread-safe. */
+   while ((file = readdir(etcwam)))
+   {
+      int n;
+      /* Check if the name is ***.config */
+      n = strlen(file->d_name);
+      if (n < 8) continue;
+      if (strcmp(".config",file->d_name + n - 7)==0)
+      {
+         struct bt_wam_list_entry * entry;
+         char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
+         FILE * lockfile;
+         char pscommand[100];
+         FILE * pspipe;
+         int err;
+         
+         entry = (struct bt_wam_list_entry *) malloc(sizeof(struct bt_wam_list_entry));
+         if (!list->num)
+            list->entries = (struct bt_wam_list_entry **)
+                            malloc(sizeof(struct bt_wam_list_entry *));
+         else
+            list->entries = (struct bt_wam_list_entry **)
+                            realloc(list->entries,(list->num+1)*sizeof(struct bt_wam_list_entry *));
+         list->entries[list->num] = entry;
+         list->num++;
+         
+         strncpy(entry->name,file->d_name,n-7);
+         
+         /* Attempt to read the lock file */
+         strcpy(lockfilename,WAMLOCKDIR);
+         strcat(lockfilename,entry->name);
+         lockfile = fopen(lockfilename,"r");
+         if (!lockfile)
+         {
+            entry->status = BT_WAM_LIST_ENTRY_STATUS_FREE;
+            entry->programpid = 0;
+            strcpy(entry->programname,"(none)");
+            continue;
+         }
+         
+         /* Copy in the pid */
+         err = fscanf(lockfile,"%10d\n",&(entry->programpid));
+         if (err != 1)
+         {
+            entry->status = BT_WAM_LIST_ENTRY_STATUS_DEFUNCT;
+            entry->programpid = 0;
+            strcpy(entry->programname,"(none)");
+            fclose(lockfile);
+            continue;
+         }
+         
+         /* Attempt to grab the program name from ps */
+         sprintf(pscommand,"ps -p %d -o comm=",entry->programpid);
+         pspipe = popen(pscommand,"r");
+         if (!pspipe)
+         {
+            entry->status = BT_WAM_LIST_ENTRY_STATUS_INUSE;
+            strcpy(entry->programname,"(unknown)");
+            fclose(lockfile);
+            continue;
+         }
+         
+         err = fscanf(pspipe,"%s\n",entry->programname);
+         if (err != 1)
+         {
+            entry->status = BT_WAM_LIST_ENTRY_STATUS_DEFUNCT;
+            strcpy(entry->programname,"(unknown)");
+            pclose(pspipe);
+            fclose(lockfile);
+            continue;
+         }
+         
+         entry->status = BT_WAM_LIST_ENTRY_STATUS_INUSE;
+         
+         pclose(pspipe);
+         fclose(lockfile);
+      }
+   }
+   
+   closedir(etcwam);
+   return list;
+}
+
+int bt_wam_list_destroy(struct bt_wam_list * list_base)
+{
+   int i;
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,list_base,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+   
+   for (i=0; i<list->num; i++)
+      free(list->entries[i]);
+   if (list->num)
+      free(list->entries);
+   free(list);
+   return 0;
+}
+
+int bt_wam_list_get_num(struct bt_wam_list * list_base)
+{
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,list_base,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+
+   return list->num;
+}
+
+char * bt_wam_list_get_name(struct bt_wam_list * list_base, int i, char * buf)
+{
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,list_base,i,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+
+   if (i >= list->num)
+      return 0;
+   strcpy(buf,list->entries[i]->name);
+   return buf;
+}
+
+enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list_base, int i)
+{
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,list_base,i,&myint))
+         return -1; /* Could not forward over RPC */
+      return (enum bt_wam_list_entry_status)myint;
+   }
+
+   if (i >= list->num)
+      return -1;
+   return list->entries[i]->status;
+}
+
+int bt_wam_list_get_pid(struct bt_wam_list * list_base, int i)
+{
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      int myint;
+      if (bt_wam_proxy_handle(__func__,list_base,i,&myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+
+   if (i >= list->num)
+      return -1;
+   return list->entries[i]->programpid;
+}
+
+char * bt_wam_list_get_programname(struct bt_wam_list * list_base, int i, char * buf)
+{
+   struct bt_wam_list_local * list = (struct bt_wam_list_local *)list_base;
+   if (list_base->type == BT_WAM_PROXY)
+   {
+      if (bt_wam_proxy_handle(__func__,list_base,i,buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+
+   if (i >= list->num)
+      return 0;
+   strcpy(buf,list->entries[i]->programname);
+   return buf;
+}

@@ -282,7 +282,9 @@ src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
                            -Isrc/rpc
 # Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
 #src_libbtwam_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long -Wno-variadic-macros
-src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+# Note: c99 doesn't include popen (!!)
+#src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtwam_la_SOURCES = src/wam/wam.c \
                           src/wam/wam_rpc.c
 

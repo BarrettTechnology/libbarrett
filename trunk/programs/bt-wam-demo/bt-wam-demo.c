@@ -134,7 +134,7 @@ int main(int argc, char ** argv)
    /*wam = bt_wam_create("tcp+json://localhost/wam4");*/
    if (!wam)
    {
-      /*endwin();*/
+      endwin();
       closelog();
       printf("Could not open the WAM.\n");
       exit(-1);

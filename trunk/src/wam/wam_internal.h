@@ -38,10 +38,13 @@
 #include "control_cartesian_xyz.h"
 #include "control_joint_legacy.h"
 #include "rpc.h"
+#include "wam.h"
 #include "wam_rpc.h"
 
 #define WAMCONFIGDIR "/etc/wam/"
+#define WAMLOCKDIR "/var/lock/"
 #define WAMCONFIGDIRLEN (70)
+#define WAMLOCKDIRLEN (70)
 #define WAMNAMELEN (30)
 
 /* Shortcut for proxy stuff */
@@ -143,6 +146,38 @@ struct bt_wam_local
    
    /* Are we currently teaching into the first trajectory in the list? */
    int teach;
+};
+
+/* WAM list stuff -------------------------------------------- */
+
+struct bt_wam_list
+{
+   enum bt_wam_type type;
+};
+
+struct bt_wam_list_proxy
+{
+   /* This tells us if it's a local or RPC proxy wam */
+   struct bt_wam_list base;
+   
+   struct bt_rpc_caller * caller;
+   void * obj;
+};
+
+struct bt_wam_list_entry
+{
+   char name[30];
+   enum bt_wam_list_entry_status status;
+   int programpid;
+   char programname[30];
+};
+
+struct bt_wam_list_local
+{
+   struct bt_wam_list base;
+   
+   struct bt_wam_list_entry ** entries;
+   int num;
 };
 
 #endif /* BT_WAM_INTERNAL_H */

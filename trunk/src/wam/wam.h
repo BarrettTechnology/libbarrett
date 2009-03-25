@@ -25,7 +25,28 @@
 
 /* We also use gsl as an interface language.  Maybe change this to
  * arrays of doubles? */
- #include <gsl/gsl_vector.h>
+#include <gsl/gsl_vector.h>
+
+/* A list of WAMs */
+struct bt_wam_list;
+
+enum bt_wam_list_entry_status
+{
+   BT_WAM_LIST_ENTRY_STATUS_FREE,
+   BT_WAM_LIST_ENTRY_STATUS_INUSE,
+   BT_WAM_LIST_ENTRY_STATUS_DEFUNCT
+};
+
+/* List the status of available WAMs at a location
+ * (use 0 or "" for "locally") */
+struct bt_wam_list * bt_wam_list_create(char * wamloc);
+int bt_wam_list_destroy(struct bt_wam_list * list);
+
+int bt_wam_list_get_num(struct bt_wam_list * list);
+char * bt_wam_list_get_name(struct bt_wam_list * list, int i, char * buf);
+enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list, int i);
+int bt_wam_list_get_pid(struct bt_wam_list * list, int i);
+char * bt_wam_list_get_programname(struct bt_wam_list * list, int i, char * buf);
 
 /* The opaque WAM structure */
 struct bt_wam;
