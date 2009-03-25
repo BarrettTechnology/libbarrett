@@ -219,6 +219,8 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             /* Make sure the puck is in IDLE mode */
             bt_bus_can_set_property(bus->dev, id, bus->p->MODE, 0, MODE_IDLE);
             /* Fill the puck structure */
+            bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply);
+            puck->vers = reply;
             bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply);
             puck->counts_per_rev = reply;
             bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply);

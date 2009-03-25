@@ -101,6 +101,7 @@ struct bt_bus_puck
    int id;
    
    /* Read from the puck each boot: */
+   int vers;
    int counts_per_rev;
    double puckI_per_Nm;
    int gid;
