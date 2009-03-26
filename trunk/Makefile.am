@@ -1,10 +1,17 @@
 # Things set by ./configure:
-#  - BT_BUS_ENABLE
-#  - @BT_BUS_CANTYPE@
-#  - @BT_BUS_LIBS@
+# Variables:
 #  - @BT_OS_CPP@
 #  - @BT_OS_LDFLAGS@
 #  - @BT_OS_LIBS@
+#  - @BT_BUS_CANTYPE@
+#  - @BT_BUS_LIBS@
+# Contitionals:
+#  - BT_ASYNC_ONLY
+#  - BT_WAMBOT_PHYSICAL
+#  - BT_WAMBOT_SIMULATED
+#  - BT_BUS_ENABLE
+
+
 
 ####### LIBBT
 
@@ -16,6 +23,10 @@ src_libbt_la_SOURCES =
 src_libbt_la_LIBADD =
 noinst_LTLIBRARIES =
 pkginclude_HEADERS =
+
+############################################
+
+if BT_WAM_LOCAL
 
 ######## BT_BUS
 
@@ -216,25 +227,6 @@ src_libbtrefgen_la_SOURCES = src/refgen/refgen_move.c \
                              src/refgen/refgen_teachplay_const.c \
                              src/refgen/refgen_teachplay.c
 
-####### BT_RPC
-
-# Add this library to libbt
-src_libbt_la_LIBADD += src/libbtrpc.la
-
-# The libtool library to make
-noinst_LTLIBRARIES += src/libbtrpc.la
-
-# Header files to include in the package
-pkginclude_HEADERS += src/rpc/rpc.h \
-                      src/rpc/rpc_tcpjson.h
-
-# Source files to complile
-# Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
-#src_libbtrpc_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-variadic-macros
-src_libbtrpc_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror
-src_libbtrpc_la_SOURCES = src/rpc/rpc.c \
-                          src/rpc/rpc_tcpjson.c
-
 ####### BT_SPLINE
 
 # Add this library to libbt
@@ -250,43 +242,6 @@ pkginclude_HEADERS += src/spline/spline.h
 src_libbtspline_la_CPPFLAGS = -Isrc/interp
 src_libbtspline_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
 src_libbtspline_la_SOURCES = src/spline/spline.c
-
-####### BT_WAM
-
-# Add this library to libbt
-src_libbt_la_LIBADD += src/libbtwam.la
-
-# The libtool library to make
-noinst_LTLIBRARIES += src/libbtwam.la
-
-# Header files to include in the package
-pkginclude_HEADERS += src/wam/wam.h \
-                      src/wam/wam_custom.h \
-                      src/wam/wam_internal.h \
-                      src/wam/wam_rpc.h
-
-# Source files to complile
-# Note - remove os.h dep from sys.h ...
-src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
-                           -Isrc/os \
-                           -Isrc/bus \
-                           -Isrc/wambot \
-                           -Isrc/kinematics \
-                           -Isrc/dynamics \
-                           -Isrc/gravity \
-                           -Isrc/refgen \
-                           -Isrc/log \
-                           -Isrc/control \
-                           -Isrc/spline \
-                           -Isrc/profile \
-                           -Isrc/rpc
-# Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
-#src_libbtwam_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long -Wno-variadic-macros
-# Note: c99 doesn't include popen (!!)
-#src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtwam_la_SOURCES = src/wam/wam.c \
-                          src/wam/wam_rpc.c
 
 ####### BT_WAMBOT
 
@@ -322,9 +277,78 @@ src_libbtwambot_la_SOURCES = src/wambot/wambot.c \
                              $(SOURCE_PHYS) \
                              $(SOURCE_SIM)
 
+#######
+
+endif
+                             
+############################################
+
+####### BT_RPC
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtrpc.la
+
+# The libtool library to make
+noinst_LTLIBRARIES += src/libbtrpc.la
+
+# Header files to include in the package
+pkginclude_HEADERS += src/rpc/rpc.h \
+                      src/rpc/rpc_tcpjson.h
+
+# Source files to complile
+# Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
+#src_libbtrpc_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-variadic-macros
+src_libbtrpc_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror
+src_libbtrpc_la_SOURCES = src/rpc/rpc.c \
+                          src/rpc/rpc_tcpjson.c
+
+####### BT_WAM
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtwam.la
+
+# The libtool library to make
+noinst_LTLIBRARIES += src/libbtwam.la
+
+# Header files to include in the package
+pkginclude_HEADERS += src/wam/wam.h \
+                      src/wam/wam_rpc.h
+
+if BT_WAM_LOCAL
+
+pkginclude_HEADERS += src/wam/wam_custom.h \
+                      src/wam/wam_internal.h
+
+endif
+
+# Source files to complile
+# Note - remove os.h dep from sys.h ...
+src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
+                           -Isrc/os \
+                           -Isrc/bus \
+                           -Isrc/wambot \
+                           -Isrc/kinematics \
+                           -Isrc/dynamics \
+                           -Isrc/gravity \
+                           -Isrc/refgen \
+                           -Isrc/log \
+                           -Isrc/control \
+                           -Isrc/spline \
+                           -Isrc/profile \
+                           -Isrc/rpc
+# Note: -Wno-variadic-macros can be used in GCC 4.2.4, but not GCC 3.4.6. UGH!
+#src_libbtwam_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long -Wno-variadic-macros
+# Note: c99 doesn't include popen (!!)
+#src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtwam_la_SOURCES = src/wam/wam.c \
+                          src/wam/wam_rpc.c
+
 ##############################################
 
 # Also, make the legacy stuff
+
+if BT_WAM_LOCAL
 
 lib_LTLIBRARIES += legacy/libbtlegacy.la
 
@@ -347,6 +371,8 @@ legacy_libbtlegacy_la_CPPFLAGS = -Isrc/gsl \
 # Damn variadic macros ...
 legacy_libbtlegacy_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
 legacy_libbtlegacy_la_SOURCES = legacy/wam/wam_legacy.c
+
+endif
 
 ##############################################
 
