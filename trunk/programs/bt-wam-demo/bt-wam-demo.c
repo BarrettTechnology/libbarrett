@@ -26,7 +26,9 @@
 /* System Libraries */
 #include <signal.h>
 #include <sys/mman.h>
+
 #include <malloc.h>
+#include <unistd.h> /* For usleep() */
 
 /* Package Dependencies */
 #include <curses.h>
@@ -34,10 +36,12 @@
 
 /* Include the high-level WAM header file */
 #include <libbt/wam.h>
-#include <libbt/os.h> /* for bt_os_usleep() */
+/*#include <libbt/os.h>*/ /* for bt_os_usleep() */
 
+/*
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+*/
 
 #define INPUT_MAX 20
 
@@ -130,14 +134,14 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
 
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create("wam4");
-   /*wam = bt_wam_create("tcp+json://localhost/wam4");*/
+   /*wam = bt_wam_create("wam4");*/
+   wam = bt_wam_create("tcp+json://wam15/wam4");
    if (!wam)
    {
       endwin();
       closelog();
       printf("Could not open the WAM.\n");
-      exit(-1);
+      return -1;
    }
 
    /* Start the demo program ... */
@@ -255,7 +259,7 @@ int main(int argc, char ** argv)
          }
       
       /* Slow this loop down to about 10Hz */
-      bt_os_usleep(100000); /* Wait a moment*/
+      usleep(100000); /* Wait a moment*/
    }
 
    /* Close the WAM */

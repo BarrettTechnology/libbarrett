@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 
 libbt = Extension('libbt',
                   include_dirs = ['/usr/local/include','../../src/wam'],
-                  libraries = ['bt'],
+                  libraries = ['bt','json'],
                   library_dirs = ['/usr/local/lib','../../src/.libs'],
                   sources=['libbtmodule.c'])
 

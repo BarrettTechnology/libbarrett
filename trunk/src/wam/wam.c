@@ -261,7 +261,7 @@ char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf)
 {
 #ifndef ASYNC_ONLY
    if (!wam->caller)
-      return bt_wam_local_str_crotation_r1(wam->obj,buf);
+      return bt_wam_local_str_crotation_r2(wam->obj,buf);
    else
 #endif
    {
@@ -275,7 +275,7 @@ char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
 {
 #ifndef ASYNC_ONLY
    if (!wam->caller)
-      return bt_wam_local_str_crotation_r1(wam->obj,buf);
+      return bt_wam_local_str_crotation_r3(wam->obj,buf);
    else
 #endif
    {
