@@ -1,7 +1,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-#include <libbt/wam.h>
+#include "wam.h"
 
 /* Function prototypes */
 static PyObject * libbt_version(PyObject * self, PyObject * args);

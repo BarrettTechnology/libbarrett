@@ -20,8 +20,8 @@
  *
  * ======================================================================== */
 
-#ifndef BT_WAM_INTERNAL_H
-#define BT_WAM_INTERNAL_H
+#ifndef BT_WAM_LOCAL_H
+#define BT_WAM_LOCAL_H
 
 /* Include the bt libraries */
 #include "os.h"
@@ -39,38 +39,12 @@
 #include "control_joint_legacy.h"
 #include "rpc.h"
 #include "wam.h"
-#include "wam_rpc.h"
 
 #define WAMCONFIGDIR "/etc/wam/"
 #define WAMLOCKDIR "/var/lock/"
 #define WAMCONFIGDIRLEN (70)
 #define WAMLOCKDIRLEN (70)
 #define WAMNAMELEN (30)
-
-/* Shortcut for proxy stuff */
-#define bt_wam_proxy_handle(f,w,...) \
-   bt_rpc_caller_handle(((struct bt_wam_proxy *)(w))->caller,bt_wam_rpc, \
-                        (f),((struct bt_wam_proxy *)(w))->obj,__VA_ARGS__)
-
-enum bt_wam_type
-{
-   BT_WAM_LOCAL,
-   BT_WAM_PROXY
-};
-
-struct bt_wam
-{
-   enum bt_wam_type type;
-};
-
-struct bt_wam_proxy
-{
-   /* This tells us if it's a local or RPC proxy wam */
-   struct bt_wam base;
-   
-   struct bt_rpc_caller * caller;
-   void * obj;
-};
 
 /* A bt_wam_refgen_list represents the currently loaded refgen;
  * it keeps track of ownership and persistance */
@@ -87,9 +61,6 @@ struct bt_wam_refgen_list
 
 struct bt_wam_local
 {
-   /* This tells us if it's a local or RPC proxy wam */
-   struct bt_wam base;
-   
    char name[WAMNAMELEN+1]; /* Do we even need this? */
    
    int loop_go;
@@ -148,21 +119,60 @@ struct bt_wam_local
    int teach;
 };
 
+struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts);
+int bt_wam_local_destroy(struct bt_wam_local * wam);
+
+int bt_wam_local_loop_start(struct bt_wam_local * wam);
+int bt_wam_local_loop_stop(struct bt_wam_local * wam);
+
+char * bt_wam_local_str_jposition(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_jvelocity(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_jtorque(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_cposition(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_crotation_r1(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_crotation_r2(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_str_crotation_r3(struct bt_wam_local * wam, char * buf);
+
+int bt_wam_local_isgcomp(struct bt_wam_local * wam);
+int bt_wam_local_setgcomp(struct bt_wam_local * wam, int onoff);
+int bt_wam_local_controller_toggle(struct bt_wam_local * wam);
+int bt_wam_local_idle(struct bt_wam_local * wam);
+int bt_wam_local_hold(struct bt_wam_local * wam);
+int bt_wam_local_is_holding(struct bt_wam_local * wam);
+char * bt_wam_local_get_current_controller_name(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_get_current_refgen_name(struct bt_wam_local * wam, char * buf);
+int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen);
+int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel);
+int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc);
+int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest);
+int bt_wam_local_movehome(struct bt_wam_local * wam);
+int bt_wam_local_moveisdone(struct bt_wam_local * wam);
+
+int bt_wam_local_is_teaching(struct bt_wam_local * wam);
+int bt_wam_local_teach_start(struct bt_wam_local * wam);
+int bt_wam_local_teach_end(struct bt_wam_local * wam);
+int bt_wam_local_teach_start_custom(struct bt_wam_local * wam, struct bt_refgen * refgen);
+int bt_wam_local_teach_end_custom(struct bt_wam_local * wam);
+int bt_wam_local_playback(struct bt_wam_local * wam);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* WAM list stuff -------------------------------------------- */
 
-struct bt_wam_list
-{
-   enum bt_wam_type type;
-};
-
-struct bt_wam_list_proxy
-{
-   /* This tells us if it's a local or RPC proxy wam */
-   struct bt_wam_list base;
-   
-   struct bt_rpc_caller * caller;
-   void * obj;
-};
 
 struct bt_wam_list_entry
 {
@@ -174,10 +184,18 @@ struct bt_wam_list_entry
 
 struct bt_wam_list_local
 {
-   struct bt_wam_list base;
-   
    struct bt_wam_list_entry ** entries;
    int num;
 };
 
-#endif /* BT_WAM_INTERNAL_H */
+struct bt_wam_list_local * bt_wam_list_local_create();
+int bt_wam_list_local_destroy(struct bt_wam_list_local * list);
+int bt_wam_list_local_get_num(struct bt_wam_list_local * list);
+char * bt_wam_list_local_get_name(struct bt_wam_list_local * list, int i, char * buf);
+enum bt_wam_list_entry_status bt_wam_list_local_get_status(struct bt_wam_list_local * list, int i);
+int bt_wam_list_local_get_pid(struct bt_wam_list_local * list, int i);
+char * bt_wam_list_local_get_programname(struct bt_wam_list_local * list, int i, char * buf);
+
+
+
+#endif /* BT_WAM_LOCAL_H */

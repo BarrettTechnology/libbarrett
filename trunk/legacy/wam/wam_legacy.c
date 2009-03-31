@@ -27,7 +27,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "wam_internal.h"
+#include "wam.h"
+#include "wam_local.h"
 #include "wam_legacy.h"
 
 
@@ -302,8 +303,8 @@ enum scstate getmode_bts(btstatecontrol *sc)
 
 int moveparm_bts(btstatecontrol *sc, double vel, double acc)
 {
-   bt_wam_set_velocity(&sc->my_wam->local->base, vel);
-   bt_wam_set_acceleration(&sc->my_wam->local->base, acc);
+   bt_wam_local_set_velocity(sc->my_wam->local, vel);
+   bt_wam_local_set_acceleration(sc->my_wam->local, acc);
    return 0;
 }
 
@@ -374,7 +375,6 @@ int apply_tool_force_bot(btrobot * robot, vect_3 * point, vect_3 * force, vect_3
 wam_struct * OpenWAM(char * conffile, int which)
 {
    wam_struct * wam;
-   struct bt_wam * bt_wam;
    
    /* Create the legacy structure */
    wam = (wam_struct *) malloc(sizeof(wam_struct));
@@ -385,19 +385,9 @@ wam_struct * OpenWAM(char * conffile, int which)
    }
    
    /* Create the bt_wam, but don't start the loop immediately */
-   bt_wam = bt_wam_create_opt(conffile, BT_WAM_OPT_NO_LOOP_START);
-   if (!bt_wam)
+   wam->local = bt_wam_local_create(conffile, BT_WAM_OPT_NO_LOOP_START);
+   if (!wam->local)
    {
-      free(wam);
-      return 0;
-   }
-   
-   if (bt_wam->type == BT_WAM_LOCAL)
-      wam->local = (struct bt_wam_local *) bt_wam;
-   else
-   {
-      syslog(LOG_ERR,"%s: We don't support proxy WAMs in legacy mode.",__func__);
-      bt_wam_destroy(&wam->local->base);
       free(wam);
       return 0;
    }
@@ -410,7 +400,7 @@ wam_struct * OpenWAM(char * conffile, int which)
    wam->Jpos = math_create_from_gsl(wam->local->jposition,BT_WAM_LEGACY_MATH_TYPE_VECT);
    if (!wam->Jpos)
    {
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }
@@ -418,7 +408,7 @@ wam_struct * OpenWAM(char * conffile, int which)
    if (!wam->Jtrq)
    {
       math_destroy(wam->Jpos);
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }
@@ -427,7 +417,7 @@ wam_struct * OpenWAM(char * conffile, int which)
    {
       math_destroy(wam->Jpos);
       math_destroy(wam->Jtrq);
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }  
@@ -437,7 +427,7 @@ wam_struct * OpenWAM(char * conffile, int which)
       destroy_vn(&wam->Gtrq);
       math_destroy(wam->Jpos);
       math_destroy(wam->Jtrq);
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }  
@@ -448,7 +438,7 @@ wam_struct * OpenWAM(char * conffile, int which)
       destroy_vn(&wam->Gtrq);
       math_destroy(wam->Jpos);
       math_destroy(wam->Jtrq);
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }
@@ -460,7 +450,7 @@ wam_struct * OpenWAM(char * conffile, int which)
       math_destroy(wam->Cpos);
       math_destroy(wam->Jpos);
       math_destroy(wam->Jtrq);
-      bt_wam_destroy(&wam->local->base);
+      bt_wam_local_destroy(wam->local);
       free(wam);
       return 0;
    }
@@ -487,13 +477,13 @@ void WAMControlThread(struct bt_os_thread * thd)
    wam_struct * wam;
    wam = thd->data;
    
-   bt_wam_loop_start(&wam->local->base);
+   bt_wam_local_loop_start(wam->local);
    
    while (!bt_os_thread_done(thd)){
       bt_os_usleep(10000);
    }
    
-   bt_wam_loop_stop(&wam->local->base);
+   bt_wam_local_loop_stop(wam->local);
    
    bt_os_thread_exit(thd);
 }
@@ -506,8 +496,8 @@ int registerWAMcallback(wam_struct * wam, int (* thd_func)(wam_struct *))
 
 int MoveSetup(wam_struct * wam, double vel, double acc)
 {
-   bt_wam_set_velocity(&wam->local->base, vel);
-   bt_wam_set_acceleration(&wam->local->base, acc);
+   bt_wam_local_set_velocity(wam->local, vel);
+   bt_wam_local_set_acceleration(wam->local, acc);
    return 0;
 }
 
@@ -520,12 +510,12 @@ int SetGravityComp(wam_struct * wam, double gcompval)
 {
    if (gcompval == 0.0)
    {
-      bt_wam_setgcomp(&wam->local->base, 0);
+      bt_wam_local_setgcomp(wam->local, 0);
       return 0;
    }
    else if (gcompval == 1.0)
    {
-      bt_wam_setgcomp(&wam->local->base, 1);
+      bt_wam_local_setgcomp(wam->local, 1);
       return 0;
    }
    return -1;

@@ -314,13 +314,6 @@ noinst_LTLIBRARIES += src/libbtwam.la
 pkginclude_HEADERS += src/wam/wam.h \
                       src/wam/wam_rpc.h
 
-if BT_WAM_LOCAL
-
-pkginclude_HEADERS += src/wam/wam_custom.h \
-                      src/wam/wam_internal.h
-
-endif
-
 # Source files to complile
 # Note - remove os.h dep from sys.h ...
 src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
@@ -343,6 +336,19 @@ src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
 src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtwam_la_SOURCES = src/wam/wam.c \
                           src/wam/wam_rpc.c
+
+if BT_WAM_LOCAL
+
+pkginclude_HEADERS += src/wam/wam_custom.h \
+                      src/wam/wam_local.h
+
+src_libbtwam_la_SOURCES += src/wam/wam_local.c
+
+else
+
+src_libbtwam_la_CPPFLAGS += -DASYNC_ONLY
+
+endif
 
 ##############################################
 

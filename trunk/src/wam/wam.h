@@ -25,7 +25,7 @@
 
 /* We also use gsl as an interface language.  Maybe change this to
  * arrays of doubles? */
-#include <gsl/gsl_vector.h>
+/*#include <gsl/gsl_vector.h>*/
 
 /* A list of WAMs */
 struct bt_wam_list;
@@ -48,8 +48,12 @@ enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list, 
 int bt_wam_list_get_pid(struct bt_wam_list * list, int i);
 char * bt_wam_list_get_programname(struct bt_wam_list * list, int i, char * buf);
 
+
+
+
 /* The opaque WAM structure */
 struct bt_wam;
+struct bt_wam_local;
 
 /* WAM options */
 enum bt_wam_opt {
@@ -97,7 +101,7 @@ char * bt_wam_get_current_refgen_name(struct bt_wam * wam, char * buf);
 int bt_wam_set_velocity(struct bt_wam * wam, double vel);
 int bt_wam_set_acceleration(struct bt_wam * wam, double acc);
 
-int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);
+/*int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);*/
 int bt_wam_movehome(struct bt_wam * wam);
 int bt_wam_moveisdone(struct bt_wam * wam);
 

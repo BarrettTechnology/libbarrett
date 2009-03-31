@@ -27,7 +27,7 @@
 
 /* For internal use: */
 #include "wam.h"
-#include "wam_internal.h"
+#include "wam_local.h"
 
 #define TRUE 1
 #define FALSE 0
