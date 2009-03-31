@@ -152,6 +152,7 @@ int bt_wam_destroy(struct bt_wam * wam)
       int myint;
       if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
          return -1; /* Could not forward over RPC */
+      bt_rpc_caller_destroy(wam->caller);
       free(wam);
       return myint;
    }
@@ -584,7 +585,7 @@ struct bt_wam_list * bt_wam_list_create(char * wamloc)
    }
    
    /* Attempt to open the remote wam list */
-   err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_list_create",&obj);
+   err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_list_create","",&obj);
    if (err || !obj)
    {
       syslog(LOG_ERR,"%s: Could not open remote WAM list.",__func__);
@@ -603,13 +604,19 @@ int bt_wam_list_destroy(struct bt_wam_list * list)
 {
 #ifndef ASYNC_ONLY
    if (!list->caller)
-      return bt_wam_list_local_destroy(list->obj);
+   {
+      bt_wam_list_local_destroy(list->obj);
+      free(list);
+      return 0;
+   }
    else
 #endif
    {
       int myint;
       if (bt_rpc_caller_handle(list->caller, bt_wam_rpc, __func__, list->obj, &myint))
          return -1; /* Could not forward over RPC */
+      bt_rpc_caller_destroy(list->caller);
+      free(list);
       return myint;
    }
 }

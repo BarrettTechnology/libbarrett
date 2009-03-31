@@ -72,7 +72,7 @@ struct bt_rpc_caller
 enum bt_rpc_interface_func_type
 {
 /*   BT_RPC_FUNC_OBJ_STR_CREATE,*/
-   BT_RPC_FUNC_OBJ_CREATE,
+   BT_RPC_FUNC_OBJ_STR_CREATE,
    BT_RPC_FUNC_OBJ_STR_INT_CREATE,
    BT_RPC_FUNC_INT_OBJ_DESTROY,
    BT_RPC_FUNC_INT_OBJ,

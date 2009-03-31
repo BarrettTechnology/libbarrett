@@ -1114,6 +1114,7 @@ struct bt_wam_list_local * bt_wam_list_local_create()
          list->num++;
          
          strncpy(entry->name,file->d_name,n-7);
+         entry->name[n-7] = '\0';
          
          /* Attempt to read the lock file */
          strcpy(lockfilename,WAMLOCKDIR);

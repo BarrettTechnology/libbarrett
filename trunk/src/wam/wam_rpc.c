@@ -60,7 +60,7 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_playback,          "bt_wam_playback",          BT_RPC_FUNC_INT_OBJ},
    
    /* WAM list stuff */
-   {(void (*)())&bt_wam_list_create,       "bt_wam_list_create",       BT_RPC_FUNC_OBJ_CREATE},
+   {(void (*)())&bt_wam_list_create,       "bt_wam_list_create",       BT_RPC_FUNC_OBJ_STR_CREATE},
    {(void (*)())&bt_wam_list_destroy,      "bt_wam_list_destroy",      BT_RPC_FUNC_INT_OBJ_DESTROY},
    
    {(void (*)())&bt_wam_list_get_num,      "bt_wam_list_get_num",      BT_RPC_FUNC_INT_OBJ},

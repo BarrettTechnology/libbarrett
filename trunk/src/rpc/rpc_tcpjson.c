@@ -288,7 +288,6 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
       int myint2;
       char * str;
       void * vptr;
-#if 0
       case BT_RPC_FUNC_OBJ_STR_CREATE:
          /* Check for one string parameter */
          if (json_object_array_length(params)!=1)
@@ -320,7 +319,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          }
          json_object_put(req);
          return 0;
-#endif
+#if 0
       case BT_RPC_FUNC_OBJ_CREATE:
          /* Check for one string, one int parameter */
          if (json_object_array_length(params)!=0)
@@ -345,6 +344,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          }
          json_object_put(req);
          return 0;
+#endif
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          /* Check for one string, one int parameter */
          if (json_object_array_length(params)!=2)
@@ -634,15 +634,15 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       char * mystr;
       void * vptr;
       int myint;
-#if 0
       case BT_RPC_FUNC_OBJ_STR_CREATE:
          mystr = va_arg(ap, char *);
          sprintf(cr->buf,"{'method':'%s','params':['%s']}\n", function, mystr);
          break;
-#endif
+#if 0
       case BT_RPC_FUNC_OBJ_CREATE:
          sprintf(cr->buf,"{'method':'%s','params':[]}\n", function);
          break;
+#endif
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          mystr = va_arg(ap, char *);
          myint = va_arg(ap, int);
@@ -739,13 +739,11 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       void * vptr;
       int myint;
       char * mystr;
-#if 0
+
       case BT_RPC_FUNC_OBJ_STR_CREATE:
-         vptr = (void *) json_object_get_int(json_object_object_get(req,"result"));
-         *((void **)result) = vptr;
-         break;
-#endif
+#if 0
       case BT_RPC_FUNC_OBJ_CREATE:
+#endif
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          vptr = (void *) json_object_get_int(json_object_object_get(req,"result"));
          *((void **)result) = vptr;

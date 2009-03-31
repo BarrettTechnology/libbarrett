@@ -22,6 +22,8 @@
 /** \file bt-wam-list.c
  */
 
+#include <stdio.h>
+
 /* Include the high-level WAM header file */
 #include <libbt/wam.h>
 
@@ -33,7 +35,7 @@ int main(int argc, char ** argv)
    char buf2[100];
    int i;
    
-   list = bt_wam_list_create(0);
+   list = bt_wam_list_create("tcp+json://wam15");
    if (!list)
    {
       printf("Could not get wam list.\n");
@@ -42,7 +44,7 @@ int main(int argc, char ** argv)
    
    for (i=0; i<bt_wam_list_get_num(list); i++)
    {
-      printf("Entry %d: %s, status %d, id %d, name %s\n",
+      printf("Entry %d: %s, status %d, id %d, name %s,\n",
              i,
              bt_wam_list_get_name(list,i,buf1),
              bt_wam_list_get_status(list,i),

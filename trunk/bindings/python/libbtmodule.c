@@ -3,11 +3,14 @@
 
 #include "wam.h"
 
+/* Prototypes of types that we support */
+static PyTypeObject WamType;
+static PyTypeObject WamListType;
+
+/* The module ------------------------------------------------------------- */
+
 /* Function prototypes */
 static PyObject * libbt_version(PyObject * self, PyObject * args);
-
-/* Types that we support */
-static PyTypeObject WamType;
 
 /* Function table */
 static PyMethodDef LibbtMethods[] =
@@ -25,8 +28,8 @@ initlibbt(void)
 {
    PyObject * m;
    
-   if (PyType_Ready(&WamType) < 0)
-      return;
+   if (PyType_Ready(&WamType) < 0) return;
+   if (PyType_Ready(&WamListType) < 0) return;
    
    m = Py_InitModule("libbt", LibbtMethods);
    if (!m)
@@ -34,7 +37,8 @@ initlibbt(void)
    
    /* Add the wam type */
    Py_INCREF(&WamType);
-   PyModule_AddObject(m, "Wam", (PyObject *)&WamType);
+   PyModule_AddObject(m, "Wam",     (PyObject *)&WamType);
+   PyModule_AddObject(m, "WamList", (PyObject *)&WamListType);
 }
 
 /* Get version */
@@ -50,14 +54,12 @@ typedef struct
 {
    PyObject_HEAD
    struct bt_wam * wam;
-   int number;
 } Wam;
 
 /* Wam members table */
 static PyMemberDef Wam_members[] =
 {
-   {"number", T_INT, offsetof(Wam,number), 0, "a number"},
-   {0}
+   {0,0,0,0,0}
 };
 
 /* Creation function */
@@ -72,7 +74,6 @@ static PyObject * Wam_new(PyTypeObject * type, PyObject * args, PyObject * kwds)
    
    /* Initialize */
    self->wam = 0;
-   self->number = 0;
    
    return (PyObject *)self;
 }
@@ -91,7 +92,6 @@ static int Wam_init(Wam * self, PyObject * args, PyObject * kwds)
    if (!self->wam)
       return -1;
    
-   self->number = 1338;
    return 0;
 }
 
@@ -106,7 +106,6 @@ static void Wam_dealloc(Wam * self)
    self->ob_type->tp_free((PyObject *)self);
 }
 
-static PyObject * Wam_getnumber(Wam * self);
 static PyObject * Wam_str_jposition(Wam * self);
 static PyObject * Wam_str_jvelocity(Wam * self);
 static PyObject * Wam_str_jtorque(Wam * self);
@@ -132,7 +131,6 @@ static PyObject * Wam_playback(Wam * self);
 /* Wam methods table */
 static PyMethodDef Wam_methods[] =
 {
-   {"getnumber",         (PyCFunction)Wam_getnumber,         METH_NOARGS,  "Return the number"},
    {"str_jposition",     (PyCFunction)Wam_str_jposition,     METH_NOARGS,  "Return the number"},
    {"str_jvelocity",     (PyCFunction)Wam_str_jvelocity,     METH_NOARGS,  "Return the number"},
    {"str_jtorque",       (PyCFunction)Wam_str_jtorque,       METH_NOARGS,  "Return the number"},
@@ -160,12 +158,6 @@ static PyMethodDef Wam_methods[] =
    {"playback",          (PyCFunction)Wam_playback,          METH_NOARGS,  "Return the number"},
    {0, 0, 0, 0}
 };
-
-/* Wam method getnumber */
-static PyObject * Wam_getnumber(Wam * self)
-{
-   return Py_BuildValue("i", self->number);
-}
 
 static PyObject * Wam_str_jposition(Wam * self)
 {
@@ -299,7 +291,7 @@ static PyTypeObject WamType =
 {
    PyObject_HEAD_INIT(0)
    0,                         /*ob_size*/
-   "libbt.Wam",                  /*tp_name*/
+   "libbt.Wam",               /*tp_name*/
    sizeof(Wam),               /*tp_basicsize*/
    0,                         /*tp_itemsize*/
    (destructor)Wam_dealloc,   /*tp_dealloc*/
@@ -336,4 +328,170 @@ static PyTypeObject WamType =
    (initproc)Wam_init,        /* tp_init */
    0,                         /* tp_alloc */
    Wam_new,                   /* tp_new */
+};
+
+
+/* The wamlist class ------------------------------------------------------ */
+
+/* A WAM instance */
+typedef struct
+{
+   PyObject_HEAD
+   struct bt_wam_list * list;
+} WamList;
+
+/* Wam members table */
+static PyMemberDef WamList_members[] =
+{
+   {0,0,0,0,0}
+};
+
+/* Creation function */
+static PyObject * WamList_new(PyTypeObject * type, PyObject * args, PyObject * kwds)
+{
+   WamList * self;
+   
+   /* Create */
+   self = (WamList *) type->tp_alloc(type,0);
+   if (!self)
+      return 0;
+   
+   /* Initialize */
+   self->list = 0;
+   
+   return (PyObject *)self;
+}
+
+/* Init function, expects string location */
+static int WamList_init(WamList * self, PyObject * args, PyObject * kwds)
+{
+   char * prefixhost;
+   
+   /* Grab the string */
+   if (!PyArg_ParseTuple(args,"s",&prefixhost))
+      return -1;
+   
+   /* Attempt to initialize the wam_list */
+   self->list = bt_wam_list_create(prefixhost);
+   if (!self->list)
+      return -1;
+   
+   return 0;
+}
+
+/* Deallocate function */
+static void WamList_dealloc(WamList * self)
+{
+   /* If we have a wam, destroy it */
+   if (self->list)
+      bt_wam_list_destroy(self->list);
+   
+   /* Free myself */
+   self->ob_type->tp_free((PyObject *)self);
+}
+
+static PyObject * WamList_get_num(WamList * self);
+static PyObject * WamList_get_name(WamList * self, PyObject * args);
+static PyObject * WamList_get_status(WamList * self, PyObject * args);
+static PyObject * WamList_get_pid(WamList * self, PyObject * args);
+static PyObject * WamList_get_programname(WamList * self, PyObject * args);
+
+/* Wam methods table */
+static PyMethodDef WamList_methods[] =
+{
+   {"get_num",         (PyCFunction)WamList_get_num,         METH_NOARGS,  "Get number of list entries"},
+   {"get_name",        (PyCFunction)WamList_get_name,        METH_VARARGS, "Get an entry's name"},
+   {"get_status",      (PyCFunction)WamList_get_status,      METH_VARARGS, "Get an entry's status"},
+   {"get_pid",         (PyCFunction)WamList_get_pid,         METH_VARARGS, "Get an entry's PID"},
+   {"get_programname", (PyCFunction)WamList_get_programname, METH_VARARGS, "Get an entry's program name"},
+   {0, 0, 0, 0}
+};
+
+/* Wam method getnumber */
+static PyObject * WamList_get_num(WamList * self)
+{
+   return Py_BuildValue("i",bt_wam_list_get_num(self->list));
+}
+
+static PyObject * WamList_get_name(WamList * self, PyObject * args)
+{
+   int myint;
+   char buf[300];
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("s",bt_wam_list_get_name(self->list,myint,buf));
+}
+
+static PyObject * WamList_get_status(WamList * self, PyObject * args)
+{
+   int myint;
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("i",bt_wam_list_get_status(self->list,myint));
+}
+
+static PyObject * WamList_get_pid(WamList * self, PyObject * args)
+{
+   int myint;
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("i",bt_wam_list_get_pid(self->list,myint));
+}
+
+static PyObject * WamList_get_programname(WamList * self, PyObject * args)
+{
+   int myint;
+   char buf[300];
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("s",bt_wam_list_get_programname(self->list,myint,buf));
+}
+
+
+/* Define the type */
+static PyTypeObject WamListType =
+{
+   PyObject_HEAD_INIT(0)
+   0,                         /*ob_size*/
+   "libbt.WamList",           /*tp_name*/
+   sizeof(WamList),           /*tp_basicsize*/
+   0,                         /*tp_itemsize*/
+   (destructor)WamList_dealloc, /*tp_dealloc*/
+   0,                         /*tp_print*/
+   0,                         /*tp_getattr*/
+   0,                         /*tp_setattr*/
+   0,                         /*tp_compare*/
+   0,                         /*tp_repr*/
+   0,                         /*tp_as_number*/
+   0,                         /*tp_as_sequence*/
+   0,                         /*tp_as_mapping*/
+   0,                         /*tp_hash */
+   0,                         /*tp_call*/
+   0,                         /*tp_str*/
+   0,                         /*tp_getattro*/
+   0,                         /*tp_setattro*/
+   0,                         /*tp_as_buffer*/
+   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+   "WamList objects",         /* tp_doc */
+   0,		                     /* tp_traverse */
+   0,		                     /* tp_clear */
+   0,		                     /* tp_richcompare */
+   0,		                     /* tp_weaklistoffset */
+   0,		                     /* tp_iter */
+   0,		                     /* tp_iternext */
+   WamList_methods,           /* tp_methods */
+   WamList_members,           /* tp_members */
+   0,                         /* tp_getset */
+   0,                         /* tp_base */
+   0,                         /* tp_dict */
+   0,                         /* tp_descr_get */
+   0,                         /* tp_descr_set */
+   0,                         /* tp_dictoffset */
+   (initproc)WamList_init,    /* tp_init */
+   0,                         /* tp_alloc */
+   WamList_new,               /* tp_new */
 };
