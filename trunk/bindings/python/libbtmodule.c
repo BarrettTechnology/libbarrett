@@ -2,10 +2,12 @@
 #include "structmember.h"
 
 #include "wam.h"
+#include "discover.h"
 
 /* Prototypes of types that we support */
 static PyTypeObject WamType;
 static PyTypeObject WamListType;
+static PyTypeObject DiscoverClientType;
 
 /* The module ------------------------------------------------------------- */
 
@@ -30,6 +32,7 @@ initlibbt(void)
    
    if (PyType_Ready(&WamType) < 0) return;
    if (PyType_Ready(&WamListType) < 0) return;
+   if (PyType_Ready(&DiscoverClientType) < 0) return;
    
    m = Py_InitModule("libbt", LibbtMethods);
    if (!m)
@@ -37,8 +40,9 @@ initlibbt(void)
    
    /* Add the wam type */
    Py_INCREF(&WamType);
-   PyModule_AddObject(m, "Wam",     (PyObject *)&WamType);
-   PyModule_AddObject(m, "WamList", (PyObject *)&WamListType);
+   PyModule_AddObject(m, "Wam",            (PyObject *)&WamType);
+   PyModule_AddObject(m, "WamList",        (PyObject *)&WamListType);
+   PyModule_AddObject(m, "DiscoverClient", (PyObject *)&DiscoverClientType);
 }
 
 /* Get version */
@@ -495,3 +499,148 @@ static PyTypeObject WamListType =
    0,                         /* tp_alloc */
    WamList_new,               /* tp_new */
 };
+
+
+/* The DiscoverClient class ----------------------------------------------- */
+
+/* A WAM instance */
+typedef struct
+{
+   PyObject_HEAD
+   struct bt_discover_client * client;
+} DiscoverClient;
+
+/* Wam members table */
+static PyMemberDef DiscoverClient_members[] =
+{
+   {0,0,0,0,0}
+};
+
+/* Creation function */
+static PyObject * DiscoverClient_new(PyTypeObject * type, PyObject * args, PyObject * kwds)
+{
+   DiscoverClient * self;
+   
+   /* Create */
+   self = (DiscoverClient *) type->tp_alloc(type,0);
+   if (!self)
+      return 0;
+   
+   /* Initialize */
+   self->client = 0;
+   
+   return (PyObject *)self;
+}
+
+/* Init function, expects string location */
+static int DiscoverClient_init(DiscoverClient * self, PyObject * args, PyObject * kwds)
+{
+   /* Attempt to initialize the wam_list */
+   self->client = bt_discover_client_create();
+   if (!self->client)
+      return -1;
+   
+   return 0;
+}
+
+/* Deallocate function */
+static void DiscoverClient_dealloc(DiscoverClient * self)
+{
+   /* If we have a wam, destroy it */
+   if (self->client)
+      bt_discover_client_destroy(self->client);
+   
+   /* Free myself */
+   self->ob_type->tp_free((PyObject *)self);
+}
+
+static PyObject * DiscoverClient_get_num(DiscoverClient * self);
+static PyObject * DiscoverClient_discover(DiscoverClient * self);
+static PyObject * DiscoverClient_get_mac(DiscoverClient * self, PyObject * args);
+static PyObject * DiscoverClient_get_ip(DiscoverClient * self, PyObject * args);
+
+/* DiscoverClient methods table */
+static PyMethodDef DiscoverClient_methods[] =
+{
+   {"get_num",  (PyCFunction)DiscoverClient_get_num,  METH_NOARGS,  "Get number of list entries"},
+   {"discover", (PyCFunction)DiscoverClient_discover, METH_NOARGS,  "Discover via UDP broadcast"},
+   {"get_mac",  (PyCFunction)DiscoverClient_get_mac,  METH_VARARGS, "Get an entry's mac"},
+   {"get_ip",   (PyCFunction)DiscoverClient_get_ip,   METH_VARARGS, "Get an entry's ip"},
+   {0, 0, 0, 0}
+};
+
+/* DiscoverClient method getnumber */
+static PyObject * DiscoverClient_get_num(DiscoverClient * self)
+{
+   return Py_BuildValue("i",self->client->num);
+}
+
+static PyObject * DiscoverClient_discover(DiscoverClient * self)
+{
+   return Py_BuildValue("i",bt_discover_client_discover(self->client));
+}
+
+static PyObject * DiscoverClient_get_mac(DiscoverClient * self, PyObject * args)
+{
+   int myint;
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("s",self->client->list[myint].mac);
+}
+
+static PyObject * DiscoverClient_get_ip(DiscoverClient * self, PyObject * args)
+{
+   int myint;
+   /* Grab the int */
+   if (!PyArg_ParseTuple(args,"i",&myint))
+      return 0;
+   return Py_BuildValue("s",self->client->list[myint].ip);
+}
+
+/* Define the type */
+static PyTypeObject DiscoverClientType =
+{
+   PyObject_HEAD_INIT(0)
+   0,                         /*ob_size*/
+   "libbt.WamList",           /*tp_name*/
+   sizeof(DiscoverClient),    /*tp_basicsize*/
+   0,                         /*tp_itemsize*/
+   (destructor)DiscoverClient_dealloc, /*tp_dealloc*/
+   0,                         /*tp_print*/
+   0,                         /*tp_getattr*/
+   0,                         /*tp_setattr*/
+   0,                         /*tp_compare*/
+   0,                         /*tp_repr*/
+   0,                         /*tp_as_number*/
+   0,                         /*tp_as_sequence*/
+   0,                         /*tp_as_mapping*/
+   0,                         /*tp_hash */
+   0,                         /*tp_call*/
+   0,                         /*tp_str*/
+   0,                         /*tp_getattro*/
+   0,                         /*tp_setattro*/
+   0,                         /*tp_as_buffer*/
+   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+   "DiscoverClient objects",  /* tp_doc */
+   0,		                     /* tp_traverse */
+   0,		                     /* tp_clear */
+   0,		                     /* tp_richcompare */
+   0,		                     /* tp_weaklistoffset */
+   0,		                     /* tp_iter */
+   0,		                     /* tp_iternext */
+   DiscoverClient_methods,    /* tp_methods */
+   DiscoverClient_members,    /* tp_members */
+   0,                         /* tp_getset */
+   0,                         /* tp_base */
+   0,                         /* tp_dict */
+   0,                         /* tp_descr_get */
+   0,                         /* tp_descr_set */
+   0,                         /* tp_dictoffset */
+   (initproc)DiscoverClient_init, /* tp_init */
+   0,                         /* tp_alloc */
+   DiscoverClient_new,        /* tp_new */
+};
+
+
+

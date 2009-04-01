@@ -283,6 +283,22 @@ endif
                              
 ############################################
 
+####### BT_DISCOVER
+
+# Add this library to libbt
+src_libbt_la_LIBADD += src/libbtdiscover.la
+
+# The libtool library to make
+noinst_LTLIBRARIES += src/libbtdiscover.la
+
+# Header files to include in the package
+pkginclude_HEADERS += src/discover/discover.h
+
+# Source files to complile
+src_libbtdiscover_la_CPPFLAGS =
+src_libbtdiscover_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtdiscover_la_SOURCES = src/discover/discover.c
+
 ####### BT_RPC
 
 # Add this library to libbt
