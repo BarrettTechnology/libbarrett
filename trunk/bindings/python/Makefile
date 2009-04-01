@@ -9,3 +9,6 @@ install: libbt.so
 clean:
 	python setup.py clean
 	rm -rf build
+
+distdir:
+	cp Makefile setup.py libbtmodule.c $(distdir)

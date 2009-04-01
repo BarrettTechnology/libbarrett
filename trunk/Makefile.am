@@ -39,7 +39,8 @@ src_libbt_la_LIBADD += src/libbtbus.la
 noinst_LTLIBRARIES += src/libbtbus.la
 
 # Header files to include in the package
-pkginclude_HEADERS += src/bus/bus.h
+pkginclude_HEADERS += src/bus/bus.h \
+                      src/bus/bus_can.h
 
 # Source files to complile
 src_libbtbus_la_CPPFLAGS = -Isrc/os -D@BT_BUS_CANTYPE@
