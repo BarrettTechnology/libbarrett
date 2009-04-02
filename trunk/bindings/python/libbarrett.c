@@ -342,11 +342,17 @@ typedef struct
 {
    PyObject_HEAD
    struct bt_wam_list * list;
+   int STATUS_FREE;
+   int STATUS_INUSE;
+   int STATUS_DEFUNCT;
 } WamList;
 
 /* Wam members table */
 static PyMemberDef WamList_members[] =
 {
+   {"STATUS_FREE", T_INT, offsetof(WamList,STATUS_FREE), 0, "STATUS_FREE"},
+   {"STATUS_INUSE", T_INT, offsetof(WamList,STATUS_INUSE), 0, "STATUS_INUSE"},
+   {"STATUS_DEFUNCT", T_INT, offsetof(WamList,STATUS_DEFUNCT), 0, "STATUS_DEFUNCT"},
    {0,0,0,0,0}
 };
 
@@ -362,6 +368,9 @@ static PyObject * WamList_new(PyTypeObject * type, PyObject * args, PyObject * k
    
    /* Initialize */
    self->list = 0;
+   self->STATUS_FREE = BT_WAM_LIST_ENTRY_STATUS_FREE;
+   self->STATUS_INUSE = BT_WAM_LIST_ENTRY_STATUS_INUSE;
+   self->STATUS_DEFUNCT = BT_WAM_LIST_ENTRY_STATUS_DEFUNCT;
    
    return (PyObject *)self;
 }

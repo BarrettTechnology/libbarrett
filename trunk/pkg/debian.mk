@@ -2,7 +2,6 @@ dist-deb: dist
 	tar xzf libbarrett-0.1.tar.gz
 	cp -r pkg/debian libbarrett-0.1
 	cd libbarrett-0.1 && debuild -us -uc
-	false
 	rm -r libbarrett-0.1
 	
 dist-deb-clean:
