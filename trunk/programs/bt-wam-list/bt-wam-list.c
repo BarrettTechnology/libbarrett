@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 /* Include the high-level WAM header file */
-#include <libbt/wam.h>
+#include "wam.h"
 
 /* Program entry point */
 int main(int argc, char ** argv)

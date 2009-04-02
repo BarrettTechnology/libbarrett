@@ -29,9 +29,9 @@
 /* Package Dependencies */
 #include <syslog.h>
 
-#include <libbt/rpc.h>
-#include <libbt/rpc_tcpjson.h>
-#include <libbt/wam_rpc.h>
+#include "rpc.h"
+#include "rpc_tcpjson.h"
+#include "wam_rpc.h"
 
 /* We have a global flag and signal handler
  * to allow the user to close the program

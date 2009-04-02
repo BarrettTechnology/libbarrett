@@ -33,7 +33,7 @@ struct bt_discover_client
    int num;
 };
 
-struct bt_discover_client * bt_discover_client_create();
+struct bt_discover_client * bt_discover_client_create(void);
 int bt_discover_client_destroy(struct bt_discover_client * client);
 
 /* For now, this blocks for about 1 second */

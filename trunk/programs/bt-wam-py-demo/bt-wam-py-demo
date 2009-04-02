@@ -5,7 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from libbt import Wam, WamList, DiscoverClient
+from libbarrett import Wam, WamList, DiscoverClient
 
 class WamDemo:
 

@@ -34,8 +34,8 @@
 #include <libconfig.h>
 
 /* Include the high-level WAM header file */
-#include <libbt/bus.h>
-#include <libbt/os.h> /* for bt_os_usleep() */
+#include "bus.h"
+#include "os.h" /* for bt_os_usleep() */
 
 #define INPUT_MAX 20
 

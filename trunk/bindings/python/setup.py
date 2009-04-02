@@ -1,14 +1,14 @@
 from distutils.core import setup, Extension
 
-libbt = Extension('libbt',
+libbt = Extension('libbarrett',
                   include_dirs = ['/usr/local/include',
                                   '../../src/wam',
                                   '../../src/discover'],
-                  libraries = ['bt','json'],
+                  libraries = ['barrett','json'],
                   library_dirs = ['/usr/local/lib','../../src/.libs'],
-                  sources=['libbtmodule.c'])
+                  sources=['libbarrett.c'])
 
-setup(name='libbt',
+setup(name='libbarrett',
       version='0.1',
-      description='libbt module',
+      description='libbarrett module',
       ext_modules=[libbt])

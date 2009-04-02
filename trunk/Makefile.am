@@ -13,14 +13,14 @@
 
 
 
-####### LIBBT
+####### LIBBARRETT
 
 # The library to make 
-lib_LTLIBRARIES = src/libbt.la
+lib_LTLIBRARIES = src/libbarrett.la
 
 # All the libraries to not be installed ...
-src_libbt_la_SOURCES =
-src_libbt_la_LIBADD =
+src_libbarrett_la_SOURCES =
+src_libbarrett_la_LIBADD =
 noinst_LTLIBRARIES =
 pkginclude_HEADERS =
 
@@ -33,7 +33,7 @@ if BT_WAM_LOCAL
 if BT_BUS_ENABLE
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtbus.la
+src_libbarrett_la_LIBADD += src/libbtbus.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtbus.la
@@ -54,7 +54,7 @@ endif
 ####### BT_CONTROL
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtcontrol.la
+src_libbarrett_la_LIBADD += src/libbtcontrol.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtcontrol.la
@@ -78,7 +78,7 @@ src_libbtcontrol_la_SOURCES = src/control/control_joint_legacy.c \
 ####### BT_DYNAMICS
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtdynamics.la
+src_libbarrett_la_LIBADD += src/libbtdynamics.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtdynamics.la
@@ -95,7 +95,7 @@ src_libbtdynamics_la_SOURCES = src/dynamics/dynamics.c
 ####### BT_GRAVITY
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtgravity.la
+src_libbarrett_la_LIBADD += src/libbtgravity.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtgravity.la
@@ -115,7 +115,7 @@ src_libbtgravity_la_SOURCES = src/gravity/gravity.c
 ####### BT_GSL
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtgsl.la
+src_libbarrett_la_LIBADD += src/libbtgsl.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtgsl.la
@@ -130,7 +130,7 @@ src_libbtgsl_la_SOURCES = src/gsl/gsl.c
 ####### BT_INTERP
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtinterp.la
+src_libbarrett_la_LIBADD += src/libbtinterp.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtinterp.la
@@ -145,7 +145,7 @@ src_libbtinterp_la_SOURCES = src/interp/interp.c
 ####### BT_KINEMATICS
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtkinematics.la
+src_libbarrett_la_LIBADD += src/libbtkinematics.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtkinematics.la
@@ -161,7 +161,7 @@ src_libbtkinematics_la_SOURCES = src/kinematics/kinematics.c
 ####### BT_LOG
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtlog.la
+src_libbarrett_la_LIBADD += src/libbtlog.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtlog.la
@@ -176,7 +176,7 @@ src_libbtlog_la_SOURCES = src/log/log.c
 ####### BT_OS
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtos.la
+src_libbarrett_la_LIBADD += src/libbtos.la
 
 noinst_LTLIBRARIES += src/libbtos.la
 
@@ -192,7 +192,7 @@ src_libbtos_la_LIBADD = @BT_OS_LIBS@
 ####### BT_PROFILE
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtprofile.la
+src_libbarrett_la_LIBADD += src/libbtprofile.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtprofile.la
@@ -208,7 +208,7 @@ src_libbtprofile_la_SOURCES = src/profile/profile.c
 ####### BT_REFGEN
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtrefgen.la
+src_libbarrett_la_LIBADD += src/libbtrefgen.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtrefgen.la
@@ -231,7 +231,7 @@ src_libbtrefgen_la_SOURCES = src/refgen/refgen_move.c \
 ####### BT_SPLINE
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtspline.la
+src_libbarrett_la_LIBADD += src/libbtspline.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtspline.la
@@ -247,7 +247,7 @@ src_libbtspline_la_SOURCES = src/spline/spline.c
 ####### BT_WAMBOT
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtwambot.la
+src_libbarrett_la_LIBADD += src/libbtwambot.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtwambot.la
@@ -287,7 +287,7 @@ endif
 ####### BT_DISCOVER
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtdiscover.la
+src_libbarrett_la_LIBADD += src/libbtdiscover.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtdiscover.la
@@ -303,7 +303,7 @@ src_libbtdiscover_la_SOURCES = src/discover/discover.c
 ####### BT_RPC
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtrpc.la
+src_libbarrett_la_LIBADD += src/libbtrpc.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtrpc.la
@@ -318,11 +318,12 @@ pkginclude_HEADERS += src/rpc/rpc.h \
 src_libbtrpc_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror
 src_libbtrpc_la_SOURCES = src/rpc/rpc.c \
                           src/rpc/rpc_tcpjson.c
+src_libbtrpc_la_LIBADD = -ljson
 
 ####### BT_WAM
 
 # Add this library to libbt
-src_libbt_la_LIBADD += src/libbtwam.la
+src_libbarrett_la_LIBADD += src/libbtwam.la
 
 # The libtool library to make
 noinst_LTLIBRARIES += src/libbtwam.la
@@ -396,6 +397,58 @@ legacy_libbtlegacy_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long
 legacy_libbtlegacy_la_SOURCES = legacy/wam/wam_legacy.c
 
 endif
+
+##############################################
+
+bin_PROGRAMS = programs/bt-wam-demo/bt-wam-demo \
+               programs/bt-wam-gw/bt-wam-gw \
+               programs/bt-wam-list/bt-wam-list
+
+programs_bt_wam_demo_bt_wam_demo_SOURCES = programs/bt-wam-demo/bt-wam-demo.c
+programs_bt_wam_demo_bt_wam_demo_CPPFLAGS = -Isrc/wam
+# This is cause we need usleep()
+programs_bt_wam_demo_bt_wam_demo_CFLAGS = -std=gnu89 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_wam_demo_bt_wam_demo_LDADD = src/libbarrett.la -lcurses
+if BT_WAM_LOCAL
+programs_bt_wam_demo_bt_wam_demo_LDADD += -lgsl -lgslcblas -lconfig
+endif
+
+programs_bt_wam_gw_bt_wam_gw_SOURCES = programs/bt-wam-gw/bt-wam-gw.c
+programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/wam -Isrc/rpc
+# This is cause we need select(), variadic macros ...
+programs_bt_wam_gw_bt_wam_gw_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la
+if BT_WAM_LOCAL
+programs_bt_wam_gw_bt_wam_gw_LDADD += -lgsl -lgslcblas -lconfig
+endif
+
+programs_bt_wam_list_bt_wam_list_SOURCES = programs/bt-wam-list/bt-wam-list.c
+programs_bt_wam_list_bt_wam_list_CPPFLAGS = -Isrc/wam
+programs_bt_wam_list_bt_wam_list_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_wam_list_bt_wam_list_LDADD = src/libbarrett.la
+if BT_WAM_LOCAL
+programs_bt_wam_list_bt_wam_list_LDADD += -lgsl -lgslcblas -lconfig
+endif
+
+dist_bin_SCRIPTS = programs/bt-wam-py-demo/bt-wam-py-demo
+
+###########
+
+if BT_WAM_LOCAL
+
+bin_PROGRAMS += programs/bt-bus-util/bt-bus-util
+
+programs_bt_bus_util_bt_bus_util_SOURCES = programs/bt-bus-util/bt-bus-util.c
+programs_bt_bus_util_bt_bus_util_CPPFLAGS = -Isrc/bus -Isrc/os
+programs_bt_bus_util_bt_bus_util_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_bus_util_bt_bus_util_LDADD = src/libbarrett.la -lcurses -lgsl -lgslcblas -lconfig
+
+endif
+
+##############################################
+
+# Some more rules
+include pkg/debian.mk
 
 ##############################################
 

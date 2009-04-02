@@ -35,7 +35,7 @@
 #include <syslog.h>
 
 /* Include the high-level WAM header file */
-#include <libbt/wam.h>
+#include "wam.h"
 /*#include <libbt/os.h>*/ /* for bt_os_usleep() */
 
 /*

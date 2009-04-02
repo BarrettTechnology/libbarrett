@@ -12,12 +12,12 @@ static PyTypeObject DiscoverClientType;
 /* The module ------------------------------------------------------------- */
 
 /* Function prototypes */
-static PyObject * libbt_version(PyObject * self, PyObject * args);
+static PyObject * libbarrett_version(PyObject * self, PyObject * args);
 
 /* Function table */
-static PyMethodDef LibbtMethods[] =
+static PyMethodDef LibbarrettMethods[] =
 {
-   {"version", libbt_version, METH_VARARGS, "Get the version of libbt."},
+   {"version", libbarrett_version, METH_VARARGS, "Get the version of libbarrett."},
    {0, 0, 0, 0}
 };
 
@@ -26,7 +26,7 @@ static PyMethodDef LibbtMethods[] =
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
-initlibbt(void)
+initlibbarrett(void)
 {
    PyObject * m;
    
@@ -34,7 +34,7 @@ initlibbt(void)
    if (PyType_Ready(&WamListType) < 0) return;
    if (PyType_Ready(&DiscoverClientType) < 0) return;
    
-   m = Py_InitModule("libbt", LibbtMethods);
+   m = Py_InitModule("libbarrett", LibbarrettMethods);
    if (!m)
       return;
    
@@ -46,7 +46,7 @@ initlibbt(void)
 }
 
 /* Get version */
-static PyObject * libbt_version(PyObject * self, PyObject * args)
+static PyObject * libbarrett_version(PyObject * self, PyObject * args)
 {
    return Py_BuildValue("i", 1337);
 }
@@ -295,7 +295,7 @@ static PyTypeObject WamType =
 {
    PyObject_HEAD_INIT(0)
    0,                         /*ob_size*/
-   "libbt.Wam",               /*tp_name*/
+   "libbarrett.Wam",          /*tp_name*/
    sizeof(Wam),               /*tp_basicsize*/
    0,                         /*tp_itemsize*/
    (destructor)Wam_dealloc,   /*tp_dealloc*/
@@ -461,7 +461,7 @@ static PyTypeObject WamListType =
 {
    PyObject_HEAD_INIT(0)
    0,                         /*ob_size*/
-   "libbt.WamList",           /*tp_name*/
+   "libbarrett.WamList",      /*tp_name*/
    sizeof(WamList),           /*tp_basicsize*/
    0,                         /*tp_itemsize*/
    (destructor)WamList_dealloc, /*tp_dealloc*/
@@ -603,7 +603,7 @@ static PyTypeObject DiscoverClientType =
 {
    PyObject_HEAD_INIT(0)
    0,                         /*ob_size*/
-   "libbt.WamList",           /*tp_name*/
+   "libbarrett.WamList",      /*tp_name*/
    sizeof(DiscoverClient),    /*tp_basicsize*/
    0,                         /*tp_itemsize*/
    (destructor)DiscoverClient_dealloc, /*tp_dealloc*/
