@@ -80,7 +80,11 @@ enum bt_rpc_interface_func_type
    BT_RPC_FUNC_STR_OBJ_INT,
    BT_RPC_FUNC_INT_OBJ_INT,
    BT_RPC_FUNC_INT_OBJ_DOUBLE,
-   BT_RPC_FUNC_INT_OBJ_VECTOR
+   BT_RPC_FUNC_INT_OBJ_VECTOR,
+   
+   BT_RPC_FUNC_INT_OBJ_STR,
+   BT_RPC_FUNC_INT_OBJ_INT_INT,
+   BT_RPC_FUNC_INT_OBJ_GETLINE
 };
 
 struct bt_rpc_interface_func

@@ -30,8 +30,9 @@ struct bt_rpc_tcpjson_callee
    char buf[BUFLEN+1];
    int buf_already;
    
-   char writebuf[201]; /* For sending things back */
-   char strbuf[101]; /* For library functions that return strings */
+   char writebuf[402]; /* For sending things back */
+   char * strbuf; /* For library functions that return strings */
+   int strbuf_len;
 };
 
 struct bt_rpc_tcpjson_caller

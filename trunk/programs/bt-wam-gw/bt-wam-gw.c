@@ -31,7 +31,9 @@
 
 #include "rpc.h"
 #include "rpc_tcpjson.h"
+
 #include "wam_rpc.h"
+#include "file_rpc.h"
 
 /* We have a global flag and signal handler
  * to allow the user to close the program
@@ -62,6 +64,7 @@ int main(int argc, char ** argv)
    
    /* Set up the RPC server */
    bt_rpc_server_add_interface(rpc, bt_wam_rpc);
+   bt_rpc_server_add_interface(rpc, bt_file_rpc);
    bt_rpc_server_add_listener(rpc, bt_rpc_tcpjson);
 
    /* Loop until Control+C ... */

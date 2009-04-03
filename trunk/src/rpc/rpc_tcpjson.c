@@ -145,6 +145,16 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    if (!c)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      close(new);
+      return 0;
+   }
+   
+   c->strbuf = (char *) malloc(302*sizeof(char));
+   if (!c->strbuf)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      close(new);
+      free(c);
       return 0;
    }
    
@@ -153,6 +163,7 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    c->base.fd = new;
    /* c->buf[] statically allocated */
    c->buf_already = 0;
+   c->strbuf_len = 302;
    
    /* Success! */
    return (struct bt_rpc_callee *)c;
@@ -286,6 +297,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
    {
       int myint;
       int myint2;
+      int myint3;
       char * str;
       void * vptr;
       case BT_RPC_FUNC_OBJ_STR_CREATE:
@@ -531,6 +543,106 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          }
          json_object_put(req);
          return 0;
+      case BT_RPC_FUNC_INT_OBJ_STR:
+         /* Check for two parameters, an obj and a string */
+         if (json_object_array_length(params)!=2)
+         {
+            syslog(LOG_ERR,"%s: Request does not have two parameters.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         vptr = (void *) json_object_get_int(json_object_array_get_idx(params,0));
+         /* Check object */
+         err = bt_rpc_interface_object_check(interface, vptr);
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: Could not find object.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Get string */
+         str = json_object_get_string(json_object_array_get_idx(params,1));
+         if (!str)
+         {
+            syslog(LOG_ERR,"%s: Request does not have a string parameter.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Cast and call the funcion */
+         myint = (*(int (*)(void *,char *))(func->ptr))(vptr,str);
+         /* Return success */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":%d}\n",myint);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
+      case BT_RPC_FUNC_INT_OBJ_INT_INT:
+         /* Check for one int (vptr) parameter, two int parameters */
+         if (json_object_array_length(params)!=3)
+         {
+            syslog(LOG_ERR,"%s: Request does not have three parameter.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         vptr = (void *) json_object_get_int(json_object_array_get_idx(params,0));
+         myint2 = json_object_get_int(json_object_array_get_idx(params,1));
+         myint3 = json_object_get_int(json_object_array_get_idx(params,2));
+         /* Check object */
+         err = bt_rpc_interface_object_check(interface, vptr);
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: Could not find object.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Cast and call the function */
+         myint = (*(int (*)(void *,int,int))(func->ptr))(vptr,myint2,myint3);
+         /* Return success */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":%d}\n",myint);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
+      case BT_RPC_FUNC_INT_OBJ_GETLINE:
+         /* Check for one int (vptr) parameter */
+         if (json_object_array_length(params)!=1)
+         {
+            syslog(LOG_ERR,"%s: Request does not have one parameter.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         vptr = (void *) json_object_get_int(json_object_array_get_idx(params,0));
+         /* Check object */
+         err = bt_rpc_interface_object_check(interface, vptr);
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: Could not find object.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Cast and call the function */
+         myint = (*(int (*)(void *,char **,int *))(func->ptr))(vptr,&c->strbuf,&c->strbuf_len);
+         /* Return success */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":\"%s\"}\n",c->strbuf);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
       default:
          break;
    }
@@ -613,7 +725,6 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
    struct bt_rpc_tcpjson_caller * cr;
    const struct bt_rpc_interface_func * func;
    struct json_object * req;
-   void * result;
    
    cr = (struct bt_rpc_tcpjson_caller *)base;
    va_start(ap, function);
@@ -634,6 +745,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       char * mystr;
       void * vptr;
       int myint;
+      int myint2;
       case BT_RPC_FUNC_OBJ_STR_CREATE:
          mystr = va_arg(ap, char *);
          sprintf(cr->buf,"{'method':'%s','params':['%s']}\n", function, mystr);
@@ -651,6 +763,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       case BT_RPC_FUNC_INT_OBJ_DESTROY:
       case BT_RPC_FUNC_INT_OBJ:
       case BT_RPC_FUNC_STR_OBJ:
+      case BT_RPC_FUNC_INT_OBJ_GETLINE:
          vptr = va_arg(ap, void *);
          sprintf(cr->buf,"{'method':'%s','params':[%d]}\n", function, (int)vptr);
          break;
@@ -660,6 +773,18 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          myint = va_arg(ap, int);
          sprintf(cr->buf,"{'method':'%s','params':[%d,%d]}\n", function,
                  (int)vptr, myint);
+         break;
+      case BT_RPC_FUNC_INT_OBJ_INT_INT:
+         vptr = va_arg(ap, void *);
+         myint = va_arg(ap, int);
+         myint2 = va_arg(ap, int);
+         sprintf(cr->buf,"{'method':'%s','params':[%d,%d,%d]}\n", function,
+                 (int)vptr, myint, myint2);
+         break;
+      case BT_RPC_FUNC_INT_OBJ_STR:
+         vptr = va_arg(ap, void *);
+         mystr = va_arg(ap, char *);
+         sprintf(cr->buf,"{'method':'%s','params':[%d,'%s']}\n", function, (int)vptr, mystr);
          break;
       default:
          syslog(LOG_ERR,"%s: Non-supported function type.",__func__);
@@ -730,7 +855,6 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
    }
    
    /* Check for error!!!! */
-   result = va_arg(ap, void *);
    
    /* Switch on type,
     * put result into (*result), the last vararg */
@@ -739,6 +863,9 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       void * vptr;
       int myint;
       char * mystr;
+      void * result;
+      char ** strptr;
+      int * intptr;
 
       case BT_RPC_FUNC_OBJ_STR_CREATE:
 #if 0
@@ -746,19 +873,58 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
 #endif
       case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
          vptr = (void *) json_object_get_int(json_object_object_get(req,"result"));
+         result = va_arg(ap, void *);
          *((void **)result) = vptr;
          break;
       case BT_RPC_FUNC_INT_OBJ_DESTROY:
       case BT_RPC_FUNC_INT_OBJ:
       case BT_RPC_FUNC_INT_OBJ_INT:
+      case BT_RPC_FUNC_INT_OBJ_STR:
+      case BT_RPC_FUNC_INT_OBJ_INT_INT:
          myint = json_object_get_int(json_object_object_get(req,"result"));
+         result = va_arg(ap, void *);
          *((int *)result) = myint;
          break;
       case BT_RPC_FUNC_STR_OBJ:
       case BT_RPC_FUNC_STR_OBJ_INT:
          mystr = json_object_get_string(json_object_object_get(req,"result"));
          /* TODO check length! */
+         result = va_arg(ap, void *);
          strcpy((char *)result,mystr);
+         break;
+      case BT_RPC_FUNC_INT_OBJ_GETLINE:
+         mystr = json_object_get_string(json_object_object_get(req,"result"));
+         strptr = va_arg(ap, char **);
+         intptr = va_arg(ap, int *);
+         result = va_arg(ap, void *);
+         myint = strlen(mystr);
+         /* Allocate (*strptr) if passed as 0 */
+         if (!(*strptr))
+         {
+            (*strptr) = (char *) malloc( (myint+1) * sizeof(char) );
+            if (!(*strptr))
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               *((int *)result) = -1;
+               break;
+            }
+            (*intptr) = myint + 1;
+         }
+         /* Enlarge (*strptr) if necessary */
+         if ((*intptr) < myint + 1)
+         {
+            (*strptr) = (char *) realloc( (*strptr), (myint+1) * sizeof(char) );
+            if (!(*strptr))
+            {
+               syslog(LOG_ERR,"%s: Out of memory.",__func__);
+               *((int *)result) = -1;
+               break;
+            }
+            (*intptr) = myint + 1;
+         }
+         /* Copy in the string */
+         strcpy((*strptr),mystr);
+         *((int *)result) = -1; /* TODO: actually get this over the wire */
          break;
       default:
          syslog(LOG_ERR,"%s: Non-supported function type.",__func__);

@@ -300,6 +300,32 @@ src_libbtdiscover_la_CPPFLAGS =
 src_libbtdiscover_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtdiscover_la_SOURCES = src/discover/discover.c
 
+####### BT_FILE
+
+# Add this library to libbt
+src_libbarrett_la_LIBADD += src/libbtfile.la
+
+# The libtool library to make
+noinst_LTLIBRARIES += src/libbtfile.la
+
+# Header files to include in the package
+pkginclude_HEADERS += src/file/file.h \
+                      src/file/file_rpc.h
+
+# Source files to complile
+src_libbtfile_la_CPPFLAGS = -Isrc/rpc
+# Damn variadic macros!
+src_libbtfile_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtfile_la_SOURCES = src/file/file.c \
+                           src/file/file_rpc.c
+
+if BT_WAM_LOCAL
+else
+
+src_libbtfile_la_CPPFLAGS += -DASYNC_ONLY
+
+endif
+
 ####### BT_RPC
 
 # Add this library to libbt
@@ -414,7 +440,7 @@ programs_bt_wam_demo_bt_wam_demo_LDADD += -lgsl -lgslcblas -lconfig
 endif
 
 programs_bt_wam_gw_bt_wam_gw_SOURCES = programs/bt-wam-gw/bt-wam-gw.c
-programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/wam -Isrc/rpc
+programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/rpc -Isrc/wam -Isrc/file
 # This is cause we need select(), variadic macros ...
 programs_bt_wam_gw_bt_wam_gw_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
 programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la

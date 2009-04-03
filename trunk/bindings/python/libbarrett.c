@@ -3,11 +3,13 @@
 
 #include "wam.h"
 #include "discover.h"
+#include "file.h"
 
 /* Prototypes of types that we support */
 static PyTypeObject WamType;
 static PyTypeObject WamListType;
 static PyTypeObject DiscoverClientType;
+static PyTypeObject FileType;
 
 /* The module ------------------------------------------------------------- */
 
@@ -33,6 +35,7 @@ initlibbarrett(void)
    if (PyType_Ready(&WamType) < 0) return;
    if (PyType_Ready(&WamListType) < 0) return;
    if (PyType_Ready(&DiscoverClientType) < 0) return;
+   if (PyType_Ready(&FileType) < 0) return;
    
    m = Py_InitModule("libbarrett", LibbarrettMethods);
    if (!m)
@@ -43,6 +46,7 @@ initlibbarrett(void)
    PyModule_AddObject(m, "Wam",            (PyObject *)&WamType);
    PyModule_AddObject(m, "WamList",        (PyObject *)&WamListType);
    PyModule_AddObject(m, "DiscoverClient", (PyObject *)&DiscoverClientType);
+   PyModule_AddObject(m, "File",           (PyObject *)&FileType);
 }
 
 /* Get version */
@@ -337,14 +341,15 @@ static PyTypeObject WamType =
 
 /* The wamlist class ------------------------------------------------------ */
 
-/* A WAM instance */
+/* A WamList instance */
 typedef struct
 {
    PyObject_HEAD
-   struct bt_wam_list * list;
    int STATUS_FREE;
    int STATUS_INUSE;
    int STATUS_DEFUNCT;
+   
+   struct bt_wam_list * list;
 } WamList;
 
 /* Wam members table */
@@ -512,7 +517,7 @@ static PyTypeObject WamListType =
 
 /* The DiscoverClient class ----------------------------------------------- */
 
-/* A WAM instance */
+/* A DiscoverClient instance */
 typedef struct
 {
    PyObject_HEAD
@@ -652,4 +657,159 @@ static PyTypeObject DiscoverClientType =
 };
 
 
+/* The File class ----------------------------------------------- */
 
+/* A File instance */
+typedef struct
+{
+   PyObject_HEAD
+   
+   int FILE_SEEK_SET;
+   int FILE_SEEK_CUR;
+   int FILE_SEEK_END;
+   
+   struct bt_file * file;
+   char * buf;
+   int buf_len;
+} File;
+
+/* Wam members table */
+static PyMemberDef File_members[] =
+{
+   {"FILE_SEEK_SET", T_INT, offsetof(File,FILE_SEEK_SET), 0, "FILE_SEEK_SET"},
+   {"FILE_SEEK_CUR", T_INT, offsetof(File,FILE_SEEK_CUR), 0, "FILE_SEEK_CUR"},
+   {"FILE_SEEK_END", T_INT, offsetof(File,FILE_SEEK_END), 0, "FILE_SEEK_END"},
+   {0,0,0,0,0}
+};
+
+/* Creation function */
+static PyObject * File_new(PyTypeObject * type, PyObject * args, PyObject * kwds)
+{
+   File * self;
+   
+   /* Create */
+   self = (File *) type->tp_alloc(type,0);
+   if (!self)
+      return 0;
+   
+   /* Initialize */
+   self->file = 0;
+   self->buf = 0;
+   self->buf_len = 0;
+   self->FILE_SEEK_SET = BT_FILE_SEEK_SET;
+   self->FILE_SEEK_CUR = BT_FILE_SEEK_CUR;
+   self->FILE_SEEK_END = BT_FILE_SEEK_END;
+   
+   return (PyObject *)self;
+}
+
+/* Init function, expects string location */
+static int File_init(File * self, PyObject * args, PyObject * kwds)
+{
+   char * fileloc;
+   
+   /* Grab the string */
+   if (!PyArg_ParseTuple(args,"s",&fileloc))
+      return -1;
+   
+   /* Attempt to initialize the wam_list */
+   self->file = bt_file_create(fileloc);
+   if (!self->file)
+      return -1;
+   
+   return 0;
+}
+
+/* Deallocate function */
+static void File_dealloc(File * self)
+{
+   /* If we have a wam, destroy it */
+   if (self->file)
+      bt_file_destroy(self->file);
+   
+   /* Free myself */
+   self->ob_type->tp_free((PyObject *)self);
+}
+
+static PyObject * File_fputs(File * self, PyObject * args);
+static PyObject * File_fseek(File * self, PyObject * args);
+static PyObject * File_getline(File * self);
+
+/* DiscoverClient methods table */
+static PyMethodDef File_methods[] =
+{
+   {"fputs",   (PyCFunction)File_fputs,   METH_VARARGS, "Write a string to a file"},
+   {"fseek",   (PyCFunction)File_fseek,   METH_VARARGS, "Seek to a location in a file"},
+   {"getline", (PyCFunction)File_getline, METH_NOARGS,  "Get a line in a file"},
+   {0, 0, 0, 0}
+};
+
+static PyObject * File_fputs(File * self, PyObject * args)
+{
+   char * line;
+   /* Grab the string */
+   if (!PyArg_ParseTuple(args,"s",&line))
+      return 0;
+   return Py_BuildValue("i",bt_file_fputs(self->file,line));
+}
+
+static PyObject * File_fseek(File * self, PyObject * args)
+{
+   int offset;
+   int seek;
+   /* Grab the ints */
+   if (!PyArg_ParseTuple(args,"ii",&offset,&seek))
+      return 0;
+   return Py_BuildValue("i",bt_file_fseek(self->file,offset,seek));
+}
+
+static PyObject * File_getline(File * self)
+{
+   bt_file_getline(self->file,&self->buf,&self->buf_len);
+   return Py_BuildValue("s",self->buf);
+}
+
+
+/* Define the type */
+static PyTypeObject FileType =
+{
+   PyObject_HEAD_INIT(0)
+   0,                         /*ob_size*/
+   "libbarrett.File",         /*tp_name*/
+   sizeof(File),              /*tp_basicsize*/
+   0,                         /*tp_itemsize*/
+   (destructor)File_dealloc,  /*tp_dealloc*/
+   0,                         /*tp_print*/
+   0,                         /*tp_getattr*/
+   0,                         /*tp_setattr*/
+   0,                         /*tp_compare*/
+   0,                         /*tp_repr*/
+   0,                         /*tp_as_number*/
+   0,                         /*tp_as_sequence*/
+   0,                         /*tp_as_mapping*/
+   0,                         /*tp_hash */
+   0,                         /*tp_call*/
+   0,                         /*tp_str*/
+   0,                         /*tp_getattro*/
+   0,                         /*tp_setattro*/
+   0,                         /*tp_as_buffer*/
+   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+   "File objects",            /* tp_doc */
+   0,		                     /* tp_traverse */
+   0,		                     /* tp_clear */
+   0,		                     /* tp_richcompare */
+   0,		                     /* tp_weaklistoffset */
+   0,		                     /* tp_iter */
+   0,		                     /* tp_iternext */
+   File_methods,              /* tp_methods */
+   File_members,              /* tp_members */
+   0,                         /* tp_getset */
+   0,                         /* tp_base */
+   0,                         /* tp_dict */
+   0,                         /* tp_descr_get */
+   0,                         /* tp_descr_set */
+   0,                         /* tp_dictoffset */
+   (initproc)File_init,       /* tp_init */
+   0,                         /* tp_alloc */
+   File_new,                  /* tp_new */
+};
