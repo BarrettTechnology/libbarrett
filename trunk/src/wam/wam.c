@@ -158,6 +158,18 @@ int bt_wam_destroy(struct bt_wam * wam)
    }
 }
 
+struct bt_wam_local * bt_wam_get_local(struct bt_wam * wam)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return wam->obj;
+   else
+#endif
+   {
+      return 0;
+   }
+}
+
 int bt_wam_loop_start(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY

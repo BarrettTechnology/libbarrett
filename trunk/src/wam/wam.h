@@ -68,6 +68,9 @@ enum bt_wam_opt {
 struct bt_wam * bt_wam_create(char * wamname);
 struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts);
 
+/* Get the local WAM if it exists */
+struct bt_wam_local * bt_wam_get_local(struct bt_wam * wam);
+
 /* Close communication with a WAM */
 int bt_wam_destroy(struct bt_wam * wam);
 

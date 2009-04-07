@@ -15,7 +15,7 @@
 #include <syslog.h>
 
 #include "refgen_trimesh.h"
-#include "libbt/gsl.h"
+#include "libbarrett/gsl.h"
 
 #define RADIUS_LEFT (0.0010)
 #define RADIUS_RIGHT (0.0010)
@@ -44,7 +44,7 @@ const struct bt_refgen_type * refgen_trimesh = &refgen_trimesh_type;
 void func(struct refgen_trimesh * r, double left, double right, gsl_vector * pos)
 {
    /* Start at the bottom point */
-   gsl_vector_memcpy(pos, r->cur->pb->vec);
+   gsl_vector_memcpy(pos, r->cur->pb);
    
    /* Add in the left vector */
    gsl_blas_daxpy( left, r->cur->v_left_unit, pos );
@@ -138,46 +138,37 @@ struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos)
                while ((pointstr = strtok(points_read ? 0 : line, ",")))
                {
                   double a, b, c;
-                  struct refgen_trimesh_point * point;
+                  gsl_vector * point;
                   
                   points_read++;
                   if (sscanf(pointstr," %lf %lf %lf",&a,&b,&c) != 3)
                   {
                      break;
                   }
-                  point = (struct refgen_trimesh_point *) malloc(sizeof(struct refgen_trimesh_point));
+                  point = gsl_vector_alloc(3);
                   if (!point)
                   {
                      syslog(LOG_ERR,"%s: Out of memory.",__func__);
                      /* We should be better about freeing */
                      free(r);
                      return 0;
-                  }  
-                  point->vec = gsl_vector_alloc(3);
-                  if (!point->vec)
-                  {
-                     syslog(LOG_ERR,"%s: Out of memory.",__func__);
-                     /* We should be better about freeing */
-                     free(point);
-                     free(r);
-                     return 0;
                   }
-                  gsl_vector_set(point->vec,0,10*a+0.5);
-                  gsl_vector_set(point->vec,1,10*b);
-                  gsl_vector_set(point->vec,2,10*c);
+                  /* Move all the points the same way */
+                  gsl_vector_set(point,0,10*a+0.5);
+                  gsl_vector_set(point,1,10*b);
+                  gsl_vector_set(point,2,10*c);
                   if (!r->points_num)
-                     r->points = (struct refgen_trimesh_point **)
-                                 malloc(sizeof(struct refgen_trimesh_point *));
+                     r->points = (gsl_vector **)
+                                 malloc(sizeof(gsl_vector *));
                   else
-                     r->points = (struct refgen_trimesh_point **)
+                     r->points = (gsl_vector **)
                                  realloc(r->points, (r->points_num+1)*
-                                         sizeof(struct refgen_trimesh_point *));
+                                         sizeof(gsl_vector *));
                   if (!r->points)
                   {
                      syslog(LOG_ERR,"%s: Out of memory.",__func__);
                      /* We should be better about freeing */
-                     gsl_vector_free(point->vec);
-                     free(point);
+                     gsl_vector_free(point);
                      free(r);
                      return 0;
                   }
@@ -268,11 +259,13 @@ struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos)
          break;
    }
    
-   /* Fill in the triangle-to-triangle links */
+   /* Fill in the triangle-to-triangle links
+    * by building an EDGE DATABASE */
    {
       struct edge *** edges;
       
-      /* Zero the triangles */
+      /* Zero the triangles' links to adjacent triangles
+       * (this is what we'll be filling in here) */
       for (i=0; i<r->triangles_num; i++)
       {
          r->triangles[i]->tl = 0;
@@ -434,14 +427,14 @@ struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos)
       t = r->triangles[i];
       
       t->v_left_unit = gsl_vector_alloc(3);
-      gsl_vector_memcpy(t->v_left_unit, t->pl->vec);
-      gsl_vector_sub(t->v_left_unit, t->pb->vec);
+      gsl_vector_memcpy(t->v_left_unit, t->pl);
+      gsl_vector_sub(t->v_left_unit, t->pb);
       t->v_left_len = gsl_blas_dnrm2(t->v_left_unit);
       gsl_blas_dscal(1.0/t->v_left_len, t->v_left_unit);
       
       t->v_right_unit = gsl_vector_alloc(3);
-      gsl_vector_memcpy(t->v_right_unit, t->pr->vec);
-      gsl_vector_sub(t->v_right_unit, t->pb->vec);
+      gsl_vector_memcpy(t->v_right_unit, t->pr);
+      gsl_vector_sub(t->v_right_unit, t->pb);
       t->v_right_len = gsl_blas_dnrm2(t->v_right_unit);
       gsl_blas_dscal(1.0/t->v_right_len, t->v_right_unit);
    }
@@ -462,8 +455,7 @@ static int destroy(struct bt_refgen * base)
    /* Free points */
    for (i=0; i<r->points_num; i++)
    {
-      gsl_vector_free(r->points[i]->vec);
-      free(r->points[i]);
+      gsl_vector_free(r->points[i]);
    }
    free(r->points);
    
@@ -487,7 +479,7 @@ static int get_start(struct bt_refgen * base, gsl_vector ** start)
    struct refgen_trimesh * r = (struct refgen_trimesh *) base;
    
    /* Use the first triangle's bottom point */
-   (*start) = r->triangles[0]->pb->vec;
+   (*start) = r->triangles[0]->pb;
    
    return 0;
 }
@@ -643,194 +635,3 @@ static int trigger(struct bt_refgen * base)
 { return -1; }
 
 
-
-
-#if 0
-
-/* Functions for setting the top and bottom positions */
-int refgen_cylinder_set_top(struct refgen_cylinder * r)
-{
-   if (r->top)
-      return -1;
-   
-   r->top = gsl_vector_calloc(3);
-   gsl_vector_memcpy(r->top,r->cpos);
-   
-   if (r->bottom)
-      return compute_unit(r);
-   
-   return 0;
-}
-int refgen_cylinder_set_bottom(struct refgen_cylinder * r)
-{
-   if (r->bottom)
-      return -1;
-   
-   r->bottom = gsl_vector_calloc(3);
-   gsl_vector_memcpy(r->bottom,r->cpos);
-   
-   if (r->top)
-      return compute_unit(r);
-   
-   return 0;
-}
-static int compute_unit(struct refgen_cylinder * r)
-{
-   int i;
-   double len;
-   
-   /* Compute r->unit and r->h_max */
-   gsl_blas_dcopy( r->top, r->unit );
-   gsl_blas_daxpy( -1.0, r->bottom, r->unit );
-   r->h_max = gsl_blas_dnrm2(r->unit);
-   gsl_blas_dscal( 1.0/r->h_max, r->unit );
-   
-   /* Compute e1 and e2 */
-   gsl_vector_set_zero(r->e2);
-   gsl_vector_set_zero(r->temp);
-   gsl_vector_set( r->temp, 0, 1.0 );
-   
-   bt_gsl_cross( r->unit, r->temp, r->e2 );
-   len = gsl_blas_dnrm2(r->e2);
-   gsl_blas_dscal( 1.0/len, r->e2 );
-   
-   gsl_vector_set_zero(r->e1);
-   bt_gsl_cross( r->e2, r->unit, r->e1 );
-   
-   /* Allocate memory for r->hs and r->rs */
-   r->func_sz = (int) floor(r->h_max / RES) + 1;
-   r->hs = (double *) malloc( r->func_sz * sizeof(double) );
-   r->rs = (double *) malloc( r->func_sz * sizeof(double) );
-   r->rs_set = (char *) malloc( r->func_sz );
-   
-   /* Fill in r->hs and r->rs_set */
-   for (i=0; i<r->func_sz; i++)
-   {
-      r->hs[i] = (RES/2) + (i * RES);
-      r->rs_set[i] = 0;
-   }
-   
-   return 0;
-}
-
-int refgen_cylinder_init(struct refgen_cylinder * r)
-{
-   int oi; /* old index */
-   int ni; /* old index */
-
-   if (r->interp)
-      return -1;
-   
-   /* Eliminate any un-set values in the arrays */
-   ni = 0;
-   for (oi=0; oi<r->func_sz; oi++)
-   {
-      if (r->rs_set[oi])
-      {
-         /* Copy the values */
-         r->hs[ni] = r->hs[oi];
-         r->rs[ni] = r->rs[oi];
-         ni++;
-      }
-   }
-   r->func_sz = ni;
-   free(r->rs_set);
-   r->rs_set = 0;
-   r->hs = (double *) realloc( r->hs, r->func_sz * sizeof(double) );
-   r->rs = (double *) realloc( r->rs, r->func_sz * sizeof(double) );
-   
-   /* Create a gsl interpolator for the h -> r function */
-   r->interp = gsl_interp_alloc( gsl_interp_cspline, r->func_sz );
-   gsl_interp_init( r->interp, r->hs, r->rs, r->func_sz );
-   r->acc = gsl_interp_accel_alloc();
-   
-   /* Compute the start vector */
-   func(r, r->h_max, 0.0, r->start);
-   
-   return 0;
-}
-
-
-/* Generic refgen functions */
-static int destroy(struct bt_refgen * base)
-{
-   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   if (r->top) gsl_vector_free(r->top);
-   if (r->bottom) gsl_vector_free(r->bottom);
-   gsl_vector_free(r->e1);
-   gsl_vector_free(r->e2);
-   if (r->hs) free(r->hs);
-   if (r->rs) free(r->rs);
-   gsl_vector_free(r->temp);
-   if (r->interp) gsl_interp_free(r->interp);
-   if (r->acc) gsl_interp_accel_free(r->acc);
-   gsl_vector_free(r->start);
-   free(r);
-   return 0;
-}
-static int get_start(struct bt_refgen * base, gsl_vector ** start)
-{
-   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   (*start) = r->start;
-   return 0;
-}
-static int get_total_time(struct bt_refgen * base, double * time)
-{
-   (*time) = 0.0;
-   return 0;
-}
-static int get_num_points(struct bt_refgen * base, int * points)
-{
-   (*points) = 1;
-   return 0;
-}
-static int start(struct bt_refgen * base)
-{
-   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   r->h = r->h_max;
-   r->theta = 0.0;
-   return 0;
-}
-static int eval(struct bt_refgen * base, gsl_vector * ref)
-{
-
-}
-
-static int trigger(struct bt_refgen * base)
-{
-   struct refgen_cylinder * r;
-   double h;
-   double bb; /* length of b squared */
-   double rad;
-   int i;
-   
-   r = (struct refgen_cylinder *) base;
-   
-   if (r->interp)
-      return -1;
-   
-   /* Get the current h and r */
-   gsl_blas_dcopy( r->cpos, r->temp );
-   gsl_blas_daxpy( -1.0, r->bottom, r->temp );
-   gsl_blas_ddot( r->temp, r->unit, &h);
-   gsl_blas_ddot( r->temp, r->temp, &bb );
-   rad = sqrt( bb - h*h );
-   
-   /* Ignore if h is out of range */
-   if (h < 0 || r->h_max < h)
-      return 0;
-   
-   /* Lookup the index for h */
-   i = (int) floor(h / RES);
-   if ( !r->rs_set[i] )
-   {
-      r->rs[i] = rad;
-      r->rs_set[i] = 1;
-   }
-   else if ( r->rs[i] > rad )
-      r->rs[i] = rad;
-   
-   return 0;
-}
-
-#endif

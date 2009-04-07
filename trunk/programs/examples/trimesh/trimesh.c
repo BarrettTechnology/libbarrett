@@ -30,10 +30,10 @@
 #include <libconfig.h>
 
 /* Include the high-level WAM header file */
-#include <libbt/wam.h>
-#include <libbt/wam_custom.h>
-#include <libbt/wam_internal.h>
-#include <libbt/gsl.h>
+#include <libbarrett/wam.h>
+#include <libbarrett/wam_custom.h>
+#include <libbarrett/wam_local.h>
+#include <libbarrett/gsl.h>
 
 /* Our own, custom refgen! */
 #include "refgen_trimesh.h"
@@ -139,7 +139,7 @@ int main(int argc, char ** argv)
    
    /* Open the WAM (or WAMs!) */
    wam = bt_wam_create("wam4");
-   wam_local = (struct bt_wam_local *)wam;
+   wam_local = bt_wam_get_local(wam);
    if (!wam)
    {
       endwin();
@@ -283,7 +283,7 @@ int main(int argc, char ** argv)
          /* tri refgen stuff */
          case 'u': /* Use our surface refgen! */
             if (!tri) break;
-            bt_wam_refgen_use(wam,(struct bt_refgen *)tri);
+            bt_wam_local_refgen_use(wam_local,(struct bt_refgen *)tri);
             break;
          /* end tri refgen stuff */
          default:

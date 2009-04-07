@@ -1,14 +1,9 @@
 /* This is a custom refgen that does trimeshes from
  * Solidworks-generated VRML 1.0 ascii files*/
 
-#include <libbt/refgen.h>
+#include <libbarrett/refgen.h>
 
 #include <gsl/gsl_interp.h>
-
-struct refgen_trimesh_point
-{
-   gsl_vector * vec;
-};
 
 enum refgen_trimesh_triangle_side
 {
@@ -23,9 +18,9 @@ struct refgen_trimesh_triangle
    int pl_i;
    int pr_i;
 
-   struct refgen_trimesh_point * pb; /* bottom */
-   struct refgen_trimesh_point * pl; /* left */
-   struct refgen_trimesh_point * pr; /* right */
+   gsl_vector * pb; /* bottom */
+   gsl_vector * pl; /* left */
+   gsl_vector * pr; /* right */
    
    struct refgen_trimesh_triangle * tl; /* left coupled triangle */
    enum refgen_trimesh_triangle_side tl_side; /* side of the lct that borders */
@@ -49,7 +44,7 @@ struct refgen_trimesh
    gsl_vector * cpos; /* current, saved */
    
    /* Collection of points */
-   struct refgen_trimesh_point ** points;
+   gsl_vector ** points;
    int points_num;
    
    /* Collection of triangles */
