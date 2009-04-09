@@ -139,13 +139,13 @@ int main(int argc, char ** argv)
    
    /* Open the WAM (or WAMs!) */
    wam = bt_wam_create("wam4");
-   wam_local = bt_wam_get_local(wam);
    if (!wam)
    {
       endwin();
       printf("Could not open the WAM.\n");
       exit(-1);
    }
+   wam_local = bt_wam_get_local(wam);
    
    /* Make the triangle */
    tri = refgen_trimesh_create("cylinder.wrl",wam_local->cposition);
@@ -159,7 +159,8 @@ int main(int argc, char ** argv)
    
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
-   gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.183); /* chuck w/ little haptic ball */
+   /*gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.183);*/ /* chuck w/ little haptic ball */
+   gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.090); /* opd haptic ball */
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
@@ -203,18 +204,14 @@ int main(int argc, char ** argv)
             
             mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
             line++;
-
-#if 0
-            /* Show cylinder refgen stuff */
-            if (cyl)
+            
+            /* Show trimesh refgen stuff */
+            if (tri)
             {
-               mvprintw(line++, 0, "   unit: %s", bt_gsl_vector_sprintf(buf,cyl->unit) );
-               mvprintw(line++, 0, "  h_max: %lf", cyl->h_max );
-               mvprintw(line++, 0, "      h: %lf", cyl->h );
-               mvprintw(line++, 0, "  theta: %lf", cyl->theta );
+               mvprintw(line++, 0, "     pos: %s", bt_gsl_vector_sprintf(buf,tri->pos) );
+               mvprintw(line++, 0, "      hs: %s", bt_gsl_vector_sprintf(buf,tri->hs) );
                line++;
             }
-#endif
             
             /* Show HAPTICS */
             

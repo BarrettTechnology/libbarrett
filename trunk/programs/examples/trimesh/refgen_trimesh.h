@@ -5,37 +5,26 @@
 
 #include <gsl/gsl_interp.h>
 
-enum refgen_trimesh_triangle_side
-{
-   REFGEN_TRIMESH_TRIANGLE_SIDE_LEFT,
-   REFGEN_TRIMESH_TRIANGLE_SIDE_RIGHT,
-   REFGEN_TRIMESH_TRIANGLE_SIDE_TOP
-};
-
 struct refgen_trimesh_triangle
 {
-   int pb_i;
-   int pl_i;
-   int pr_i;
+   /* Indices of the three points */
+   int p_index[3];
 
-   gsl_vector * pb; /* bottom */
-   gsl_vector * pl; /* left */
-   gsl_vector * pr; /* right */
+   /* For getting 3d position of a two-vector */
+   gsl_vector * p0; /* 3x1 */
+   gsl_matrix * ij; /* 3x2 */
    
-   struct refgen_trimesh_triangle * tl; /* left coupled triangle */
-   enum refgen_trimesh_triangle_side tl_side; /* side of the lct that borders */
+   /* js matrix (one column each j) */
+   gsl_matrix * js;
+
+   /* For getting the heights from the three sides */
+   gsl_vector * hs_const; /* 3x1 */
+   gsl_matrix * hs_mult;  /* 3x2 */
    
-   struct refgen_trimesh_triangle * tr; /* right coupled triangle */
-   enum refgen_trimesh_triangle_side tr_side; /* side of the rct that borders */
-   
-   struct refgen_trimesh_triangle * tt; /* top coupled triangle */
-   enum refgen_trimesh_triangle_side tt_side; /* side of the tct that borders */
-   
-   /* Unit vectors in the two directions */
-   double v_left_len;
-   double v_right_len;
-   gsl_vector * v_left_unit;
-   gsl_vector * v_right_unit;
+   /* For converting to each neighbor's frame */
+   struct refgen_trimesh_triangle * neighbor[3];
+   gsl_vector * conv_const[3];
+   gsl_matrix * conv_mult[3];
 };
 
 struct refgen_trimesh
@@ -53,12 +42,13 @@ struct refgen_trimesh
    
    /* Current state */
    struct refgen_trimesh_triangle * cur;
-   double left;
-   double right;
+   gsl_vector * pos; /* 2x1 */
+   gsl_vector * hs;
    
    gsl_vector * temp;
+   gsl_vector * guess;
+   gsl_vector * start;
    
 };
 
 struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos);
-

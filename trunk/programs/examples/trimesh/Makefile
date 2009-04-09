@@ -9,7 +9,7 @@ default: trimesh
 
 # Link against btos for realtime stuff:
 CFLAGS += -I/usr/local/include
-LDFLAGS += -lbt -lgsl -lgslcblas -lconfig -lcurses -ljson
+LDFLAGS += -lbarrett -lgsl -lgslcblas -lconfig -lcurses -ljson
 # Note: we shouldn't need to link against gsl, libconfig!
 
 # OK; Compile stuff:
