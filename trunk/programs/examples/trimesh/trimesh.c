@@ -148,7 +148,7 @@ int main(int argc, char ** argv)
    wam_local = bt_wam_get_local(wam);
    
    /* Make the triangle */
-   tri = refgen_trimesh_create("cylinder.wrl",wam_local->cposition);
+   tri = refgen_trimesh_create("bigcyl.wrl",wam_local->cposition);
    if (!tri)
    {
       bt_wam_destroy(wam);

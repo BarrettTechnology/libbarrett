@@ -17,7 +17,7 @@
 #include "refgen_trimesh.h"
 #include "libbarrett/gsl.h"
 
-#define RADIUS (0.0010)
+#define RADIUS (0.0050)
 #define BINARY_DEPTH (8)
 
 static int destroy(struct bt_refgen * base);
@@ -190,9 +190,9 @@ struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos)
                      return 0;
                   }
                   /* Move all the points the same way */
-                  gsl_vector_set(point,0,10*b+0.5);
-                  gsl_vector_set(point,1,10*a);
-                  gsl_vector_set(point,2,10*c);
+                  gsl_vector_set(point,0,b+0.5);
+                  gsl_vector_set(point,1,a);
+                  gsl_vector_set(point,2,c);
                   if (!r->points_num)
                      r->points = (gsl_vector **)
                                  malloc(sizeof(gsl_vector *));
@@ -514,6 +514,13 @@ static int destroy(struct bt_refgen * base)
    /* Free triangles */
    for (i=0; i<r->triangles_num; i++)
    {
+      int j;
+      for (j=0; j<3; j++)
+      if (r->triangles[i]->neighbor[j])
+      {
+         gsl_vector_free(r->triangles[i]->conv_const[j]);
+         gsl_matrix_free(r->triangles[i]->conv_mult[j]);
+      }
       gsl_matrix_free(r->triangles[i]->ij);
       gsl_matrix_free(r->triangles[i]->js);
       gsl_vector_free(r->triangles[i]->hs_const);
@@ -649,6 +656,11 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
       /* If the height is negative, switch triangles across side i! */
       if (gsl_vector_get(r->hs,i) < 0.0)
       {
+         if (!r->cur->neighbor[i])
+         {
+            /* Error! going out of bounds ... */
+            return 0;
+         }
          /* Switch the position */
          gsl_vector_memcpy(r->guess, r->pos); /* guess is the old position */
          gsl_vector_memcpy(r->pos, r->cur->conv_const[i]);
