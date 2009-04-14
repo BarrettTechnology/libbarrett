@@ -7,7 +7,6 @@
 #include "refgen_mastermaster.h"
 
 #define PORT (5555)
-#define DIFFPERLOOP (0.002)
 
 static int destroy(struct bt_refgen * base);
 static int get_start(struct bt_refgen * base, gsl_vector ** start);
@@ -28,6 +27,7 @@ static const struct bt_refgen_type refgen_mastermaster_type = {
 };
 const struct bt_refgen_type * refgen_mastermaster = &refgen_mastermaster_type;
 
+static double diffperloop[7] = {0.002,0.002,0.005,0.004,0.05,0.05,0.05};
 
 /* Functions */
 struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos, double amp)
@@ -212,7 +212,6 @@ static int get_start(struct bt_refgen * base, gsl_vector ** start)
    struct refgen_mastermaster * r = (struct refgen_mastermaster *) base;
    
    /* For now, start at the current position (??) */
-   gsl_vector_memcpy(r->start,r->jpos);
    (*start) = r->start;
    
    return 0;
@@ -226,6 +225,8 @@ static int get_num_points(struct bt_refgen * base, int * points)
 static int start(struct bt_refgen * base)
 {
    struct refgen_mastermaster * r = (struct refgen_mastermaster *) base;
+   r->num_missed = 1000;
+   r->locked = 0;
    return 0;
 }
 
@@ -240,52 +241,33 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    for (i=0; i<r->jpos->size; i++)
       *(gsl_vector_ptr(r->sendbuf,i)) = *(gsl_vector_ptr(r->jpos,i));
 
-   /* Attempt to send the datagram */
+   /* Send the datagram */
    send(r->sock, r->sendbuf->data, 7*sizeof(double), 0);
    
    /* Read as many datagrams as we can ... */
    if (r->num_missed < 1000)
       r->num_missed++;
    while (recv(r->sock, r->recvbuf->data, 7*sizeof(double), 0) == 7*sizeof(double))
-      r->num_missed = 0;
-   
-   /* If we've missed a lot, we're unlocked */
-   if (r->num_missed > 100)
-      r->locked = 0;
-   
-   /* Take the average of sendbuf and recvbuf (using sendbuf as temp)
-    * only if we've gotten something in the past 10 cycles */
    {
-      gsl_blas_dscal( 1.0 - r->amp, r->sendbuf );
-      gsl_blas_daxpy( r->amp, r->recvbuf, r->sendbuf );
+      r->locked = 1;
+      r->num_missed = 0;
    }
    
-   /* Check each position difference, and bound to a certain value
-    * in radians, per loop, if we're not yet locked */
+   /* If we've missed a lot, we're done */
+   if (r->locked && r->num_missed > 100)
+      return 1; /* finished */
+   
+   /* If we aren't locked yet, stay at the zero position */
    if (!r->locked)
    {
-      alllocked = 1;
-      for (i=0; i<ref->size; i++)
-      {
-         double diff;
-         diff = gsl_vector_get(r->sendbuf,i) - gsl_vector_get(r->jpos,i);
-         if (diff > DIFFPERLOOP)
-         {
-            gsl_vector_set(r->sendbuf,i, DIFFPERLOOP + gsl_vector_get(r->jpos,i) );
-            alllocked = 0;
-         }
-         if (diff < -DIFFPERLOOP)
-         {
-            gsl_vector_set(r->sendbuf,i, -DIFFPERLOOP + gsl_vector_get(r->jpos,i) );
-            alllocked = 0;
-         }
-      }
-      /* If we've recently gotten positions, and we're near the other position,
-       * then lock! */
-      if (alllocked && r->num_missed < 100)
-         r->locked = 1;
+      gsl_vector_memcpy(ref,r->start);
+      return 0;
    }
-
+   
+   /* Take the average of sendbuf and recvbuf (using sendbuf as temp) */
+   gsl_blas_dscal( 1.0 - r->amp, r->sendbuf );
+   gsl_blas_daxpy( r->amp, r->recvbuf, r->sendbuf );
+   
    /* Copy this into the reference */
    for (i=0; i<ref->size; i++)
       *(gsl_vector_ptr(ref,i)) = *(gsl_vector_ptr(r->sendbuf,i));

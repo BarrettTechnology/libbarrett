@@ -147,7 +147,7 @@ int main(int argc, char ** argv)
    wam_local = bt_wam_get_local(wam);
    
    /* Toggle once to get joint controller */
-   bt_wam_local_controller_toggle(wam_local);
+   /*bt_wam_local_controller_toggle(wam_local);*/
    
    /* Make the triangle */
    mas = refgen_mastermaster_create(argv[2],wam_local->jposition,0.5);
