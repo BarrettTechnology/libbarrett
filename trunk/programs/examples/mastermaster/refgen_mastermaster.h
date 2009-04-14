@@ -10,7 +10,7 @@ struct refgen_mastermaster
    struct bt_refgen base;
    gsl_vector * jpos; /* current, saved */
    
-   double amp;
+   double power;
    
    gsl_vector * start;
    
@@ -23,5 +23,5 @@ struct refgen_mastermaster
    int locked;
 };
 
-struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos, double amp);
-int refgen_mastermaster_set_amp(struct refgen_mastermaster * r, double amp);
+struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos);
+int refgen_mastermaster_set_power(struct refgen_mastermaster * r, double power);

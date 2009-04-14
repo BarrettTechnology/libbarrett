@@ -30,7 +30,7 @@ const struct bt_refgen_type * refgen_mastermaster = &refgen_mastermaster_type;
 static double diffperloop[7] = {0.002,0.002,0.005,0.004,0.05,0.05,0.05};
 
 /* Functions */
-struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos, double amp)
+struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos)
 {
    struct refgen_mastermaster * r;
    int err;
@@ -47,7 +47,7 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_v
    /* save the joint position vector,
     * set on refgen creation */
    r->base.type = refgen_mastermaster;
-   r->amp = amp;
+   r->power = 0.5;
    r->jpos = jpos;
    
    /* Initialize */
@@ -189,9 +189,9 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_v
    return r;
 }
 
-int refgen_mastermaster_set_amp(struct refgen_mastermaster * r, double amp)
+int refgen_mastermaster_set_power(struct refgen_mastermaster * r, double power)
 {
-   r->amp = amp;
+   r->power = power;
 }
 
 static int destroy(struct bt_refgen * base)
@@ -265,8 +265,8 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    }
    
    /* Take the average of sendbuf and recvbuf (using sendbuf as temp) */
-   gsl_blas_dscal( 1.0 - r->amp, r->sendbuf );
-   gsl_blas_daxpy( r->amp, r->recvbuf, r->sendbuf );
+   gsl_blas_dscal( r->power, r->sendbuf );
+   gsl_blas_daxpy( 1.0 - r->power, r->recvbuf, r->sendbuf );
    
    /* Copy this into the reference */
    for (i=0; i<ref->size; i++)

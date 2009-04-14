@@ -147,17 +147,6 @@ int main(int argc, char ** argv)
    wam_local = bt_wam_get_local(wam);
    
    /* Toggle once to get joint controller */
-   /*bt_wam_local_controller_toggle(wam_local);*/
-   
-   /* Make the triangle */
-   mas = refgen_mastermaster_create(argv[2],wam_local->jposition,0.5);
-   if (!mas)
-   {
-      bt_wam_destroy(wam);
-      endwin();
-      printf("Could not create the mastermaster.\n");
-      exit(-1);
-   }
    
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
@@ -211,7 +200,7 @@ int main(int argc, char ** argv)
             /* Show mastermaster refgen stuff */
             if (mas)
             {
-               mvprintw(line++, 0, "       amp: %.1f", mas->amp );
+               mvprintw(line++, 0, "     power: %.1f", mas->power );
                mvprintw(line++, 0, "    locked: %s", mas->locked ? "Yes" : "No" );
                mvprintw(line++, 0, "num_missed: %d", mas->num_missed );
                line++;
@@ -283,10 +272,23 @@ int main(int argc, char ** argv)
             bt_wam_playback(wam);
             break;
          /* mastermaster refgen stuff */
-         case 'u': /* Use our mastermaster refgen! */
-            if (!mas) break;
+         case 'U': /* Use our mastermaster refgen! */
+            if (mas) break;
+            mas = refgen_mastermaster_create(argv[2],wam_local->jposition);
+            if (!mas)
+            {
+               syslog(LOG_ERR,"Could not create the mastermaster.");
+               break;
+            }
             bt_wam_local_refgen_use(wam_local,(struct bt_refgen *)mas);
             break;
+         case 'u':
+            if (!mas) break;
+            bt_wam_local_idle(wam_local);
+            bt_refgen_destroy((struct bt_refgen *)mas);
+            mas = 0;
+            break;
+         /* end mastermaster refgen stuff */
          case '0':
          case '1':
          case '2':
@@ -298,10 +300,10 @@ int main(int argc, char ** argv)
          case '8':
          case '9':
             if (!mas) break;
-            refgen_mastermaster_set_amp(mas, 0.1 * (key - '0'));
+            refgen_mastermaster_set_power(mas, 0.1 * (key - '0'));
             break;
          case 'a':
-            refgen_mastermaster_set_amp(mas, 1.0);
+            refgen_mastermaster_set_power(mas, 1.0);
             break;
          /* end mastermaster refgen stuff */
          default:
