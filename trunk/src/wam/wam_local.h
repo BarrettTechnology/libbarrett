@@ -35,8 +35,9 @@
 #include "refgen_teachplay.h"
 #include "control.h"
 #include "control_joint.h"
-#include "control_cartesian_xyz.h"
 #include "control_joint_legacy.h"
+#include "control_cartesian_xyz.h"
+#include "control_cartesian_xyz_q.h"
 #include "rpc.h"
 #include "wam.h"
 
@@ -103,6 +104,7 @@ struct bt_wam_local
    struct bt_control_joint * con_joint;
    struct bt_control_joint_legacy * con_joint_legacy;
    struct bt_control_cartesian_xyz * con_cartesian_xyz;
+   struct bt_control_cartesian_xyz_q * con_cartesian_xyz_q;
    
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
    double vel, acc;
@@ -128,10 +130,13 @@ int bt_wam_local_loop_stop(struct bt_wam_local * wam);
 char * bt_wam_local_str_jposition(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_jvelocity(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_jtorque(struct bt_wam_local * wam, char * buf);
+
 char * bt_wam_local_str_cposition(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r1(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r2(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r3(struct bt_wam_local * wam, char * buf);
+
+char * bt_wam_local_str_con_position(struct bt_wam_local * wam, char * buf);
 
 int bt_wam_local_isgcomp(struct bt_wam_local * wam);
 int bt_wam_local_setgcomp(struct bt_wam_local * wam, int onoff);

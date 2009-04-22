@@ -39,6 +39,7 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_str_crotation_r1,  "bt_wam_str_crotation_r1",  BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_str_crotation_r2,  "bt_wam_str_crotation_r2",  BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_str_crotation_r3,  "bt_wam_str_crotation_r3",  BT_RPC_FUNC_STR_OBJ},
+   {(void (*)())&bt_wam_str_con_position,  "bt_wam_str_con_position",  BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_isgcomp,           "bt_wam_isgcomp",           BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_setgcomp,          "bt_wam_setgcomp",          BT_RPC_FUNC_INT_OBJ_INT},
    {(void (*)())&bt_wam_get_current_controller_name,

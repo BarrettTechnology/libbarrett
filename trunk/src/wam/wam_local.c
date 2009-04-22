@@ -377,6 +377,16 @@ char * bt_wam_local_str_crotation_r3(struct bt_wam_local * wam, char * buf)
    return bt_gsl_vector_sprintf(buf,&view.vector);
 }
 
+char * bt_wam_local_str_con_position(struct bt_wam_local * wam, char * buf)
+{
+   if (!wam->con_active)
+   {
+      strcpy(buf,"none active");
+      return buf;
+   }
+   return bt_gsl_vector_sprintf(buf,wam->con_active->position);
+}
+
 
 
 /* Here are the asynchronous WAM functions */
@@ -810,6 +820,9 @@ static void rt_wam(struct bt_os_thread * thread)
       bt_kinematics_eval( wam->kin, wam->wambot->jposition, wam->wambot->jvelocity );
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
       
+      /* Get the position from the current controller */
+      bt_control_get_position(wam->con_active);
+      
       /* If there's an active trajectory, grab the reference into the joint controller
        * Note: this is a while loop for the case where the refgen is done,
        *       and we move on to the next refgen. */
@@ -995,11 +1008,22 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
       return 1;
    }
    
-   wam->con_list = (struct bt_control **) malloc((3)*sizeof(struct bt_control *));
+   /* Create a Cartesian-xyz-q-space controller */
+   wam->con_cartesian_xyz_q = bt_control_cartesian_xyz_q_create(config_setting_get_member(wamconfig,"control_cartesian_xyz_q"),
+                                            wam->kin, wam->dyn );
+   if (!wam->con_cartesian_xyz_q)
+   {
+      syslog(LOG_ERR,"%s: Could not create Cartesian-xyz-q-space controller.",__func__);
+      rt_wam_destroy(wam);
+      return 1;
+   }
+   
+   wam->con_list = (struct bt_control **) malloc((4)*sizeof(struct bt_control *));
    wam->con_list[0] = (struct bt_control *) wam->con_joint;
-   wam->con_list[1] = (struct bt_control *) wam->con_cartesian_xyz;
-   wam->con_list[2] = (struct bt_control *) wam->con_joint_legacy;
-   wam->con_num = 3;
+   wam->con_list[1] = (struct bt_control *) wam->con_joint_legacy;
+   wam->con_list[2] = (struct bt_control *) wam->con_cartesian_xyz;
+   wam->con_list[3] = (struct bt_control *) wam->con_cartesian_xyz_q;
+   wam->con_num = 4;
 
    return 0;
 }
@@ -1014,6 +1038,8 @@ static void rt_wam_destroy(struct bt_wam_local * wam)
       bt_control_joint_legacy_destroy(wam->con_joint_legacy);
    if (wam->con_cartesian_xyz)
       bt_control_cartesian_xyz_destroy(wam->con_cartesian_xyz);
+   if (wam->con_cartesian_xyz_q)
+      bt_control_cartesian_xyz_q_destroy(wam->con_cartesian_xyz_q);
    if (wam->ts_log)
       bt_log_destroy(wam->ts_log);
    if (wam->log)

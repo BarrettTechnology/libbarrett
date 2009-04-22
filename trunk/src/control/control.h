@@ -45,7 +45,7 @@ struct bt_control;
 /* "Base Class" function pointers */
 struct bt_control_type
 {
-   char name[20]; /* points to the same place for a given type */
+   char name[30]; /* points to the same place for a given type */
    
    /* Simple state switching */
    int (*idle)(struct bt_control * c);

@@ -85,6 +85,7 @@ char * bt_wam_str_cposition(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf);
+char * bt_wam_str_con_position(struct bt_wam * wam, char * buf);
 
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);

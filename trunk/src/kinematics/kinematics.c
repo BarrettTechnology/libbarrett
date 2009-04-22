@@ -68,6 +68,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    kin->tool = 0;
    kin->tool_jacobian = 0;
    kin->tool_jacobian_linear = 0;
+   kin->tool_jacobian_angular = 0;
    kin->tool_velocity = 0;
    kin->temp_v3 = 0;
    
@@ -373,6 +374,16 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       }
       view = gsl_matrix_submatrix( kin->tool_jacobian, 0,0, 3,ndofs );
       *(kin->tool_jacobian_linear) = view.matrix;
+      
+      kin->tool_jacobian_angular = (gsl_matrix *) malloc(sizeof(gsl_matrix));
+      if (!kin->tool_jacobian_angular)
+      {
+         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         bt_kinematics_destroy(kin);
+         return 0;
+      }
+      view = gsl_matrix_submatrix( kin->tool_jacobian, 3,0, 3,ndofs );
+      *(kin->tool_jacobian_angular) = view.matrix;
    }
    kin->tool_velocity = gsl_vector_alloc( 3 );
    if (!kin->tool_velocity)
@@ -402,6 +413,8 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
       gsl_matrix_free(kin->tool_jacobian);
    if (kin->tool_jacobian_linear)
       free(kin->tool_jacobian_linear);
+   if (kin->tool_jacobian_angular)
+      free(kin->tool_jacobian_angular);
    if (kin->tool_velocity)
       gsl_vector_free(kin->tool_velocity);
    if (kin->temp_v3)

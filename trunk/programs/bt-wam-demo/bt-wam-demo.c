@@ -179,6 +179,8 @@ int main(int argc, char ** argv)
 
             /* Show controller name (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam,buf) );
+            mvprintw(line++, 0, "   Position: %s", bt_wam_str_con_position(wam,buf) );
+            line++;
             
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );

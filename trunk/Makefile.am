@@ -63,7 +63,8 @@ noinst_LTLIBRARIES += src/libbtcontrol.la
 pkginclude_HEADERS += src/control/control.h \
                       src/control/control_joint_legacy.h \
                       src/control/control_joint.h \
-                      src/control/control_cartesian_xyz.h
+                      src/control/control_cartesian_xyz.h \
+                      src/control/control_cartesian_xyz_q.h
 
 # Source files to complile
 src_libbtcontrol_la_CPPFLAGS = -Isrc/gsl \
@@ -73,7 +74,8 @@ src_libbtcontrol_la_CPPFLAGS = -Isrc/gsl \
 src_libbtcontrol_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtcontrol_la_SOURCES = src/control/control_joint_legacy.c \
                               src/control/control_joint.c \
-                              src/control/control_cartesian_xyz.c
+                              src/control/control_cartesian_xyz.c \
+                              src/control/control_cartesian_xyz_q.c
 
 ####### BT_DYNAMICS
 

@@ -92,6 +92,7 @@ struct bt_kinematics {
    /* Toolplate Jacobian */
    gsl_matrix * tool_jacobian;
    gsl_matrix * tool_jacobian_linear; /* matrix view */
+   gsl_matrix * tool_jacobian_angular; /* matrix view */
    gsl_vector * tool_velocity;
    
    /* Temp vectors */

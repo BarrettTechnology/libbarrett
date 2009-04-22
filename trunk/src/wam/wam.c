@@ -298,6 +298,20 @@ char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
    }
 }
 
+char * bt_wam_str_con_position(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_str_con_position(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
 int bt_wam_isgcomp(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY
