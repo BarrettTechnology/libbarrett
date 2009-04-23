@@ -70,6 +70,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    kin->tool_jacobian_linear = 0;
    kin->tool_jacobian_angular = 0;
    kin->tool_velocity = 0;
+   kin->tool_velocity_angular = 0;
    kin->temp_v3 = 0;
    
    /* Create the links array */
@@ -392,6 +393,13 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       bt_kinematics_destroy(kin);
       return 0;
    }
+   kin->tool_velocity_angular = gsl_vector_alloc( 3 );
+   if (!kin->tool_velocity_angular)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_kinematics_destroy(kin);
+      return 0;
+   }
    
    /* Make temporary vectors */
    kin->temp_v3 = gsl_vector_alloc(3);
@@ -417,6 +425,8 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
       free(kin->tool_jacobian_angular);
    if (kin->tool_velocity)
       gsl_vector_free(kin->tool_velocity);
+   if (kin->tool_velocity_angular)
+      gsl_vector_free(kin->tool_velocity_angular);
    if (kin->temp_v3)
       gsl_vector_free(kin->temp_v3);
    
@@ -489,6 +499,10 @@ int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_
    gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_linear,
                    jvelocity,
                    0.0, kin->tool_velocity );
+   /* Calculate the tool Cartesian angular velocity */
+   gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_angular,
+                   jvelocity,
+                   0.0, kin->tool_velocity_angular );
    
    return 0;
 }

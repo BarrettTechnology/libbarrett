@@ -65,6 +65,8 @@ struct bt_control_cartesian_xyz_q
    gsl_vector * temp2;
    
    /* A temp 4-vector */
+   double rot_p;
+   double rot_d;
    gsl_vector * temp4vec;
    
    /* This is for us to keep track of during real-time evals */

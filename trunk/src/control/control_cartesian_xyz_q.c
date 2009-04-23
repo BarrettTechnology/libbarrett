@@ -250,24 +250,25 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
       /* Make sure the configuration looks good */
       if ( !(pids = config_setting_get_member( config, "pids" ))
                 || (config_setting_type(pids)   != CONFIG_TYPE_GROUP) 
-                || (config_setting_length(pids) != 3) )
+                || (config_setting_length(pids) != 4) )
       {
-         syslog(LOG_ERR,"%s: The 'pids' configuration is not a 3-element group.",__func__);
+         syslog(LOG_ERR,"%s: The 'pids' configuration is not a 4-element group.",__func__);
          bt_control_cartesian_xyz_q_destroy(c);
          return 0;
       }
-      /* Read in the PID values */
+      /* Read in the XYZ PID values */
       for (j=0; j<3; j++)
       {
          double p,i,d;
          config_setting_t * pid_grp;
          
          pid_grp = config_setting_get_member( pids, str_dimension[j] );
-         if (   bt_gsl_config_get_double(config_setting_get_member( pid_grp, "p" ), &p)
+         if ( !pid_grp
+             || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "p" ), &p)
              || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "i" ), &i)
              || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "d" ), &d))
          {
-            syslog(LOG_ERR,"%s: No p, i, and/or d value",__func__);
+            syslog(LOG_ERR,"%s: No p, i, and/or d value in %s.",__func__,str_dimension[j]);
             bt_control_cartesian_xyz_q_destroy(c);
             return 0;
          }
@@ -275,6 +276,19 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
          gsl_vector_set(c->Kp,j,p);
          gsl_vector_set(c->Ki,j,i);
          gsl_vector_set(c->Kd,j,d);
+      }
+      /* Read in the rot PD values */
+      {
+         config_setting_t * pid_grp;
+         pid_grp = config_setting_get_member( pids, "rot" );
+         if ( !pid_grp
+             || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "p" ), &c->rot_p)
+             || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "d" ), &c->rot_d))
+         {
+            syslog(LOG_ERR,"%s: No p, i, and/or d value in rot.",__func__);
+            bt_control_cartesian_xyz_q_destroy(c);
+            return 0;
+         }
       }
    }
    
@@ -389,8 +403,8 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
                       c->force,
                       1.0, jtorque );
       
-      /* Now, torque stuff ... */
       
+      /* Now, torque stuff ... */
       gsl_vector_set_zero(c->torque);
       
       /* First, normalize the reference quaternion */
@@ -404,13 +418,16 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
       /* Convert to angle * axis (3-vec)
        * Note that this is AT THE TOOL */
       q_to_angle_axis( c->temp4vec, c->temp1 );
-      gsl_blas_dscal( 4.0, c->temp1 );
+      gsl_blas_dscal( c->rot_p, c->temp1 ); /* P TERM */
       
       /* Next, multiply it by the to_world transform
        * to get it in the world frame */
       gsl_blas_dgemv( CblasNoTrans, 1.0, c->kin->tool->rot_to_world,
                       c->temp1,
                       0.0, c->torque );
+      
+      /* Also, add in the angular velocity (D term) */
+      gsl_blas_daxpy( - c->rot_d, c->kin->tool_velocity_angular, c->torque ); /* D TERM */
       
       /* Multiply by the Jacobian-transpose at the tool (torque) */
       gsl_blas_dgemv( CblasTrans, 1.0, c->kin->tool_jacobian_angular,
