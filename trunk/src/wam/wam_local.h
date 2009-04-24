@@ -146,7 +146,10 @@ int bt_wam_local_hold(struct bt_wam_local * wam);
 int bt_wam_local_is_holding(struct bt_wam_local * wam);
 char * bt_wam_local_get_current_controller_name(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_get_current_refgen_name(struct bt_wam_local * wam, char * buf);
+
 int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen);
+int bt_wam_local_control_use(struct bt_wam_local * wam, struct bt_control * control);
+
 int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel);
 int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc);
 int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest);

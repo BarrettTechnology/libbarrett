@@ -516,6 +516,12 @@ int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen
    return 0;   
 }
 
+int bt_wam_local_control_use(struct bt_wam_local * wam, struct bt_control * control)
+{
+   wam->con_active = control;
+   return 0;
+}
+
 int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel)
 {
    wam->vel = vel;

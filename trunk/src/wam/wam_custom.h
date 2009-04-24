@@ -25,6 +25,8 @@
 
 /* For custom refgens */
 #include "refgen.h"
+
+/* These are now in wam_local.h */
 #if 0
 int bt_wam_local_refgen_use(struct bt_wam * wam, struct bt_refgen * refgen);
 
