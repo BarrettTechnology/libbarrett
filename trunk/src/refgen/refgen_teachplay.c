@@ -27,12 +27,16 @@ static const struct bt_refgen_type bt_refgen_teachplay_type = {
 };
 const struct bt_refgen_type * bt_refgen_teachplay = &bt_refgen_teachplay_type;
 
+static int load(struct bt_refgen_teachplay * t);
+
 /* Trajectory-specific create function */
 struct bt_refgen_teachplay * bt_refgen_teachplay_create(
    double * elapsed_time, gsl_vector * cur_position, char * filename)
 {
    struct bt_refgen_teachplay * t;
    int i;
+   int err;
+   
    t = (struct bt_refgen_teachplay *) malloc( sizeof(struct bt_refgen_teachplay) );
    if (!t) return 0;
    
@@ -49,14 +53,25 @@ struct bt_refgen_teachplay * bt_refgen_teachplay_create(
    /* No spline or profile yet */
    t->spline = 0;
    
-   /* Create a log object (a time field, plus a field for each dimension) */
+   /* Copy in the filename */
    t->filename = (char *) malloc( strlen(filename) + 1 );
    strcpy(t->filename,filename);
-   t->log = bt_log_create(1 + cur_position->size);
-   bt_log_addfield( t->log, &t->time, 1, BT_LOG_DOUBLE, "time" );
-   for (i=0; i<cur_position->size; i++)
-      bt_log_addfield( t->log, gsl_vector_ptr(cur_position,i), 1, BT_LOG_DOUBLE, "pos" );
-   bt_log_init( t->log, 1000, filename );
+   
+   /* Attempt to load from file */
+   t->log = 0;
+   err = load(t);
+   if (err)
+   {
+      /* Create a log object (a time field, plus a field for each dimension) */
+      t->log = bt_log_create(1 + cur_position->size);
+      bt_log_addfield( t->log, &t->time, 1, BT_LOG_DOUBLE, "time" );
+      for (i=0; i<cur_position->size; i++)
+         bt_log_addfield( t->log, gsl_vector_ptr(cur_position,i), 1, BT_LOG_DOUBLE, "pos" );
+      bt_log_init( t->log, 1000, filename );
+      
+      /* We expect to hit save after a bunch of triggers */
+      
+   }
    
    return t;
 }
@@ -66,22 +81,18 @@ int bt_refgen_teachplay_flush(struct bt_refgen_teachplay * t)
    return bt_log_flush(t->log);
 }
 
-int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
+static int load(struct bt_refgen_teachplay * t)
 {
    char * filename_csv;
    struct bt_log_read * logread;
    gsl_vector * position;
    int i;
+   int err;
    
-   /* Destroy the logger */
-   bt_log_destroy(t->log);
-   t->log = 0;
-   
-   /* Convert the file to csv */
+   /* Convert the filename to csv */
    filename_csv = (char *) malloc( strlen(t->filename) + 4 + 1 );
    strcpy(filename_csv,t->filename);
    strcat(filename_csv,".csv");
-   bt_log_decode( t->filename, filename_csv, 1, 0 );
    
    /* Create an interable log reader from the CSV file */
    position = gsl_vector_calloc( t->n );
@@ -89,7 +100,15 @@ int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
    bt_log_read_addfield( logread, &t->time, 1, BT_LOG_DOUBLE );
    for (i=0; i<t->n; i++)
       bt_log_read_addfield( logread, gsl_vector_ptr(position,i), 1, BT_LOG_DOUBLE );
-   bt_log_read_init( logread, filename_csv, 1);
+   err = bt_log_read_init( logread, filename_csv, 1);
+   if (err)
+   {
+      /* Could not load, file not found, etc. */
+      bt_log_read_destroy( logread );
+      gsl_vector_free(position);
+      free(filename_csv);
+      return 1;
+   }
    
    /* Get the first point, create the spline  */
    bt_log_read_get( logread, 0 );
@@ -107,6 +126,26 @@ int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
    bt_log_read_destroy( logread );
    gsl_vector_free(position);
    free(filename_csv);
+   
+   return 0;
+}
+
+int bt_refgen_teachplay_save(struct bt_refgen_teachplay * t)
+{
+   char * filename_csv;
+   
+   /* Destroy the logger */
+   bt_log_destroy(t->log);
+   t->log = 0;
+   
+   /* Convert the file to csv */
+   filename_csv = (char *) malloc( strlen(t->filename) + 4 + 1 );
+   strcpy(filename_csv,t->filename);
+   strcat(filename_csv,".csv");
+   bt_log_decode( t->filename, filename_csv, 1, 0 );
+   
+   /* Attempt to load from file */
+   load(t);
    
    return 0;
 }

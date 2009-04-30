@@ -48,7 +48,7 @@
  *
  * www.intel.com/cd/ids/developer/asmo-na/eng/293748.htm
 */
-int rot_to_q( gsl_matrix * rot, gsl_vector * quat )
+static int rot_to_q( gsl_matrix * rot, gsl_vector * quat )
 {
    if ( gsl_matrix_get(rot,0,0) + gsl_matrix_get(rot,1,1) + gsl_matrix_get(rot,2,2) > 0.0 )
    {
@@ -95,7 +95,7 @@ int rot_to_q( gsl_matrix * rot, gsl_vector * quat )
 }
 
 /* Here, we calculate q_a = q_b * q_c' */
-int q_mult_conj( gsl_vector * qa,  gsl_vector * qb,  gsl_vector * qc )
+static int q_mult_conj( gsl_vector * qa,  gsl_vector * qb,  gsl_vector * qc )
 {
    gsl_vector_set(qa,0, + gsl_vector_get(qb,0) * gsl_vector_get(qc,0)
                         + gsl_vector_get(qb,1) * gsl_vector_get(qc,1)
@@ -120,7 +120,7 @@ int q_mult_conj( gsl_vector * qa,  gsl_vector * qb,  gsl_vector * qc )
    return 0;
 }
 
-int q_to_angle_axis( gsl_vector * q, gsl_vector * angleaxis )
+static int q_to_angle_axis( gsl_vector * q, gsl_vector * angleaxis )
 {
    double sin_a;
    double angle;
@@ -285,7 +285,7 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
              || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "p" ), &c->rot_p)
              || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "d" ), &c->rot_d))
          {
-            syslog(LOG_ERR,"%s: No p, i, and/or d value in rot.",__func__);
+            syslog(LOG_ERR,"%s: No p and/or d value in rot.",__func__);
             bt_control_cartesian_xyz_q_destroy(c);
             return 0;
          }
@@ -404,8 +404,7 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
                       1.0, jtorque );
       
       
-      /* Now, torque stuff ... */
-      gsl_vector_set_zero(c->torque);
+      /* Now, the rotation stuff */
       
       /* First, normalize the reference quaternion */
       len = gsl_blas_dnrm2( c->ref_quat );

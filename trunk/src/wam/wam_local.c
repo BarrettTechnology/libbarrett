@@ -625,9 +625,14 @@ int bt_wam_local_teach_start(struct bt_wam_local * wam)
       bt_refgen_teachplay_create(&(wam->elapsed_time), wam->con_active->position,"teach");
    if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    
-   /* Set the sync side start_time */
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
-   wam->teach = 1;
+   /* TODO:
+    * For now, we check if the log exists; if it does, we're teaching */
+   if (  ((struct bt_refgen_teachplay *)(wam->refgen_list->refgen))->log )
+   {
+      /* Set the sync side start_time */
+      wam->start_time = 1e-9 * bt_os_rt_get_time();
+      wam->teach = 1;
+   }
    
    return 0;
 }
