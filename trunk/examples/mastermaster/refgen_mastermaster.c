@@ -27,8 +27,6 @@ static const struct bt_refgen_type refgen_mastermaster_type = {
 };
 const struct bt_refgen_type * refgen_mastermaster = &refgen_mastermaster_type;
 
-static double diffperloop[7] = {0.002,0.002,0.005,0.004,0.05,0.05,0.05};
-
 /* Functions */
 struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos)
 {

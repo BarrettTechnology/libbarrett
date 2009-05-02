@@ -238,7 +238,9 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
       bt_wam_destroy((struct bt_wam *)wam);
       return 0;
    }
-   wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);
+   /* TODO: FIX THIS! */
+   /*wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);*/
+   wam->rt_thread = bt_os_thread_create(BT_OS_RT, wam->name, 90, rt_wam, (void *)helper);
    if (!wam->rt_thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime thread.",__func__);
@@ -487,6 +489,7 @@ int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = 0;
+   wam->refgen_list->iown = 0;
    wam->refgen_list->refgen = refgen;
    
    /* Insert the move list element before the refgen */
@@ -494,8 +497,11 @@ int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = refgen_list_element;
+   wam->refgen_list->iown = 1;
    
    /* Get the refgen starting point */
+   syslog(LOG_ERR,"inside Type: %d",(int)(refgen->type));
+   bt_os_usleep(100000);
    bt_refgen_get_start(refgen,&refgen_start);
    
    /* Create the move refgen itself */
@@ -558,6 +564,7 @@ int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest)
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = 0;
+   wam->refgen_list->iown = 1;
    
    /* Make the refgen itself */
    wam->refgen_list->refgen = (struct bt_refgen *)
@@ -619,6 +626,7 @@ int bt_wam_local_teach_start(struct bt_wam_local * wam)
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = 0;
+   wam->refgen_list->iown = 1;
    
    /* Make the refgen itself */
    wam->refgen_list->refgen = (struct bt_refgen *)
@@ -679,6 +687,7 @@ int bt_wam_local_teach_start_custom(struct bt_wam_local * wam, struct bt_refgen 
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = 0;
+   wam->refgen_list->iown = 0;
    
    /* Insert the already-made itself */
    wam->refgen_list->refgen = refgen;
@@ -718,6 +727,7 @@ int bt_wam_local_playback(struct bt_wam_local * wam)
    wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
    if (!wam->refgen_list) return -1;
    wam->refgen_list->next = teachplay;
+   wam->refgen_list->iown = 1;
    
    /* Make the move refgen itself */
    bt_refgen_get_start(teachplay->refgen,&teachplay_start);
