@@ -146,4 +146,54 @@ int bt_rpc_interface_object_add(struct bt_rpc_interface * interface, void * vptr
 int bt_rpc_interface_object_check(struct bt_rpc_interface * interface, void * vptr);
 int bt_rpc_interface_object_remove(struct bt_rpc_interface * interface, void * vptr);
 
+
+/* ======================================================================== */
+
+#if 0
+
+enum bt_rpc_val_types
+{
+   BT_RPC_VAL_INT,
+   BT_RPC_VAL_HANDLE,
+   BT_RPC_VAL_CHARPTR
+};
+
+/* A prototype has a list of value types as args
+ * and a return type. */
+struct bt_rpc_prototype
+{
+   enum bt_rpc_val_types params[];
+   enum bt_rpc_val_types ret;
+};
+
+/* An example prototype caller;
+ *   RPC-type independent;
+ *   knows about basic type;
+ *   auto-generatable given list of arg types */
+int call_int_from_handle_int(struct bt_rpc_type * rpctype, void (*fptr)(), void * params, void * ret)
+{
+   void * a0_handle;
+   int    a1_int;
+   int    r_int;
+   a0_handle = rpctype->get_param_handle(params,0);
+   a1_int      rpctype->get_param_int(params,1);
+   r_int = (*(int (*)(void *, int))(fptr))(a0_handle,a1_int);
+   rpc->set_return_int(ret,r_int);
+   return 0;
+}
+
+int call_int_from_handle_charptr(struct bt_rpc_type * rpctype, void (*fptr)(), void * params, void * ret)
+{
+   void * a0_handle;
+   int    a1_charptr;
+   int    r_int;
+   a0_handle  = rpctype->get_param_handle(params,0);
+   a1_charptr = rpctype->get_param_charptr(params,1);
+   r_int = (*(int (*)(void *, int))(fptr))(a0_handle,a1_int);
+   rpc->set_return_int(ret,r_int);
+   return 0;
+}
+
+#endif
+
 #endif /* BT_RPC_H */

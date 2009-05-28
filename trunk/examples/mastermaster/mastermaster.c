@@ -27,6 +27,7 @@
 #include <libbarrett/wam.h>
 #include <libbarrett/wam_custom.h>
 #include <libbarrett/wam_local.h>
+#include <libbarrett/wambot_phys.h>
 #include <libbarrett/gsl.h>
 
 /* Our own, custom refgen! */
@@ -104,6 +105,7 @@ int main(int argc, char ** argv)
    /* Stuff for starting up the WAM */
    struct bt_wam * wam;
    struct bt_wam_local * wam_local;
+   struct bt_bus * bus;
    
    /* My refgen_mastermaster */
    struct refgen_mastermaster * mas = 0;
@@ -145,6 +147,7 @@ int main(int argc, char ** argv)
       exit(-1);
    }
    wam_local = bt_wam_get_local(wam);
+   bus = ((struct bt_wambot_phys *)(wam_local->wambot))->bus;
    
    /* Toggle once to get joint controller */
    
@@ -200,9 +203,13 @@ int main(int argc, char ** argv)
             /* Show mastermaster refgen stuff */
             if (mas)
             {
-               mvprintw(line++, 0, "     power: %.1f", mas->power );
-               mvprintw(line++, 0, "    locked: %s", mas->locked ? "Yes" : "No" );
-               mvprintw(line++, 0, "num_missed: %d", mas->num_missed );
+               mvprintw(line++, 0, "        power: %.1f", mas->power );
+               mvprintw(line++, 0, "       locked: %s", mas->locked ? "Yes" : "No" );
+               mvprintw(line++, 0, "   num_missed: %d", mas->num_missed );
+               line++;
+               mvprintw(line++, 0, "wrist_locking: %s", mas->wrist_locking ? "Yes" : "No" );
+               mvprintw(line++, 0, "           J5: %s", mas->wrist_j5_locked ? "Locked" : "Unlocked" );
+               mvprintw(line++, 0, "           J6: %s", mas->wrist_j6_locked ? "Locked" : "Unlocked" );
                line++;
             }
             
@@ -217,7 +224,7 @@ int main(int argc, char ** argv)
             mvprintw(line++, 0, "J Velocity : %s", bt_wam_str_jvelocity(wam,buf) );
             mvprintw(line++, 0, "J Torque   : %s", bt_wam_str_jtorque(wam,buf) );
             line++;
-
+#if 0
             /* Show CARTESION POSITION, ROTATION */
             mvprintw(line++, 0, "C Position : %s", bt_wam_str_cposition(wam,buf) );
             
@@ -226,7 +233,7 @@ int main(int argc, char ** argv)
             mvprintw(line++, 13, "%s", bt_wam_str_crotation_r2(wam,buf) );
             mvprintw(line++, 13, "%s", bt_wam_str_crotation_r3(wam,buf) );
             line++;
-
+#endif
             break;
          case SCREEN_HELP:
             line = 0;
@@ -274,7 +281,7 @@ int main(int argc, char ** argv)
          /* mastermaster refgen stuff */
          case 'U': /* Use our mastermaster refgen! */
             if (mas) break;
-            mas = refgen_mastermaster_create(argv[2],wam_local->jposition);
+            mas = refgen_mastermaster_create(argv[2],wam_local->kin,wam_local->jposition,wam_local->jtorque);
             if (!mas)
             {
                syslog(LOG_ERR,"Could not create the mastermaster.");
@@ -288,7 +295,45 @@ int main(int argc, char ** argv)
             bt_refgen_destroy((struct bt_refgen *)mas);
             mas = 0;
             break;
+         case 'L':
+            if (!mas) break;
+            if (mas->wrist_locking) break;
+            mas->wrist_j5_locked = 0;
+            mas->wrist_j6_locked = 0;
+            mas->wrist_locking = 1;
+            break;
+         case 'l':
+            if (!mas) break;
+            if (!mas->wrist_locking) break;
+            mas->wrist_locking = 0;
+            mas->wrist_j5_locked = 0;
+            mas->wrist_j6_locked = 0;
+            break;
          /* end mastermaster refgen stuff */
+         /* start safety disabling stuff */
+         case 's':
+            bt_bus_set_property(bus,10,47,0,1800); /* TL1 */
+            bt_bus_set_property(bus,10,48,0,5700); /* TL2 */
+            bt_bus_set_property(bus,1,43,0,4860); /* MT */
+            bt_bus_set_property(bus,2,43,0,4860);
+            bt_bus_set_property(bus,3,43,0,4860);
+            bt_bus_set_property(bus,4,43,0,4320);
+            bt_bus_set_property(bus,5,43,0,3900);
+            bt_bus_set_property(bus,6,43,0,3900);
+            bt_bus_set_property(bus,7,43,0,3200);
+            break;
+         case 'S':
+            bt_bus_set_property(bus,10,47,0,5700); /* TL1 */
+            bt_bus_set_property(bus,10,48,0,9000); /* TL2 */
+            bt_bus_set_property(bus,1,43,0,9000); /* MT */
+            bt_bus_set_property(bus,2,43,0,9000);
+            bt_bus_set_property(bus,3,43,0,9000);
+            bt_bus_set_property(bus,4,43,0,9000);
+            bt_bus_set_property(bus,5,43,0,9000);
+            bt_bus_set_property(bus,6,43,0,9000);
+            bt_bus_set_property(bus,7,43,0,9000);
+            break;
+         /* end safety disabling stuff */            
          case '0':
          case '1':
          case '2':

@@ -1,12 +1,13 @@
 #include <sys/socket.h> /* For sockets */
-#include <fcntl.h> /* To change socket to nonblocking mode */
-#include <arpa/inet.h> /* For inet_aton() */
+#include <fcntl.h>      /* To change socket to nonblocking mode */
+#include <arpa/inet.h>  /* For inet_aton() */
 
 #include <gsl/gsl_vector.h>
 #include <syslog.h>
 #include "refgen_mastermaster.h"
 
 #define PORT (5555)
+#define J5GAIN (100)
 
 static int destroy(struct bt_refgen * base);
 static int get_start(struct bt_refgen * base, gsl_vector ** start);
@@ -28,7 +29,10 @@ static const struct bt_refgen_type refgen_mastermaster_type = {
 const struct bt_refgen_type * refgen_mastermaster = &refgen_mastermaster_type;
 
 /* Functions */
-struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_vector * jpos)
+struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost,
+                                                        struct bt_kinematics * kin,
+                                                        gsl_vector * jpos,
+                                                        gsl_vector * jtrq)
 {
    struct refgen_mastermaster * r;
    int err;
@@ -47,6 +51,8 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_v
    r->base.type = refgen_mastermaster;
    r->power = 0.5;
    r->jpos = jpos;
+   r->jtrq = jtrq;
+   r->kin = kin;
    
    /* Initialize */
    r->start = 0;
@@ -55,6 +61,11 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_v
    r->sock = -1;
    r->num_missed = 1000;
    r->locked = 0;
+   r->wrist_locking = 0;
+   r->wrist_j5_locked = 0;
+   r->wrist_j6_locked = 0;
+   r->temp3 = 0;
+   r->g_unit = 0;
    
    /* Allocate start vector */
    r->start = gsl_vector_calloc(jpos->size);
@@ -94,6 +105,25 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost, gsl_v
       destroy((struct bt_refgen *)r);
       return 0;
    }
+
+   /* Allocate temp3 vector */
+   r->temp3 = gsl_vector_calloc(3);
+   if (!r->temp3)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      destroy((struct bt_refgen *)r);
+      return 0;
+   }
+
+   /* Allocate g_unit vector */
+   r->g_unit = gsl_vector_calloc(3);
+   if (!r->g_unit)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      destroy((struct bt_refgen *)r);
+      return 0;
+   }
+   gsl_vector_set(r->g_unit,2,-1.0);
    
    /* Create socket */
    r->sock = socket(PF_INET, SOCK_DGRAM, 0);
@@ -201,6 +231,8 @@ static int destroy(struct bt_refgen * base)
    if (r->recvbuf) gsl_vector_free(r->recvbuf);
    if (r->sendbuf) gsl_vector_free(r->sendbuf);
    if (r->start) gsl_vector_free(r->start);
+   if (r->temp3) gsl_vector_free(r->temp3);
+   if (r->g_unit) gsl_vector_free(r->g_unit);
    free(r);
    return 0;
 }
@@ -265,6 +297,36 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    /* Take the average of sendbuf and recvbuf (using sendbuf as temp) */
    gsl_blas_dscal( r->power, r->sendbuf );
    gsl_blas_daxpy( 1.0 - r->power, r->recvbuf, r->sendbuf );
+
+   /* If we're wrist_locking (or locked), compute the J5 torque */
+   if (r->wrist_locking)
+   {
+      double j5torque;
+      
+      gsl_vector_set_zero(r->temp3);
+      /* r->temp = z5 cross g */
+      bt_gsl_cross( r->kin->link[4]->axis_z, r->g_unit, r->temp3 );
+      /* j5torque = r->temp dot z4 */
+      gsl_blas_ddot( r->kin->link[3]->axis_z, r->temp3, &j5torque );
+      /* Add in the gain */
+      j5torque *= J5GAIN;
+
+      /* If this torque is small enough, lock it! */
+      if (!r->wrist_j5_locked && fabs(j5torque) < 1.0)
+         r->wrist_j5_locked = 1;
+
+      /* If we're J5 locked, apply the torque */
+      if (r->wrist_j5_locked)
+         *(gsl_vector_ptr(r->jtrq,4)) += j5torque;
+
+      /* Apply the J6 lock if we're close to 0 */
+      if (!r->wrist_j6_locked && (fabs(gsl_vector_get(r->jpos,5)) < 0.01 ) )
+         r->wrist_j6_locked = 1;
+
+      /* If we're J6 locked, zero the reference position */
+      if (r->wrist_j6_locked)
+         gsl_vector_set(r->sendbuf,5,0.0);
+   }
    
    /* Copy this into the reference */
    for (i=0; i<ref->size; i++)

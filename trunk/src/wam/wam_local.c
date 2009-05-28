@@ -843,6 +843,11 @@ static void rt_wam(struct bt_os_thread * thread)
       
       /* Get the position from the current controller */
       bt_control_get_position(wam->con_active);
+
+      /* Zero the torque 
+       * (this is here in case a refgen wants to tweak it,
+       * which really isn't what we should be doing ... */
+      gsl_vector_set_zero( wam->wambot->jtorque );
       
       /* If there's an active trajectory, grab the reference into the joint controller
        * Note: this is a while loop for the case where the refgen is done,
@@ -865,8 +870,6 @@ static void rt_wam(struct bt_os_thread * thread)
          }
       }
       bt_os_timestat_trigger(wam->ts,TS_REFGEN);
-
-      gsl_vector_set_zero( wam->wambot->jtorque );
 
       /* Do the active controller */
       bt_control_eval( wam->con_active, wam->wambot->jtorque, time );
@@ -898,8 +901,10 @@ static void rt_wam(struct bt_os_thread * thread)
 #endif
             
       /* Log data (including timing statistics) */
-      bt_log_trigger( wam->log );
-      bt_log_trigger( wam->ts_log );
+      if (wam->log)
+         bt_log_trigger( wam->log );
+      if (wam->ts_log)
+         bt_log_trigger( wam->ts_log );
       bt_os_timestat_trigger(wam->ts,TS_LOG);
       
       /* Calculate timing statistics */
@@ -917,8 +922,10 @@ static void rt_wam(struct bt_os_thread * thread)
 /* realtime WAM initialization stuff */
 static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig)
 {
+#if 0
    int err;
    int i;
+#endif
  
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
@@ -957,6 +964,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
       return 1;
    }
 
+#if 0
    /* Create a datalogger
     * For now, we're just logging pos and accelerations */
    wam->log = bt_log_create( 3 );
@@ -997,6 +1005,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
       rt_wam_destroy(wam);
       return 1;
    }
+#endif
 
    /* Create a joint-space controller */
    wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
