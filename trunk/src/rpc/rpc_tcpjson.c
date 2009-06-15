@@ -691,7 +691,7 @@ static struct bt_rpc_caller * caller_create(char * host)
       caller_destroy(&cr->base);
       return 0;
    }
-   callee_addr.sin_addr = *(struct in_addr *) hostinfo->h_addr;
+   callee_addr.sin_addr = *(struct in_addr *)(hostinfo->h_addr_list[0]);
    
    /* Attempt to connect */
    err = connect(cr->fd, (struct sockaddr *)&callee_addr, sizeof(callee_addr));

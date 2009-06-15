@@ -5,8 +5,7 @@ libbt = Extension('libbarrett',
                                   '../../src/wam',
                                   '../../src/discover',
                                   '../../src/file'],
-                  libraries = ['barrett','json',
-                               'gsl','gslcblas','config'],
+                  libraries = ['barrett','json'],
                   library_dirs = ['/usr/local/lib','../../src/.libs'],
                   sources=['libbarrett.c'])
 
