@@ -18,6 +18,24 @@
 # include <libconfig.h> /* We should push this into wam_local.c ... */
 #endif
 
+#if 0
+/* Eventaully, this will look like this ... */
+
+#include "rpc.h"
+
+#define RPC_FUNCS \
+   CFUNC( bt_wam_create,   bt_wam_local_create,   struct bt_wam, P2(T(CHAR),T(INT)) ) \
+    FUNC( bt_wam_destroy,  bt_wam_local_destroy,  T(INT),    P1(H(struct bt_wam))         ) \
+    FUNC( bt_wam_do_thing, bt_wam_local_do_thing, T(INT),    P2(H(struct bt_wam), T(INT))  ) \
+    FUNC( bt_wam_use,      bt_wam_local_use,      T(INT),    P2(H(struct bt_wam), H(struct bt_refgen)) ) \
+    FUNC( bt_wam_goto,     bt_wam_local_goto,     T(INT),    P2(H(struct bt_wam), R(DOUBLE,CONST,IN,2,0)) ) \
+    FUNC( bt_wam_getline,  bt_wam_local_getline,  T(INT),    P3(H(struct bt_wam), G(CHAR,OUT,100,2), R(INT,CONST,OUT,1,0)) ) \
+    FUNC( bt_wam_getstr,   bt_wam_local_getstr,   R(DOUBLE,CONST,OUT,2,0), P1(H(struct bt_wam)) )
+
+#include "rpc_generate_c.h"
+
+#endif
+
 /* This could conceivably go in another header file ... */
 
 static char proxy_err[] = "(proxy-err)";
