@@ -142,7 +142,7 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
 
 #ifdef CANTYPE_PEAKPCI
    dev->handle = CAN_Open(HW_PCI, (port + 1));
-   if (dev->handle)
+   if (!dev->handle)
    {
       syslog(LOG_ERR, "%s: CAN_Open(): cannot open device with type=pci, port=%d", __func__, port);
       bt_bus_can_destroy(dev);
