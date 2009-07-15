@@ -41,7 +41,7 @@ extern "C" {
 #define DOF 7
 #endif
 
-#define SIMPLE 0							//0 to support only VIEW mode. 1 to support multiple modes **NOT IMPLEMENTED**
+#define SIMPLE 0                     //0 to support only VIEW mode. 1 to support multiple modes **NOT IMPLEMENTED**
 
 static const int socket_port=2021; ///<socket listening port
 
@@ -59,10 +59,10 @@ bool parse_angles(char *, int, double *);
 
 /* Constructor */
 CommunicationThread::CommunicationThread(double * shared_angle, 
-										int shared_finish, 
-										pthread_mutex_t * shared_mutex): shared_angle(shared_angle), 
-																		shared_finish(shared_finish),
-																		shared_mutex(shared_mutex)
+                              int shared_finish, 
+                              pthread_mutex_t * shared_mutex): shared_angle(shared_angle), 
+                                                      shared_finish(shared_finish),
+                                                      shared_mutex(shared_mutex)
 {
 }
 
@@ -83,12 +83,12 @@ void * CommunicationThread::run(void)
    int loop = 1;
    
    enum {
-	   VIEW,
-	   
+      VIEW,
+      
 #if SIMPLE
-	   MOVETO,
-	   REFGEN,
-	   FORCE
+      MOVETO,
+      REFGEN,
+      FORCE
 #endif
    } state = VIEW;
    
@@ -100,8 +100,8 @@ void * CommunicationThread::run(void)
       int timeout = 0;
       
       communicate=false;
-	  char string[100];
-
+     char string[100];
+      std::cout << "finish is " << shared_finish << std::endl;
       
       /* create client socket */
       std::cout << "trying to connect to server" << std::endl;
@@ -114,62 +114,63 @@ void * CommunicationThread::run(void)
 
       while(communicate)
       {  
-		  switch(state)
-		  {
-			case VIEW:								
-				/*try and read from socket */
-				int received = clientSocket.recv(string, sizeof(string) );
+        switch(state)
+        {
+         case VIEW:                        
+            /*try and read from socket */
+            int received = clientSocket.recv(string, sizeof(string) );
 
-				if (received == -1 )
-				std::cout << "error occured when reading from socket" << std::endl;
-				else if (!received)
-				{
-					timeout++;
-					std::cout << "empty message" << std::endl;
-					if (timeout > 10)
-					{
-					   std::cout << "server no longer detected" << std::endl;
-					   break;
-					}
-				}
-				else
-				{
-					 //std::cout << "received is " << received << std::endl;
-					//std::cout << string << std::endl;
+            if (received == -1 )
+            std::cout << "error occured when reading from socket" << std::endl;
+            else if (!received)
+            {
+               timeout++;
+               std::cout << "empty message" << std::endl;
+               if (timeout > 10)
+               {
+                  std::cout << "server no longer detected" << std::endl;
+                  communicate = 0;
+                  break;
+               }
+            }
+            else
+            {
+                //std::cout << "received is " << received << std::endl;
+               //std::cout << string << std::endl;
 
-					/*parse received string and store in local variable */
-					parse_angles(string, 7, socket_angles);
+               /*parse received string and store in local variable */
+               parse_angles(string, 7, socket_angles);
 
-					/*update shared variables for GUI */
-					pthread_mutex_lock( shared_mutex );
-					for(int i=0;i<7;i++)
-						shared_angle[i]=socket_angles[i];
-					pthread_mutex_unlock( shared_mutex ); 
-					usleep(10000);
-				}
-				break;
-#if SIMPLE		
-			case MOVETO:
-				std::cout << "entering moveto state" << endl;
-				client_handler::angles_to_string(string, * double_array);
-				clientSocket.send(string, sizeof(string) );
-				break;
-				
-			case REFGEN:
-			
-				break;
-				
-				
-			case FORCE:
-			
-				break;
-				
+               /*update shared variables for GUI */
+               pthread_mutex_lock( shared_mutex );
+               for(int i=0;i<7;i++)
+                  shared_angle[i]=socket_angles[i];
+               pthread_mutex_unlock( shared_mutex ); 
+               usleep(10000);
+            }
+            break;
+#if SIMPLE      
+         case MOVETO:
+            std::cout << "entering moveto state" << endl;
+            client_handler::angles_to_string(string, * double_array);
+            clientSocket.send(string, sizeof(string) );
+            break;
+            
+         case REFGEN:
+         
+            break;
+            
+            
+         case FORCE:
+         
+            break;
+            
 #endif
-		  }
-		  
-		  
-		  
-		  
+        }
+        
+        
+        
+        
 
            
          
@@ -212,10 +213,10 @@ void * CommunicationThread::run(void)
          else 
             std::cout << "unrecognized character, please try again" << std::endl;
             
-		}
+      }
       
-	   } 
-	return 0;
+      } 
+   return 0;
 }
 
 

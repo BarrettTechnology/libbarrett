@@ -22,10 +22,10 @@
     \author Pedro Nobre <pedrognobre@gmail.com>
     \author Pedro Queirós <pqueiros@isr.uc.pt>
     \author Cristóvão Sousa <crisjss@isr.uc.pt>
-	
-	\Revised: 13 July 2009- 
-			Victor J Wang, Barrett Technology Inc.
-			* Moved communication and graphic threads into separate classes and files
+   
+   \Revised: 13 July 2009- 
+         Victor J Wang, Barrett Technology Inc.
+         * Moved communication and graphic threads into separate classes and files
 
     \mainpage
 
@@ -67,7 +67,7 @@ extern "C" {
 #define DOF 7
 #endif
 
-#define CAN 0  /// 1 if WAM hooked up externally through CAN. 0 if using internal PC server
+#define CAN 1  /// 1 if WAM hooked up externally through CAN. 0 if using internal PC server
 
 
 
@@ -91,8 +91,8 @@ shared_values shared;
 
 struct arguments
 {
-	int argc0;
-	char **argv0;
+   int argc0;
+   char **argv0;
 }argument;
 */
 
@@ -123,63 +123,63 @@ void * initWamContrThd(void * _wamContrObj)
 
 
 /* global variables make static?? */
-static arguments argument; 	
+static arguments argument;    
 static shared_values shared;
 
 int main(int argc, char *argv[])
 {
   
-	/* set joint positions to 0 */
-	for(int i=0;i<7;i++)
-		shared.angle[i]=0;
-	shared.finish=1;
+   /* set joint positions to 0 */
+   for(int i=0;i<7;i++)
+      shared.angle[i]=0;
+   shared.finish=1;
   
-	/* initialize global variable */
-	argument.argc0=argc;
-	argument.argv0=argv;
+   /* initialize global variable */
+   argument.argc0=argc;
+   argument.argv0=argv;
 
-	/* make threads */
-	pthread_t thread1, thread2;
-	
-	/* spin off graphics thread to maintain GUI */
-	GraphicThread * g = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
-	pthread_create( &thread1, NULL, initGraThd, g);
-	
-	
+   /* make threads */
+   pthread_t thread1, thread2;
+   
+   /* spin off graphics thread to maintain GUI */
+   GraphicThread * g = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
+   pthread_create( &thread1, NULL, initGraThd, g);
+   
+   
 #if CAN
-	CommunicationThread * t = new CommunicationThread(shared.angle, shared.fi nish, &mutex1);
-	pthread_create( &thread2, NULL, initCommThd, t);
+   CommunicationThread * t = new CommunicationThread(shared.angle, shared.finish, &mutex1);
+   pthread_create( &thread2, NULL, initCommThd, t);
 #else
-	wamdisplay_controller * wc = new wamdisplay_controller(shared.angle, shared.finish, &mutex1);
-	pthread_create( &thread2, NULL, initWamContrThd, wc);
+   wamdisplay_controller * wc = new wamdisplay_controller(shared.angle, shared.finish, &mutex1);
+   pthread_create( &thread2, NULL, initWamContrThd, wc);
 #endif 
 
-	pthread_join( thread1, NULL);
-	pthread_join( thread2, NULL);
-	exit(0);
-	return 0;
+   pthread_join( thread1, NULL);
+   pthread_join( thread2, NULL);
+   exit(0);
+   return 0;
 }
 
 
 void * initCommThd(void * _commThdObj)
 {
-	CommunicationThread * commThdObj = (CommunicationThread *) _commThdObj;
-	//commThdObj = new CommunicationThread(shared.angle, shared.finish, &mutex1);
-	printf("starting comm thread");
-	void * threadResult = commThdObj->run();
-	delete commThdObj;
-	return threadResult;
+   CommunicationThread * commThdObj = (CommunicationThread *) _commThdObj;
+   //commThdObj = new CommunicationThread(shared.angle, shared.finish, &mutex1);
+   printf("starting comm thread");
+   void * threadResult = commThdObj->run();
+   delete commThdObj;
+   return threadResult;
 
 }
 
 void * initGraThd(void * _graThdObj)
 {
-	GraphicThread * graThdObj = (GraphicThread *) _graThdObj;
-	//graThdObj = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
-	printf("starting graphics thread");
-	void * threadResult = graThdObj->run();
-	delete graThdObj;
-	return threadResult;
-	
-	
+   GraphicThread * graThdObj = (GraphicThread *) _graThdObj;
+   //graThdObj = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
+   printf("starting graphics thread");
+   void * threadResult = graThdObj->run();
+   delete graThdObj;
+   return threadResult;
+   
+   
 }
