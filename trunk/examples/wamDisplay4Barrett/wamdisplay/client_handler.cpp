@@ -43,6 +43,7 @@ void client_handler::move_wam_to_point()
 
 char *  client_handler::rand_num_gen(int size, char * str)
 {
+	srand(time(NULL));			//to ensure actual random generation
    str[0] = '\n';
    strcat(str, "< ");				// '\n' is overwritten by first character in concatenate
    char buf[10];
@@ -82,5 +83,7 @@ char * client_handler::angles_to_string(char * str, double * array)
 	
 	return str;
 }
+
+
 
 

@@ -15,17 +15,22 @@ extern "C" {
 #include "wamComponents.h"
 #include "wamdisplay_controller.h"
 
+/** requires btgw to be running on internal pc */
+
 
 using namespace std;
 
-STATE state;
+//STATE state;
 
 // TODO: may not need sockets
 
 /*constructor */
-wamdisplay_controller::wamdisplay_controller(double * darray, pthread_mutex_t * pmutex) : darray(darray), pmutex(pmutex)
+wamdisplay_controller::wamdisplay_controller(double * shared_angle, 
+										int shared_finish, 
+										pthread_mutex_t * shared_mutex): shared_angle(shared_angle), 
+																		shared_finish(shared_finish),
+																		shared_mutex(shared_mutex)
 {
-   run(NULL);
 }
 
 
@@ -34,7 +39,7 @@ wamdisplay_controller::~wamdisplay_controller()
 {
 }
 
-void * wamdisplay_controller::run(void *)
+void * wamdisplay_controller::run(void )
 {
 
     /* Stuff for starting up the WAM */
@@ -72,6 +77,7 @@ void * wamdisplay_controller::run(void *)
    //char * line;
     while(going)
     {
+#if 0
         switch(state)
         {
             case VIEW:
@@ -92,6 +98,7 @@ void * wamdisplay_controller::run(void *)
                break;
 
         }
+#endif
 
        /* ?????? Slow this loop down to about 10Hz ?????*/
        usleep(100000); /* Wait a moment*/
@@ -159,7 +166,7 @@ bool wamdisplay_controller::get_angles(char * angle_str, int num_angles, double 
     return (counter == num_angles);                   //checks if WAM DOF matches number of received values
 }
 
-
+#if 0
 void toggle_state(char c)
 {
    if (c == 'v')
@@ -171,5 +178,5 @@ void toggle_state(char c)
    
 }
 
-
+#endif
 

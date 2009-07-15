@@ -4,24 +4,21 @@
 //#include <libbarrett/wam_local.h>
 #include <pthread.h>
 
-enum STATE 
-{
-   VIEW,
-   CONTROL
-};
 
 class wamdisplay_controller
 {
    public:
-      wamdisplay_controller(double[], pthread_mutex_t *);
+      wamdisplay_controller(double * shared_angle, 
+										int shared_finish, 
+										pthread_mutex_t * shared_mutex);
       virtual ~wamdisplay_controller();
-      void * run(void *);
+      void * run(void);
       
-   private:   
-      double * darray;
-      pthread_mutex_t * pmutex;
-      //   STATE state;
-   
+	private:
+		double * shared_angle;
+		int shared_finish;
+		pthread_mutex_t * shared_mutex;
+	
       bool get_angles(char * angle_str, int num_angles, double * d_array);
       void toggle_state(char c);
       
