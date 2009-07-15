@@ -40,7 +40,6 @@ server_handler::server_handler(Sockets * sock,
                                              pconnected(pconnected),
                                              pgoing(pgoing)
 {
-    run(NULL);
 
 }
 
@@ -58,7 +57,7 @@ void sigint_handler(int param)
 }
 */
 
-void * server_handler::run(void *)
+void * server_handler::run(void)
 {
       char buf[100]; 
       int timeout = 0;

@@ -22,6 +22,9 @@ extern "C" {
 //#include <libbarrett/wam_custom.h>
 #include <libbarrett/wam_local.h>
 //#include <libbarrett/gsl.h>
+
+/* Our own, custom refgen! */
+#include "refgen_trimesh.h"
 }
 
 
@@ -31,8 +34,9 @@ extern "C" {
 #include "server_controller.h"
 #include "server_handler.h"
 
-#define SOCKET_CONNECT_TIMEOUT_USEC -1;
-#define TEXTGUI 0;
+#define SOCKET_CONNECT_TIMEOUT_USEC -1
+#define TEXTGUI 0
+#define SERVER_CONTROLLER_ON 1
 /* ------------------------------------------------------------------------ */
 
 static const int socket_port=2021;
@@ -46,21 +50,11 @@ initializes:
 using namespace std;
 
 void * init_server_manager(void *);
-void * init_server_controller(void * input);
-void * init_server_handler(void *);
-void textUI(struct bt_wam *);
+void * initServerController(void * );
 
-/* to satisfy pthread_create arguments */
-struct thread_data
-{
-   Sockets * sock;
-   struct bt_wam * wam;
-   pthread_t * thd;
-   queue<string> * pcmd_q;
-   int * pconnected;
-   int * pgoing;
-   pthread_mutex_t * pmutex_q;
-};
+void textUI(struct bt_wam *, struct bt_wam_local *);
+
+void * initServerHandler(void * );
 
  /* Key Grabbing Utility Function, for use with ncurses's getch()            */
 enum btkey {
@@ -135,8 +129,13 @@ enum MODE {
 };
 MODE screen;
 
+/* My refgen_cylinder */
+struct refgen_trimesh * tri = 0;
+
+#if SERVER_CONTROLLER_ON
 /*create global command queue */
-//queue<string> cmd_q;
+queue<string> cmd_q;
+#endif
 
 /* Program entry point */
 int main(int argc, char ** argv)
@@ -144,6 +143,7 @@ int main(int argc, char ** argv)
    /* Stuff for starting up the WAM */
    struct bt_wam * wam;
    struct bt_wam_local * wam_local;
+
 
 
    /* Lock memory */
@@ -172,6 +172,17 @@ int main(int argc, char ** argv)
    }
    wam_local = bt_wam_get_local(wam);
 
+   /* Make the triangle */
+   tri = refgen_trimesh_create("bigcyl.wrl",wam_local->cposition);
+   if (!tri)
+   {
+      bt_wam_destroy(wam);
+      endwin();
+      printf("Could not create the trimesh.\n");
+      exit(-1);
+   }
+
+
    /*spin off thread to process command queue */
 
    //   pthread_t serverManager_t;
@@ -199,38 +210,29 @@ int main(int argc, char ** argv)
       //TODO handle destroying of threads, have print statement
 
       if(!serverSocket.error)      //if no error upon connection, proceed
-      {
-         
          connected = 1;
-  
-//         /*wait for thread to terminate */
-//         pthread_join(thread1, NULL);
-      }
-         
-      /*package paramters into struct */
-      thread_data thd_info;
-      thd_info.sock = &serverSocket;
-      thd_info.wam = wam;
-      thd_info.pconnected = &connected;
-      thd_info.pgoing = &going;
+
+      /* make threads */
+      pthread_t serverHandlerThd; //, serverControllerThd;
+
+
+      /* spin off server handler thread */
+      server_handler * serverHandler = new server_handler(&serverSocket, wam, &connected, &going);
+      pthread_create(&serverHandlerThd, NULL, initServerHandler, serverHandler);   
+
       
-      //handler_data.pcmd_q = 
-
-      /*create thread for server handler to send and initiate */
-      pthread_t serv_handl_thd;
-      pthread_create(&serv_handl_thd, NULL, init_server_handler, (void *) &thd_info);
-
-
-      /*create thread for server controller to receive and initiate */
-      pthread_t serv_contr_thd;
-      pthread_create(&serv_contr_thd, NULL, init_server_controller, (void *) &thd_info);
-
+#if SERVER_CONTROLLER_ON
+      /* spin off server controller thread */
+      pthread_t serverControllerThd; 
+      server_controller * serverController = new server_controller(&serverSocket, &cmd_q, &connected, &going);
+      pthread_create(&serverControllerThd, NULL, initServerController, serverController);
+#endif
 
       /*server text interface */
-      textUI(wam);
+      textUI(wam, wam_local);
       
       clear();          //MUST BE INCLUDED else server disconnects ::weird::
-      pthread_join(serv_handl_thd, NULL);
+      pthread_join(serverHandlerThd, NULL);
       printw("disconnected from client\n");
       printw("returning to listening...\n");  
       refresh();
@@ -241,19 +243,6 @@ int main(int argc, char ** argv)
         
    }          
            
-           
-           
-           /*
-           cout << "client connection!" << endl;
-         struct thread_data * thd_args;
-         thd_args->sock = &serverSocket;
-         thd_args->pserv_man = serverManager;
-
-         pthread_t thread1;
-         pthread_create( &thread1, NULL, init_server_controller, (void *) thd_args );
-*/
-
-
    
    /* Close the WAM */
    bt_wam_destroy(wam);
@@ -267,11 +256,11 @@ int main(int argc, char ** argv)
    return 0;
 }
 
-
+#if SERVER_CONTROLLER_ON
 void * init_server_manager(void * params)
 {
-   struct thread_data * my_data = (thread_data *) params;
-   server_manager serverManager(my_data->wam, my_data->pcmd_q, my_data->pmutex_q);
+   //struct thread_data * my_data = (thread_data *) params;
+   //server_manager serverManager(my_data->wam, my_data->pcmd_q, my_data->pmutex_q);
    
    
    
@@ -279,39 +268,42 @@ void * init_server_manager(void * params)
    return 0;
 }
 
-void * init_server_controller(void * params)
+void * initServerController(void * _serverControllerObj)
 {
-   struct thread_data * my_data = (thread_data *)params;
-   server_controller serverController(my_data->sock, my_data->pcmd_q, my_data->pconnected, my_data->pgoing);
-   //clear();
-   
-   //connected = 0;
-   
-   return 0;
+   //struct thread_data * my_data = (thread_data *)params;
+   //server_controller serverController(my_data->sock, my_data->pcmd_q, my_data->pconnected, my_data->pgoing);
+   server_controller * serverControllerObj = (server_controller *) _serverControllerObj;
+   cout << "starting server controller" << endl;
+   void * threadResult = serverControllerObj->run();
+   delete serverControllerObj;
+   return threadResult;
 } 
 
+#endif
+
 /*needs wam pointer and socket pointer */
-void * init_server_handler(void * params)
+void * initServerHandler(void * _serverHandlerObj)
 {
-   struct thread_data * my_data = (thread_data *) params;
-   server_handler serverHandler(my_data->sock, my_data->wam, my_data->pconnected, my_data->pgoing);
-   
-   clear();
-   
+   //struct thread_data * my_data = (thread_data *)params;
+   //serverHandlerObj = new serverHandler(my_data->sock, my_data->wam, my_data->pconnected, my_data->pgoing);
+   server_handler * serverHandlerObj = (server_handler *) _serverHandlerObj;
+   cout << "starting server handler " << endl;
+   void * threadResult = serverHandlerObj->run();
+   delete serverHandlerObj;
+
    //lock with mutex???
    connected = 0;
    
-
-   return 0;
+   return threadResult;
 }
 
-void textUI(struct bt_wam * wam)
+void textUI(struct bt_wam * wam, struct bt_wam_local * wam_local)
 {
 
    while(connected && going)
    {
 
-#if 0
+#if TEXTGUI
       /* Clear the screen buffer */
       clear();
 
@@ -410,6 +402,11 @@ void textUI(struct bt_wam * wam)
             case '.':
                bt_wam_playback(wam);
                break;
+            case 'u': /* Use our surface refgen! */
+               if (!tri) break;
+               bt_wam_local_refgen_use(wam_local,(struct bt_refgen *)tri);
+               break;
+            /* end tri refgen stuff */
             default:
                break;
             } 

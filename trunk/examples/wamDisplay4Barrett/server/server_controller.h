@@ -7,7 +7,7 @@ class server_controller
    public:
       server_controller(Sockets * sock, std::queue<std::string> * pcmd_q, int * pconnected, int * pgoing);
       virtual ~server_controller();
-      void * run(void *);
+      void * run(void);
       
       
 

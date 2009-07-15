@@ -31,7 +31,6 @@ char line[50];
 server_controller::server_controller(Sockets * sock, queue<string> * pcmd_q, int * pconnected, int * pgoing) : sock(sock), pcmd_q(pcmd_q), pconnected(pconnected), pgoing(pgoing)
 {   
    cout << "server controller initiated" << endl;
-   run(NULL);
    
 }
 
@@ -41,7 +40,7 @@ server_controller::~server_controller()
 
 }
 
-void * server_controller::run(void *)
+void * server_controller::run(void)
 {
 //    double angles[7];
 

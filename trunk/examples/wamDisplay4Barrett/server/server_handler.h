@@ -7,7 +7,7 @@ class server_handler
    public:
       server_handler(Sockets * sock, struct bt_wam * wam, int * pconnected, int * pgoing);
       virtual ~server_handler();
-      void * run(void *);
+      void * run(void);
       
    private:
       Sockets * sock;

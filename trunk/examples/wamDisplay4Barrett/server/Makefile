@@ -20,11 +20,14 @@ LDFLAGS += -L/usr/local/include -L/usr/include -lbarrett -lgsl -lgslcblas -lcurs
 sockets.o: ../sockets/sockets.cpp
 	${CC} ${CFLAGS} -c ../sockets/sockets.cpp 
 
+refgen_trimesh.o: ../../trimesh/refgen_trimesh.c
+	gcc ${CFLAGS} -c refgen_trimesh.c 
+
 main.o: main.cpp
 	${CC} ${CFLAGS} -c main.cpp 
 
-Server : main.o server_handler.o sockets.o server_controller.o server_manager.o
-	${CC} ${CFLAGS} -o Server main.o server_handler.o sockets.o server_controller.o server_manager.o ${LDFLAGS}
+Server : main.o server_handler.o sockets.o server_controller.o server_manager.o refgen_trimesh.o
+	${CC} ${CFLAGS} -o Server main.o server_handler.o sockets.o server_controller.o server_manager.o refgen_trimesh.o ${LDFLAGS}
 
 clean:
 	rm -f *~ *.o Server
