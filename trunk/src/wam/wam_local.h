@@ -76,6 +76,10 @@ struct bt_wam_local
    
    struct bt_os_timestat * ts; /* For timing things */
    
+   /* For network connection checking */
+   double last_heartbeat_time; 
+   int heartbeat_dead;
+   
    int gcomp;
    int count;
 
@@ -163,7 +167,8 @@ int bt_wam_local_teach_start_custom(struct bt_wam_local * wam, struct bt_refgen 
 int bt_wam_local_teach_end_custom(struct bt_wam_local * wam);
 int bt_wam_local_playback(struct bt_wam_local * wam);
 
-
+int bt_wam_local_set_heartbeat(struct bt_wam_local * wam);
+int bt_wam_local_check_heartbeat(struct bt_wam_local * wam);
 
 
 
