@@ -1,41 +1,43 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... wambot.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2003 Feb 15
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/**
+ * \file wambot_phys.c
+ * \author Christopher Dellin
+ * \date 2008-2009
  *
- *  NOTES:
- *    wam-specific low-level functions
+ * This file implements a bt_wambot_phys physical WAM robot.
+ */
+
+/* Copyright 2008, 2009 Barrett Technology <support@barrett.com> */
+
+/*
+ * This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
+ * libbarrett is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * ======================================================================== */
+ * libbarrett is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libbarrett.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
+#include <math.h> /* For floor() */
+#include <syslog.h>
+#include <libconfig.h>
+#include <gsl/gsl_linalg.h> /* For matrix inverse operations, etc */
+#include <gsl/gsl_blas.h> /* For fast matrix multiplication */
 
 #include "wambot.h"
 #include "wambot_phys.h"
-
 #include "bus.h"
 #include "gsl.h"
-
-#include <math.h> /* For floor() */
-
-/* For matrix inverse operations, etc */
-#include <gsl/gsl_linalg.h>
-
-/* For fast matrix multiplication */
-#include <gsl/gsl_blas.h>
-
-/* Read config files for the wam stuff */
-#include <libconfig.h>
-#include <syslog.h>
 
 static int update( struct bt_wambot * base );
 static int setjtor( struct bt_wambot * base );
@@ -87,7 +89,6 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    wambot->base.jtorque = 0;
    wambot->base.jposition = 0;
    wambot->base.jvelocity = 0;
-   wambot->base.jacceleration = 0;
    wambot->base.home = 0;
    wambot->base.update = &update;
    wambot->base.setjtor = &setjtor;
@@ -99,7 +100,6 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    wambot->j2mt = 0;
    wambot->mposition = 0;
    wambot->mvelocity = 0;
-   wambot->macceleration = 0;
    
    /* First, create the bus */
    {
@@ -143,7 +143,6 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
        || !( wambot->base.jtorque       = gsl_vector_calloc(n) )
        || !( wambot->base.jposition     = gsl_vector_calloc(n) )
        || !( wambot->base.jvelocity     = gsl_vector_calloc(n) )
-       || !( wambot->base.jacceleration = gsl_vector_calloc(n) )
        /* Physical properties to be read from config file */
        || !( wambot->base.home          = gsl_vector_calloc(n) )
        || !( wambot->zeromag            = gsl_vector_calloc(n) )
@@ -154,7 +153,6 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
        /* temporary storage locations */
        || !( wambot->mposition          = gsl_vector_calloc(n) ) /*rad*/
        || !( wambot->mvelocity          = gsl_vector_calloc(n) ) /*rad/s*/
-       || !( wambot->macceleration      = gsl_vector_calloc(n) ) /*rad/s/s*/
        || !( wambot->mtorque            = gsl_vector_calloc(n) ) /*Nm*/
    ) {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
@@ -236,7 +234,6 @@ int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
    if (base->jtorque) gsl_vector_free( base->jtorque );
    if (base->jposition) gsl_vector_free( base->jposition );
    if (base->jvelocity) gsl_vector_free( base->jvelocity );
-   if (base->jacceleration) gsl_vector_free( base->jacceleration );
    if (base->home) gsl_vector_free( base->home );
     
    if (wambot->zeromag) gsl_vector_free( wambot->zeromag );
@@ -247,7 +244,6 @@ int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
    
    if (wambot->mposition) gsl_vector_free( wambot->mposition );
    if (wambot->mvelocity) gsl_vector_free( wambot->mvelocity );
-   if (wambot->macceleration) gsl_vector_free( wambot->macceleration );
    if (wambot->mtorque) gsl_vector_free( wambot->mtorque );
    
    if (wambot->bus)
@@ -272,13 +268,11 @@ static int update( struct bt_wambot * base )
    {
       gsl_vector_set( wambot->mposition, j, wambot->bus->puck[j+1]->position ); /* aah, fix this */
       gsl_vector_set( wambot->mvelocity, j, wambot->bus->puck[j+1]->velocity ); /* aah, fix this */
-      gsl_vector_set( wambot->macceleration, j, wambot->bus->puck[j+1]->acceleration ); /* aah, fix this */
    }
    
    /* Convert from motor angles to joint angles */
    gsl_blas_dgemv(CblasNoTrans, 1.0, wambot->m2jp, wambot->mposition, 0.0, base->jposition);
    gsl_blas_dgemv(CblasNoTrans, 1.0, wambot->m2jp, wambot->mvelocity, 0.0, base->jvelocity);
-   gsl_blas_dgemv(CblasNoTrans, 1.0, wambot->m2jp, wambot->macceleration, 0.0, base->jacceleration);
    
    return 0;
 }

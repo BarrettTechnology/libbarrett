@@ -115,7 +115,6 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
    base->jtorque = 0;
    base->jposition = 0;
    base->jvelocity = 0;
-   base->jacceleration = 0;
    base->home = 0;
    base->update = &update;
    base->setjtor = &setjtor;
@@ -146,7 +145,6 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
    base->jtorque = gsl_vector_calloc( base->dof );
    base->jposition = gsl_vector_calloc( base->dof );
    base->jvelocity = gsl_vector_calloc( base->dof );
-   base->jacceleration = gsl_vector_calloc( base->dof );
    
    /* Physical properties to be read from config file */
    base->home = gsl_vector_calloc( base->dof );
@@ -213,7 +211,6 @@ int bt_wambot_sim_destroy( struct bt_wambot_sim * wambot )
    if (base->jtorque) gsl_vector_free( base->jtorque );
    if (base->jposition) gsl_vector_free( base->jposition );
    if (base->jvelocity) gsl_vector_free( base->jvelocity );
-   if (base->jacceleration) gsl_vector_free( base->jacceleration );
    if (base->home) gsl_vector_free( base->home );
    
    free(wambot);
@@ -227,7 +224,6 @@ static int update( struct bt_wambot * base )
    
    gsl_vector_memcpy( base->jposition, wambot->sim_jposition);
    gsl_vector_memcpy( base->jvelocity, wambot->sim_jvelocity);
-   gsl_vector_set_zero( base->jacceleration);
    
    return 0;
 }
