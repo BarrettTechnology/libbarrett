@@ -26,6 +26,10 @@
 /* bt_wambot uses gsl :-) */
 #include <gsl/gsl_vector.h>
 
+/* Bound methods */
+#define bt_wambot_update(wb) (wb)->update((wb))
+#define bt_wambot_setjtor(wb) (wb)->setjtor((wb))
+
 struct bt_wambot
 {
    int dof;
@@ -38,17 +42,9 @@ struct bt_wambot
    
    /* Constant stuff to be read from config file */
    gsl_vector * home; /* rad */
-   
-   /* wambot function pointers */
-   /*struct bt_wambot * bt_wambot_create( config_setting_t * wamconfig );
-   int bt_wambot_destroy( struct bt_wambot * wambot );*/
 
    int (*update)( struct bt_wambot * wambot );
    int (*setjtor)( struct bt_wambot * wambot );
 };
-
-/* Shortcut Functions */
-int bt_wambot_update( struct bt_wambot * wambot );
-int bt_wambot_setjtor( struct bt_wambot * wambot );
 
 #endif /* BT_WAMBOT_H */

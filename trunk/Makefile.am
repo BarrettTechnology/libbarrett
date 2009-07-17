@@ -276,8 +276,7 @@ pkginclude_HEADERS += src/wambot/wambot.h \
 # Note - remove os.h dep from bus.h ...
 src_libbtwambot_la_CPPFLAGS = $(CPP_PHYS) $(CPP_SIM)
 src_libbtwambot_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtwambot_la_SOURCES = src/wambot/wambot.c \
-                             $(SOURCE_PHYS) \
+src_libbtwambot_la_SOURCES = $(SOURCE_PHYS) \
                              $(SOURCE_SIM)
 
 #######
