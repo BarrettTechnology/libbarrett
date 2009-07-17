@@ -1,4 +1,5 @@
-/**
+/** Low-level abstraction of a WAM robot.
+ *
  * \file wambot.h
  * \author Christopher Dellin
  * \date 2008-2009
@@ -39,8 +40,8 @@
 /** Set the joint torque to wambot */
 #define bt_wambot_setjtor(wb) (wb)->setjtor((wb))
 
-/** A "wambot" is a simple WAM robot, which supports getting joint
- *  positions (and velocities, etc) and setting joint torques.
+/** A simple WAM robot, which supports getting joint positions
+ *  (and velocities, etc) and setting joint torques.
  *
  * A "wambot" is a low-level abstraction of a Barrett WAM robot.  There may
  * be several implementations of the wambot, including a physical wambot and

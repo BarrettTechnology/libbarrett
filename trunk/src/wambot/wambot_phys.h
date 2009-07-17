@@ -1,9 +1,8 @@
-/**
+/** Definition of bt_wambot_phys, a physical WAM robot.
+ *
  * \file wambot_phys.h
  * \author Christopher Dellin
  * \date 2008-2009
- *
- * \copydoc bt_wambot_phys
  */
 
 /* Copyright 2008, 2009 Barrett Technology <support@barrett.com> */
@@ -38,8 +37,8 @@
 #include "wambot.h"
 #include "bus.h"
 
-/** A "wambot_phys" is a physical WAM robot, which consists of a series of
- *  motor controllers on a bus.
+/** A physical WAM robot, which consists of a series of motor controllers on
+ *  a bus.
  *
  * A "wambot_phys" is a low-level abstraction of a physical Barrett WAM
  * robot.  This robot uses electric motors and linear steel cable
@@ -67,14 +66,14 @@ struct bt_wambot_phys
    
 };
 
-/** wambot_phys creation function, given a configuration group.
+/** bt_wambot_phys creation function, given a configuration group.
  *
  * This function creates a new wambot_phys object, given a libconfig
  * configuration group.
  */
 struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config );
 
-/** wambot_phys destroy function.
+/** bt_wambot_phys destroy function.
  *
  * This function destroys a wambot_phys.
  */

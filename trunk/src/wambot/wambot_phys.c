@@ -1,9 +1,8 @@
-/**
+/** Implementation of bt_wambot_phys, a physical WAM robot.
+ *
  * \file wambot_phys.c
  * \author Christopher Dellin
  * \date 2008-2009
- *
- * This file implements a bt_wambot_phys physical WAM robot.
  */
 
 /* Copyright 2008, 2009 Barrett Technology <support@barrett.com> */
@@ -39,11 +38,14 @@
 #include "bus.h"
 #include "gsl.h"
 
+/** Implementation of bt_wambot::update for bt_wambot_phys. */
 static int update( struct bt_wambot * base );
+
+/** Implementation of bt_wambot::setjtor for bt_wambot_phys. */
 static int setjtor( struct bt_wambot * base );
 
-/* Zero the pucks */
-int DefineWAMpos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
+/** Initialize the pucks using the given position. */
+int define_pos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
 {
    int j;
    long pos;
@@ -215,7 +217,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       if(reply) {
          syslog(LOG_ERR, "WAM was already zeroed");
       } else {
-         DefineWAMpos(wambot, wambot->base.home); /* Assume we're exactly home */
+         define_pos(wambot, wambot->base.home); /* Assume we're exactly home */
          bt_bus_set_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, 1, 1);
          /*SetByID(wam->bus, SAFETY_MODULE, ZERO, 1);*/ /* 0 = Joint velocity, 1 = Tip velocity */
          syslog(LOG_ERR, "WAM zeroed by application");

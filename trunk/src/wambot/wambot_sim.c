@@ -1,36 +1,40 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... wambot.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2003 Feb 15
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_wambot_sim, a simulated WAM robot.
  *
- *  NOTES:
- *    wam-specific low-level functions
+ * \file wambot_sim.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
+
+/* Copyright 2008, 2009 Barrett Technology <support@barrett.com> */
+
+/*
+ * This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
+ * libbarrett is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * ======================================================================== */
+ * libbarrett is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libbarrett.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
+#include <libconfig.h>
+#include <syslog.h>
+#include <gsl/gsl_vector.h>
+#include <ode/ode.h>
 
 #include "wambot.h"
 #include "wambot_sim.h"
-
 #include "os.h"
-
-#include <gsl/gsl_vector.h>
-
-/* Read config files for the wam stuff */
-#include <libconfig.h>
-#include <syslog.h>
-
-#include <ode/ode.h>
 
 static int update( struct bt_wambot * base );
 static int setjtor( struct bt_wambot * base );

@@ -1,56 +1,64 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... wambot.h
- *  Author ............. Sam Clanton
- *                       Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2004 Q3
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2004-2008   Barrett Technology <support@barrett.com>
+/** Definition of bt_wambot_sim, a simulated WAM robot.
  *
- *  NOTES:
- *    wam-specific low-level functions
+ * \file wambot_sim.h
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
+
+/* Copyright 2008, 2009 Barrett Technology <support@barrett.com> */
+
+/*
+ * This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt, split from btwam into wam and wambot
+ * libbarrett is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * ======================================================================== */
+ * libbarrett is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libbarrett.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
 #ifndef BT_WAMBOT_SIM_H
 #define BT_WAMBOT_SIM_H
 
-#include "wambot.h"
-#include "os.h"
-
-/* bt_wambot_sim uses gsl :-) */
+#include <libconfig.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-/* bt_wambot_phys uses libconfig */
-#include <libconfig.h>
+#include "wambot.h"
+#include "os.h"
 
-/* We don't need this here?
-#include <ode/ode.h> */
-
+/** A simlulated WAM robot, which consists of a series links connected by
+ *  revolute joints.
+ *
+ * A "wambot_sim" is a low-level abstraction of a simulated Barrett WAM
+ * robot using the ODE physics simulator.  Currently, this is not guarenteed
+ * to work.
+ */
 struct bt_wambot_sim
 {
-   /* The base is queried from the WAM control loop */
+   /** We "inherit" from a bt_wambot. */
    struct bt_wambot base;
    
    /* We should have a "base update" mutex.
     * Should that be wambot-global, anyway? */
 
-   /* We have a thread ... */
+   /** We have a thread ... */
    bt_os_thread * sim_thread;
    
-   /* The current simulation time */
+   /** The current simulation time */
    bt_os_rtime sim_time;
    
-   /* Calculation Duty Cycle
+   /** Calculation Duty Cycle
     * (0.0 -> 1.0) */
    double duty_cycle;
    
@@ -69,7 +77,17 @@ struct bt_wambot_sim
    
 };
 
+/** bt_wambot_sim creation function, given a configuration group.
+ *
+ * This function creates a new wambot_sim object, given a libconfig
+ * configuration group.
+ */
 struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config );
+
+/** bt_wambot_sim destroy function.
+ *
+ * This function destroys a wambot_sim.
+ */
 int bt_wambot_sim_destroy( struct bt_wambot_sim * wambot );
 
 #endif /* BT_WAMBOT_SIM_H */
