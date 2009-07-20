@@ -431,9 +431,33 @@ bin_PROGRAMS = programs/bt-wam-demo/bt-wam-demo \
                programs/bt-wam-gw/bt-wam-gw \
                programs/bt-wam-list/bt-wam-list
 
+if BT_WAM_LOCAL
+bin_PROGRAMS += programs/bt-wam-calibrate/bt-wam-calibrate
+endif
+
+# It sucks that I have to include all of this crap ...
+programs_bt_wam_calibrate_bt_wam_calibrate_SOURCES = programs/bt-wam-calibrate/bt-wam-calibrate.c
+programs_bt_wam_calibrate_bt_wam_calibrate_CPPFLAGS = -Isrc/gsl \
+                                                      -Isrc/os \
+                                                      -Isrc/bus \
+                                                      -Isrc/wambot \
+                                                      -Isrc/kinematics \
+                                                      -Isrc/dynamics \
+                                                      -Isrc/gravity \
+                                                      -Isrc/refgen \
+                                                      -Isrc/log \
+                                                      -Isrc/control \
+                                                      -Isrc/spline \
+                                                      -Isrc/profile \
+                                                      -Isrc/rpc \
+                                                      -Isrc/wam
+# Damn variadic macros!
+programs_bt_wam_calibrate_bt_wam_calibrate_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_wam_calibrate_bt_wam_calibrate_LDADD = src/libbarrett.la -lcurses
+programs_bt_wam_calibrate_bt_wam_calibrate_LDADD += -lgsl -lgslcblas -lconfig
+
 programs_bt_wam_demo_bt_wam_demo_SOURCES = programs/bt-wam-demo/bt-wam-demo.c
 programs_bt_wam_demo_bt_wam_demo_CPPFLAGS = -Isrc/wam
-# This is cause we need usleep()
 programs_bt_wam_demo_bt_wam_demo_CFLAGS = -std=gnu89 -pedantic-errors -Wall -Werror -Wno-long-long
 programs_bt_wam_demo_bt_wam_demo_LDADD = src/libbarrett.la -lcurses
 if BT_WAM_LOCAL
@@ -442,7 +466,6 @@ endif
 
 programs_bt_wam_gw_bt_wam_gw_SOURCES = programs/bt-wam-gw/bt-wam-gw.c
 programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/rpc -Isrc/wam -Isrc/file
-# This is cause we need select(), variadic macros ...
 programs_bt_wam_gw_bt_wam_gw_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
 programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la
 if BT_WAM_LOCAL

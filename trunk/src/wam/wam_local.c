@@ -186,6 +186,7 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->name[WAMNAMELEN] = '\0'; /* Not sure if we need this ... */
    wam->loop_go = 1;
    wam->gcomp = 0;
+   wam->callback = 0;
    wam->vel = 0.5;
    wam->acc = 0.5;
    wam->refgen_list = 0;
@@ -759,6 +760,13 @@ int bt_wam_local_playback(struct bt_wam_local * wam)
    bt_refgen_start( wam->refgen_list->refgen );
    wam->refgen_current = wam->refgen_list;
    
+   return 0;
+}
+
+int bt_wam_local_set_callback(struct bt_wam_local * wam,
+                              int (*callback)(struct bt_wam_local * wam))
+{
+   wam->callback = callback;
    return 0;
 }
 

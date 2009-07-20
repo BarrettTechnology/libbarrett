@@ -108,6 +108,9 @@ struct bt_wam_local
    struct bt_control_joint_legacy * con_joint_legacy;
    struct bt_control_cartesian_xyz * con_cartesian_xyz;
    struct bt_control_cartesian_xyz_q * con_cartesian_xyz_q;
+
+   /* The WAM Callback */
+   int (*callback)(struct bt_wam_local * wam);
    
    /* For moves ( rad/s(/s) in joint control mode, m/s(/s) in cartesian control mode )*/
    double vel, acc;
@@ -165,6 +168,9 @@ int bt_wam_local_teach_end(struct bt_wam_local * wam);
 int bt_wam_local_teach_start_custom(struct bt_wam_local * wam, struct bt_refgen * refgen);
 int bt_wam_local_teach_end_custom(struct bt_wam_local * wam);
 int bt_wam_local_playback(struct bt_wam_local * wam);
+
+int bt_wam_local_set_callback(struct bt_wam_local * wam,
+                              int (*callback)(struct bt_wam_local * wam));
 
 int bt_wam_local_set_heartbeat(struct bt_wam_local * wam);
 int bt_wam_local_check_heartbeat(struct bt_wam_local * wam);
