@@ -94,7 +94,6 @@ struct bt_wam_local
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
    gsl_vector * jvelocity; /* From wambot */
-   gsl_vector * jacceleration; /* From wambot */
    gsl_vector * jtorque; /* From wambot */
    gsl_vector * cposition; /* From kinematics (tool) */
    gsl_vector * cvelocity;

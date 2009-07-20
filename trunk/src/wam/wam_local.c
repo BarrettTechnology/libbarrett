@@ -277,16 +277,17 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
       bt_os_thread_stop(wam->nonrt_thread);
       bt_os_thread_destroy(wam->nonrt_thread);
    }
-   
+#if 0
    /* If dead heartbeat, no need to stop thread */
    if (wam->heartbeat_dead && wam->rt_thread)
    {
 	   bt_os_thread_destroy(wam->rt_thread);
    }
-   
-   
+
    /* Tell the realtime thread to exit */
-   else if (wam->rt_thread)
+   else
+#endif
+   if (wam->rt_thread)
    {
       bt_os_thread_stop(wam->rt_thread);
       bt_os_thread_destroy(wam->rt_thread);
@@ -808,7 +809,6 @@ static void rt_wam(struct bt_os_thread * thread)
    /* Set up the easy-access wam vectors */
    wam->jposition = wam->wambot->jposition;
    wam->jvelocity = wam->wambot->jvelocity;
-   wam->jacceleration = wam->wambot->jacceleration;
    wam->jtorque = wam->wambot->jtorque;
    wam->cposition = wam->kin->tool->origin_pos;
    wam->cvelocity = wam->kin->tool_velocity;
@@ -835,14 +835,16 @@ static void rt_wam(struct bt_os_thread * thread)
       
       /* Skip the loop if we're not told to go */
       if (!wam->loop_go) continue;
-	  
-	  /* Check for connection heartbeat */
-	  if (bt_wam_local_check_heartbeat(wam))
-	  {
+
+#if 0	  
+      /* Check for connection heartbeat */
+      if (bt_wam_local_check_heartbeat(wam))
+      {
          wam->heartbeat_dead = 1;
-		 break;
-	  }
-	  
+         break;
+      }
+#endif
+      
       /* Start timing ... */
       bt_os_timestat_start(wam->ts);
       
@@ -934,8 +936,10 @@ static void rt_wam(struct bt_os_thread * thread)
    }
    
    rt_wam_destroy(wam);
-   
+
+#if 0
    if (wam->heartbeat_dead) { bt_wam_local_destroy(wam); }
+#endif
    
    /* Remove this thread from the realtime scheduler */
    bt_os_thread_exit( thread );

@@ -30,6 +30,7 @@
 #include <math.h> /* For floor() */
 #include <syslog.h>
 #include <libconfig.h>
+#include <gsl/gsl_math.h> /* For M_PI */
 #include <gsl/gsl_linalg.h> /* For matrix inverse operations, etc */
 #include <gsl/gsl_blas.h> /* For fast matrix multiplication */
 
@@ -96,7 +97,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    wambot->base.setjtor = &setjtor;
    
    wambot->bus = 0;
-   wambot->zeromag = 0;
+   wambot->zeroangle = 0;
    wambot->j2mp = 0;
    wambot->m2jp = 0;
    wambot->j2mt = 0;
@@ -134,7 +135,8 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
          return 0; 
       }
    }
-   
+
+   /* For convenience ... */
    n = wambot->base.dof;
    
    /* Make sure we have pucks with the IDs we expect */
@@ -147,7 +149,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
        || !( wambot->base.jvelocity     = gsl_vector_calloc(n) )
        /* Physical properties to be read from config file */
        || !( wambot->base.home          = gsl_vector_calloc(n) )
-       || !( wambot->zeromag            = gsl_vector_calloc(n) )
+       || !( wambot->zeroangle          = gsl_vector_calloc(n) )
        || !( wambot->j2mp             = gsl_matrix_calloc(n,n) )
        /* Constant cache stuff computed from config file stuff above */
        || !( wambot->m2jp             = gsl_matrix_calloc(n,n) )
@@ -166,8 +168,13 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    /* NOTE - DO BETTER ERROR CHECKING HERE! */
    err = bt_gsl_fill_vector(wambot->base.home, config, "home");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
-   err = bt_gsl_fill_vector(wambot->zeromag, config, "zeromag");
-   if (err) { printf("No zeromag entry found.\n"); }
+   err = bt_gsl_fill_vector(wambot->zeroangle, config, "zeroangle");
+   if (err)
+   {
+      printf("No zeroangle entry found.\n");
+      gsl_vector_free( wambot->zeroangle );
+      wambot->zeroangle = 0;
+   }
    err = bt_gsl_fill_matrix(wambot->j2mp, config, "j2mp");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
      
@@ -208,19 +215,83 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    }
     
    /* note - SetEngrUnits() defaults to 1; we shouldn't touch it here. */
-   
+
    {
+      /* Communicate with the bus */
       /* Zero the WAM */
       long reply;
-      /*btsys_getProperty(bot->bus, SAFETY_MODULE, ZERO, &reply);*/
       bt_bus_get_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, &reply);
-      if(reply) {
+      if(reply)
+      {
          syslog(LOG_ERR, "WAM was already zeroed");
-      } else {
-         define_pos(wambot, wambot->base.home); /* Assume we're exactly home */
+      }
+      else
+      {
+         /* We need to set the current position to the pucks */
+         gsl_vector * err_angle;
+         err_angle = gsl_vector_calloc(n);
+         
+         /* Do we do zero compensation? */
+         if (wambot->zeroangle)
+         {
+            int m;
+            gsl_vector * cur_angle;
+            cur_angle = gsl_vector_calloc(n);
+            syslog(LOG_ERR, "wambot zero_angle value found.");
+            /* Grab each motor's current encoder angle into cur_angle [0..2pi] */
+            for (m=0; m<n; m++)
+            {
+               long cts;
+               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->MECH, &reply);
+               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->CTS, &cts);
+               gsl_vector_set(cur_angle,m,2.0*M_PI*((double)reply)/((double)cts));
+            }
+            /* Calculate the error angle err_angle */
+            gsl_blas_dgemv(CblasNoTrans, 1.0, wambot->j2mp, wambot->base.home, 0.0, err_angle);
+            gsl_vector_add(err_angle, wambot->zeroangle);
+            gsl_vector_sub(err_angle, cur_angle);
+            for (m=0; m<n; m++)
+            {
+               while (gsl_vector_get(err_angle,m) > M_PI)
+                  *(gsl_vector_ptr(err_angle,m)) -= 2.0*M_PI;
+               while (gsl_vector_get(err_angle,m) < -M_PI)
+                  *(gsl_vector_ptr(err_angle,m)) += 2.0*M_PI;
+            }
+            /* Define a zero error for any pucks with a sucky version number */
+            /* Define a zero error for any pucks with a -1 zeromag value */
+            for (m=0; m<n; m++)
+            {
+               /* If the ROLE does not have its 256 bit set, then it's not
+                * an absolute encoder; do no error compensation */
+               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->ROLE, &reply);
+               if (!(reply & 256)) gsl_vector_set(err_angle, m, 0.0);
+               
+               /* If the firmware version number is less than 118, then it's
+                * not exposing anything useful on MECH; do no error compensation */
+               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->VERS, &reply);
+               if (reply < 118) gsl_vector_set(err_angle, m, 0.0);
+               
+               /* If the zeroangle value is out of range, then the calibration
+                * didn't produce a useful resuld; do no error compensation */
+               if (   (gsl_vector_get(wambot->zeroangle,m) < 0.0)
+                   || (gsl_vector_get(wambot->zeroangle,m) > 2.0*M_PI) )
+                  gsl_vector_set(err_angle, m, 0.0);
+            }
+            gsl_vector_free(cur_angle);
+         }
+
+         /* Conver the error angle to joint-space, using jposition as temp */
+         gsl_blas_dgemv(CblasNoTrans, 1.0, wambot->m2jp, err_angle, 0.0, wambot->base.jposition);
+         gsl_vector_memcpy(err_angle, wambot->base.jposition);
+         /* Adjust the current position by subtracting the joint error angle */
+         gsl_vector_memcpy(wambot->base.jposition, wambot->base.home);
+         gsl_vector_sub(wambot->base.jposition, err_angle);
+         /* Define the WAM position */
+         define_pos(wambot, wambot->base.jposition);
+
          bt_bus_set_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, 1, 1);
-         /*SetByID(wam->bus, SAFETY_MODULE, ZERO, 1);*/ /* 0 = Joint velocity, 1 = Tip velocity */
          syslog(LOG_ERR, "WAM zeroed by application");
+         gsl_vector_free(err_angle);
       }
    }
    
@@ -238,7 +309,7 @@ int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )
    if (base->jvelocity) gsl_vector_free( base->jvelocity );
    if (base->home) gsl_vector_free( base->home );
     
-   if (wambot->zeromag) gsl_vector_free( wambot->zeromag );
+   if (wambot->zeroangle) gsl_vector_free( wambot->zeroangle );
    if (wambot->j2mp) gsl_matrix_free( wambot->j2mp );
    
    if (wambot->m2jp) gsl_matrix_free( wambot->m2jp );

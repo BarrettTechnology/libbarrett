@@ -52,7 +52,7 @@ struct bt_wambot_phys
 
    /* Constant stuff to be read from config file */
    struct bt_bus * bus; /**< The bt_bus this WAM is on */
-   gsl_vector * zeromag; /**< enc counts */
+   gsl_vector * zeroangle; /**< zero angle enc value */
    gsl_matrix * j2mp; /**< ratios */
    
    /* Constant cache stuff computed from config file stuff above */
