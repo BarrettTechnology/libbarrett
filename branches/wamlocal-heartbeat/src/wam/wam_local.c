@@ -322,9 +322,7 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
                 ((int)(maxs[i]))/1000,       ((int)(maxs[i]))%1000 );
       
       /* Destroy the timestat */
-	  syslog(LOG_ERR, "destroying timestat");
       bt_os_timestat_destroy(wam->ts);
-	  syslog(LOG_ERR, "timestate destroyed");
    }
 
 #if 0
@@ -337,13 +335,9 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
    strcpy(lockfilename,WAMLOCKDIR);
    strcat(lockfilename,wam->name);
    unlink(lockfilename);
-   
-   syslog(LOG_ERR, "freeing wam");
-   
+      
    free(wam);
-   
-   syslog(LOG_ERR, "freed wam, destoy ended");
-   
+      
    return 0;
 }
 
@@ -800,7 +794,6 @@ static void rt_wam(struct bt_os_thread * thread)
    int err;
    struct setup_helper * helper;
    struct bt_wam_local * wam;
-   int count = 0;
       
    helper = (struct setup_helper *) thread->data;
    wam = helper->wam;
@@ -815,8 +808,6 @@ static void rt_wam(struct bt_os_thread * thread)
       bt_os_thread_exit( thread );
       return;
    }
-   
-   syslog(LOG_ERR, "%s: Entering rt thread.", __func__);
    
    /* Set the active controller to joint-space */
    wam->con_active = (struct bt_control *) wam->con_joint_legacy;
@@ -844,13 +835,11 @@ static void rt_wam(struct bt_os_thread * thread)
    bt_os_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
    /* CHECK RETURN VALUE */
    
-   syslog(LOG_ERR, "%s: Entering rt thread mainloop.", __func__);
    
    /* Loop until we're told by destroy() to exit */
    while (!bt_os_thread_done(thread))
    {
       double time;
-      count++;
 	  
       /* Wait for the next control period ... */
       bt_os_rt_set_mode_hard();
@@ -864,8 +853,6 @@ static void rt_wam(struct bt_os_thread * thread)
 	  if (bt_wam_local_check_heartbeat(wam))
 	  {
 		 syslog(LOG_ERR, "%s: heartbeat dead", __func__);
-		 syslog(LOG_ERR, "last heartbeat time is %f", wam->last_heartbeat_time);
-		 syslog(LOG_ERR, "count is %d", count);
          wam->heartbeat_dead = 1;
 		 break;
 	  }
@@ -964,9 +951,20 @@ static void rt_wam(struct bt_os_thread * thread)
    syslog(LOG_ERR, "%s: destroying rt wam", __func__);
    rt_wam_destroy(wam);
    
+   /** 
+    * TODO: fix this
+    * If heartbeat_dead is true, bt_wam_local_destroy function is called
+	* which frees everything including the wam pointer and thread variable.
+	* This thread will subsequently end in a segmentation fault because 
+	* it is terminating itself (aka returning to nothing)?? 
+	* Currently, this thread enters an infinite sleep loop (aka never 
+	* returns), which allows bt-wam-gw to stay alive, although no new 
+	* wam can be connected (segfault) because threads have similar names? 
+	* Either way, program ends in segfault.
+	* */
+   
    if (wam->heartbeat_dead) 
    { 
-	   syslog(LOG_ERR, "%s: destroying everything", __func__);
 	   bt_wam_local_destroy(wam); 
 	   syslog(LOG_ERR, "thread is sleeping from heartbeat error");
 	   while(1) bt_os_usleep(1);
