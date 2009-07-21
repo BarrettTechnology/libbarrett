@@ -24,17 +24,16 @@
  */
 
 /* System Libraries */
-#include <signal.h>
-#include <sys/mman.h>
 #include <string.h>   /* strncasecmp(), etc */
 #include <math.h> /* pow() */
-
+#include <malloc.h>
+#include <sys/mman.h>
 #include <malloc.h>
 
 /* Package Dependencies */
 #include <curses.h>
 #include <syslog.h>
-
+#include <gsl/gsl_math.h> /* For M_PI */
 #include <gsl/gsl_vector.h>
 
 /* Include the high-level WAM header file */
@@ -226,7 +225,9 @@ int main(int argc, char **argv)
 struct bt_wam_local * wam_local;
 struct bt_os_thread * magenc_thd;
 int * mz_mechisset;
+int * mz_counts;
 int * mz_magvals;
+double * mz_angles;
 int mz_magvals_get;
 
 /* A new rt thread which just gets the encoder positions */
@@ -234,7 +235,7 @@ static void magenc_thd_function(struct bt_os_thread * thread)
 {
    int i;
    struct bt_wambot_phys * wambot_phys;
-
+   
    wambot_phys = (struct bt_wambot_phys *)(wam_local->wambot);
    
    /* Detect puck versions */
@@ -242,25 +243,33 @@ static void magenc_thd_function(struct bt_os_thread * thread)
    {
       long vers;
       long role;
+      long cts;
       bt_bus_get_property(wambot_phys->bus, i+1, wambot_phys->bus->p->VERS, &vers);
       bt_bus_get_property(wambot_phys->bus, i+1, wambot_phys->bus->p->ROLE, &role);
+      bt_bus_get_property(wambot_phys->bus, i+1, wambot_phys->bus->p->CTS, &cts);
       mz_mechisset[i] = ((vers >= 118) && (role & 256)) ? 1 : 0;
+      mz_counts[i] = (int)cts;
    }
    
    while (!bt_os_thread_done(thread))
    {
+
       long reply;
       if (mz_magvals_get)
       {
          for (i=0; i<wam_local->wambot->dof; i++) if (mz_mechisset[i])
          {
+            reply = 1000;
             bt_bus_get_property(wambot_phys->bus, i+1,wambot_phys->bus->p->MECH, &reply);
             mz_magvals[i] = (int)reply;
+            mz_angles[i] = 2.0 * M_PI * reply / mz_counts[i];
          }
          mz_magvals_get = 0;
       }
       bt_os_usleep(100000);
    }
+
+   return;
 }
 
 static int do_mode_zero(char * wamname)
@@ -269,6 +278,7 @@ static int do_mode_zero(char * wamname)
    int i;           /* For iterating through the pucks */
    int n;
    int done;
+   int err;
    
    /* GUI stuff */
    enum {
@@ -324,11 +334,17 @@ static int do_mode_zero(char * wamname)
    /* Spin off the magenc thread, which also detecs puck versions into mechset */
    /* EEK! Why must this be such high priority? */
    mz_mechisset = (int *)malloc( n * sizeof(int) );
+   mz_counts    = (int *)malloc( n * sizeof(int) );
    mz_magvals   = (int *)calloc( n, sizeof(int) );
+   mz_angles    = (double *)malloc( n * sizeof(double) );
    mz_magvals_get = 0;
    magenc_thd = bt_os_thread_create(BT_OS_RT, "mag", 91, magenc_thd_function, 0); /* This is global! */
    if (!magenc_thd)
    {
+      free(mz_mechisset);
+      free(mz_counts);
+      free(mz_magvals);
+      free(mz_angles);
       bt_wam_destroy(wam);
       endwin();
       closelog();
@@ -356,14 +372,15 @@ static int do_mode_zero(char * wamname)
    done = 0;
    while (!done)
    {
-      char buf[80];
+      char buf[100];
       int j;
       int line;
       enum btkey key;
+
+      mvprintw(0, 0, bt_gsl_vector_sprintf(buf,wam_local->con_active->reference));
       
       /* Display the Zeroing calibration stuff ... */
       mz_magvals_get = 1;
-      mvprintw(0, 0, "Joint Position (rad): %s", bt_wam_str_jposition(wam,buf) );
       
       line = 2;
       if (mode == MODE_TOZERO)
@@ -434,7 +451,10 @@ static int do_mode_zero(char * wamname)
          mvprintw(line+3, 13 + 9*j, "% 08.5f ",gsl_vector_get(wam_local->jposition,j));
          mvprintw(line+5, 13 + 9*j, " Motor %d",j+1);
          if (mz_mechisset[j])
-            mvprintw(line+6, 13 + 9*j, "    %04d",mz_magvals[j]);
+         {
+            mvprintw(line+6, 13 + 9*j, "   %05.3f",mz_angles[j]);
+            mvprintw(line+7, 13 + 9*j, "    %04d",mz_magvals[j]);
+         }
          else
             mvprintw(line+6, 13 + 9*j, "   (None)",mz_magvals[j]);
          
@@ -513,12 +533,22 @@ static int do_mode_zero(char * wamname)
          case BTKEY_UP:
             if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) += pow(10,-decplace);
-            bt_wam_local_moveto(wam_local,jangle);
+            err = bt_wam_local_moveto(wam_local,jangle);
+            if (err)
+            {
+               syslog(LOG_ERR,"Error with moveto: %d.",err);
+               *(gsl_vector_ptr(jangle,joint)) -= pow(10,-decplace);
+            }
             break;
          case BTKEY_DOWN:
             if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) -= pow(10,-decplace);
-            bt_wam_local_moveto(wam_local,jangle);
+            err = bt_wam_local_moveto(wam_local,jangle);
+            if (err)
+            {
+               syslog(LOG_ERR,"Error with moveto: %d.",err);
+               *(gsl_vector_ptr(jangle,joint)) += pow(10,-decplace);
+            }
             break;
          default:
             break;
@@ -536,11 +566,11 @@ static int do_mode_zero(char * wamname)
       gsl_vector_free(vec);
       
       /* Save the zeromag values */
-      for (i=0; i<n; i++) if (!mz_mechisset[i]) mz_magvals[i] = -1;
-      sprintf(zeromag,"< %d",mz_magvals[0]);
+      for (i=0; i<n; i++) if (!mz_mechisset[i]) mz_angles[i] = -1.0;
+      sprintf(zeromag,"( %05.3f",mz_angles[0]);
       for (i=1; i<n; i++)
-         sprintf(zeromag+strlen(zeromag),", %d",mz_magvals[i]);
-      sprintf(zeromag+strlen(zeromag)," >");
+         sprintf(zeromag+strlen(zeromag),", %05.3f",mz_angles[i]);
+      sprintf(zeromag+strlen(zeromag)," );");
    }
    
    /* Re-fold, print, and exit */
@@ -552,6 +582,9 @@ static int do_mode_zero(char * wamname)
    mvprintw(1,0,"Shift+Idle, and press [Enter] to continue.");
    refresh();
    while (btkey_get()!=BTKEY_ENTER) bt_os_usleep(10000);
+
+   bt_os_thread_stop(magenc_thd);
+   bt_os_thread_destroy(magenc_thd);
 
    bt_wam_destroy(wam);
    
@@ -572,9 +605,9 @@ static int do_mode_zero(char * wamname)
          printf("\n");
          break;
       }
-      printf("Copy the following lines into your wam.conf file,\n");
+      printf("Copy the following lines into your wam.config file,\n");
       printf("near the top, in the %s{} group.\n",wamname);
-      printf("Make sure it replaces the old home = < ... > definition.\n");
+      printf("Make sure it replaces the old home = ( ... ); definition.\n");
       printf("--------\n");
       printf("    # Calibrated zero values ...\n");
       printf("    home = %s\n",newhome);
@@ -605,7 +638,11 @@ static int do_mode_zero(char * wamname)
       printf("for the calibrated settings to take effect!\n");
       printf("\n");
    }
-
+   
+   free(mz_mechisset);
+   free(mz_counts);
+   free(mz_magvals);
+   free(mz_angles);
    gsl_vector_free(jangle);
    
    return 0;

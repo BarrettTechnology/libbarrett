@@ -278,22 +278,12 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
       bt_os_thread_stop(wam->nonrt_thread);
       bt_os_thread_destroy(wam->nonrt_thread);
    }
-#if 0
-   /* If dead heartbeat, no need to stop thread */
-   if (wam->heartbeat_dead && wam->rt_thread)
-   {
-	   bt_os_thread_destroy(wam->rt_thread);
-   }
-
-   /* Tell the realtime thread to exit */
-   else
-#endif
+   
    if (wam->rt_thread)
    {
       bt_os_thread_stop(wam->rt_thread);
       bt_os_thread_destroy(wam->rt_thread);
    }
-
 
    /* Print timer means and variances */
    if (wam->ts)
@@ -577,8 +567,12 @@ int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest)
    wam->refgen_list->iown = 1;
    
    /* Make the refgen itself */
+#if 0
    wam->refgen_list->refgen = (struct bt_refgen *)
       bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
+#endif
+   wam->refgen_list->refgen = (struct bt_refgen *)
+      bt_refgen_move_create(&(wam->elapsed_time), wam->con_active->reference, 0, dest, wam->vel, wam->acc);
    if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
    
    /* Save this refgen as the current one, and start it! */
@@ -770,18 +764,6 @@ int bt_wam_local_set_callback(struct bt_wam_local * wam,
    return 0;
 }
 
-int bt_wam_local_set_heartbeat(struct bt_wam_local * wam)
-{
-	wam->last_heartbeat_time = 1e9 * bt_os_rt_get_time();
-	return 0;
-}
-
-int bt_wam_local_check_heartbeat(struct bt_wam_local * wam)
-{
-	return ( ( ( 1e9* bt_os_rt_get_time() ) - wam->last_heartbeat_time ) > 2 ); /* check if difference is more than 2 seconds */ 
-}
-
-
 
 /* ===========================================================================
  * Below are separate thread stuffs */
@@ -843,15 +825,6 @@ static void rt_wam(struct bt_os_thread * thread)
       
       /* Skip the loop if we're not told to go */
       if (!wam->loop_go) continue;
-
-#if 0	  
-      /* Check for connection heartbeat */
-      if (bt_wam_local_check_heartbeat(wam))
-      {
-         wam->heartbeat_dead = 1;
-         break;
-      }
-#endif
       
       /* Start timing ... */
       bt_os_timestat_start(wam->ts);
@@ -944,10 +917,6 @@ static void rt_wam(struct bt_os_thread * thread)
    }
    
    rt_wam_destroy(wam);
-
-#if 0
-   if (wam->heartbeat_dead) { bt_wam_local_destroy(wam); }
-#endif
    
    /* Remove this thread from the realtime scheduler */
    bt_os_thread_exit( thread );

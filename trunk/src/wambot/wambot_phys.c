@@ -171,7 +171,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    err = bt_gsl_fill_vector(wambot->zeroangle, config, "zeroangle");
    if (err)
    {
-      printf("No zeroangle entry found.\n");
+      syslog(LOG_ERR,"No zeroangle entry found.\n");
       gsl_vector_free( wambot->zeroangle );
       wambot->zeroangle = 0;
    }
