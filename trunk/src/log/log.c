@@ -1,38 +1,41 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... btlogger.c
- *  Author ............. Traveler Hauptman  
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2003 Apr 3
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_log, a double-buffered data logger.
  *
- *  NOTES:                                                              
- *    Uses some code & concepts developed at Nortwestern University 
- *    by Traveler Hauptman          
+ * \file log.c
+ * \author Traveler Hauptman
+ * \author Brian Zenowich
+ * \author Christopher Dellin
+ * \date 2005-2009
+ */
+
+/* Copyright 2005, 2006, 2007, 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/*
+ * This file is part of libbarrett.
  *
- *  REVISION HISTORY:                                                   
- *    2005 Nov 01 - TH
- *      Checked
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
- *                                                                      
- * ======================================================================== */
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
-#define _GNU_SOURCE
-
-#ifdef S_SPLINT_S
-#include <err.h>
-#endif
 #include <syslog.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "log.h"
-
 
 /*==============================*
  * Functions                    *
@@ -154,7 +157,7 @@ and AddDataDL() first to define what fields will be recorded.
 \internal chk'd TH 051101
 */
 
-int bt_log_init( struct bt_log * log, int num_blocks, char * filename)
+int bt_log_init( struct bt_log * log, int num_records, char * filename)
 {
    int i;
    
@@ -170,13 +173,13 @@ int bt_log_init( struct bt_log * log, int num_blocks, char * filename)
    }
 
    /* Figure out the total size per record */
-   log->num_blocks = num_blocks;
-   log->block_size = 0;
+   log->num_records = num_records;
+   log->record_size = 0;
    for(i=0; i < log->num_fields; i++)
-      log->block_size += log->data[i].size;
+      log->record_size += log->data[i].size;
    
-   log->buf_A = malloc(log->num_blocks * log->block_size);
-   log->buf_B = malloc(log->num_blocks * log->block_size);
+   log->buf_A = malloc(log->num_records * log->record_size);
+   log->buf_B = malloc(log->num_records * log->record_size);
 
    /* Was InitDataFileDL() */
    /*
@@ -193,12 +196,12 @@ int bt_log_init( struct bt_log * log, int num_blocks, char * filename)
    fwrite(&(log->num_fields),sizeof(int),1,log->file);   /* number of fields */
    for(i = 0; i < log->num_fields; i++) {
       fwrite(&(log->data[i].type),sizeof(int),1,log->file);
-      fwrite(&(log->data[i].size),sizeof(int),1,log->file); /* block size = arraysize + sizeof(variable) */
+      fwrite(&(log->data[i].size),sizeof(int),1,log->file); /* record size = arraysize + sizeof(variable) */
       fwrite(log->data[i].name,sizeof(char),50,log->file);
    }
 
    log->buf = log->buf_A;
-   log->buf_block_idx = 0;
+   log->buf_record_idx = 0;
    log->full = BT_LOG_FULL_NONE;
    log->chunk_idx = 0;
    log->initialized = 1;
@@ -218,10 +221,10 @@ int bt_log_destroy( struct bt_log * log )
       /* If our data logging files are open and everything is peachy */
       fwrite(&log->chunk_idx,sizeof(int),1,log->file);     /*Write Record index as a binary integer*/
       
-      chunk_size = log->buf_block_idx * log->block_size;         /*Calculate the chunk size*/
+      chunk_size = log->buf_record_idx * log->block_size;         /*Calculate the chunk size*/
       fwrite(&chunk_size,sizeof(long),1,log->file);     /*Write the Record length in bytes*/
 
-      fwrite(log->buf, log->block_size, log->buf_block_idx, log->file);  /*Write all the data in binary form*/
+      fwrite(log->buf, log->record_size, log->buf_record_idx, log->file);  /*Write all the data in binary form*/
       log->chunk_idx++;                                        /*ncrement the record index*/
       
       free(log->buf_A);
@@ -248,7 +251,7 @@ int bt_log_trigger( struct bt_log * log )
    char * start; /* it's indexed by bytes, anyways */
    
    /* point to the present location in the buffer */
-   start = log->buf + log->buf_block_idx * log->block_size; /* ######## MADE THIS CHANGE 08-12 */
+   start = log->buf + log->buf_record_idx * log->record_size; /* ######## MADE THIS CHANGE 08-12 */
 
    /* copy user data to buffer */
    for(i = 0; i < log->num_fields; i++) {
@@ -258,10 +261,10 @@ int bt_log_trigger( struct bt_log * log )
    
    /* Was UpdateDL() */
    /* If our index exceeds our array size */
-   log->buf_block_idx++;
-   if (log->buf_block_idx >= log->num_blocks)
+   log->buf_record_idx++;
+   if (log->buf_record_idx >= log->num_records)
    {
-      log->buf_block_idx = 0;                  /*reset our index to zero */
+      log->buf_record_idx = 0;                  /*reset our index to zero */
 
       /*If we are currently pointed to buffer A */
       if (log->buf == log->buf_A)
@@ -319,11 +322,11 @@ int bt_log_flush( struct bt_log * log )
    
    /* Calculate / write the chunk size in bytes
     * (this is a full chunk) */
-   chunk_size = log->num_blocks * log->block_size;
+   chunk_size = log->num_records * log->block_record;
    fwrite(&chunk_size,sizeof(long),1,log->file);
 
    /* Write all the data in binary form */
-   fwrite(buf_full, log->block_size, log->num_blocks, log->file);
+   fwrite(buf_full, log->record_size, log->num_records, log->file);
    
    /* Increment the chunk index */
    log->chunk_idx++;
@@ -467,7 +470,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                case BT_LOG_INT:
                   array_len = log->data[i].size / sizeof(int);
                   if ((log->data[i].size % sizeof(int)) != 0)
-                     syslog(LOG_ERR,"DecodeDL: This block is not an even multiple of our datatype (int)");
+                     syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      intdata = (int *)dataidx;
                      if (octave)
@@ -485,7 +488,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                case BT_LOG_LONG:
                   array_len = log->data[i].size / sizeof(long);
                   if ((log->data[i].size % sizeof(long)) != 0)
-                     syslog(LOG_ERR,"DecodeDL: This block is not an even multiple of our datatype (long)");
+                     syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (long)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      longdata = (long *)dataidx;
                      if (octave)
@@ -503,7 +506,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                case BT_LOG_LONGLONG:
                   array_len = log->data[i].size / sizeof(long long);
                   if ((log->data[i].size % sizeof(long long)) != 0)
-                     syslog(LOG_ERR,"DecodeDL: This block is not an even multiple of our datatype (int)");
+                     syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      exlongdata = (long long *)dataidx;
                      if (octave)
@@ -521,7 +524,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                case BT_LOG_ULONGLONG:
                   array_len = log->data[i].size / sizeof(unsigned long long);
                   if ((log->data[i].size % sizeof(unsigned long long)) != 0)
-                     syslog(LOG_ERR,"DecodeDL: This block is not an even multiple of our datatype (int)");
+                     syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      exulongdata = (unsigned long long *)dataidx;
                      if (octave)
@@ -539,7 +542,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                case BT_LOG_DOUBLE:
                   array_len = log->data[i].size / sizeof(double);
                   if ((log->data[i].size % sizeof(double)) != 0)
-                     syslog(LOG_ERR,"DecodeDL: This block is not an even multiple of our datatype (int)");
+                     syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      doubledata = (double *)dataidx;
                      if (octave)
@@ -665,7 +668,7 @@ int bt_log_read_init( struct bt_log_read * logread, char * filename, int header)
    if (header)
       getline( &logread->line, &logread->line_length, logread->file );
    
-   logread->blocks_read = 0;
+   logread->records_read = 0;
    
    logread->initialized = 1;
    return 0;
@@ -679,7 +682,7 @@ int bt_log_read_destroy( struct bt_log_read * logread )
    return 0;
 }
 
-int bt_log_read_get( struct bt_log_read * logread, int * block_num_ptr )
+int bt_log_read_get( struct bt_log_read * logread, int * record_num_ptr )
 {
    int ret;
    char * field;
@@ -740,31 +743,8 @@ int bt_log_read_get( struct bt_log_read * logread, int * block_num_ptr )
       }
    }
    
-   if (block_num_ptr) (*block_num_ptr) = logread->blocks_read;
-   logread->blocks_read++;
+   if (record_num_ptr) (*record_num_ptr) = logread->records_read;
+   logread->records_read++;
    
    return 0;
 }
-
-
-
-/*======================================================================*
- *                                                                      *
- *          Copyright (c) 2003-2008 Barrett Technology, Inc.            *
- *                        625 Mount Auburn St                           *
- *                    Cambridge, MA  02138,  USA                        *
- *                                                                      *
- *                        All rights reserved.                          *
- *                                                                      *
- *  ******************************************************************  *
- *                            DISCLAIMER                                *
- *                                                                      *
- *  This software and related documentation are provided to you on      *
- *  an as is basis and without warranty of any kind.  No warranties,    *
- *  express or implied, including, without limitation, any warranties   *
- *  of merchantability or fitness for a particular purpose are being    *
- *  provided by Barrett Technology, Inc.  In no event shall Barrett     *
- *  Technology, Inc. be liable for any lost development expenses, lost  *
- *  lost profits, or any incidental, special, or consequential damage.  *
- *======================================================================*/
- 

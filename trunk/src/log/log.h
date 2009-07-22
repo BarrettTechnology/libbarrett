@@ -1,84 +1,103 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... log.h
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2005 Feb 18
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2005-2008   Barrett Technology <support@barrett.com>
+/** Definition of bt_log, a double-buffered data logger.
  *
- *  NOTES:
+ * \file log.h
+ * \author Traveler Hauptman
+ * \author Brian Zenowich
+ * \author Christopher Dellin
+ * \date 2005-2009
+ */
+
+/* Copyright 2005, 2006, 2007, 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/*
+ * This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2005 Nov 01 - TH
- *      Checked
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * ======================================================================== */
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
 /** \file log.h
-    \brief Realtime data logging functionality
+ * \section sec_intro Introduction
+ * 
+ * The bt_log object and associated functions implement a double buffer data
+ * logger.  The double buffer mechanism allows data to be recorded at high
+ * speed into memory while writes to disk are done as efficient block
+ * operations in a low priority thread.
+ *
+ * \section sec_usage Usage
+ *
+ * First, create a new bt_log object using bt_log_create(). The argument is
+ * the number of fields in the log.
+ * \code
+ * struct bt_log * mylog;
+ * mylog = bt_log_create(3); 
+ * \endcode
+ * 
+ * Next, add the fields using bt_log_addfield() and initialize using
+ * bt_log_init():
+ * \code
+ * int ticks;
+ * double time;
+ * unsigned long long numbers[7];
+ * bt_log_addfield(mylog, &ticks, 1, BT_LOG_INT, "ticks");
+ * bt_log_addfield(mylog, &time, 1, BT_LOG_DOUBLE, "time");
+ * bt_log_addfield(mylog, &numbers, 7, BT_LOG_ULONGLONG, "numbers");
+ * bt_log_init(mylog,1000,"datafile.bin");
+ * \endcode
+ *
+ * Now, in some time-important thread (usually a real-time loop), we can
+ * trigger the bt_log object, which will copy the current values of all of
+ * the fields into the designated memory location:
+ * \code
+ * while (going)
+ * {
+ *    ticks++;
+ *    time = get_time();
+ *    get_numbers(numbers);
+ *    bt_log_trigger(mylog);
+ *    do_stuff();
+ * }
+ * \endcode
+ *
+ * Concurrently, in a lower-priority thread, the log must be flushed
+ * periodically to disk (the binary file specified in bt_log_init()):
+ * \code
+ * while (going)
+ * {
+ *    bt_log_flush(mylog);
+ *    sleep(FOR_A_WHILE);
+ * }
+ * \endcode
+ *
+ * Once we're done, we destroy the bt_log object.  We can then decode the
+ * binary file to a CSV file (or an octave file):
+ * \code
+ * bt_log_destroy(mylog);
+ * bt_log_decode("datafile.bin", "datafile.csv", 1, 0);
+ * \endcode
+ */
 
-\section tmp Realtime data logging:
-
-The btlogger object and member functions implement a double buffer data logger.
-The double buffer mechanism allows data to be recorded at high speed into memory 
-while writes to disk are done as efficient block operations in a low priority 
-thread.
-
-
- - PrepDL(),AddDataDL(), and InitDL() are the setup functions.
- - DLon(), evalDL(), TriggerDL(), and DLoff() are the operation functions.
- - CloseDL() and DecodeDL() Are the shutdown and conversion functions.
-
- Typical usage is shown in the following pseudo code
-
-\code
-btlogger log;
-double a,b,c[3];
-void main()
-{  
-  //allocate fields
-  PrepDL(&log,3);
-  AddDataDL(&log,&a,sizeof(double),BTLOG_DOUBLE,"Arclength");
-  AddDataDL(&log,&b,sizeof(double),BTLOG_DOUBLE,"Normal");
-  AddDataDL(&log,c,sizeof(double)*3,BTLOG_DOUBLE,"Position");
-  //initialize buffers
-  InitDL(&log,1000,"logfile.dat");
-  
-  DLon(&log);
-  while(!done){
-    evalDL(&log);
-  }
-  DLoff(&log);
-  CloseDL(&log);bt_log_addfield( t->log, gsl_vector_ptr(cur_position,i), BT_LOG_DOUBLE, "pos" );
-}
-void loop()
-{
-  while(1){
-    a = a + b;
-    c[2] = b/2;
-    TriggerDL(&log);
-  }
-}
-\endcode
-
-*/
 #ifndef BT_LOG_H
 #define BT_LOG_H
 
-#include <stdio.h>
+#include <stdio.h> /* For FILE */
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif/* __cplusplus */
-
-/* Note - one block is like a line, with many fields */
+/* Note - one record is like a line, with many fields */
 
 /* Field Types */
 enum bt_log_fieldtype {
@@ -126,13 +145,13 @@ Function definitions are in btlogger.h.
 struct bt_log
 {
   struct bt_log_data_info * data; /*!< list of data information*/
-  size_t block_size; /*!< Total size of one block of data*/
+  size_t record_size; /*!< Total size of one record of data*/
   int num_fields_max; /*!< Total number of data_info structures allocated.*/
   int num_fields; /*!< Number of data_info pieces*/
   int initialized;
   
-  int num_blocks;
-  int buf_block_idx;
+  int num_records;
+  int buf_record_idx;
   char * buf; /*!< Pointer to current buffer*/
   char * buf_A; /*!< First data buffer*/
   char * buf_B;  /*!< Second data buffer*/
@@ -145,7 +164,7 @@ struct bt_log
 struct bt_log_read
 {
   struct bt_log_data_info * data; /*!< list of data information*/
-  size_t block_size; /*!< Total size of one block of data*/
+  size_t record_size; /*!< Total size of one record of data*/
   int num_fields_max; /*!< Total number of data_info structures allocated.*/
   int num_fields; /*!< Number of data_info pieces*/
   int initialized;
@@ -153,56 +172,30 @@ struct bt_log_read
   FILE * file;
   char * line;
   size_t line_length;
-  int blocks_read;
+  int records_read;
 };
 
 
 
 /* public functions */
-struct bt_log * bt_log_create( unsigned int num_fields );
-int bt_log_addfield( struct bt_log * log, void * data, int num, enum bt_log_fieldtype type, char * name);
-int bt_log_init( struct bt_log * log, int num_blocks, char * filename);
-int bt_log_destroy( struct bt_log * log );
+struct bt_log * bt_log_create(unsigned int num_fields);
+int bt_log_addfield(struct bt_log * log, void * data, int num, enum bt_log_fieldtype type, char * name);
+int bt_log_init(struct bt_log * log, int num_records, char * filename);
+int bt_log_destroy(struct bt_log * log);
 
-int bt_log_trigger( struct bt_log * log );
-int bt_log_flush( struct bt_log * log );
+int bt_log_trigger(struct bt_log * log);
+int bt_log_flush(struct bt_log * log);
 
-int bt_log_decode( char * infile, char * outfile, int header, int octave);
+int bt_log_decode(char * infile, char * outfile, int header, int octave);
 
 
 /* For reading a CSV file */
 
-struct bt_log_read * bt_log_read_create( unsigned int num_fields );
-int bt_log_read_addfield( struct bt_log_read * logread, void * data, int num, enum bt_log_fieldtype type);
-int bt_log_read_init( struct bt_log_read * logread, char * filename, int header);
-int bt_log_read_destroy( struct bt_log_read * logread );
+struct bt_log_read * bt_log_read_create(unsigned int num_fields );
+int bt_log_read_addfield(struct bt_log_read * logread, void * data, int num, enum bt_log_fieldtype type);
+int bt_log_read_init(struct bt_log_read * logread, char * filename, int header);
+int bt_log_read_destroy(struct bt_log_read * logread);
 
-int bt_log_read_get( struct bt_log_read * logread, int * block_num_ptr );
+int bt_log_read_get(struct bt_log_read * logread, int * record_num_ptr);
 
-
-
-#ifdef __cplusplus
-}
-#endif/* __cplusplus */
 #endif/* BT_LOG_H */
-
-/*======================================================================*
- *                                                                      *
- *          Copyright (c) 2003-2008 Barrett Technology, Inc.            *
- *                        625 Mount Auburn St                           *
- *                    Cambridge, MA  02138,  USA                        *
- *                                                                      *
- *                        All rights reserved.                          *
- *                                                                      *
- *  ******************************************************************  *
- *                            DISCLAIMER                                *
- *                                                                      *
- *  This software and related documentation are provided to you on      *
- *  an as is basis and without warranty of any kind.  No warranties,    *
- *  express or implied, including, without limitation, any warranties   *
- *  of merchantability or fitness for a particular purpose are being    *
- *  provided by Barrett Technology, Inc.  In no event shall Barrett     *
- *  Technology, Inc. be liable for any lost development expenses, lost  *
- *  lost profits, or any incidental, special, or consequential damage.  *
- *======================================================================*/
- 
