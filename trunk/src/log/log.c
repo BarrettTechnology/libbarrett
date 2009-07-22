@@ -10,8 +10,7 @@
 /* Copyright 2005, 2006, 2007, 2008, 2009
  *           Barrett Technology <support@barrett.com> */
 
-/*
- * This file is part of libbarrett.
+/* This file is part of libbarrett.
  *
  * This version of libbarrett is free software: you can redistribute it
  * and/or modify it under the terms of the GNU General Public License as
@@ -35,46 +34,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "log.h"
 
-/*==============================*
- * Functions                    *
- *==============================*/
-/*****************************************************************************/
-/** Allocate a specified number of fields.
- 
-You can add fewer fields than specified by PrepDL() but you cannot AddDataDL() 
-after calling InitDL().
- 
-Typical usage:
-\code
-  PrepDL(&log,3);
-  AddDataDL(&log,&a,sizeof(double),BTLOG_DOUBLE,"Arclength");
-  //...more AddDataDL()
-  //initialize buffers
-  InitDL(&log,1000,"logfile.dat");
-\endcode
- 
-\param db Pointer to the btlogger structure
-\param fields The number of fields you want to record
- 
-\internal chk'd TH 051101
-*/
-/* Note: This is like prepDL */
-struct bt_log * bt_log_create( unsigned int num_fields )
+struct bt_log * bt_log_create(unsigned int num_fields)
 {
    int i;
    struct bt_log * log;
    
    log = (struct bt_log *) malloc(sizeof(struct bt_log));
+   if (!log)
+      return 0;
    
-   log->data = (struct bt_log_data_info *)
-      malloc( num_fields * sizeof(struct bt_log_data_info) );
+   log->fields = (struct bt_log_field *)
+      malloc( num_fields * sizeof(struct bt_log_field) );
+   if (!log->fields)
+   {
+      free(log);
+      return 0;
+   }
    log->num_fields_max = num_fields;
    log->num_fields = 0;
    
    for (i=0; i<log->num_fields_max; i++)
-      log->data[i].size = 0;
+      log->fields[i].size = 0;
    
    log->initialized = 0;
    
@@ -82,25 +65,7 @@ struct bt_log * bt_log_create( unsigned int num_fields )
 }
 
 
-/** Adds a field to the list of data to log.
- 
-You must call PrepDL() first. Fields are
-added in the order that this function is called.
- 
-\param size Size of data = Array_length * sizeof(type)
-\param data Pointer to data you want to log.
-\param type See #btlog_enum
-\param name Data name to be printed in the column heading
-\retval 0 Success
-\retval -1 No more fields available
-\retval -2 db was invalid 
- 
-\internal chk'd TH 051101
-\bug Check to see if we have already initialized with InitDL()
-*/
-/* Note: this is like AddDataDL */
-int bt_log_addfield( struct bt_log * log, void * data, int num, enum bt_log_fieldtype type, char * name)
-/* int AddDataDL(btlogger *db,void *data, int size, int type,char *name) */
+int bt_log_addfield(struct bt_log * log, void * data, int num, enum bt_log_fieldtype type, char * name)
 {
    int i;
    
@@ -115,28 +80,28 @@ int bt_log_addfield( struct bt_log * log, void * data, int num, enum bt_log_fiel
    if (i >= log->num_fields_max)
    {
       syslog(LOG_ERR,"bt_log_addfield: No more field slots left. Use a higher value in btlog_create()");
-      return -1;
+      return -2;
    }
    
-   strcpy( log->data[i].name, name );
-   log->data[i].data = data;
-   log->data[i].type = type;
+   strcpy( log->fields[i].name, name );
+   log->fields[i].data = data;
+   log->fields[i].type = type;
    switch (type)
    {
       case BT_LOG_INT:
-         log->data[i].size = num * sizeof(int);
+         log->fields[i].size = num * sizeof(int);
          break;
       case BT_LOG_LONG:
-         log->data[i].size = num * sizeof(long int);
+         log->fields[i].size = num * sizeof(long int);
          break;
       case BT_LOG_LONGLONG:
-         log->data[i].size = num * sizeof(long long int);
+         log->fields[i].size = num * sizeof(long long int);
          break;
       case BT_LOG_ULONGLONG:
-         log->data[i].size = num * sizeof(unsigned long long int);
+         log->fields[i].size = num * sizeof(unsigned long long int);
          break;
       case BT_LOG_DOUBLE:
-         log->data[i].size = num * sizeof(double);
+         log->fields[i].size = num * sizeof(double);
          break;
    }
    
@@ -145,19 +110,7 @@ int bt_log_addfield( struct bt_log * log, void * data, int num, enum bt_log_fiel
 }
 
 
-/** Initialize the buffers and prepare for logging.
- 
- Don't forget to call PrepDL() 
-and AddDataDL() first to define what fields will be recorded.
- 
-\param size The number of records the buffer will hold
-\param filename The path and filename where you want to write to
-\retval 0 Success
-\retval -1 Could not open file
-\internal chk'd TH 051101
-*/
-
-int bt_log_init( struct bt_log * log, int num_records, char * filename)
+int bt_log_init(struct bt_log * log, int num_records, char * filename)
 {
    int i;
    
@@ -169,19 +122,30 @@ int bt_log_init( struct bt_log * log, int num_records, char * filename)
    
    if ((log->file = fopen(filename,"w"))==NULL) {
       syslog(LOG_ERR,"bt_log_init: Could not open datalogger file %s",filename);
-      return -1;
+      return -2;
    }
 
    /* Figure out the total size per record */
    log->num_records = num_records;
    log->record_size = 0;
    for(i=0; i < log->num_fields; i++)
-      log->record_size += log->data[i].size;
-   
-   log->buf_A = malloc(log->num_records * log->record_size);
-   log->buf_B = malloc(log->num_records * log->record_size);
+      log->record_size += log->fields[i].size;
 
-   /* Was InitDataFileDL() */
+   /* Allocate the buffers */
+   log->buf_A = malloc(log->num_records * log->record_size);
+   if (!log->buf_A)
+   {
+      fclose(log->file);
+      return -3;
+   }
+   log->buf_B = malloc(log->num_records * log->record_size);
+   if (!log->buf_B)
+   {
+      free(log->buf_A);
+      fclose(log->file);
+      return -3;
+   }
+
    /*
     * --0--1--2--3---4--5--6--7--8--9-10-11-12-....-61
     * |  :  :  :  ||  :  :  :  |  :  :  :  |          |
@@ -195,9 +159,9 @@ int bt_log_init( struct bt_log * log, int num_records, char * filename)
     */
    fwrite(&(log->num_fields),sizeof(int),1,log->file);   /* number of fields */
    for(i = 0; i < log->num_fields; i++) {
-      fwrite(&(log->data[i].type),sizeof(int),1,log->file);
-      fwrite(&(log->data[i].size),sizeof(int),1,log->file); /* record size = arraysize + sizeof(variable) */
-      fwrite(log->data[i].name,sizeof(char),50,log->file);
+      fwrite(&(log->fields[i].type),sizeof(int),1,log->file);
+      fwrite(&(log->fields[i].size),sizeof(int),1,log->file); /* record size = arraysize + sizeof(variable) */
+      fwrite(log->fields[i].name,sizeof(char),50,log->file);
    }
 
    log->buf = log->buf_A;
@@ -209,10 +173,7 @@ int bt_log_init( struct bt_log * log, int num_records, char * filename)
 }
 
 
-/** Close the logging file and free buffer memory
-\internal chk'd TH 051101
-*/
-int bt_log_destroy( struct bt_log * log )
+int bt_log_destroy(struct bt_log * log)
 {
    /* Was flushDL() */
    long chunk_size;
@@ -221,7 +182,7 @@ int bt_log_destroy( struct bt_log * log )
       /* If our data logging files are open and everything is peachy */
       fwrite(&log->chunk_idx,sizeof(int),1,log->file);     /*Write Record index as a binary integer*/
       
-      chunk_size = log->buf_record_idx * log->block_size;         /*Calculate the chunk size*/
+      chunk_size = log->buf_record_idx * log->record_size;         /*Calculate the chunk size*/
       fwrite(&chunk_size,sizeof(long),1,log->file);     /*Write the Record length in bytes*/
 
       fwrite(log->buf, log->record_size, log->buf_record_idx, log->file);  /*Write all the data in binary form*/
@@ -232,31 +193,26 @@ int bt_log_destroy( struct bt_log * log )
       fclose(log->file);
    }
    
-   free(log->data);
+   free(log->fields);
    free(log);
    return 0;
 }
 
 
-/** Copy all the data pointed to by the btdata_info array into the present buffer.
- 
- This function should be called every time you want to save a record to the buffer.
- Typically this is called in a high priority thread with a short loop period.
- 
- \internal chk'd TH 051101
-*/
-int bt_log_trigger( struct bt_log * log )
+int bt_log_trigger(struct bt_log * log)
 {
    int i;
    char * start; /* it's indexed by bytes, anyways */
+
+   if (!log->initialized) return -1;
    
    /* point to the present location in the buffer */
    start = log->buf + log->buf_record_idx * log->record_size; /* ######## MADE THIS CHANGE 08-12 */
 
    /* copy user data to buffer */
    for(i = 0; i < log->num_fields; i++) {
-      memcpy(start, log->data[i].data, log->data[i].size);
-      start += log->data[i].size;
+      memcpy(start, log->fields[i].data, log->fields[i].size);
+      start += log->fields[i].size;
    }
    
    /* Was UpdateDL() */
@@ -283,18 +239,7 @@ int bt_log_trigger( struct bt_log * log )
 }
 
 
-/** Checks the buffers and writes them if one is full.
- 
-This must be cyclically called (from an event loop perhaps)
-with a period that is shorter than the time it takes to fill the buffer.
- 
-\warning If you do not call this often enough, you will have buffer sized gaps
-in your data file.
- 
-\internal chk'd TH 051101
-*/
-/* was evalDL() */
-int bt_log_flush( struct bt_log * log )
+int bt_log_flush(struct bt_log * log)
 {
    void * buf_full;
    long chunk_size;
@@ -305,16 +250,19 @@ int bt_log_flush( struct bt_log * log )
       return -1;
    }
    
-   /* Make sure some buffer is full */
-   if (log->full == BT_LOG_FULL_NONE) return 0;
-   
-   /* Point buf_full to the full buffer */
-   if (log->full == BT_LOG_FULL_A)
-      buf_full = log->buf_A;
-   else if (log->full == BT_LOG_FULL_B)
-      buf_full = log->buf_B;
-   else
-      return -1; /* Huh? */
+   /* Make sure some buffer is full, and if so,
+    * point buf_full to the full buffer.*/
+   switch (log->full)
+   {
+      case BT_LOG_FULL_NONE:
+         return 0;
+      case BT_LOG_FULL_A:
+         buf_full = log->buf_A;
+         break;
+      case BT_LOG_FULL_B:
+         buf_full = log->buf_B;
+         break;
+   }
 
    /* Write record index (full buffer counter) as binary integer
     * Start of chunk : 4 bytes for the chunk index */
@@ -322,7 +270,7 @@ int bt_log_flush( struct bt_log * log )
    
    /* Calculate / write the chunk size in bytes
     * (this is a full chunk) */
-   chunk_size = log->num_records * log->block_record;
+   chunk_size = log->num_records * log->record_size;
    fwrite(&chunk_size,sizeof(long),1,log->file);
 
    /* Write all the data in binary form */
@@ -338,16 +286,7 @@ int bt_log_flush( struct bt_log * log )
 }
 
 
-
-/*************************** binary file to text file converter ***********/
-/** Decode a binary file created by btlogger.
-
- 
-\param header If header !0 then the first line will be column names
- 
-\internal chk'd TH 051101
-*/
-int bt_log_decode( char * infile, char * outfile, int header, int octave)
+int bt_log_decode(char * infile, char * outfile, int header, int octave)
 {
    struct bt_log * log; /*use this just because it is convinient*/
    FILE *inf,*outf;
@@ -396,26 +335,26 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
    numcols = 0;
    /* Read header info, write text header */
    for (i=0; i<fieldcnt; i++) {
-      fread(&(log->data[i].type),sizeof(int),1,inf);
-      fread(&(log->data[i].size),sizeof(int),1,inf);
-      fread(log->data[i].name,sizeof(char),50,inf);
+      fread(&(log->fields[i].type),sizeof(int),1,inf);
+      fread(&(log->fields[i].size),sizeof(int),1,inf);
+      fread(log->fields[i].name,sizeof(char),50,inf);
 
-      switch (log->data[i].type)
+      switch (log->fields[i].type)
       {
          case BT_LOG_INT:
-            array_len = log->data[i].size / sizeof(int);
+            array_len = log->fields[i].size / sizeof(int);
             break;
          case BT_LOG_LONG:
-            array_len = log->data[i].size / sizeof(long);
+            array_len = log->fields[i].size / sizeof(long);
             break;
          case BT_LOG_LONGLONG:
-            array_len = log->data[i].size / sizeof(long long);
+            array_len = log->fields[i].size / sizeof(long long);
             break;
          case BT_LOG_ULONGLONG:
-            array_len = log->data[i].size / sizeof(unsigned long long);
+            array_len = log->fields[i].size / sizeof(unsigned long long);
             break;
          case BT_LOG_DOUBLE:
-            array_len = log->data[i].size / sizeof(double);
+            array_len = log->fields[i].size / sizeof(double);
             break;
          default:
             /* Return an error? */
@@ -425,13 +364,13 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
       if (header) {
          if (array_len > 1) {
             for (ridx = 0; ridx < array_len; ridx++) {
-               fprintf(outf,"%s[%ld]",log->data[i].name,ridx);
+               fprintf(outf,"%s[%ld]",log->fields[i].name,ridx);
                if ((ridx < array_len - 1) || (i < fieldcnt - 1))
                   fprintf(outf,", ");
                numcols++;
             }
          } else {
-            fprintf(outf,"%s",log->data[i].name);
+            fprintf(outf,"%s",log->fields[i].name);
             if (i < fieldcnt - 1)
                fprintf(outf,", ");
             numcols++;
@@ -466,10 +405,10 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
          
          for (i=0; i<fieldcnt; i++)
          {
-            switch (log->data[i].type) {
+            switch (log->fields[i].type) {
                case BT_LOG_INT:
-                  array_len = log->data[i].size / sizeof(int);
-                  if ((log->data[i].size % sizeof(int)) != 0)
+                  array_len = log->fields[i].size / sizeof(int);
+                  if ((log->fields[i].size % sizeof(int)) != 0)
                      syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      intdata = (int *)dataidx;
@@ -483,11 +422,11 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                      }
                      dataidx += sizeof(int);
                   }
-                  cnt += log->data[i].size;
+                  cnt += log->fields[i].size;
                   break;
                case BT_LOG_LONG:
-                  array_len = log->data[i].size / sizeof(long);
-                  if ((log->data[i].size % sizeof(long)) != 0)
+                  array_len = log->fields[i].size / sizeof(long);
+                  if ((log->fields[i].size % sizeof(long)) != 0)
                      syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (long)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      longdata = (long *)dataidx;
@@ -501,11 +440,11 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                      }
                      dataidx +=  sizeof(long);
                   }
-                  cnt += log->data[i].size;
+                  cnt += log->fields[i].size;
                   break;
                case BT_LOG_LONGLONG:
-                  array_len = log->data[i].size / sizeof(long long);
-                  if ((log->data[i].size % sizeof(long long)) != 0)
+                  array_len = log->fields[i].size / sizeof(long long);
+                  if ((log->fields[i].size % sizeof(long long)) != 0)
                      syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      exlongdata = (long long *)dataidx;
@@ -519,11 +458,11 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                      }
                      dataidx += sizeof(long long);
                   }
-                  cnt += log->data[i].size;
+                  cnt += log->fields[i].size;
                   break;
                case BT_LOG_ULONGLONG:
-                  array_len = log->data[i].size / sizeof(unsigned long long);
-                  if ((log->data[i].size % sizeof(unsigned long long)) != 0)
+                  array_len = log->fields[i].size / sizeof(unsigned long long);
+                  if ((log->fields[i].size % sizeof(unsigned long long)) != 0)
                      syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      exulongdata = (unsigned long long *)dataidx;
@@ -537,11 +476,11 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                      }
                      dataidx += sizeof(unsigned long long);
                   }
-                  cnt += log->data[i].size;
+                  cnt += log->fields[i].size;
                   break;
                case BT_LOG_DOUBLE:
-                  array_len = log->data[i].size / sizeof(double);
-                  if ((log->data[i].size % sizeof(double)) != 0)
+                  array_len = log->fields[i].size / sizeof(double);
+                  if ((log->fields[i].size % sizeof(double)) != 0)
                      syslog(LOG_ERR,"DecodeDL: This record is not an even multiple of our datatype (int)");
                   for (ridx = 0; ridx < array_len; ridx++) {
                      doubledata = (double *)dataidx;
@@ -555,7 +494,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
                      }
                      dataidx += sizeof(double);
                   }
-                  cnt += log->data[i].size;
+                  cnt += log->fields[i].size;
                   break;
             }
             if (i < fieldcnt-1 && !octave)
@@ -569,7 +508,7 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
    
    }
    
-   free(log->data);
+   free(log->fields);
    free(log);
    
    fseek(outf, fwrite_rowpos, SEEK_SET);
@@ -581,30 +520,29 @@ int bt_log_decode( char * infile, char * outfile, int header, int octave)
 }
 
 
-/* Log read functions ...
- * Note that this doesn't yet support arrays of fields ... */
-
-struct bt_log_read * bt_log_read_create( unsigned int num_fields )
+struct bt_log_read * bt_log_read_create(unsigned int num_fields)
 {
    int i;
    struct bt_log_read * logread;
    
    logread = (struct bt_log_read *) malloc(sizeof(struct bt_log_read));
    
-   logread->data = (struct bt_log_data_info *)
-      malloc( num_fields * sizeof(struct bt_log_data_info) );
+   logread->fields = (struct bt_log_field *)
+      malloc( num_fields * sizeof(struct bt_log_field) );
    logread->num_fields_max = num_fields;
    logread->num_fields = 0;
    
    for (i=0; i<logread->num_fields_max; i++)
-      logread->data[i].size = 0;
+      logread->fields[i].size = 0;
    
    logread->initialized = 0;
    
    return logread;
 }
 
-int bt_log_read_addfield( struct bt_log_read * logread, void * data, int num, enum bt_log_fieldtype type)
+
+int bt_log_read_addfield(struct bt_log_read * logread, void * data, int num,
+                         enum bt_log_fieldtype type)
 {
    int i;
    
@@ -619,27 +557,27 @@ int bt_log_read_addfield( struct bt_log_read * logread, void * data, int num, en
    if (i >= logread->num_fields_max)
    {
       syslog(LOG_ERR,"bt_log_read_addfield: No more field slots left. Use a higher value in btlog_create()");
-      return -1;
+      return -2;
    }
    
-   logread->data[i].data = data;
-   logread->data[i].type = type;
+   logread->fields[i].data = data;
+   logread->fields[i].type = type;
    switch (type)
    {
       case BT_LOG_INT:
-         logread->data[i].size = num * sizeof(int);
+         logread->fields[i].size = num * sizeof(int);
          break;
       case BT_LOG_LONG:
-         logread->data[i].size = num * sizeof(long int);
+         logread->fields[i].size = num * sizeof(long int);
          break;
       case BT_LOG_LONGLONG:
-         logread->data[i].size = num * sizeof(long long int);
+         logread->fields[i].size = num * sizeof(long long int);
          break;
       case BT_LOG_ULONGLONG:
-         logread->data[i].size = num * sizeof(unsigned long long int);
+         logread->fields[i].size = num * sizeof(unsigned long long int);
          break;
       case BT_LOG_DOUBLE:
-         logread->data[i].size = num * sizeof(double);
+         logread->fields[i].size = num * sizeof(double);
          break;
    }
    
@@ -647,7 +585,8 @@ int bt_log_read_addfield( struct bt_log_read * logread, void * data, int num, en
    return 0;
 }
 
-int bt_log_read_init( struct bt_log_read * logread, char * filename, int header)
+int bt_log_read_init(struct bt_log_read * logread, char * filename,
+                     int header)
 {
    
    if (logread->initialized)
@@ -658,7 +597,7 @@ int bt_log_read_init( struct bt_log_read * logread, char * filename, int header)
    
    if ((logread->file = fopen(filename,"r"))==NULL) {
       syslog(LOG_ERR,"bt_log_read_init: Could not open datalogger file %s",filename);
-      return -1;
+      return -2;
    }
    
    logread->line_length = 0;
@@ -674,7 +613,8 @@ int bt_log_read_init( struct bt_log_read * logread, char * filename, int header)
    return 0;
 }
 
-int bt_log_read_destroy( struct bt_log_read * logread )
+
+int bt_log_read_destroy(struct bt_log_read * logread)
 {
    if (logread->initialized) fclose(logread->file);
    if (logread->line) free(logread->line);
@@ -682,7 +622,8 @@ int bt_log_read_destroy( struct bt_log_read * logread )
    return 0;
 }
 
-int bt_log_read_get( struct bt_log_read * logread, int * record_num_ptr )
+
+int bt_log_read_get(struct bt_log_read * logread, int * record_num_ptr)
 {
    int ret;
    char * field;
@@ -713,7 +654,7 @@ int bt_log_read_get( struct bt_log_read * logread, int * record_num_ptr )
          return -3; /* Shouldn't happen (not enough commas?) */
       
       /* Copy the value */
-      switch (logread->data[i].type)
+      switch (logread->fields[i].type)
       {
          int var_int;
          long int var_long_int;
@@ -722,23 +663,23 @@ int bt_log_read_get( struct bt_log_read * logread, int * record_num_ptr )
          double var_double;
          case BT_LOG_INT:
             var_int = strtol(field,0,0);
-            memcpy( logread->data[i].data, &var_int, sizeof(int) );
+            memcpy( logread->fields[i].data, &var_int, sizeof(int) );
             break;
          case BT_LOG_LONG:
             var_long_int = strtol(field,0,0);
-            memcpy( logread->data[i].data, &var_long_int, sizeof(long int) );
+            memcpy( logread->fields[i].data, &var_long_int, sizeof(long int) );
             break;
          case BT_LOG_LONGLONG:
             var_long_long_int = strtoll(field,0,0);
-            memcpy( logread->data[i].data, &var_long_long_int, sizeof(long long int) );
+            memcpy( logread->fields[i].data, &var_long_long_int, sizeof(long long int) );
             break;
          case BT_LOG_ULONGLONG:
             var_unsigned_long_long_int = strtoull(field,0,0);
-            memcpy( logread->data[i].data, &var_unsigned_long_long_int, sizeof(unsigned long long int) );
+            memcpy( logread->fields[i].data, &var_unsigned_long_long_int, sizeof(unsigned long long int) );
             break;
          case BT_LOG_DOUBLE:
             var_double = strtod(field,0);
-            memcpy( logread->data[i].data, &var_double, sizeof(double) );
+            memcpy( logread->fields[i].data, &var_double, sizeof(double) );
             break;
       }
    }
