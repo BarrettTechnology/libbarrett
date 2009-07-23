@@ -6,10 +6,8 @@ AC_PREFIX_DEFAULT(/usr)
 # Note, these are automake warnings, not compiler ones
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-# Information on the package
 
-### STEP -1: ASYNC ONLY ###
-# defaults to no
+# First, grab input from the user into $with_xxx variables
 AC_ARG_WITH([async-only],
    [AS_HELP_STRING([--with-async-only],[Async Only Support])],
    [],[with_async_only=no])
@@ -20,13 +18,16 @@ AC_ARG_WITH([xenomai],
 AC_ARG_WITH([rtai],
    [AS_HELP_STRING([--with-rtai],[RTAI Real-Time Support])],
    [],[with_rtai=no])
+AC_ARG_WITH([nortsys],
+   [AS_HELP_STRING([--with-nortsys],[No Real-Time System Supported])],
+   [],[with_nortsys=no])
 
-AC_ARG_WITH([wambot_physical],
+AC_ARG_WITH([wambot-physical],
    [AS_HELP_STRING([--with-wambot-physical],[Physical WAM support (Def:yes)])],
    [],[with_wambot_physical=yes])
-AC_ARG_WITH([wambot_simulated],
-   [AS_HELP_STRING([--with-wambot-simulated],[Simulated WAM support (Def:yes)])],
-   [],[with_wambot_simulated=yes])
+AC_ARG_WITH([wambot-simulated],
+   [AS_HELP_STRING([--with-wambot-simulated],[Simulated WAM support (Def:no)])],
+   [],[with_wambot_simulated=no])
    
 AC_ARG_WITH([can-esd],
    [AS_HELP_STRING([--with-can-esd],[ESD CAN (Def:no)])],
@@ -42,8 +43,7 @@ AC_ARG_WITH([can-peak-isa],
 bt_os_cpp=""
 bt_os_ldflags=""
 bt_os_libs=""
-
-bt_bus_cantype="woo2"
+bt_bus_cantype=""
 bt_bus_libs=""
 
 # Make sure the user picks at least one
@@ -88,11 +88,13 @@ AS_IF(
             bt_os_cpp="$bt_os_cpp -D_GNU_SOURCE -DRTSYS_RTAI -I/usr/realtime/include"
             bt_os_libs="$bt_os_libs -L/usr/realtime/lib -llxrt -lpthread"
          ],
+         [test "x$with_nortsys" != xno],
          [
             # No RTSYS Selected
             bt_os_cpp="$bt_os_cpp -D_GNU_SOURCE -DRTSYS_NONE"
             bt_os_libs="-lpthread"
-         ]
+         ],
+         [AC_MSG_FAILURE([one of --with-xenomai, --with-rtai, --with-nortsys, or --with-async-only./ required])]
       )
 
       ### STEP 2: WAMBOT PHYSICAL AND/OR SIMULATION ###
@@ -138,12 +140,10 @@ AS_IF(
 )
 
 
-
 # Do substitutions
 AC_SUBST([BT_OS_CPP],["$bt_os_cpp"])
 AC_SUBST([BT_OS_LDFLAGS],["$bt_os_ldflags"])
 AC_SUBST([BT_OS_LIBS],["$bt_os_libs"])
-
 AC_SUBST([BT_BUS_CANTYPE],["$bt_bus_cantype"])
 AC_SUBST([BT_BUS_LIBS],["$bt_bus_libs"])
 
@@ -152,7 +152,6 @@ AM_CONDITIONAL([BT_WAM_LOCAL],[! test "$with_async_only" = yes])
 AM_CONDITIONAL([BT_WAMBOT_PHYSICAL],[test "$with_wambot_physical" = yes])
 AM_CONDITIONAL([BT_WAMBOT_SIMULATED],[test "$with_wambot_simulated" = yes])
 AM_CONDITIONAL([BT_BUS_ENABLE],[test "$with_wambot_physical" = yes])
-
 
 # Checks for programs
 AC_PROG_CC

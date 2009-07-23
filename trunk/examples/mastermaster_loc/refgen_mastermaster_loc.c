@@ -2,6 +2,7 @@
 #include <fcntl.h> /* To change socket to nonblocking mode */
 #include <arpa/inet.h> /* For inet_aton() */
 
+#include <gsl/gsl_blas.h>
 #include <gsl/gsl_vector.h>
 #include <syslog.h>
 #include "refgen_mastermaster_loc.h"
@@ -31,7 +32,6 @@ const struct bt_refgen_type * refgen_mastermaster_loc = &refgen_mastermaster_loc
 struct refgen_mastermaster_loc * refgen_mastermaster_loc_create(gsl_vector * jpos)
 {
    struct refgen_mastermaster_loc * r;
-   int err;
 
    /* Create */
    r = (struct refgen_mastermaster_loc *) malloc(sizeof(struct refgen_mastermaster_loc));

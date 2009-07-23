@@ -102,7 +102,6 @@ void sigint_handler()
 int main(int argc, char ** argv)
 {
    /* Stuff for starting up the two WAMs */
-   int i;
    struct bt_wam * wam[2];
    struct bt_wam_local * wam_local[2];
    
@@ -139,12 +138,19 @@ int main(int argc, char ** argv)
    
    /* Open the WAM (or WAMs!) */\
    wam[0] = bt_wam_create(argv[1]);
-   wam[1] = bt_wam_create(argv[2]);
    if (!wam[0] || !wam[1])
    {
       endwin();
-      printf("Could not open the WAM.\n");
-      exit(-1);
+      printf("Could not open the WAM %s.\n",argv[1]);
+      return -1;
+   }
+   wam[1] = bt_wam_create(argv[2]);
+   if (!wam[1])
+   {
+      bt_wam_destroy(wam[0]);
+      endwin();
+      printf("Could not open the WAM %s.\n",argv[2]);
+      return -1;
    }
    wam_local[0] = bt_wam_get_local(wam[0]);
    wam_local[1] = bt_wam_get_local(wam[1]);
@@ -154,7 +160,7 @@ int main(int argc, char ** argv)
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
    /*gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.183);*/ /* chuck w/ little haptic ball */
-   /*gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.0); /* old haptic ball */
+   /*gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.0);*/ /* old haptic ball */
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;

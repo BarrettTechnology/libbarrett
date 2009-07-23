@@ -10,7 +10,7 @@
 #include <syslog.h>
 
 #include "refgen_cylinder.h"
-#include "libbt/gsl.h"
+#include "libbarrett/gsl.h"
 
 #define RES (0.001)
 

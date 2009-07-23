@@ -29,6 +29,10 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
+/** \dir src/kinematics
+ * Hello.
+ */
+
 /** \file kinematics.h
  *
  * \section sec_intro Introduction
@@ -72,6 +76,29 @@
  *
  *  - There is one toolplate frame, attached to the robot's end tool plate;
  *    this is assumed to be rigidly attached to the last moving frame.
+ *
+ * \section sec_config Configuration Syntax
+ *
+ * The creation function, bt_kinematics_create(), takes a configuration
+ * argument.  Here is an example configuration, for a 7-DOF WAM:
+\verbatim
+kinematics:
+{
+   # For a 7-DOF WAM
+   moving:
+   (
+      # Note: alpha_pi = alpha / pi
+      { alpha_pi = -0.5; a =      0; d =      0; }, # Base Yaw
+      { alpha_pi =  0.5; a =      0; d =      0; }, # Base Pitch
+      { alpha_pi = -0.5; a = -0.045; d = 0.5500; }, # Twist
+      { alpha_pi =  0.5; a =  0.045; d =      0; }, # Elbow
+      { alpha_pi = -0.5; a =      0; d = 0.3000; }, # Wrist Yaw
+      { alpha_pi =  0.5; a =      0; d =      0; }, # Wrist Pitch
+      { alpha_pi = -0.5; a =      0; d = 0.0609; }  # Wrist Twist
+   );
+   toolplate = { alpha_pi = 0.5; theta_pi = 0; a = 0; d = 0; };
+};
+\endverbatim
  */
 
 #ifndef BT_KINEMATICS_H
@@ -156,17 +183,62 @@ struct bt_kinematics {
 };
 
 
+/** Create a bt_kinematics object from a given configuration.
+ *
+ * This function creates a new kinematics object, reading the DH parameters
+ * and toolplate information from the configuration given by kinconfig.
+ * Currently, the number of moving links (ndofs) is also passed, and the
+ * creating fails if the number of moving links read from the configuration
+ * file does not match the expected number.
+ *
+ * \param[in] kinconfig Kinematics configuration, from libconfig
+ * \param[in] ndofs Expected number of moving links
+ * \return The bt_kinematics object on success, or 0 on failure
+ */
+struct bt_kinematics * bt_kinematics_create(config_setting_t * kinconfig,
+                                            int ndofs);
 
-struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs );
-int bt_kinematics_destroy( struct bt_kinematics * kin );
+/** Destroy a bt_kinematics object.
+ *
+ * This function destroys a bt_kinematics object created by
+ * bt_kinematics_create().
+ *
+ * \param[in] kin bt_kinematics object to destroy
+ * \retval 0 Success
+ */
+int bt_kinematics_destroy(struct bt_kinematics * kin);
 
-/* Evaluate all link transforms, including the toolplate jacobian */
-int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_vector * jvelocity );
 
-/* Evaluate the jacobian, on link jlimit (ndofs for tool), at base-point point
- * NOTE: eval_forward must have already been computed!
- * NOTE: jac should be a 6xN matrix */
-int bt_kinematics_eval_jacobian( struct bt_kinematics * kin,
-   int jlimit, gsl_vector * point, gsl_matrix * jac);
+/** Evaluate all link transforms, including the toolplate jacobian.
+ *
+ * This function is used in a control loop to update all link transform
+ * matrices (and associated matrix and vector views) given a vector
+ * of joint positions and velocities.
+ *
+ * \param[in] kin bt_kinematics object
+ * \param[in] jposition Joint position vector
+ * \paran[in] jvelocity Joint velocity vector
+ * \retval 0 Success
+ */
+int bt_kinematics_eval(struct bt_kinematics * kin, gsl_vector * jposition,
+                       gsl_vector * jvelocity);
+
+
+/** Evalulate the Jacobian matrix at a paticular point on a particular link.
+ *
+ * This function evaluates the Jacobian matrix for a given point on a given
+ * moving link.
+ *
+ * \param[in] kin bt_kinematics object
+ * \param[in] jlimit The number of the moving link on which the point lies,
+ *                   (ndofs for the toolplate)
+ * \param[in] point The point at which the Jacobian should be calculate, in
+ *                  world coordinates
+ * \param[out] jac The Jacobian matrix into which to calculate; it should be
+ *                 an alread-allocated 6-N matrix.
+ * \retval 0 Success
+ */
+int bt_kinematics_eval_jacobian(struct bt_kinematics * kin, int jlimit,
+                                gsl_vector * point, gsl_matrix * jac);
 
 #endif /* BT_KINEMATICS_H */

@@ -30,10 +30,13 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#include <syslog.h>
+#define _GNU_SOURCE /* This is for getline(), strtoll(), and strtoull() */
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#undef _GNU_SOURCE
+
+#include <syslog.h>
 
 #include "log.h"
 
@@ -252,6 +255,7 @@ int bt_log_flush(struct bt_log * log)
    
    /* Make sure some buffer is full, and if so,
     * point buf_full to the full buffer.*/
+   buf_full = 0;
    switch (log->full)
    {
       case BT_LOG_FULL_NONE:

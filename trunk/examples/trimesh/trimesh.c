@@ -121,6 +121,13 @@ int main(int argc, char ** argv)
       SCREEN_MAIN,
       SCREEN_HELP
    } screen;
+
+   /* Check arguments */
+   if (argc != 2)
+   {
+      printf("Usage: %s <wam>\n",argv[0]);
+      return 1;
+   }
    
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -138,7 +145,7 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
    
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create("wam4");
+   wam = bt_wam_create(argv[1]);
    if (!wam)
    {
       endwin();

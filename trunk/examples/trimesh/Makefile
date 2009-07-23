@@ -1,26 +1,14 @@
 ### Makefile for the "trimesh" WAM example program
 
+BIN = trimesh
+OBJ = trimesh.o refgen_trimesh.o
 CC = gcc
 
-#CFLAGS += -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-#CFLAGS += -pedantic-errors -Wall -Werror -Wno-long-long
+CFLAGS += -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+LDFLAGS += -lbarrett -lcurses
 
-default: trimesh
+${BIN} : ${OBJ}
 
-# Link against btos for realtime stuff:
-CFLAGS += -I/usr/local/include
-LDFLAGS += -lbarrett -lgsl -lgslcblas -lconfig -lcurses -ljson
-# Note: we shouldn't need to link against gsl, libconfig!
-
-# OK; Compile stuff:
-
-%.o : %.c
-	${CC} ${CFLAGS} -c $?
-
-# OK; Link stuff:
-
-trimesh : trimesh.o refgen_trimesh.o
-	${CC} trimesh.o refgen_trimesh.o ${LDFLAGS} -o trimesh
-
+.PHONY : clean
 clean:
-	rm -f *~ *.o trimesh
+	rm -f ${OBJ} ${BIN}

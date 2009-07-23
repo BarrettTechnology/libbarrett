@@ -1,11 +1,11 @@
 
+#define _GNU_SOURCE /* For getline() #include <stdio.h>*/
 #include <stdlib.h>
+#include <stdio.h>
+#undef _GNU_SOURCE
 
 #include <string.h>
 #include <math.h>
-
-#define _GNU_SOURCE /* For getline() #include <stdio.h>*/
-#include <stdio.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
@@ -108,7 +108,7 @@ struct refgen_trimesh * refgen_trimesh_create(char * filename,gsl_vector * cpos)
    struct refgen_trimesh * r;
    FILE * fp;
    char * line;
-   int line_len;
+   unsigned int line_len;
    int i, j;
    enum STATE {
       STATE_PREPOINTS,
@@ -577,16 +577,15 @@ static int start(struct bt_refgen * base)
    struct refgen_trimesh * r = (struct refgen_trimesh *) base;
    r->cur = r->triangles[0];
    gsl_vector_set_zero(r->pos);
+   return 0;
 }
 
 static int eval(struct bt_refgen * base, gsl_vector * ref)
 {
    int i;
-   double left, right;
    double error;
    double new_left_error, new_right_error;
    double radius;
-   double rad;
    struct refgen_trimesh * r = (struct refgen_trimesh *) base;
    /* We have r->cpos, the current position */
    

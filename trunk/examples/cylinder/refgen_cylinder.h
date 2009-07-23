@@ -1,7 +1,7 @@
 /* This is a custom refgen that traces a two-dimensional
  * surface with cylindrical symmetry. */
 
-#include <libbt/refgen.h>
+#include <libbarrett/refgen.h>
 
 #include <gsl/gsl_interp.h>
 

@@ -5,7 +5,7 @@ OBJ = ex2-gcomp.o
 CC = gcc
 
 CFLAGS += -std=c89 -pedantic-errors -Wall -Werror
-LDFLAGS += -lbarrett -lgsl -lgslcblas -lconfig -lncurses
+LDFLAGS += -lbarrett -lncurses
 
 ${BIN} : ${OBJ}
 

@@ -18,9 +18,17 @@
 # The library to make 
 lib_LTLIBRARIES = src/libbarrett.la
 
+# Library dependencies
+if BT_WAM_LOCAL
+libbarrett_lib_deps = -lgsl -lgslcblas -lconfig
+else
+libbarrett_lib_deps =
+endif
+
 # All the libraries to not be installed ...
-src_libbarrett_la_SOURCES =
-src_libbarrett_la_LIBADD =
+src_libbarrett_la_SOURCES = 
+src_libbarrett_la_LIBADD = $(libbarrett_lib_deps)
+
 noinst_LTLIBRARIES =
 pkginclude_HEADERS =
 
@@ -431,10 +439,6 @@ bin_PROGRAMS = programs/bt-wam-demo/bt-wam-demo \
                programs/bt-wam-gw/bt-wam-gw \
                programs/bt-wam-list/bt-wam-list
 
-if BT_WAM_LOCAL
-bin_PROGRAMS += programs/bt-wam-calibrate/bt-wam-calibrate
-endif
-
 # It sucks that I have to include all of this crap ...
 programs_bt_wam_calibrate_bt_wam_calibrate_SOURCES = programs/bt-wam-calibrate/bt-wam-calibrate.c
 programs_bt_wam_calibrate_bt_wam_calibrate_CPPFLAGS = -Isrc/gsl \
@@ -451,34 +455,21 @@ programs_bt_wam_calibrate_bt_wam_calibrate_CPPFLAGS = -Isrc/gsl \
                                                       -Isrc/profile \
                                                       -Isrc/rpc \
                                                       -Isrc/wam
-# Damn variadic macros!
-programs_bt_wam_calibrate_bt_wam_calibrate_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-programs_bt_wam_calibrate_bt_wam_calibrate_LDADD = src/libbarrett.la -lcurses
-programs_bt_wam_calibrate_bt_wam_calibrate_LDADD += -lgsl -lgslcblas -lconfig
-
+                                                      
 programs_bt_wam_demo_bt_wam_demo_SOURCES = programs/bt-wam-demo/bt-wam-demo.c
 programs_bt_wam_demo_bt_wam_demo_CPPFLAGS = -Isrc/wam
 programs_bt_wam_demo_bt_wam_demo_CFLAGS = -std=gnu89 -pedantic-errors -Wall -Werror -Wno-long-long
-programs_bt_wam_demo_bt_wam_demo_LDADD = src/libbarrett.la -lcurses
-if BT_WAM_LOCAL
-programs_bt_wam_demo_bt_wam_demo_LDADD += -lgsl -lgslcblas -lconfig
-endif
+programs_bt_wam_demo_bt_wam_demo_LDADD = src/libbarrett.la -lcurses $(libbarrett_lib_deps)
 
 programs_bt_wam_gw_bt_wam_gw_SOURCES = programs/bt-wam-gw/bt-wam-gw.c
 programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/rpc -Isrc/wam -Isrc/file
 programs_bt_wam_gw_bt_wam_gw_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la
-if BT_WAM_LOCAL
-programs_bt_wam_gw_bt_wam_gw_LDADD += -lgsl -lgslcblas -lconfig
-endif
+programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la $(libbarrett_lib_deps)
 
 programs_bt_wam_list_bt_wam_list_SOURCES = programs/bt-wam-list/bt-wam-list.c
 programs_bt_wam_list_bt_wam_list_CPPFLAGS = -Isrc/wam
 programs_bt_wam_list_bt_wam_list_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-programs_bt_wam_list_bt_wam_list_LDADD = src/libbarrett.la
-if BT_WAM_LOCAL
-programs_bt_wam_list_bt_wam_list_LDADD += -lgsl -lgslcblas -lconfig
-endif
+programs_bt_wam_list_bt_wam_list_LDADD = src/libbarrett.la $(libbarrett_lib_deps)
 
 dist_bin_SCRIPTS = programs/bt-wam-py-demo/bt-wam-py-demo
 
@@ -486,12 +477,17 @@ dist_bin_SCRIPTS = programs/bt-wam-py-demo/bt-wam-py-demo
 
 if BT_WAM_LOCAL
 
-bin_PROGRAMS += programs/bt-bus-util/bt-bus-util
+bin_PROGRAMS += programs/bt-wam-calibrate/bt-wam-calibrate \
+                programs/bt-bus-util/bt-bus-util
+
+# Damn variadic macros!
+programs_bt_wam_calibrate_bt_wam_calibrate_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
+programs_bt_wam_calibrate_bt_wam_calibrate_LDADD = src/libbarrett.la -lcurses $(libbarrett_lib_deps)
 
 programs_bt_bus_util_bt_bus_util_SOURCES = programs/bt-bus-util/bt-bus-util.c
 programs_bt_bus_util_bt_bus_util_CPPFLAGS = -Isrc/bus -Isrc/os
 programs_bt_bus_util_bt_bus_util_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-programs_bt_bus_util_bt_bus_util_LDADD = src/libbarrett.la -lcurses -lgsl -lgslcblas -lconfig
+programs_bt_bus_util_bt_bus_util_LDADD = src/libbarrett.la -lcurses $(libbarrett_lib_deps)
 
 endif
 

@@ -27,11 +27,11 @@
 /* Package Dependencies */
 #include <curses.h>
 #include <syslog.h>
-#include <libconfig.h>
 
 /* Include the high-level WAM header file */
-#include <libbt/wam.h>
-#include <libbt/gsl.h>
+#include <libbarrett/gsl.h>
+#include <libbarrett/wam.h>
+#include <libbarrett/wam_local.h>
 
 /* Our own, custom refgen! */
 #include "refgen_cylinder.h"
@@ -106,12 +106,10 @@ void sigint_handler()
 
 /* Program entry point */
 int main(int argc, char ** argv)
-{
-   int err;
-   
+{   
    /* Stuff for starting up the WAM */
-   struct config_t cfg;
    struct bt_wam * wam;
+   struct bt_wam_local * wam_local;
    
    /* My refgen_cylinder */
    struct refgen_cylinder * cyl = 0;
@@ -121,6 +119,13 @@ int main(int argc, char ** argv)
       SCREEN_MAIN,
       SCREEN_HELP
    } screen;
+
+   /* Check arguments */
+   if (argc != 2)
+   {
+      printf("Usage: %s <wam>\n",argv[0]);
+      return 1;
+   }
    
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -135,24 +140,18 @@ int main(int argc, char ** argv)
    timeout(0);
    clear();
    
-   /* Look for (-q) or (-ns) flags?? */
-   
-   /* Open the config file */
-   config_init(&cfg);
-   err = config_read_file(&cfg,"../wam.config");
-   if (err != CONFIG_TRUE)
-   {
-      syslog(LOG_ERR,"libconfig error: %s, line %d\n",
-             config_error_text(&cfg), config_error_line(&cfg));
-      exit(-1);
-   }
-   
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create(config_lookup(&cfg,"wam"));
+   wam = bt_wam_create(argv[1]);
    if (!wam)
    {
       printf("Could not open the WAM.\n");
-      exit(-1);
+      return -1;
+   }
+   wam_local = bt_wam_get_local(wam);
+   if (!wam_local)
+   {
+      printf("You must open a local wam.\n");
+      return -2;
    }
    
    /* Make my "surface" refgen */
@@ -160,7 +159,7 @@ int main(int argc, char ** argv)
    
    /* Manually set the tool kinematics info
     * (eventually this should come from a config file) */
-   gsl_matrix_set(wam->kin->tool->trans_to_prev, 2,3, 0.183); /* chuck w/ little haptic ball */
+   gsl_matrix_set(wam_local->kin->tool->trans_to_prev, 2,3, 0.183); /* chuck w/ little haptic ball */
    
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
@@ -190,7 +189,7 @@ int main(int argc, char ** argv)
             line++;
 
             /* Show controller name (joint space, cartesian space) */
-            mvprintw(line++, 0, " Controller: %s", wam->con_active->type->name );
+            mvprintw(line++, 0, " Controller: %s", wam_local->con_active->type->name );
 
             /* Show GRAVTIY COMPENSATION */
             mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
@@ -198,7 +197,7 @@ int main(int argc, char ** argv)
             /* Show HOLDING */
             mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
             
-            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam) );
+            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
             
             mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             
@@ -222,21 +221,21 @@ int main(int argc, char ** argv)
             /* Show NAME */
             
             /* Show JOINT POSTITION + TORQUE */
-            mvprintw(line++, 0, "J Position : %s", bt_gsl_vector_sprintf(buf,wam->jposition) );
-            mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam->jvelocity) );
-            mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam->jtorque) );
+            mvprintw(line++, 0, "J Position : %s", bt_gsl_vector_sprintf(buf,wam_local->jposition) );
+            mvprintw(line++, 0, "J Velocity : %s", bt_gsl_vector_sprintf(buf,wam_local->jvelocity) );
+            mvprintw(line++, 0, "J Torque   : %s", bt_gsl_vector_sprintf(buf,wam_local->jtorque) );
             line++;
 
             /* Show CARTESION POSITION, ROTATION */
-            mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam->cposition) );
-            mvprintw(line++, 0, "C Velocity : %s", bt_gsl_vector_sprintf(buf,wam->cvelocity) );
+            mvprintw(line++, 0, "C Position : %s", bt_gsl_vector_sprintf(buf,wam_local->cposition) );
+            mvprintw(line++, 0, "C Velocity : %s", bt_gsl_vector_sprintf(buf,wam_local->cvelocity) );
             mvprintw(line,   0, "C Rotation :");
             {
                int i;
                gsl_vector_view view;
                for (i=0; i<3; i++)
                {
-                  view = gsl_matrix_row(wam->crotation,i);
+                  view = gsl_matrix_row(wam_local->crotation,i);
                   mvprintw(line++, 13, "%s", bt_gsl_vector_sprintf(buf,&view.vector));
                }
             }
@@ -288,26 +287,26 @@ int main(int argc, char ** argv)
          /* cyl refgen stuff */
          case 't': /* top of the cylinder */
             /* Make the cyl refgen if it doesn't exist */
-            if (!cyl) cyl = refgen_cylinder_create(wam->cposition);
+            if (!cyl) cyl = refgen_cylinder_create(wam_local->cposition);
             refgen_cylinder_set_top(cyl);
             break;
          case 'b': /* bottom of the cylinder */
             /* Make the cyl refgen if it doesn't exist */
-            if (!cyl) cyl = refgen_cylinder_create(wam->cposition);
+            if (!cyl) cyl = refgen_cylinder_create(wam_local->cposition);
             refgen_cylinder_set_bottom(cyl);
             break;
          case 'R': /* record the radius function of height */
             if (!cyl) break;
-            bt_wam_teach_start_custom(wam,(struct bt_refgen *)cyl);
+            bt_wam_local_teach_start_custom(wam_local,(struct bt_refgen *)cyl);
             break;
          case 'r': /* end record */
             if (!cyl) break;
-            bt_wam_teach_end_custom(wam);
+            bt_wam_local_teach_end_custom(wam_local);
             refgen_cylinder_init(cyl);
             break;
          case 'u': /* Use our surface refgen! */
             if (!cyl) break;
-            bt_wam_refgen_use(wam,(struct bt_refgen *)cyl);
+            bt_wam_local_refgen_use(wam_local,(struct bt_refgen *)cyl);
             break;
          case 'd': /* Discard */
             if (!cyl) break;
@@ -325,9 +324,6 @@ int main(int argc, char ** argv)
    
    /* Close the WAM */
    bt_wam_destroy(wam);
-   
-   /* Deallocate the configuration */
-   config_destroy(&cfg);
    
    /* Close ncurses */
    endwin();

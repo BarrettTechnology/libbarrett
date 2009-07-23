@@ -109,7 +109,7 @@ struct control_draw * control_draw_create(config_setting_t * config,
                 || (config_setting_length(pids) != 3) )
       {
          syslog(LOG_ERR,"%s: The 'pids' configuration is not a 3-element group.",__func__);
-         bt_control_cartesian_xyz_destroy(c);
+         control_draw_destroy(c);
          return 0;
       }
       /* Read in the PID values */
@@ -124,7 +124,7 @@ struct control_draw * control_draw_create(config_setting_t * config,
              || bt_gsl_config_get_double(config_setting_get_member( pid_grp, "d" ), &d))
          {
             syslog(LOG_ERR,"%s: No p, i, and/or d value",__func__);
-            bt_control_cartesian_xyz_destroy(c);
+            control_draw_destroy(c);
             return 0;
          }
          

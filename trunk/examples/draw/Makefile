@@ -1,7 +1,7 @@
-### Makefile for the "mastermaster_loc" WAM example program
+### Makefile for the "draw" WAM example program
 
-BIN = mastermaster_loc
-OBJ = mastermaster_loc.o refgen_mastermaster_loc.o
+BIN = draw
+OBJ = draw.o control_draw.o
 CC = gcc
 
 CFLAGS += -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long

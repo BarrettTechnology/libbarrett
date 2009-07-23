@@ -1,9 +1,17 @@
+#include <math.h> /* for fabs() */
+
+#include <unistd.h> /* for close() */
+
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
-#include <arpa/inet.h>  /* For inet_aton() */
+#include <arpa/inet.h>  /* For inet_pton() */
 
+#include <gsl/gsl_blas.h>
 #include <gsl/gsl_vector.h>
 #include <syslog.h>
+
+#include <libbarrett/gsl.h>
+
 #include "refgen_mastermaster.h"
 
 #define PORT (5555)
@@ -38,7 +46,7 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost,
    int err;
    long flags;
    int buflen;
-   int buflenlen;
+   unsigned int buflenlen;
    struct sockaddr_in bind_addr;
    struct sockaddr_in their_addr;
 
@@ -197,7 +205,7 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost,
    /* Set up the other guy's address */
    their_addr.sin_family = AF_INET;
    their_addr.sin_port = htons(PORT);
-   err = ! inet_aton(sendtohost, &their_addr.sin_addr);
+   err = ! inet_pton(AF_INET, sendtohost, &their_addr.sin_addr);
    if (err)
    {
       syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,sendtohost);
@@ -220,11 +228,11 @@ struct refgen_mastermaster * refgen_mastermaster_create(char * sendtohost,
 int refgen_mastermaster_set_power(struct refgen_mastermaster * r, double power)
 {
    r->power = power;
+   return 0;
 }
 
 static int destroy(struct bt_refgen * base)
 {
-   int i;
    struct refgen_mastermaster * r = (struct refgen_mastermaster *) base;
    
    if (r->sock != -1) close(r->sock);
@@ -262,7 +270,6 @@ static int start(struct bt_refgen * base)
 
 static int eval(struct bt_refgen * base, gsl_vector * ref)
 {
-   int alllocked;
    int i;
    struct refgen_mastermaster * r = (struct refgen_mastermaster *) base;
    

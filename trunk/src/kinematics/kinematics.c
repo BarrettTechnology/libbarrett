@@ -1,47 +1,53 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... kinematics.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... Feb 18, 2005
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2005-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_kinematics, a simple forward kinematics library for
+ *  single-chain revolute robots.
  *
- *  NOTES:
- *
- *  REVISION HISTORY:
- *    2005 Nov 07 - TH
- *      Minimal documentation in place.
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
- *
- * ======================================================================== */
+ * \file kinematics.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
 
-/* Read config files for the wam stuff */
-#include <libconfig.h>
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
+#include <math.h> /* For sin(), cos() */
 #include <syslog.h>
 
-/* For fast matrix multiplication */
-#include <gsl/gsl_blas.h>
-
-/* For M_PI */
-#include <gsl/gsl_math.h>
-
+#include <libconfig.h>
+#include <gsl/gsl_blas.h> /* For fast matrix multiplication */
+#include <gsl/gsl_math.h> /* For M_PI */
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
 #include "kinematics.h"
-
 #include "gsl.h"
 
-#include <math.h> /* For sin(), cos() */
 
-/* Local function definitions */
+/** Evaluate the link's to_prev transform matrix, given link->theta */
 static int eval_trans_to_prev( struct bt_kinematics_link * link );
+
+/** Evaluate the link's to_world transform matrix, given updated to_prev */
 static int eval_trans_to_world( struct bt_kinematics_link * link );
+
 
 struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs )
 {
@@ -413,6 +419,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    return kin;
 }
 
+
 int bt_kinematics_destroy( struct bt_kinematics * kin )
 {
    int i;
@@ -464,6 +471,7 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
    return 0;
 }
 
+
 int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_vector * jvelocity )
 {
    int j;
@@ -507,8 +515,9 @@ int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_
    return 0;
 }
 
-int bt_kinematics_eval_jacobian( struct bt_kinematics * kin,
-   int jlimit, gsl_vector * point, gsl_matrix * jac)
+
+int bt_kinematics_eval_jacobian(struct bt_kinematics * kin, int jlimit,
+                                gsl_vector * point, gsl_matrix * jac)
 {
 
    int j;
@@ -542,8 +551,7 @@ int bt_kinematics_eval_jacobian( struct bt_kinematics * kin,
    return 0;
 }
 
-/* Forward Kinematics - Homogeneous Transform Matrix A
- * (Spong p. 61) */
+
 static int eval_trans_to_prev( struct bt_kinematics_link * link )
 {   
    /* Right now this is only for revolute joints */
@@ -565,7 +573,7 @@ static int eval_trans_to_prev( struct bt_kinematics_link * link )
    return 0;
 }
 
-/* Note - assume this isn't the world link */
+
 static int eval_trans_to_world( struct bt_kinematics_link * link )
 {   
    /* Matrix Multiply */

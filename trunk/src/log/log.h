@@ -187,8 +187,7 @@ struct bt_log_read
  * example.
  *
  * \param[in] num_fields The number of fields to allocate
- * \return The bt_log object (on success)
- * \return 0 (on failure)
+ * \return The bt_log object on success, or 0 on failure
  */
 struct bt_log * bt_log_create(unsigned int num_fields);
 
