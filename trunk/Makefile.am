@@ -463,10 +463,69 @@ endif
 
 ##############################################
 
-# Some more rules
-include pkg/debian.mk
+# Configuration files
+etcwamdir = $(sysconfdir)/wam
+etcwamsamplesdir = $(etcwamdir)/samples
+dist_etcwamsamples_DATA = config/wam4.config \
+                          config/wam7.config \
+                          config/wamg.config
+
+# Examples
+# Note - an easy way to generate this list is with
+#        find examples/ | sort | xargs -n 1 -I {} echo "   {} \\"
+nobase_dist_pkgdata_DATA = \
+   examples/Makefile \
+   examples/README \
+   examples/cylinder/Makefile \
+   examples/cylinder/cylinder.c \
+   examples/cylinder/refgen_cylinder.c \
+   examples/cylinder/refgen_cylinder.h \
+   examples/draw/Makefile \
+   examples/draw/control_draw.c \
+   examples/draw/control_draw.h \
+   examples/draw/draw.c \
+   examples/draw/draw.config \
+   examples/draw2d/Makefile \
+   examples/draw2d/control_draw2d.c \
+   examples/draw2d/control_draw2d.h \
+   examples/draw2d/draw2d.c \
+   examples/draw2d/draw2d.config \
+   examples/draw2dq/Makefile \
+   examples/draw2dq/control_draw2dq.c \
+   examples/draw2dq/control_draw2dq.h \
+   examples/draw2dq/draw2dq.c \
+   examples/draw2dq/draw2dq.config \
+   examples/ex1-jointposition/Makefile \
+   examples/ex1-jointposition/ex1-jointposition.c \
+   examples/ex2-gcomp/Makefile \
+   examples/ex2-gcomp/ex2-gcomp.c \
+   examples/mastermaster/Makefile \
+   examples/mastermaster/mastermaster.c \
+   examples/mastermaster/refgen_mastermaster.c \
+   examples/mastermaster/refgen_mastermaster.h \
+   examples/mastermaster_loc/Makefile \
+   examples/mastermaster_loc/mastermaster_loc.c \
+   examples/mastermaster_loc/refgen_mastermaster_loc.c \
+   examples/mastermaster_loc/refgen_mastermaster_loc.h \
+   examples/trimesh/Makefile \
+   examples/trimesh/bigcyl.wrl \
+   examples/trimesh/cylinder.wrl \
+   examples/trimesh/refgen_trimesh.c \
+   examples/trimesh/refgen_trimesh.h \
+   examples/trimesh/tetra.wrl \
+   examples/trimesh/trimesh.c
 
 ##############################################
 
-# Also, make the bindings
-SUBDIRS = . bindings/python
+# Some more rules
+include pkg/debian.mk
+
+# Make the bindings
+
+pyexec_LTLIBRARIES = bindings/python/libbarrett.la
+bindings_python_libbarrett_la_SOURCES = bindings/python/libbarrett.c
+bindings_python_libbarrett_la_LDFLAGS = -avoid-version -module
+bindings_python_libbarrett_la_CPPFLAGS = -I@BT_PYINCDIR@ \
+                                         -Isrc/wam \
+                                         -Isrc/discover \
+                                         -Isrc/file

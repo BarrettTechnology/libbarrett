@@ -1,8 +1,6 @@
 AC_INIT([libbarrett], [0.1], [cd@barrett.com])
 AC_CONFIG_HEADERS([config.h])
 
-AC_PREFIX_DEFAULT(/usr)
-
 # Note, these are automake warnings, not compiler ones
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -138,6 +136,13 @@ AS_IF(
       )
    ]
 )
+
+# Check Python
+AM_PATH_PYTHON([2.4])
+AC_MSG_CHECKING([for Python include directory])
+pyincdir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_inc()" 2>/dev/null`
+AC_MSG_RESULT([$pyincdir])
+AC_SUBST([BT_PYINCDIR],["$pyincdir"])
 
 
 # Do substitutions
