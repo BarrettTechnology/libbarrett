@@ -405,36 +405,6 @@ endif
 
 ##############################################
 
-# Also, make the legacy stuff
-
-if BT_WAM_LOCAL
-
-lib_LTLIBRARIES += legacy/libbtlegacy.la
-
-pkginclude_HEADERS += legacy/wam/wam_legacy.h
-
-legacy_libbtlegacy_la_CPPFLAGS = -Isrc/gsl \
-                                 -Isrc/os \
-                                 -Isrc/bus \
-                                 -Isrc/wambot \
-                                 -Isrc/kinematics \
-                                 -Isrc/dynamics \
-                                 -Isrc/gravity \
-                                 -Isrc/refgen \
-                                 -Isrc/log \
-                                 -Isrc/control \
-                                 -Isrc/spline \
-                                 -Isrc/profile \
-                                 -Isrc/rpc \
-                                 -Isrc/wam
-# Damn variadic macros ...
-legacy_libbtlegacy_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-legacy_libbtlegacy_la_SOURCES = legacy/wam/wam_legacy.c
-
-endif
-
-##############################################
-
 bin_PROGRAMS = programs/bt-wam-demo/bt-wam-demo \
                programs/bt-wam-gw/bt-wam-gw \
                programs/bt-wam-list/bt-wam-list
