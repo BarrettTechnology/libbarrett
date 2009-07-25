@@ -470,9 +470,10 @@ dist_etcwamsamples_DATA = config/wam4.config \
                           config/wam7.config \
                           config/wamg.config
 
-# Examples
+# Examples, usually installed to /usr/share/libbarrett
+# or /usr/local/share/libbarrett;
 # Note - an easy way to generate this list is with
-#        find examples/ | sort | xargs -n 1 -I {} echo "   {} \\"
+#        find examples/ -type f | sort | xargs -n 1 -I {} echo "   {} \\"
 nobase_dist_pkgdata_DATA = \
    examples/Makefile \
    examples/README \
@@ -495,6 +496,8 @@ nobase_dist_pkgdata_DATA = \
    examples/draw2dq/control_draw2dq.h \
    examples/draw2dq/draw2dq.c \
    examples/draw2dq/draw2dq.config \
+   examples/example-cpp/Makefile \
+   examples/example-cpp/example-cpp.cpp \
    examples/ex1-jointposition/Makefile \
    examples/ex1-jointposition/ex1-jointposition.c \
    examples/ex2-gcomp/Makefile \
@@ -529,3 +532,4 @@ bindings_python_libbarrett_la_CPPFLAGS = -I@BT_PYINCDIR@ \
                                          -Isrc/wam \
                                          -Isrc/discover \
                                          -Isrc/file
+bindings_python_libbarrett_la_LIBADD = -lbarrett

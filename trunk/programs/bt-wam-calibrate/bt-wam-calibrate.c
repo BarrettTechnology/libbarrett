@@ -251,7 +251,7 @@ static void magenc_thd_function(struct bt_os_thread * thread)
       mz_counts[i] = (int)cts;
    }
    
-   while (!bt_os_thread_done(thread))
+   while (!bt_os_thread_isdone(thread))
    {
 
       long reply;
@@ -269,6 +269,8 @@ static void magenc_thd_function(struct bt_os_thread * thread)
       bt_os_usleep(100000);
    }
 
+   bt_os_thread_exit(thread);
+   
    return;
 }
 

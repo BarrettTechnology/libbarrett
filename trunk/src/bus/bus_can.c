@@ -81,7 +81,7 @@ static int compile_msg(int property, long longVal, unsigned char *data, int *dat
 struct bt_bus_can_device
 {
    HANDLE handle;
-   bt_os_mutex * mutex;
+   struct bt_os_mutex * mutex;
    int iterator;
 };
 

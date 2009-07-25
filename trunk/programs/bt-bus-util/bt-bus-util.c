@@ -120,7 +120,7 @@ void bus_thread_func(struct bt_os_thread * thd)
    setup_err = 0;
    setup_done = 1;
    
-   while (!bt_os_thread_done(thd))
+   while (!bt_os_thread_isdone(thd))
    {
       bt_os_usleep(100000);
    }

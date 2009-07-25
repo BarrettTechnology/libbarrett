@@ -30,6 +30,9 @@
 
 #ifndef BT_WAMBOT_PHYS_H
 #define BT_WAMBOT_PHYS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
@@ -80,4 +83,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config );
  */
 int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot );
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_WAMBOT_PHYS_H */

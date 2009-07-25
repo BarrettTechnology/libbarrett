@@ -30,6 +30,9 @@
 
 #ifndef BT_WAMBOT_SIM_H
 #define BT_WAMBOT_SIM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <libconfig.h>
 #include <gsl/gsl_vector.h>
@@ -91,4 +94,7 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config );
  */
 int bt_wambot_sim_destroy( struct bt_wambot_sim * wambot );
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_WAMBOT_SIM_H */

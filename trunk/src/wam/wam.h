@@ -22,6 +22,9 @@
 
 #ifndef BT_WAM_H
 #define BT_WAM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* We also use gsl as an interface language.  Maybe change this to
  * arrays of doubles? */
@@ -114,5 +117,8 @@ int bt_wam_teach_start(struct bt_wam * wam);
 int bt_wam_teach_end(struct bt_wam * wam);
 int bt_wam_playback(struct bt_wam * wam);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_WAM_H */
 

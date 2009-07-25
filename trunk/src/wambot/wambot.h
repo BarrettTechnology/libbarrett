@@ -32,6 +32,9 @@
 
 #ifndef BT_WAMBOT_H
 #define BT_WAMBOT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <gsl/gsl_vector.h>
 
@@ -78,4 +81,7 @@ struct bt_wambot
    int (*setjtor)( struct bt_wambot * wambot );
 };
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_WAMBOT_H */

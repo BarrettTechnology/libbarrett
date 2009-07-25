@@ -33,6 +33,9 @@
 
 #ifndef BT_PROFILE_H
 #define BT_PROFILE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_interp.h>
@@ -69,4 +72,7 @@ int bt_profile_destroy( struct bt_profile * profile );
 /** Function to get the distance s at a given time t from a bt_profile */
 int bt_profile_get( struct bt_profile * profile, double * s, double t );
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_PROFILE_H */

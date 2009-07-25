@@ -101,6 +101,9 @@
 
 #ifndef BT_LOG_H
 #define BT_LOG_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h> /* For FILE */
 
@@ -348,4 +351,7 @@ int bt_log_read_destroy(struct bt_log_read * logread);
  */
 int bt_log_read_get(struct bt_log_read * logread, int * record_num_ptr);
 
+#ifdef __cplusplus
+}
+#endif
 #endif/* BT_LOG_H */

@@ -811,11 +811,11 @@ static void rt_wam(struct bt_os_thread * thread)
     * and the create() function will return. */
    
    /* OK, start the control loop ... */
-   bt_os_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
+   bt_os_rt_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
    /* CHECK RETURN VALUE */
    
    /* Loop until we're told by destroy() to exit */
-   while (!bt_os_thread_done(thread))
+   while (!bt_os_thread_isdone(thread))
    {
       double time;
       
@@ -1093,7 +1093,7 @@ static void nonrt_thread_function(struct bt_os_thread * thread)
 {
    struct bt_wam_local * wam = (struct bt_wam_local *) thread->data;
    
-   while (!bt_os_thread_done(thread))
+   while (!bt_os_thread_isdone(thread))
    {
       if (wam->log)
       {

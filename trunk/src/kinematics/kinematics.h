@@ -29,10 +29,6 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-/** \dir src/kinematics
- * Hello.
- */
-
 /** \file kinematics.h
  *
  * \section sec_intro Introduction
@@ -103,6 +99,9 @@ kinematics:
 
 #ifndef BT_KINEMATICS_H
 #define BT_KINEMATICS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <libconfig.h>
 #include <gsl/gsl_vector.h>
@@ -241,4 +240,7 @@ int bt_kinematics_eval(struct bt_kinematics * kin, gsl_vector * jposition,
 int bt_kinematics_eval_jacobian(struct bt_kinematics * kin, int jlimit,
                                 gsl_vector * point, gsl_matrix * jac);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_KINEMATICS_H */
