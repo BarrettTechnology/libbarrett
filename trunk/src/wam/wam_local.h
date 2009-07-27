@@ -29,7 +29,7 @@
 #include "log.h"
 #include "kinematics.h"
 #include "dynamics.h"
-#include "gravity.h"
+#include "calgrav.h"
 #include "refgen.h"
 #include "refgen_move.h"
 #include "refgen_teachplay.h"
@@ -83,7 +83,7 @@ struct bt_wam_local
    struct bt_wambot * wambot; /* wambot has dof */
    struct bt_kinematics * kin;
    struct bt_dynamics * dyn;
-   struct bt_gravity * grav;
+   struct bt_calgrav * grav;
    struct bt_log * log; /* woo datalogger! */
    struct bt_log * ts_log; /* logger for timing statistics */
 

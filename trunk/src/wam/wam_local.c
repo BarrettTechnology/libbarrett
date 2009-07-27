@@ -887,7 +887,7 @@ static void rt_wam(struct bt_os_thread * thread)
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
  
       /* Do gravity compensation (if flagged) */
-      if (wam->gcomp) bt_gravity_eval( wam->grav, wam->wambot->jtorque );
+      if (wam->gcomp) bt_calgrav_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
 
       /* Apply the current joint torques */
@@ -961,7 +961,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
    
    /* Create a gravity object */
-   wam->grav = bt_gravity_create( config_setting_get_member(wamconfig,"gravity"), wam->kin );
+   wam->grav = bt_calgrav_create( config_setting_get_member(wamconfig,"calgrav"), wam->kin );
    if (!wam->grav)
    {
       syslog(LOG_ERR,"%s: Could not create gravity compensation.",__func__);
@@ -1080,7 +1080,7 @@ static void rt_wam_destroy(struct bt_wam_local * wam)
    if (wam->log)
       bt_log_destroy(wam->log);
    if (wam->grav)
-      bt_gravity_destroy(wam->grav);
+      bt_calgrav_destroy(wam->grav);
    if (wam->dyn)
       bt_dynamics_destroy(wam->dyn);
    if (wam->kin)

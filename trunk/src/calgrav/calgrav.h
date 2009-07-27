@@ -14,8 +14,8 @@
  *
  * ======================================================================== */
 
-#ifndef BT_GRAVITY_H
-#define BT_GRAVITY_H
+#ifndef BT_CALGRAV_H
+#define BT_CALGRAV_H
 
 #include "kinematics.h"
 
@@ -25,7 +25,7 @@
 /* gravity compensation
  * only needs a couple of additional
  * parameters in each link*/
-struct bt_gravity {
+struct bt_calgrav {
 
    /* We need to know about each link's kinematics */
    struct bt_kinematics * kin;
@@ -39,9 +39,9 @@ struct bt_gravity {
    
 };
 
-struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_kinematics * kin );
-int bt_gravity_destroy( struct bt_gravity * grav );
+struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_kinematics * kin );
+int bt_calgrav_destroy( struct bt_calgrav * grav );
 
-int bt_gravity_eval( struct bt_gravity * grav, gsl_vector * jtorque );
+int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque );
 
-#endif /* BT_GRAVITY_H */
+#endif /* BT_CALGRAV_H */

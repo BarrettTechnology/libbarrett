@@ -24,21 +24,21 @@
 #include <gsl/gsl_blas.h>
 
 #include "kinematics.h"
-#include "gravity.h"
+#include "calgrav.h"
 #include "gsl.h"
 
 #define PI (3.141592653589793238462643383)
 
-struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_kinematics * kin )
+struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_kinematics * kin )
 {
    int j;
    config_setting_t * mus;
-   struct bt_gravity * grav;
+   struct bt_calgrav * grav;
    
    /* Check arguments */
    if (gravconfig == 0) return 0;
    
-   grav = (struct bt_gravity *) malloc(sizeof(struct bt_gravity));
+   grav = (struct bt_calgrav *) malloc(sizeof(struct bt_calgrav));
    if (!grav)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
@@ -58,7 +58,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    if (!grav->world_g)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    gsl_vector_set( grav->world_g, 2, -9.805 );
@@ -68,7 +68,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    if (!grav->g)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    for (j=0; j<kin->dof; j++) grav->g[j] = 0;
@@ -77,7 +77,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    if (!grav->mu)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    for (j=0; j<kin->dof; j++) grav->mu[j] = 0;
@@ -86,7 +86,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    if (!grav->t)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    for (j=0; j<kin->dof; j++) grav->t[j] = 0;
@@ -95,7 +95,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    if (!grav->pt)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    for (j=0; j<kin->dof; j++) grav->pt[j] = 0;
@@ -106,7 +106,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
        ||  (config_setting_length(mus) != kin->dof)
    ) {
       syslog(LOG_ERR,"%s: grav:mus not a list with %d elements.",__func__,kin->dof);
-      bt_gravity_destroy(grav);
+      bt_calgrav_destroy(grav);
       return 0;
    }
    
@@ -128,7 +128,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
           || !grav->pt[j]
       ) {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
-         bt_gravity_destroy(grav);
+         bt_calgrav_destroy(grav);
          return 0;
       }
       
@@ -138,7 +138,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
           || (config_setting_length(mu) != 3)
       ) {
          syslog(LOG_ERR,"%s: grav:mu #%d not a 3-element list.",__func__,j);
-         bt_gravity_destroy(grav);
+         bt_calgrav_destroy(grav);
          return 0;
       }
       
@@ -156,7 +156,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
                break;
             default:
                syslog(LOG_ERR,"%s: that's not a number!",__func__);
-               bt_gravity_destroy(grav);
+               bt_calgrav_destroy(grav);
                return 0;
          }
       }
@@ -165,7 +165,7 @@ struct bt_gravity * bt_gravity_create( config_setting_t * gravconfig, struct bt_
    return grav;
 }
 
-int bt_gravity_destroy( struct bt_gravity * grav )
+int bt_calgrav_destroy( struct bt_calgrav * grav )
 {
    int j;
    for (j=0; j<grav->kin->dof; j++)
@@ -192,7 +192,7 @@ int bt_gravity_destroy( struct bt_gravity * grav )
 }
 
 /* Evaluate and add into jtorque */
-int bt_gravity_eval( struct bt_gravity * grav, gsl_vector * jtorque )
+int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque )
 {
    int j;
    /* For each moving link, backwards ... */

@@ -102,25 +102,25 @@ src_libbtdynamics_la_CPPFLAGS = -Isrc/gsl \
 src_libbtdynamics_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtdynamics_la_SOURCES = src/dynamics/dynamics.c
 
-####### BT_GRAVITY
+####### BT_CALGRAC
 
 # Add this library to libbt
-src_libbarrett_la_LIBADD += src/libbtgravity.la
+src_libbarrett_la_LIBADD += src/libbtcalgrav.la
 
 # The libtool library to make
-noinst_LTLIBRARIES += src/libbtgravity.la
+noinst_LTLIBRARIES += src/libbtcalgrav.la
 
 # Header files to include in the package
-pkginclude_HEADERS += src/gravity/gravity.h
+pkginclude_HEADERS += src/calgrav/calgrav.h
 
 # Source files to complile
-src_libbtgravity_la_CPPFLAGS = -Isrc/os \
+src_libbtcalgrav_la_CPPFLAGS = -Isrc/os \
                                -Isrc/sys \
                                -Isrc/bot \
                                -Isrc/kinematics \
                                -Isrc/gsl
-src_libbtgravity_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtgravity_la_SOURCES = src/gravity/gravity.c
+src_libbtcalgrav_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtcalgrav_la_SOURCES = src/calgrav/calgrav.c
 
 ####### BT_GSL
 
@@ -375,7 +375,7 @@ src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
                            -Isrc/wambot \
                            -Isrc/kinematics \
                            -Isrc/dynamics \
-                           -Isrc/gravity \
+                           -Isrc/calgrav \
                            -Isrc/refgen \
                            -Isrc/log \
                            -Isrc/control \
@@ -417,7 +417,7 @@ programs_bt_wam_calibrate_bt_wam_calibrate_CPPFLAGS = -Isrc/gsl \
                                                       -Isrc/wambot \
                                                       -Isrc/kinematics \
                                                       -Isrc/dynamics \
-                                                      -Isrc/gravity \
+                                                      -Isrc/calgrav \
                                                       -Isrc/refgen \
                                                       -Isrc/log \
                                                       -Isrc/control \
