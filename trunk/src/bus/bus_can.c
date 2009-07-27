@@ -427,7 +427,7 @@ int bt_bus_can_set_torques(struct bt_bus_can_device * dev, int group, int *value
 
    /* Send the data */
    bt_os_mutex_lock(dev->mutex);
-   err = write_msg(dev, GROUPID(group), 8, data, 1);
+   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 8, data, 1);
    bt_os_mutex_unlock(dev->mutex);
    
    return 0;
@@ -447,7 +447,7 @@ int bt_bus_can_get_packed(struct bt_bus_can_device * dev, int group, int howMany
    bt_os_mutex_lock(dev->mutex);
 
    /* Send the packet*/
-   err = write_msg(dev, GROUPID(group), 1, packet, 1);
+   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 1, packet, 1);
 
    /* Wait for each reply */
    while(howMany)
@@ -510,7 +510,7 @@ static int parse_msg(
    
    *ispacked=0;
 
-   *node = ADDR2NODE(id);
+   *node = BT_BUS_CAN_ADDR2NODE(id);
    if (*node == -1)
       syslog(LOG_ERR,"msgID:%x ",id);
    dataHeader = ((messageData[0] >> 6) & 0x0002) | ((id & 0x041F) == 0x0403) | ((id & 0x041F) == 0x0407);
@@ -610,7 +610,7 @@ int bt_bus_can_set_property(struct bt_bus_can_device * dev, int id, int property
 
    /* Send the packet*/
    bt_os_mutex_lock(dev->mutex);
-   err = write_msg(dev, (id & 0x0400) ? id : NODE2ADDR(id), len, data, 1);
+   err = write_msg(dev, (id & 0x0400) ? id : BT_BUS_CAN_NODE2ADDR(id), len, data, 1);
    bt_os_mutex_unlock(dev->mutex);
 
    /* BUG: This will not verify properties from groups of pucks*/
@@ -640,7 +640,7 @@ int bt_bus_can_get_property(struct bt_bus_can_device * dev, int id, int property
 
    bt_os_mutex_lock(dev->mutex);
    /* Send the packet*/
-   err = write_msg(dev, NODE2ADDR(id), 1, data, 1);
+   err = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
    /* Wait for 1 reply*/
    err = read_msg(dev, &id_in, &len_in, data, 1);
    bt_os_mutex_unlock(dev->mutex);
@@ -688,7 +688,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can_device * dev,
       data[0] = 5; /* STAT = 5 */
       
       /* Send the packet*/
-      ret = write_msg(dev, NODE2ADDR(id), 1, data, 1);
+      ret = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
       
       /* Wait 1ms*/
       bt_os_usleep(1000);

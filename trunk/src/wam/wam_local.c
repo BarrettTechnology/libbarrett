@@ -792,7 +792,7 @@ static void rt_wam(struct bt_os_thread * thread)
    wam->con_active = (struct bt_control *) wam->con_joint_legacy;
    
    /* Set velocity safety limit to 2.0 m/s */
-   bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, SAFETY_PUCK_ID,
+   bt_bus_set_property(((struct bt_wambot_phys *)(wam->wambot))->bus, BT_BUS_PUCK_ID_WAMSAFETY,
                        ((struct bt_wambot_phys *)(wam->wambot))->bus->p->VL2, 1, 2.0 * 0x1000);
    /* CHECK RETURN VALUE */
    

@@ -28,11 +28,16 @@ Handles all communication with the robot over the CAN bus.
     Requires library files "libcan.a" and "libmitop.a".
 */
 
-#define mbxID (0)
-#define BASE_ID (0)
-#define ADDR2NODE(x) ((((x) >> 5) & 0x001F) - BASE_ID)
-#define NODE2ADDR(x) (((mbxID + BASE_ID) << 5) | ((x) + BASE_ID))
-#define GROUPID(n) (((mbxID + BASE_ID) << 5) | (0x0400 + (n)))
+#define BT_BUS_CAN_MBXID (0)
+#define BT_BUS_CAN_BASEID (0)
+#define BT_BUS_CAN_ADDR2NODE(x) ((((x) >> 5) & 0x001F) - BT_BUS_CAN_BASEID)
+
+#define BT_BUS_CAN_NODE2ADDR(x) \
+   (((BT_BUS_CAN_MBXID + BT_BUS_CAN_BASEID) << 5) \
+   | ((x) + BT_BUS_CAN_BASEID))
+
+#define BT_BUS_CAN_GROUPID(n) \
+   (((BT_BUS_CAN_MBXID + BT_BUS_CAN_BASEID) << 5) | (0x0400 + (n)))
 
 struct bt_bus_can_device;
 

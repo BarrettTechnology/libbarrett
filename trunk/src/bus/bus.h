@@ -1,184 +1,260 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... bus.h
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 15 Feb 2003
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/** Definition of bt_bus, a library for communicating with a set of
+ *  Barrett Puck(TM) motor controllers on a CAN bus.
  *
- *  NOTES:
+ * \file bus.h
+ * \author Traveler Hauptman
+ * \author Brian Zenowich
+ * \author Sam Clanton
+ * \author Christopher Dellin
+ * \date 2003-2009
+ */
+
+/* Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt, renamed from btsystem.h to bus.h
- *                                                                          *
- * ======================================================================== */
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
-/* Note - this library is all buses wth pucks and actuators. */
-
-/** \file sys.h
-  \brief Access and use a collection of pucks
-  
-  btsystem is meant to give an api to a random set of pucks and motors on multiple busses.
-  these are abstracted as "actuators"
-  
-  \internal !ToDo! much of the bus information should be re-written to be dynamically 
-  allocated.
-  
-*/
+/** \file bus.h
+ *
+ * \section sec_intro Introduction
+ *
+ * A bt_bus is a set of Barrett Puck(TM) motor controllers on a single CAN
+ * bus.  A bus can be created in one of many update modes, which allows an
+ * update to fetch positions or positions/accelerations for Pucks that
+ * support it (presently, no Pucks support this feature).
+ *
+ * Once the bus is created, the functions defined in this file can be used
+ * to update the positions/velocities/accelerations, send motor torques,
+ * and set/get properties.
+ */
 
 #ifndef BT_BUS_H
 #define BT_BUS_H
-
-#include "os.h"
-
-/* btwam uses libconfig */
-#include <libconfig.h>
-
-/* Everything on the same BUS must have the same property defs */
-
-#define SAFETY_PUCK_ID (10)
-
-/* Todo - prefix these names */
-
-#if 0
-/*! bcastGroup */
-enum {
-   
-};
-
-enum {
-   ROLE_TATER = 0,
-   ROLE_GIMBALS = 1,
-   ROLE_SAFETY = 2,
-   ROLE_WRAPTOR = 3
-};
-
-
-
-
-
-enum {
-   DEG = 0,        /* 0-360        */
-   RAD = 1,        /* 0-6.28       */
-   GRAD = 2,       /* 0-400        */
-   PERCENT = 3,    /* 0-100        */
-   NATIVE =4     /* 0-CTS*RATIO  */
-};
-
-enum {
-   SAVED_ERR = 7,
-   IGNORE_ERR = 8,
-   IS_ACTIVE = 9
-};
-
-enum {
-   BUS_ERROR = -1,
-   BUS_OFF = 0,
-   BUS_ON = 1
-};
-
-enum {
-   ERR_NONE = 0,
-   ERR_READ_ONLY = 0,
-   ERR_OUT_OF_RANGE = 1
-};
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+#include <libconfig.h>
+   
+#include "os.h"
 
 
+/** Static IDs for particular types of Puck */
+enum bt_bus_puck_id
+{
+   BT_BUS_PUCK_ID_WAMSAFETY = 10
+};
+
+
+/** A WAM safety Puck need only have an ID. */
 struct bt_bus_safety_puck
 {
    int id;
 };
 
+/** Data associated with a motor Puck, including static info read from
+ *  the puck on initialization and dynamic data such as present position.
+ */
 struct bt_bus_puck
 {
-   int id;
+   int id; /**< The Puck's ID */
    
-   /* Read from the puck each boot: */
+   /** \name Values read from the Puck on bus creation:
+    *  \{ */
    int vers;
    int counts_per_rev;
    double puckI_per_Nm;
    int gid;
-   int order; /* PIDX-1 (0,1,2,3) */
+   int order; /**< PIDX-1 (0,1,2,3) */
+   /*  \} */
    
-   /* Last literal values: */
+   /** \name Most recent values read from Puck:
+    *  \{ */
    long int puck_position;
    int puck_acceleration;
    int puck_torque;
-   /*int index;
-   int zero;*/
+   /*  \} */
    
-   /* Converted values, kept up-to-date by integration */
+   /** \name Converted, calculated, or buffered values:
+    *  \{ */
    double position;
    double velocity;
    double acceleration;
    double torque;
+   /*  \} */
    
-   /* For differentiation */
+   /** \name Variables used for differentiation:
+    *  \{ */
    double position_last;
    double velocity_last;
-
+   /* \} */
 };
 
-/* Forward declaration */
-struct bt_bus_properties;
 
+/** A set of four Pucks in a group, each with a distinct order [0-3]. */
 struct bt_bus_group
 {
    struct bt_bus_puck * puck[4];
 };
 
+
+/** The update type; presently, Pucks do not support retrieving acceleration.
+ */
 enum bt_bus_update_type
 {
-   bt_bus_UPDATE_POS_ONLY, /* only update position */
-   bt_bus_UPDATE_POS_DIFF, /* differentiate to get pos, vel, acc */
-   bt_bus_UPDATE_ACCPOS /* alternate acceleration and position */
+   bt_bus_UPDATE_POS_ONLY, /**< only update position */
+   bt_bus_UPDATE_POS_DIFF, /**< differentiate to get pos, vel, acc */
+   bt_bus_UPDATE_ACCPOS    /**< alternate acceleration and position */
 };
 
+
+/* Forward declaration of the huge bt_bus_properties list */
+struct bt_bus_properties;
+
+
+/** All the data related to a bus of Pucks.
+ *
+ * A bt_bus has a CAN device, a list of Pucks (and groups of Pucks, etc),
+ * and information about the update type.
+ */
 struct bt_bus
 {
-   int port; /* For now, we only know about CAN.
-              * We can do ethernet later. */
-   
-   /* Note - eventually, this can be a union
-    *        of different device types */
+   /** \name CAN-specific data:
+    *  \{ */
+   int port;
    struct bt_bus_can_device * dev;
+   /*  \} */
    
-   /* A bus has a number of actuator pucks */
+   /** \name Lists and information about the Pucks found on the bus:
+    *  \{ */
    int num_pucks;
    int pucks_size;
    struct bt_bus_puck ** puck;
    struct bt_bus_safety_puck * safety_puck;
    struct bt_bus_properties * p;
-   int first_pos;
-   int first_acc;
+   int groups_size;              /**< Length of the group array */
+   struct bt_bus_group ** group; /**< Indexed array of groups */
+   /* \} */
    
-   /* Groups */
-   int groups_size;
-   struct bt_bus_group ** group;
-   
-   /* Update type */
+   /** \name Information about performing updates:
+    *  \{ */
    enum bt_bus_update_type update_type;
+   int first_pos; /**< Have we received the first position yet? */
+   int first_acc; /**< Have we received the first acceleration yet? */
    int update_count;
-   bt_os_rtime update_last;
+   bt_os_rtime update_last; /**< Time of last update */
+   /*  \} */
 };
 
-struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_type update_type );
-int bt_bus_destroy( struct bt_bus * bus );
 
-int bt_bus_update( struct bt_bus * bus );
-int bt_bus_set_torques( struct bt_bus * bus );
+/** Create a bt_bus given a configuration and an update type.
+ *
+ * \param[in] busconfig Bus configuration, from libconfig
+ * \param[in] update_type Update type
+ * \return The bt_bus object on success, or 0 on failure
+ */
+struct bt_bus * bt_bus_create(config_setting_t * busconfig,
+                              enum bt_bus_update_type update_type);
 
-int bt_bus_set_property(struct bt_bus * bus, int id, int property, int verify, long value);
-int bt_bus_get_property(struct bt_bus * bus, int id, int property, long *reply);
 
-/* Wooo property definitions! */
+/** Destroy a bt_bus object.
+ *
+ * This function destroys a bt_bus object created by bt_bus_create().
+ *
+ * \param[in] bus The bt_bus object to destroy
+ * \retval 0 Success
+ */
+int bt_bus_destroy(struct bt_bus * bus);
+
+
+/** Update a bt_bus object.
+ *
+ * This function retrieves an update from the Pucks on the bus.  Depending
+ * on the update type specified in bt_bus_create(), this may ask the Pucks
+ * for positions or accelerations.  The resulting values will be saved in
+ * the bt_bus object.
+ *
+ * \param[in] bus The bt_bus object to update
+ * \retval 0 Success
+ */
+int bt_bus_update(struct bt_bus * bus);
+
+
+/** Set torques to Pucks in a bt_bus object.
+ *
+ * This function send the present values of the Pucks's torque value to all
+ * of the motor Pucks on the bus.
+ *
+ * \param[in] bus The bt_bus object to set torques to
+ * \retval 0 Success
+ */
+int bt_bus_set_torques(struct bt_bus * bus);
+
+
+/** Set a property value on a Puck.
+ *
+ * This function sets a property to a given value on a given Puck.  If the
+ * verify argument is true, this will also perform a get property request to
+ * ensure that the value was changed.
+ *
+ * \param[in] bus The bt_bus object to use
+ * \param[in] id The ID of the Puck
+ * \param[in] property The property to set; se bt_bus_properties for a list
+ * \param[in] verify Whether to verify the set's success
+ * \param[in] value The property's value to set
+ * \retval 0 Success
+ * \retval 1 The property is beyond the maximum in the properties list
+ * \return For other return values, see bt_bus_can_set_property() in
+ *         bus_can.h
+ */
+int bt_bus_set_property(struct bt_bus * bus, int id, int property,
+                        int verify, long value);
+
+
+/** Get a property value from a Puck.
+ *
+ * This function gets a property value from a given Puck.
+ *
+ * \param[in] bus The bt_bus object to use
+ * \param[in] id The ID of the Puck
+ * \param[in] property The property to get; se bt_bus_properties for a list
+ * \param[out] reply The location to save the value
+ * \retval 0 Success
+ * \retval 1 The property is beyond the maximum in the properties list
+ * \return For other return values, see bt_bus_can_get_property() in
+ *         bus_can.h
+ */
+int bt_bus_get_property(struct bt_bus * bus, int id, int property,
+                        long * reply);
+
+
+/** A list of properties available on each Puck on the bus.
+ *
+ * This structure is presently filled with the correct values as the bt_bus
+ * is initialized, based on the version of the first puck found.
+ *
+ * \note This properties list is presently unique to a bus, instead of
+ *       specific to each Puck.  Therefore, if different Pucks have different
+ *       versions, things might break.
+ */
 struct bt_bus_properties
 {
    int VERS;
@@ -335,26 +411,8 @@ struct bt_bus_properties
    int LCTC;
 };
 
-#endif/* BT_BUS_H */
- 
 
-/*======================================================================*
- *                                                                      *
- *          Copyright (c) 2003-2008 Barrett Technology, Inc.            *
- *                        625 Mount Auburn St                           *
- *                    Cambridge, MA  02138,  USA                        *
- *                                                                      *
- *                        All rights reserved.                          *
- *                                                                      *
- *  ******************************************************************  *
- *                            DISCLAIMER                                *
- *                                                                      *
- *  This software and related documentation are provided to you on      *
- *  an as is basis and without warranty of any kind.  No warranties,    *
- *  express or implied, including, without limitation, any warranties   *
- *  of merchantability or fitness for a particular purpose are being    *
- *  provided by Barrett Technology, Inc.  In no event shall Barrett     *
- *  Technology, Inc. be liable for any lost development expenses, lost  *
- *  lost profits, or any incidental, special, or consequential damage.  *
- *======================================================================*/
- 
+#ifdef __cplusplus
+}
+#endif
+#endif/* BT_BUS_H */

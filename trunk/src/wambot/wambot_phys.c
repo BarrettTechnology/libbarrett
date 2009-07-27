@@ -57,7 +57,7 @@ int define_pos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
 
    /* Tell the safety logic to ignore the next several faults
     * (position will appear to be changing rapidly) */
-   bt_bus_set_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->IFAULT, 1, 8);
+   bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->IFAULT, 1, 8);
    
    /* Manually set the encoder values */
    for (j=0; j<jpos->size; j++)
@@ -221,7 +221,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       /* Communicate with the bus */
       /* Zero the WAM */
       long reply;
-      bt_bus_get_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, &reply);
+      bt_bus_get_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, &reply);
       if(reply)
       {
          syslog(LOG_ERR, "WAM was already zeroed");
@@ -290,7 +290,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
          /* Define the WAM position */
          define_pos(wambot, wambot->base.jposition);
 
-         bt_bus_set_property(wambot->bus, SAFETY_PUCK_ID, wambot->bus->p->ZERO, 1, 1);
+         bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, 1, 1);
          syslog(LOG_ERR, "WAM zeroed by application");
          gsl_vector_free(err_angle);
       }

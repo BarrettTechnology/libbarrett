@@ -1,57 +1,70 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... bus.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Sam Clanton
- *                       Christopher Dellin
- *  Creation Date ...... 15 Feb 2003
- *  Addtl Authors ...... Brian Zenowich
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_bus, a library for communicating with a set of
+ *  Barrett Puck(TM) motor controllers on a CAN bus.
  *
- *  NOTES:
- *
- *  REVISION HISTORY:
- *    2004 Dec 16 - BZ, SC, TH
- *      Initial port to linux + RTAI
- *    2005 Oct 06 - BZ
- *      Mangled exstensively to support new config file
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt, renamed from btsystem.c to bus.c
- *                                                                          *
- * ======================================================================== */
+ * \file bus.c
+ * \author Traveler Hauptman
+ * \author Brian Zenowich
+ * \author Sam Clanton
+ * \author Christopher Dellin
+ * \date 2003-2009
+ */
 
-#define TWOPI (2*3.141592653589793238462643383)
-#define Border(Value,Min,Max) ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
+/* Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
+#include <stdlib.h>
+#include <syslog.h>
+#include <string.h>
 
 #include "bus.h"
-
 #include "bus_can.h"
 #include "os.h"
 
-#include <string.h>
-#include <syslog.h>
-#include <stdlib.h> /* For malloc(), free() */
+#define TWOPI (2*3.141592653589793238462643383)
+#define Border(Value,Min,Max) \
+   ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
-/* Broadcast Groups */
-enum {
+
+/** CAN Broadcast Groups */
+enum broadcast_groups
+{
    WHOLE_ARM = 0,
    LOWER_ARM = -1,
    UPPER_ARM = -2
 };
 
-enum {
+/** Puck status values */
+enum puck_status
+{
    STATUS_OFFLINE = -1,
    STATUS_RESET = 0,
    STATUS_ERR = 1,
    STATUS_READY = 2
 };
 
-/*! Control_mode states */
-enum {
+/** Puck control mode states */
+enum control_modes
+{
    MODE_IDLE = 0,
    MODE_DUTY = 1,
    MODE_TORQUE = 2,
@@ -60,26 +73,55 @@ enum {
    MODE_TRAPEZOIDAL = 5
 };
 
-/* Private functions */
-static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
-static int prop_defs_destroy(struct bt_bus_properties * p);
-static int retrieve_puck_accelerations( struct bt_bus * bus );
-static int retrieve_puck_positions( struct bt_bus * bus );
 
-#define PARR_SET_FUNC(FNAME,PARRTYPE) \
-static int parr_set_ ## FNAME ( PARRTYPE *** rp, int * sz, int i, PARRTYPE * x ) \
-{ \
-   if (i >= *sz) \
-   { \
-      int j; \
-      if (*sz == 0) *rp = (PARRTYPE **) malloc (    (i+1)*sizeof(PARRTYPE *)); \
-      else          *rp = (PARRTYPE **) realloc(*rp,(i+1)*sizeof(PARRTYPE *)); \
-      if(!*rp) return -1; \
-      for (j=*sz; j<i; j++) (*rp)[j] = 0; \
-      *sz = i+1; \
-   } \
-   (*rp)[i] = x; \
-   return 0; \
+/** Create a bt_bus_properties list given a firmware version */
+static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
+
+/** Destroy a bt_bus_properties list */
+static int prop_defs_destroy(struct bt_bus_properties * p);
+
+/** Query and receive a packed CAN packet of Puck accelerations */
+static int retrieve_puck_accelerations(struct bt_bus * bus);
+
+/** Query and receive a packed CAN packet of Puck positions */
+static int retrieve_puck_positions(struct bt_bus * bus);
+
+/** Define two pointer-array setting functions for setting values in
+ *  pointer arrays.
+ *
+ * A pointer array is an array of points to objects, where the index is
+ * meaningful.  For example, the data structure that holds pointers to Pucks
+ * in a bt_bus is a pointer array:
+ * \code
+ * struct bt_bus
+ * {
+ *    ...
+ *    struct bt_bus_puck ** puck;
+ *    ...
+ * }
+ * \endcode
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+#define PARR_SET_FUNC(FNAME,TYPE) \
+static int parr_set_ ## FNAME ( TYPE *** rp, int * sz, int i, TYPE * x ) \
+{                                                                        \
+   if (i >= *sz)                                                         \
+   {                                                                     \
+      int j;                                                             \
+      if (*sz == 0) *rp = (TYPE **) malloc (    (i+1)*sizeof(TYPE *));   \
+      else          *rp = (TYPE **) realloc(*rp,(i+1)*sizeof(TYPE *));   \
+      if(!*rp) return -1;                                                \
+      for (j=*sz; j<i; j++) (*rp)[j] = 0;                                \
+      *sz = i+1;                                                         \
+   }                                                                     \
+   (*rp)[i] = x;                                                         \
+   return 0;                                                             \
 }
 PARR_SET_FUNC(puck,struct bt_bus_puck)
 PARR_SET_FUNC(group,struct bt_bus_group)
@@ -140,9 +182,8 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    
    /* Wake all the pucks on the bus */
    syslog(LOG_ERR, "Waking all pucks");
-   /* wakePuck(bus_number, GROUPID(WHOLE_ARM)); */
    /* Must use '5' for STAT*/
-   bt_bus_can_set_property(bus->dev, GROUPID(WHOLE_ARM), 5, 0, STATUS_READY);
+   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WHOLE_ARM), 5, 0, STATUS_READY);
    bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
    
    /* Iterate through all the pucks */
@@ -166,7 +207,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
                return 0;
             }
          }
-         if (id == SAFETY_PUCK_ID)
+         if (id == BT_BUS_PUCK_ID_WAMSAFETY)
          {
             struct bt_bus_safety_puck * puck;
             if (bus->safety_puck)
@@ -787,24 +828,3 @@ static int prop_defs_destroy(struct bt_bus_properties * p)
    free(p);
    return 0;
 }
-
-/*======================================================================*
- *                                                                      *
- *          Copyright (c) 2003-2008 Barrett Technology, Inc.            *
- *                        625 Mount Auburn St                           *
- *                    Cambridge, MA  02138,  USA                        *
- *                                                                      *
- *                        All rights reserved.                          *
- *                                                                      *
- *  ******************************************************************  *
- *                            DISCLAIMER                                *
- *                                                                      *
- *  This software and related documentation are provided to you on      *
- *  an as is basis and without warranty of any kind.  No warranties,    *
- *  express or implied, including, without limitation, any warranties   *
- *  of merchantability or fitness for a particular purpose are being    *
- *  provided by Barrett Technology, Inc.  In no event shall Barrett     *
- *  Technology, Inc. be liable for any lost development expenses, lost  *
- *  lost profits, or any incidental, special, or consequential damage.  *
- *======================================================================*/
- 

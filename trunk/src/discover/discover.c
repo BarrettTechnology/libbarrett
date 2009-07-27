@@ -1,28 +1,38 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... discover.c
- *  Author ............. Sam Clanton
- *                       Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2004 Q3
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2004-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_discover_client, a UDP discovery client module.
  *
- *  NOTES:
+ * \file discover.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
+
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
  *
- *  REVISION HISTORY:
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * ======================================================================== */
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/types.h> /* For select() */
 #include <sys/select.h> /* for fd_set */
-
 #include <unistd.h> /* For close() */
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,7 +42,11 @@
 
 #include "discover.h"
 
-struct bt_discover_client * bt_discover_client_create()
+/* Note - see SVN/internal/tools/wamdiscover/client for example
+ *        to make this Windows-compatible */
+
+
+struct bt_discover_client * bt_discover_client_create(void)
 {
    struct bt_discover_client * c;
    int optval;
@@ -72,7 +86,6 @@ struct bt_discover_client * bt_discover_client_create()
 }
 
 
-
 int bt_discover_client_destroy(struct bt_discover_client * c)
 {
    if (c->list)
@@ -83,7 +96,6 @@ int bt_discover_client_destroy(struct bt_discover_client * c)
 }
 
 
-/* For now, this blocks for about 1 second */
 int bt_discover_client_discover(struct bt_discover_client * c)
 {
    struct sockaddr_in their_addr;
@@ -152,4 +164,3 @@ int bt_discover_client_discover(struct bt_discover_client * c)
    return 0;
    
 }
-

@@ -197,6 +197,7 @@ struct bt_kinematics
 struct bt_kinematics * bt_kinematics_create(config_setting_t * kinconfig,
                                             int ndofs);
 
+
 /** Destroy a bt_kinematics object.
  *
  * This function destroys a bt_kinematics object created by
