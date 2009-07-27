@@ -1,24 +1,36 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... gravity.c
- *  Author ............. Christopher Dellin
- *  Creation Date ...... Sept 15, 2008
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_calgrav, a calibrated gravity compensation module.
  *
- *  NOTES:
- *
- *  REVISION HISTORY:
- *
- * ======================================================================== */
+ * \file calgrav.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
 
-/* Read config files for the wam stuff */
-#include <libconfig.h>
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
 #include <syslog.h>
 
-/* For fast matrix multiplication */
+#include <libconfig.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
@@ -27,7 +39,6 @@
 #include "calgrav.h"
 #include "gsl.h"
 
-#define PI (3.141592653589793238462643383)
 
 struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_kinematics * kin )
 {
@@ -165,6 +176,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    return grav;
 }
 
+
 int bt_calgrav_destroy( struct bt_calgrav * grav )
 {
    int j;
@@ -191,7 +203,7 @@ int bt_calgrav_destroy( struct bt_calgrav * grav )
    return 0;
 }
 
-/* Evaluate and add into jtorque */
+
 int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque )
 {
    int j;
@@ -218,5 +230,3 @@ int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque )
    }
    return 0;
 }
-
-

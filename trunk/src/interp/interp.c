@@ -1,30 +1,45 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... interp.c
- *  Author ............. Christopher Dellin
- *  Creation Date ...... Sept 15, 2008
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_interp, GSL interpolator type with support for
+ *  2-point trajectories, as well as natural or slope-drive endpoints.
  *
- *  NOTES:
- *
- *  REVISION HISTORY:
- *
- * ======================================================================== */
+ * \file interp.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
 
-#include "interp.h"
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_vector.h>
-
 #include <gsl/gsl_linalg.h>
+
+#include "interp.h"
 
 /* Implementation notes:
  * OK, here's the way this works.
  * We use a modified GSL cspline algorithm for sizes > 3.
  * For sizes of 2 and 3, all bets are off ... */
+
 
 struct state_2p
 {
@@ -513,7 +528,6 @@ static const gsl_interp_type bt_interp_type =
 const gsl_interp_type * bt_interp = &bt_interp_type;
 
 
-/* Make a few functions to set values from the default */
 int bt_interp_set_type( gsl_interp * interp,
    enum bt_interp_type ltype, enum bt_interp_type rtype )
 {
@@ -531,6 +545,7 @@ int bt_interp_set_type( gsl_interp * interp,
    return 0;
 }
 
+
 int bt_interp_set_slopes( gsl_interp * interp,
    double lslope, double rslope )
 {
@@ -547,11 +562,3 @@ int bt_interp_set_slopes( gsl_interp * interp,
    
    return 0;
 }
-
-
-
-
-
-
-
-

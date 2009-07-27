@@ -1,35 +1,44 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... spline.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... 2005 Mar 30
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_spline, an n-dimensional vector interpolator.
  *
- *  NOTES:
+ * \file spline.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
+
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt; merged from btstatecontrol and btpath
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * ======================================================================== */
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
+#include <math.h> /* For sqrt() */
+#include <syslog.h>
+
+#include <gsl/gsl_blas.h>
 
 #include "spline.h"
 #include "interp.h"
 
-#include <gsl/gsl_blas.h>
 
-#include <math.h> /* For sqrt() */
-
-#include <syslog.h>
-
-/* Public functions */
-
-struct bt_spline * bt_spline_create( gsl_vector * start, enum bt_spline_mode mode )
+struct bt_spline * bt_spline_create(gsl_vector * start,
+                                    enum bt_spline_mode mode)
 {
    int i;
    struct bt_spline * spline;
@@ -64,7 +73,8 @@ struct bt_spline * bt_spline_create( gsl_vector * start, enum bt_spline_mode mod
    return spline;
 }
 
-int bt_spline_add( struct bt_spline * spline, gsl_vector * vec, double s )
+
+int bt_spline_add(struct bt_spline * spline, gsl_vector * vec, double s)
 {
    int i;
    
@@ -94,8 +104,9 @@ int bt_spline_add( struct bt_spline * spline, gsl_vector * vec, double s )
    return 0;
 }
 
-int bt_spline_init( struct bt_spline * spline,
-                    gsl_vector * start, gsl_vector * direction )
+
+int bt_spline_init(struct bt_spline * spline, gsl_vector * start,
+                   gsl_vector * direction)
 {
    int i;
    int n;
@@ -168,7 +179,8 @@ int bt_spline_init( struct bt_spline * spline,
    return 0;
 }
 
-int bt_spline_destroy( struct bt_spline * spline )
+
+int bt_spline_destroy(struct bt_spline * spline)
 {
    int i;
    
@@ -190,7 +202,8 @@ int bt_spline_destroy( struct bt_spline * spline )
    return 0;
 }
 
-int bt_spline_get( struct bt_spline * spline, gsl_vector * result, double s )
+
+int bt_spline_get(struct bt_spline * spline, gsl_vector * result, double s)
 {
    int i;
    for (i=0; i<spline->dimension; i++)
@@ -201,4 +214,3 @@ int bt_spline_get( struct bt_spline * spline, gsl_vector * result, double s )
    }
    return 0;
 }
-
