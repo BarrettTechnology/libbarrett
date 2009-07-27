@@ -41,12 +41,16 @@
 #include "kinematics.h"
 #include "gsl.h"
 
+/** \name Private functions
+ *  \{ */
 
 /** Evaluate the link's to_prev transform matrix, given link->theta */
 static int eval_trans_to_prev( struct bt_kinematics_link * link );
 
 /** Evaluate the link's to_world transform matrix, given updated to_prev */
 static int eval_trans_to_world( struct bt_kinematics_link * link );
+
+/*  \} */
 
 
 struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs )

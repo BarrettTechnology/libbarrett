@@ -99,56 +99,72 @@ extern "C" {
 
 #include "kinematics.h"
 
-/* Links are things with attached frames;
- * Link kinematics, we have a base link/frame,
- * and one for each moving link.
- * For now, dynamics does not have a toolplate frame.
- * We'll have to work out the best way to support tooling
- * dynamics later. */
-struct bt_dynamics_link {
 
-   /* Doubly-linked for convenience */
+/** Link-specific data, including mass and inertial parameters,
+ *  the center-of-mass, and vectors/matrices to hold the results of
+ *  dynamics calculations.  For an overview of the dynamics module,
+ *  see dynamics.h.
+ */
+struct bt_dynamics_link
+{
+   /** \name Doubly-linked for convenience
+    *  \{ */
    struct bt_dynamics_link * next;
    struct bt_dynamics_link * prev;
+   /** \} */
 
-   /* Mass of link (kg) */
-   double mass;
-   
-   /* Center of mass of link, in DH link frame */
-   gsl_vector * com;
-   
-   /* Inertia matrix of link, around link center-of-mass */
-   gsl_matrix * I;
+   /** \name Geometrical and inertial parameters
+    *  \{ */
+   double mass;      /**< Mass of link (kg) */
+   gsl_vector * com; /**< Center of mass of link (m), in DH link frame */
+   gsl_matrix * I;   /**< Inertia matrix of link,
+                      *   around link center-of-mass */
+   /** \} */
    
    /* NOTE:
     * Do we need rotor inertia here?? */
    
    /* Next, a place to hold the results from calculations */
    
-   /* Vectors expressed in local link frame */
-   gsl_vector * omega; /* angular velocity of local frame w.r.t. base frame */
-   gsl_vector * alpha; /* angular acceleration of local frame w.r.t. base frame */
-   gsl_vector * a;     /* linear acceleration of frame origin */
+   /** \name Forward-calculated vectors (in local link frame)
+    *  \{ */
+   gsl_vector * omega;      /**< angular velocity of local frame
+                             *   w.r.t. base frame */
+   gsl_vector * omega_prev; /**< Previous frame's ang vel in my frame */
+   gsl_vector * alpha;      /**< angular acceleration of local frame
+                             *   w.r.t. base frame */
+   gsl_vector * a;          /**< linear acceleration of frame origin */
+   /** \} */
    
    /* A couple of caches, also expressed in local link frame */
-   gsl_vector * omega_prev; /* Previous frame's ang vel in my frame */
-   gsl_vector * f_next;     /* Next frame's force in my frame */
-   
+
+   /** \name Backward-calculated vectors (in local link frame)
+    *  \{ */
    gsl_vector * fnet;
    gsl_vector * tnet;
-   gsl_vector * f;     /* force exerted on this link by previous link */
-   gsl_vector * t;     /* torque exerted on this link by previous link */
+   gsl_vector * f;      /**< force exerted on this link by previous link */
+   gsl_vector * f_next; /**< Next frame's force in my frame */
+   gsl_vector * t;      /**< torque exerted on this link by previous link */
+   /** \} */
    
-   /* Jacobian computed at the center-of-mass (used for JSIM calc) */
+   /** \name Jacobian computed at the center-of-mass (used for JSIM calc)
+    *  \{ */
    gsl_matrix * com_jacobian;
-   gsl_matrix * com_jacobian_linear; /* Matrix view of linear jacobian (upper half) */
-   gsl_matrix * com_jacobian_angular; /* Matrix view of angular jacobian (lower half) */
+   gsl_matrix * com_jacobian_linear;  /**< Matrix view of linear jacobian
+                                       *   (upper half) */
+   gsl_matrix * com_jacobian_angular; /**< Matrix view of angular jacobian
+                                       *   (lower half) */
+   /** \} */
    
 };
 
 
-struct bt_dynamics {
-
+/** Robot dynamics data, holding an array of links (mirroring the structure
+ *  of the bt_kinematics module described in kinematics.h), along with
+ *  a place to calculate the JSIM and some temporary vectors and matrices.
+ */
+struct bt_dynamics
+{
    /* We rely on the kin structure */
    struct bt_kinematics * kin;
    
@@ -174,20 +190,65 @@ struct bt_dynamics {
 };
 
 
-/* Dynamics Functions */
-struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs, struct bt_kinematics * kin );
-int bt_dynamics_destroy( struct bt_dynamics * dyn );
+/** Create a bt_dynamics object from a given configuration.
+ *
+ * This function creates a new dynamics object, center-of-mass and inertial
+ * information from the configuration given by dynconfig.
+ * Currently, the number of moving links (ndofs) is also passed, and the
+ * creating fails if the number of moving links read from the configuration
+ * file does not match the expected number.  It is also necessary to pass a
+ * previously-created bt_kinematics object for kinematics information.
+ *
+ * \param[in] dynconfig Dynamics configuration, from libconfig
+ * \param[in] ndofs Expected number of moving links
+ * \param[in] kin Previously-created bt_kinematics object describing robot
+ * \return The bt_dynamics object on success, or 0 on failure
+ */
+struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
+                                        int ndofs,
+                                        struct bt_kinematics * kin);
 
-/* Reverse Newton-Euler Algorithm (RNEA)
- * Throw a switch in there for gravity on/off?
- * How to account for base acceleration (even gravity?)
- * NOTE: This takes ~ 152us on PC104 right now. */
-int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
-   gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor );
 
-/* Calculate the JSIM based on the explicit formulation
- * in Spong pg 254 */
+/** Destroy a bt_dynamics object.
+ *
+ * This function destroys a bt_dynamics object created by
+ * bt_dynamics_create().
+ *
+ * \param[in] dyn bt_dynamics object to destroy
+ * \retval 0 Success
+ */
+int bt_dynamics_destroy(struct bt_dynamics * dyn);
+
+
+/** Evaluate inverse dynamics using the RNEA, both forward and backward.
+ *
+ * This function is used in a control loop to calculate the inverse dynamics
+ * of the robot, given a particular configuration (calculated in the
+ * kinematics object), set of joint velocities, and set of desired joint
+ * accelerations.  The resulting joint torques are stored in jtor.
+ *
+ * \note Throw a switch in there for gravity on/off?
+ * \note How to account for base acceleration (even gravity?)
+ * \note This takes ~ 152us on PC104 right now.
+ *
+ * \param[in] dyn bt_dynamics object
+ * \paran[in] jvel Present joint velocity vector
+ * \paran[in] jacc Desired joint acceleration vector
+ * \paran[out] jtor Computed joint torque vector
+ * \retval 0 Success
+ */
+int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
+                             gsl_vector * jacc, gsl_vector * jtor);
+
+
+/** Calculate the Joint-Space Inertia Matrix (JSIM).
+ *
+ * The formulation used is the explicit formulation given in <em>Spong,
+ * Hutchinson, and Vidyasagar: Robot Modeling and Control, 2006</em>
+ * page 254.
+ */
 int bt_dynamics_eval_jsim( struct bt_dynamics * dyn );
+
 
 #ifdef __cplusplus
 }

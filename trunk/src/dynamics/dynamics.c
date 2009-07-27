@@ -1,52 +1,76 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... dynamics.c
- *  Author ............. Traveler Hauptman
- *                       Brian Zenowich
- *                       Christopher Dellin
- *  Creation Date ...... Feb 3, 2009
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2005-2008   Barrett Technology <support@barrett.com>
+/** Implementation of bt_dynamics, a simple dynamics library which uses
+ *  the Recursive Newton-Euler Algorithm for single-chain revolute robots.
  *
- *  NOTES:
- *
- *  REVISION HISTORY:
- *
- * ======================================================================== */
+ * \file dynamics.c
+ * \author Christopher Dellin
+ * \date 2008-2009
+ */
 
-#include <libconfig.h>
+/* Copyright 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
+
 #include <syslog.h>
 
-/* For fast matrix multiplication */
+#include <libconfig.h>
 #include <gsl/gsl_blas.h>
 
 #include "dynamics.h"
-
 #include "gsl.h"
 
-/* Private functions */
+
+/** \name Private functions
+ *  \{ */
+
+/** Evaluate the forward step of the RNEA for the given moving link. */
 static int eval_inverse_forward( struct bt_dynamics * dyn,
                                  struct bt_dynamics_link * link,
                                  struct bt_kinematics_link * kin_link,
                                  double vel, double acc );
 
+/** Evaluate the backward step of the RNEA for the given moving link. */
 static int eval_inverse_backward( struct bt_dynamics * dyn,
                                   struct bt_dynamics_link * link,
                                   struct bt_kinematics_link * kin_link,
                                   double * torque );
 
-/* These fixed versions assume vel and acc are zero,
- * and just translate the forces/torques back to the previous joint */
+/** Evaluate the forward step of the RNEA for the given fixed link
+ *  (vel and acc are zero) */
 static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
                                        struct bt_dynamics_link * link,
                                        struct bt_kinematics_link * kin_link );
+
+/** Evaluate the backward step of the RNEA for the given fixed link
+ *  (no computed torque) */
 static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
                                         struct bt_dynamics_link * link,
                                         struct bt_kinematics_link * kin_link );
 
-struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs, struct bt_kinematics * kin )
+/*  \} */
+
+
+struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
+                                        int ndofs,
+                                        struct bt_kinematics * kin)
 {
    int err;
    int i;
@@ -396,6 +420,7 @@ struct bt_dynamics * bt_dynamics_create( config_setting_t * dynconfig, int ndofs
    return dyn;
 }
 
+
 int bt_dynamics_destroy( struct bt_dynamics * dyn )
 {
    int i;
@@ -459,9 +484,10 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn )
    return 0;
 }
 
-/* NOTE: This takes ~ 152us on PC104 right now. */
-int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
-   gsl_vector * jvel, gsl_vector * jacc, gsl_vector * jtor )
+
+
+int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
+                             gsl_vector * jacc, gsl_vector * jtor)
 {
    int j;
    
@@ -495,6 +521,7 @@ int bt_dynamics_eval_inverse( struct bt_dynamics * dyn,
    
    return 0;
 }
+
 
 static int eval_inverse_forward( struct bt_dynamics * dyn,
                                  struct bt_dynamics_link * link,
@@ -651,7 +678,6 @@ static int eval_inverse_backward( struct bt_dynamics * dyn,
 }
 
 
-
 static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
                                        struct bt_dynamics_link * link,
                                        struct bt_kinematics_link * kin_link )
@@ -713,6 +739,7 @@ static int eval_inverse_forward_fixed( struct bt_dynamics * dyn,
    
    return 0;
 }
+
 
 static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
                                         struct bt_dynamics_link * link,

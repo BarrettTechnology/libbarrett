@@ -37,7 +37,7 @@
  * single-chain robot manipulators consisting entirely of revolute joints.
  * Moving links are defined using Denavit-Hartenberg parameters, as defined
  * in <em>Spong, Hutchinson, and Vidyasagar: Robot Modeling and Control,
- * 2006</em>.
+ * 2006</em> page 76.
  *
  * The library uses 4x4 homogeneous transform matrices to represent
  * coordinate transformations from one link's frame to the next.
@@ -112,8 +112,8 @@ extern "C" {
  *  and pointers to adjacent links.  For details about the kinematics module,
  *  see bt_kinematics.
  */
-struct bt_kinematics_link {
-
+struct bt_kinematics_link
+{
    /** \name Doubly-linked for convenience
     *  \{ */
    struct bt_kinematics_link * next; /**< The next link in the chain */
@@ -159,8 +159,8 @@ struct bt_kinematics_link {
 /** Robot kinematics data, holding an array of links, and a set of tool
  *  jacobians.
  */
-struct bt_kinematics {
-   
+struct bt_kinematics
+{
    int dof;
    int nlinks;
    struct bt_kinematics_link ** link_array;
