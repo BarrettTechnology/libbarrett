@@ -102,7 +102,7 @@ src_libbtdynamics_la_CPPFLAGS = -Isrc/gsl \
 src_libbtdynamics_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtdynamics_la_SOURCES = src/dynamics/dynamics.c
 
-####### BT_CALGRAC
+####### BT_CALGRAV
 
 # Add this library to libbt
 src_libbarrett_la_LIBADD += src/libbtcalgrav.la
@@ -308,32 +308,6 @@ pkginclude_HEADERS += src/discover/discover.h
 src_libbtdiscover_la_CPPFLAGS =
 src_libbtdiscover_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
 src_libbtdiscover_la_SOURCES = src/discover/discover.c
-
-####### BT_FILE
-
-# Add this library to libbt
-src_libbarrett_la_LIBADD += src/libbtfile.la
-
-# The libtool library to make
-noinst_LTLIBRARIES += src/libbtfile.la
-
-# Header files to include in the package
-pkginclude_HEADERS += src/file/file.h \
-                      src/file/file_rpc.h
-
-# Source files to complile
-src_libbtfile_la_CPPFLAGS = -Isrc/rpc
-# Damn variadic macros!
-src_libbtfile_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtfile_la_SOURCES = src/file/file.c \
-                           src/file/file_rpc.c
-
-if BT_WAM_LOCAL
-else
-
-src_libbtfile_la_CPPFLAGS += -DASYNC_ONLY
-
-endif
 
 ####### BT_RPC
 
