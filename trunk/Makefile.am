@@ -501,7 +501,8 @@ include pkg/debian.mk
 
 pyexec_LTLIBRARIES = bindings/python/libbarrett.la
 bindings_python_libbarrett_la_SOURCES = bindings/python/libbarrett.c
-bindings_python_libbarrett_la_LDFLAGS = -avoid-version -module
+bindings_python_libbarrett_la_LDFLAGS = -Lsrc/.libs \
+                                        -avoid-version -module
 bindings_python_libbarrett_la_CPPFLAGS = -I@BT_PYINCDIR@ \
                                          -Isrc/wam \
                                          -Isrc/discover \

@@ -1,36 +1,35 @@
-/* ======================================================================== *
- *  Module ............. libbt
- *  File ............... can_peakesd.c
- *  Author ............. Brian Zenowich
- *                       Traveler Hauptman
- *                       Lauren White
- *                       Christopher Dellin
- *  Creation Date ...... 24 Mar 2003L
- *                                                                          *
- *  **********************************************************************  *
- *                                                                          *
- * Copyright (C) 2003-2008   Barrett Technology <support@barrett.com>
+/** Definition of bt_bus_can, an abstracted CAN device driver.
  *
- *  NOTES:
- *    This file must be linked against a closed-source proprietary driver
- *    library (libntcan) from esd electronics (http://esd-electronics.com).
+ * \file bus_can.h
+ * \author Brian Zenowich
+ * \author Traveler Hauptman
+ * \author Sam Clanton
+ * \author Christopher Dellin
+ * \date 2003-2009
+ */
+
+/* Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009
+ *           Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
  *
- *  REVISION HISTORY:
- *    2003 Mar 24 - BZ
- *      File created & documented.
- *    2004 Dec 16 - BZ, TH
- *      Initial port to linux + RTAI
- *    2007 Aug 6 - LW, BZ
- *      Change code to fit Xenomai, ISA Bus
- *    2008 Sept 15 - CD
- *      Ported from btsystem to libbt
- *                                                                          *
- * ======================================================================== */
-
-
-/*==============================*
- * INCLUDES - System Files      *
- *==============================*/
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+ */
 
 #include <stdio.h>
 #include <errno.h>
@@ -39,9 +38,6 @@
 #include <linux/version.h>
 #include <signal.h>
 
-/*==============================*
- * INCLUDES - Project Files     *
- *==============================*/
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
 # include <libpcan.h>
 #endif
@@ -60,38 +56,93 @@
 # define RX_TIMEOUT          (50)
 #endif
 
-#ifdef CANTYPE_ESD
-typedef unsigned long DWORD;
-#endif
-
-#ifdef CANTYPE_ESD
-static void allow_msg(struct can_device * dev, int id, int mask);
-#endif
-
 /* CAN stuff */
 #define MAX_NODES (31) /* For iteration */
-#define Border(Value,Min,Max)  (Value<Min)?Min:((Value>Max)?Max:Value)
 
-/* Private functions */
-static int read_msg(struct bt_bus_can_device * dev, int *id, int *len, unsigned char *data, int blocking);
-static int write_msg(struct bt_bus_can_device * dev, int id, char len, unsigned char *data, int blocking);
-static int parse_msg(int id, int len, unsigned char *messageData, int *node, int *property, int *ispackedpos, long *value);
-static int compile_msg(int property, long longVal, unsigned char *data, int *dataLen);
+#define BORDER(Value,Min,Max) \
+   ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
-struct bt_bus_can_device
+
+/** Read a message from the CAN device.
+ *
+ * \param[in] dev bt_bus_can device to use
+ * \param[out] id The ID of the received node
+ * \param[out] len The length of the received data
+ * \param[out] data The data received
+ * \param[in] blocking Whether to do a blocking read
+ * \retval 0 Success
+ * \retval 1 Returned empty
+ * \retval 2 Error reading message
+ */
+static int read_msg(struct bt_bus_can * dev, int * id, int * len,
+                    unsigned char * data, int blocking);
+
+
+/** Write a message to the CAN device
+ *
+ * \param[in] dev bt_bus_can device to use
+ * \param[in] id The ID to send to
+ * \param[in] len The length of the message to send
+ * \param[in] data The data to send
+ * \param[in] blocking Whether to do a blocking write
+ * \retval 0 Success
+ * \retval 1 Error sending message
+ */
+static int write_msg(struct bt_bus_can * dev, int id, char len,
+                     unsigned char * data, int blocking);
+
+
+/** Parse a message into an ID, a property, and a value.
+ *
+ * \param[in] msgid The message ID
+ * \param[in] len The length of the message
+ * \param[in] message_data The message data to parse
+ * \param[out] id Location into which to put the node ID
+ * \param[out] property Location into which to put the associated property
+ * \param[out] ispacked Whether the message is in packed format
+ * \param[out] value Location into which to put the value
+ * \retval 0 Success
+ * \retval 1 Illegal message header
+ */
+static int parse_msg(int msgid, int len, unsigned char * message_data,
+                     int * id, int * property, int * ispacked, long * value);
+
+
+/** Compile a message from a property and value
+ *
+ * \param[in] property The property to use
+ * \param[in] value The value to use
+ * \param[out] data The location to save the compiled message
+ * \paran[out] len The location to save the message length
+ * \retval 0 Success
+ */
+static int compile_msg(int property, long value, unsigned char * data,
+                       int * len);
+
+
+#ifdef CANTYPE_ESD
+/** Instruct the ESD CAN device to allow messages from an ID
+ *
+ * \note This is only enabled for ESD CAN devices.
+ */
+static void allow_msg(struct bt_bus_can * dev, int id, int mask);
+#endif
+
+
+struct bt_bus_can
 {
    HANDLE handle;
    struct bt_os_mutex * mutex;
    int iterator;
 };
 
-/* These public functions open the can device. */
-struct bt_bus_can_device * bt_bus_can_create(int port)
+
+struct bt_bus_can * bt_bus_can_create(int port)
 {
    long err;
 
-   struct bt_bus_can_device * dev;
-   dev = (struct bt_bus_can_device *) malloc(sizeof(struct bt_bus_can_device));
+   struct bt_bus_can * dev;
+   dev = (struct bt_bus_can *) malloc(sizeof(struct bt_bus_can));
    if (!dev)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
@@ -131,7 +182,9 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
 
    if (!dev->handle)
    {
-      syslog(LOG_ERR, "%s: CAN_Open(): cannot open device with type=isa, port=%s, irq=%s",
+      syslog(LOG_ERR,
+             "%s: CAN_Open(): cannot open device with type=isa, "
+             "port=%s, irq=%s",
              __func__,
              (port==0) ? "0x300" : "0x320", 
              (port==0) ? "7" : "5");
@@ -144,7 +197,9 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
    dev->handle = CAN_Open(HW_PCI, (port + 1));
    if (!dev->handle)
    {
-      syslog(LOG_ERR, "%s: CAN_Open(): cannot open device with type=pci, port=%d", __func__, port);
+      syslog(LOG_ERR,
+             "%s: CAN_Open(): cannot open device with type=pci, port=%d",
+             __func__,port);
       bt_bus_can_destroy(dev);
       return 0;
    }
@@ -170,7 +225,8 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
 
 #ifdef CANTYPE_ESD
    /* Opening can for esd. */
-   err = canOpen(port, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT, RX_TIMEOUT, &(dev->handle));
+   err = canOpen(port, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT,
+                 RX_TIMEOUT, &(dev->handle));
    if(err != NTCAN_SUCCESS)
    {
       syslog(LOG_ERR, "%s: canOpen() failed with error %ld", __func__, err);
@@ -179,10 +235,12 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
       return 0;
    }
 
-   err = canSetBaudrate(dev->handle, 0); /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
+   /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
+   err = canSetBaudrate(dev->handle, 0);
    if(err != 0)
    {
-      syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld", err);
+      syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld",
+             err);
       bt_bus_can_destroy(dev);
       return 0;
    }
@@ -198,7 +256,7 @@ struct bt_bus_can_device * bt_bus_can_create(int port)
 }
 
 
-void bt_bus_can_destroy(struct bt_bus_can_device * dev)
+int bt_bus_can_destroy(struct bt_bus_can * dev)
 {
    if (dev->handle)
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
@@ -209,22 +267,274 @@ void bt_bus_can_destroy(struct bt_bus_can_device * dev)
    if (dev->mutex)
       bt_os_mutex_destroy(dev->mutex);
    free(dev);
-   return;
+   return 0;
 }
 
 
-#ifdef CANTYPE_ESD
-static void allow_msg(struct can_device * dev, int id, int mask)
+int bt_bus_can_clearmsg(struct bt_bus_can * dev)
 {
-   int i;
-   for(i = 0; i < 2048; i++)
-      if((i & ~mask) == id)
-         canIdAdd(dev->handle, i);
-}
+#if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
+   long err;
+   int pendread;
+   int pendwrite;
+   int id, len;
+   unsigned char data[8];
+   
+   pendread = 1;
+   err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
+   
+   while (pendread)
+   {
+      err = read_msg(dev, &id, &len, data, 1);
+      err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
+   }
+   return 0;
+   
+#else
+   
+   int id, len;
+   unsigned char data[8];
+   
+   /*find a better way of clearing the bus*/
+   while (read_msg(dev, &id, &len, data, 0) == 0)
+   {
+      syslog(LOG_ERR, "Cleared unexpected message from CANbus.");
+      bt_os_usleep(1);
+   }
+   return 0;
+   
 #endif
+}
 
 
-static int read_msg(struct bt_bus_can_device * dev, int *id, int *len, unsigned char *data, int blocking)
+int bt_bus_can_iterate_start(struct bt_bus_can * dev)
+{
+   dev->iterator = 0;
+   return 0;
+}
+
+int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
+                            int * nextstatus)
+{
+   int id;
+   
+   bt_os_rt_set_mode_hard();
+   bt_os_mutex_lock(dev->mutex);
+   
+   for (id=dev->iterator; id<MAX_NODES; id++)
+   {
+      int ret;
+      unsigned char data[8];
+      int id_in;
+      int len_in;
+      int property_in;
+      long status_in;
+      
+      /* Compile the packet*/
+      data[0] = 5; /* STAT = 5 */
+      
+      /* Send the packet*/
+      ret = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
+      
+      /* Wait 1ms*/
+      bt_os_usleep(1000);
+      
+      /* Try to get 1 reply (non-blocking read)*/
+      ret = read_msg(dev, &id_in, &len_in, data, 0);
+      
+      /* If no error*/
+      if(!ret)
+      {
+         int ispackedpos;
+         /* Parse the reply*/
+         /* What if there's an error? */
+         parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos,
+                   &status_in);
+         if (status_in >= 0)
+         {
+            /* We found a live one! */
+            bt_os_mutex_unlock(dev->mutex);
+            dev->iterator = id + 1;
+            *nextid = id;
+            *nextstatus = status_in;
+            return 1;
+         }
+      }
+   }
+   
+   bt_os_mutex_unlock(dev->mutex);
+   
+   /* Success! */
+   return 0;
+}
+
+
+int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
+                            long * reply)
+{
+   int err;
+   unsigned char data[8];
+   int len_in;
+   int id_in;
+   int property_in;
+   int ispackedpos;
+
+   /* Compile the packet*/
+   data[0] = (unsigned char)property;
+
+   bt_os_mutex_lock(dev->mutex);
+   /* Send the packet*/
+   err = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
+   /* Wait for 1 reply*/
+   err = read_msg(dev, &id_in, &len_in, data, 1);
+   bt_os_mutex_unlock(dev->mutex);
+   
+   if (err)
+   {
+      syslog(LOG_ERR, "%s: read_msg error = %d",__func__,err);
+      return 1;
+   }
+
+   /* Parse the reply*/
+   err = parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos,
+                   reply);
+   
+   /* Check that the id and property match,
+    * and that its not a packed position packet */
+   if((id != id_in) || (ispackedpos) || (property != property_in))
+   {
+      syslog(LOG_ERR, "%s: returned id or property do not match",__func__);
+      return 2;
+   }
+   
+   /* Success! */
+   return 0;
+}
+
+
+int bt_bus_can_set_property(struct bt_bus_can * dev, int id, int property,
+                            int verify, long value)
+{
+   long            response;
+   unsigned char   data[8];
+   int             len;
+   int             err;
+
+   /*syslog(LOG_ERR, "About to compile setProperty, property = %d",
+            property);
+   // Compile 'set' packet*/
+   err = compile_msg(property, value, data, &len);
+
+   /*syslog(LOG_ERR, "After compilation data[0] = %d", data[0]);*/
+   data[0] |= 0x80; /* Set the 'Set' bit*/
+
+   /* Send the packet*/
+   bt_os_mutex_lock(dev->mutex);
+   err = write_msg(dev, (id & 0x0400) ? id : BT_BUS_CAN_NODE2ADDR(id),
+                   len, data, 1);
+   bt_os_mutex_unlock(dev->mutex);
+
+   /* BUG: This will not verify properties from groups of pucks*/
+   if(verify)
+   {
+      /* Get the new value of the property*/
+      bt_bus_can_get_property(dev, id, property, &response);
+
+      /* Compare response to value*/
+      if(response != value)
+         return 2;
+   }
+   return 0;
+}
+
+
+int bt_bus_can_get_packed(struct bt_bus_can * dev, int group, int how_many,
+                          long * data, int prop)
+{
+   int             err;
+   unsigned char   packet[8];
+
+   /* Compile the packet*/
+   packet[0] = (unsigned char)prop;
+
+   bt_os_mutex_lock(dev->mutex);
+
+   /* Send the packet*/
+   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 1, packet, 1);
+
+   /* Wait for each reply */
+   while(how_many)
+   {
+      int len;
+      int msgID;
+      int id;
+      int in_property;
+      int ispacked;
+      long reply;
+      
+      /* Read a message */
+      err = read_msg(dev, &msgID, &len, packet, 1);
+      if (err)
+      {
+         /* Timeout or other error*/
+         bt_os_mutex_unlock(dev->mutex);
+         return(err);
+      }
+       
+      /* Parse the reply*/
+      err = parse_msg(msgID, len, packet, &id, &in_property, &ispacked, &reply);
+      if(ispacked)
+      {
+         data[id] = reply;
+         how_many--;
+      }
+      else
+      {
+         syslog(LOG_ERR, "getPositions(): Asked group %d for position, received property %d = %ld from id %d",
+                group, in_property, reply, id);
+      }
+
+   }
+   bt_os_mutex_unlock(dev->mutex);
+   return 0;
+}
+
+
+int bt_bus_can_set_torques(struct bt_bus_can * dev, int group, int * values,
+                           int torque_prop)
+{
+   unsigned char   data[8];
+   int             err;
+   int             i;
+
+   /* Bound the torque commands */
+   for (i = 0; i < 4; i++)
+      values[i] = BORDER(values[i], -8191, 8191);
+
+   /* Special value-packing compilation: Packs (4) 14-bit values into 8 bytes */
+   /*     0        1        2        3        4        5        6        7    */
+   /* ATPPPPPP AAAAAAaa aaaaaaBB BBBBbbbb bbbbCCCC CCcccccc ccDDDDDD dddddddd */
+
+   data[0] = torque_prop | 0x80; /* Set the "Set" bit */
+   data[1] = (unsigned char)(( values[0] >> 6) & 0x00FF);
+   data[2] = (unsigned char)(((values[0] << 2) & 0x00FC) | ((values[1] >> 12) & 0x0003) );
+   data[3] = (unsigned char)(( values[1] >> 4) & 0x00FF);
+   data[4] = (unsigned char)(((values[1] << 4) & 0x00F0) | ((values[2] >> 10) & 0x000F) );
+   data[5] = (unsigned char)(( values[2] >> 2) & 0x00FF);
+   data[6] = (unsigned char)(((values[2] << 6) & 0x00C0) | ((values[3] >> 8) & 0x003F) );
+   data[7] = (unsigned char)( values[3] & 0x00FF);
+
+   /* Send the data */
+   bt_os_mutex_lock(dev->mutex);
+   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 8, data, 1);
+   bt_os_mutex_unlock(dev->mutex);
+   
+   return 0;
+}
+
+
+static int read_msg(struct bt_bus_can * dev, int * id, int * len,
+                    unsigned char * data, int blocking)
 {
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
    
@@ -250,7 +560,7 @@ static int read_msg(struct bt_bus_can_device * dev, int *id, int *len, unsigned 
          if(pendread)
             err = LINUX_CAN_Read(dev->handle, &msg);
          else
-            return 1; /*returned empty*/
+            return 1; /* returned empty */
       }
    }
    if(err)
@@ -285,7 +595,7 @@ static int read_msg(struct bt_bus_can_device * dev, int *id, int *len, unsigned 
          return 2;
    }
    if(msgCt != 1)
-      return 1; /* No message received, return err*/
+      return 1; /* No message received, return err */
    
    /* Success! */
    (*id) = msg.id;
@@ -298,7 +608,8 @@ static int read_msg(struct bt_bus_can_device * dev, int *id, int *len, unsigned 
 }
 
 
-static int write_msg(struct bt_bus_can_device * dev, int id, char len, unsigned char *data, int blocking)
+static int write_msg(struct bt_bus_can * dev, int id, char len,
+                     unsigned char * data, int blocking)
 {
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
    long err;
@@ -364,165 +675,27 @@ static int write_msg(struct bt_bus_can_device * dev, int id, char len, unsigned 
 }
 
 
-int bt_bus_can_clearmsg(struct bt_bus_can_device * dev)
-{
-#if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
-   long err;
-   int pendread;
-   int pendwrite;
-   int id, len;
-   unsigned char data[8];
-   
-   pendread = 1;
-   err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
-   
-   while (pendread)
-   {
-      err = read_msg(dev, &id, &len, data, 1);
-      err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
-   }
-   return 0;
-   
-#else
-   
-   int id, len;
-   unsigned char data[8];
-   
-   /*find a better way of clearing the bus*/
-   while (read_msg(dev, &id, &len, data, 0) == 0)
-   {
-      syslog(LOG_ERR, "Cleared unexpected message from CANbus.");
-      bt_os_usleep(1);
-   }
-   return 0;
-   
-#endif
-}
-
-
-/* int setTorques(struct can_device * dev, int group, int *values)
- * w/ data[0] = TORQ | 0x80; */
-int bt_bus_can_set_torques(struct bt_bus_can_device * dev, int group, int *values, int torque_prop)
-{
-   unsigned char   data[8];
-   int             err;
-   int             i;
-
-   /* Bound the torque commands */
-   for (i = 0; i < 4; i++)
-      values[i] = Border(values[i], -8191, 8191);
-
-   /* Special value-packing compilation: Packs (4) 14-bit values into 8 bytes */
-   /*     0        1        2        3        4        5        6        7    */
-   /* ATPPPPPP AAAAAAaa aaaaaaBB BBBBbbbb bbbbCCCC CCcccccc ccDDDDDD dddddddd */
-
-   data[0] = torque_prop | 0x80; /* Set the "Set" bit */
-   data[1] = (unsigned char)(( values[0] >> 6) & 0x00FF);
-   data[2] = (unsigned char)(((values[0] << 2) & 0x00FC) | ((values[1] >> 12) & 0x0003) );
-   data[3] = (unsigned char)(( values[1] >> 4) & 0x00FF);
-   data[4] = (unsigned char)(((values[1] << 4) & 0x00F0) | ((values[2] >> 10) & 0x000F) );
-   data[5] = (unsigned char)(( values[2] >> 2) & 0x00FF);
-   data[6] = (unsigned char)(((values[2] << 6) & 0x00C0) | ((values[3] >> 8) & 0x003F) );
-   data[7] = (unsigned char)( values[3] & 0x00FF);
-
-   /* Send the data */
-   bt_os_mutex_lock(dev->mutex);
-   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 8, data, 1);
-   bt_os_mutex_unlock(dev->mutex);
-   
-   return 0;
-}
-
-
-/* int getPositions(struct can_device * dev, int group, int howMany, long *pos)
- * w/ data[0] = (unsigned char)AP; */
-int bt_bus_can_get_packed(struct bt_bus_can_device * dev, int group, int howMany, long * data, int prop)
-{
-   int             err;
-   unsigned char   packet[8];
-
-   /* Compile the packet*/
-   packet[0] = (unsigned char)prop;
-
-   bt_os_mutex_lock(dev->mutex);
-
-   /* Send the packet*/
-   err = write_msg(dev, BT_BUS_CAN_GROUPID(group), 1, packet, 1);
-
-   /* Wait for each reply */
-   while(howMany)
-   {
-      int len;
-      int msgID;
-      int id;
-      int in_property;
-      int ispacked;
-      long reply;
-      
-      /* Read a message */
-      err = read_msg(dev, &msgID, &len, packet, 1);
-      if (err)
-      {
-         /* Timeout or other error*/
-         bt_os_mutex_unlock(dev->mutex);
-         return(err);
-      }
-       
-      /* Parse the reply*/
-      err = parse_msg(msgID, len, packet, &id, &in_property, &ispacked, &reply);
-      if(ispacked)
-      {
-         data[id] = reply;
-         howMany--;
-      }
-      else
-      {
-         syslog(LOG_ERR, "getPositions(): Asked group %d for position, received property %d = %ld from id %d",
-                group, in_property, reply, id);
-      }
-
-   }
-   bt_os_mutex_unlock(dev->mutex);
-   return 0;
-}
-
-
-/** Parse the data payload received from a Barrett Motor Controller.
-    Allows selection of the CAN controller.
-    
-    \return 0 for no error
-    \return 1 for <illegal message header> (syslog output is generated)
- 
-*/
-static int parse_msg(
-   /* Input */
-   int id                      /** The message ID */,
-   int len                     /** The data payload length */,
-   unsigned char *messageData  /** Pointer to the message data payload */,
-   /* Output */
-   int *node       /** The controller node ID of the received message */,
-   int *property   /** The property this message applies to */,
-   int *ispacked,
-   long *value     /** The value of the property being processed */)
+static int parse_msg(int msgid, int len, unsigned char * message_data,
+                     int * id, int * property, int * ispacked, long * value)
 {
    int i;
    int dataHeader;
    
    *ispacked=0;
 
-   *node = BT_BUS_CAN_ADDR2NODE(id);
-   if (*node == -1)
-      syslog(LOG_ERR,"msgID:%x ",id);
-   dataHeader = ((messageData[0] >> 6) & 0x0002) | ((id & 0x041F) == 0x0403) | ((id & 0x041F) == 0x0407);
+   (*id) = BT_BUS_CAN_ADDR2NODE(msgid);
+   if ((*id) == -1)
+      syslog(LOG_ERR,"msgID:%x ",msgid);
+   dataHeader = ((message_data[0] >> 6) & 0x0002) | ((msgid & 0x041F) == 0x0403) | ((msgid & 0x041F) == 0x0407);
    /*messageData[0] &= 0x7F;*/
    /*syslog(LOG_ERR,"Entering parsemessage");*/
    switch (dataHeader)
    {
    case 3:  /* Data is a packed 22-bit position, acceleration, etc SET */
       *value = 0x00000000;
-      *value |= ( (long)messageData[0] << 16) & 0x003F0000;
-      *value |= ( (long)messageData[1] << 8 ) & 0x0000FF00;
-      *value |= ( (long)messageData[2] ) & 0x000000FF;
+      *value |= ( (long)message_data[0] << 16) & 0x003F0000;
+      *value |= ( (long)message_data[1] << 8 ) & 0x0000FF00;
+      *value |= ( (long)message_data[2] ) & 0x000000FF;
 
       if (*value & 0x00200000) /* If negative */
          *value |= 0xFFC00000; /* Sign-extend */
@@ -532,12 +705,12 @@ static int parse_msg(
       /*syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);*/
       break;
    case 2:  /* Data is normal, SET */
-      *property = messageData[0] & 0x7F;
+      *property = message_data[0] & 0x7F;
       /*syslog(LOG_ERR, "Received property: %d", *property);*/
       /* Store the value, second byte of message is zero (for DSP word alignment) */
       *value = 0;
       for (i = 0; i < len - 2; i++)
-         *value |= ((unsigned long)messageData[i + 2] << (i * 8))
+         *value |= ((unsigned long)message_data[i + 2] << (i * 8))
                    & (0x000000FF << (i * 8));
 
       if (*value & (1 << ((i*8) - 1)))
@@ -547,7 +720,7 @@ static int parse_msg(
       /*syslog(LOG_ERR,"parsemessage after %d",value);*/
       break;
    case 0:  /* Assume firmware request (GET) */
-         *property = -(messageData[0] & 0x7F); /* A negative (or zero) property means GET */
+         *property = -(message_data[0] & 0x7F); /* A negative (or zero) property means GET */
       *value = 0;
       /*syslog(LOG_ERR, "Received normal get property: %d from node: %d value:%d", *property, *node, *value);*/
       break;
@@ -560,19 +733,9 @@ static int parse_msg(
 
 }
 
-/** Convert a property and value into a valid btcan packet.
-    Used by getProperty() and setProperty() to build the data payload 
-    section of a CAN message based on a given property and value.
-    
-    \return 0 for success
-    \return non-zero, otherwise
-   
-*/
-static int compile_msg(
-   int property        /** The property being compiled (use the enumerations in btcan.h) */,
-   long longVal        /** The value to set the property to */,
-   unsigned char *data /** A pointer to a character buffer in which to build the data payload */,
-   int *dataLen        /** A pointer to the total length of the data payload for this packet */)
+
+static int compile_msg(int property, long value, unsigned char * data,
+                       int * len)
 {
    int i;
 
@@ -583,140 +746,23 @@ static int compile_msg(
    /* Append the value */
    for (i = 2; i < 6; i++)
    {
-      data[i] = (char)(longVal & 0x000000FF);
-      longVal >>= 8;
+      data[i] = (char)(value & 0x000000FF);
+      value >>= 8;
    }
 
    /* Record the proper data length */
-   *dataLen = 6; /*(dataType[property] & 0x0007) + 2;*/
+   (*len) = 6; /*(dataType[property] & 0x0007) + 2;*/
 
-   return (0);
-}
-
-
-int bt_bus_can_set_property(struct bt_bus_can_device * dev, int id, int property, int verify, long value)
-{
-   long            response;
-   unsigned char   data[8];
-   int             len;
-   int             err;
-
-   /*syslog(LOG_ERR, "About to compile setProperty, property = %d", property);
-   // Compile 'set' packet*/
-   err = compile_msg(property, value, data, &len);
-
-   /*syslog(LOG_ERR, "After compilation data[0] = %d", data[0]);*/
-   data[0] |= 0x80; /* Set the 'Set' bit*/
-
-   /* Send the packet*/
-   bt_os_mutex_lock(dev->mutex);
-   err = write_msg(dev, (id & 0x0400) ? id : BT_BUS_CAN_NODE2ADDR(id), len, data, 1);
-   bt_os_mutex_unlock(dev->mutex);
-
-   /* BUG: This will not verify properties from groups of pucks*/
-   if(verify)
-   {
-      /* Get the new value of the property*/
-      bt_bus_can_get_property(dev, id, property, &response);
-
-      /* Compare response to value*/
-      if(response != value)
-         return 1;
-   }
    return 0;
 }
 
-int bt_bus_can_get_property(struct bt_bus_can_device * dev, int id, int property, long *reply)
+
+#ifdef CANTYPE_ESD
+static void allow_msg(struct bt_bus_can * dev, int id, int mask)
 {
-   int err;
-   unsigned char data[8];
-   int len_in;
-   int id_in;
-   int property_in;
-   int ispackedpos;
-
-   /* Compile the packet*/
-   data[0] = (unsigned char)property;
-
-   bt_os_mutex_lock(dev->mutex);
-   /* Send the packet*/
-   err = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
-   /* Wait for 1 reply*/
-   err = read_msg(dev, &id_in, &len_in, data, 1);
-   bt_os_mutex_unlock(dev->mutex);
-   
-   if (err)
-   {
-      syslog(LOG_ERR, "%s: read_msg error = %d",__func__,err);
-      return 1;
-   }
-
-   /* Parse the reply*/
-   err = parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos, reply);
-   
-   /* Check that the id and property match, and that its not a packed position packet */
-   if((id != id_in) || (ispackedpos) || (property != property_in))
-   {
-      syslog(LOG_ERR, "%s: returned id or property do not match",__func__);
-      return 1;
-   }
-   
-   /* Success! */
-   return 0;
+   int i;
+   for(i = 0; i < 2048; i++)
+      if((i & ~mask) == id)
+         canIdAdd(dev->handle, i);
 }
-
-/* Iterate through all live pucks */
-void bt_bus_can_iterate_start(struct bt_bus_can_device * dev) { dev->iterator = 0; }
-int bt_bus_can_iterate_next(struct bt_bus_can_device * dev,
-                      int * nextid, int * nextstatus)
-{
-   int id;
-   
-   bt_os_rt_set_mode_hard();
-   bt_os_mutex_lock(dev->mutex);
-   
-   for (id=dev->iterator; id<MAX_NODES; id++)
-   {
-      int ret;
-      unsigned char data[8];
-      int id_in;
-      int len_in;
-      int property_in;
-      long status_in;
-      
-      /* Compile the packet*/
-      data[0] = 5; /* STAT = 5 */
-      
-      /* Send the packet*/
-      ret = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
-      
-      /* Wait 1ms*/
-      bt_os_usleep(1000);
-      
-      /* Try to get 1 reply (non-blocking read)*/
-      ret = read_msg(dev, &id_in, &len_in, data, 0);
-      
-      /* If no error*/
-      if(!ret)
-      {
-         int ispackedpos;
-         /* Parse the reply*/
-         /* What if there's an error? */
-         parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos, &status_in);
-         if (status_in >= 0)
-         {
-            /* We found a live one! */
-            bt_os_mutex_unlock(dev->mutex);
-            dev->iterator = id + 1;
-            *nextid = id;
-            *nextstatus = status_in;
-            return 1;
-         }
-      }
-   }
-   
-   bt_os_mutex_unlock(dev->mutex);
-   
-   /* Success! */
-   return 0;
-}
+#endif

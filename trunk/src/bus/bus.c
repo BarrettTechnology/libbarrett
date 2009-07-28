@@ -40,8 +40,9 @@
 #include "bus_can.h"
 #include "os.h"
 
+#define MAXPUCKID (20)
 #define TWOPI (2*3.141592653589793238462643383)
-#define Border(Value,Min,Max) \
+#define BORDER(Value,Min,Max) \
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
 
@@ -86,6 +87,7 @@ static int retrieve_puck_accelerations(struct bt_bus * bus);
 /** Query and receive a packed CAN packet of Puck positions */
 static int retrieve_puck_positions(struct bt_bus * bus);
 
+
 /** Define two pointer-array setting functions for setting values in
  *  pointer arrays.
  *
@@ -101,12 +103,9 @@ static int retrieve_puck_positions(struct bt_bus * bus);
  * }
  * \endcode
  *
- *
- *
- *
- *
- *
- *
+ * The generated function parr_set_puck(bus->puck,&size,6,mypuck) will set
+ * element 6 of the puck pointer array to mypuck, increasing the size of the
+ * pointer array if needed, and setting any pointer without a value to 0.
  */
 #define PARR_SET_FUNC(FNAME,TYPE) \
 static int parr_set_ ## FNAME ( TYPE *** rp, int * sz, int i, TYPE * x ) \
@@ -126,9 +125,9 @@ static int parr_set_ ## FNAME ( TYPE *** rp, int * sz, int i, TYPE * x ) \
 PARR_SET_FUNC(puck,struct bt_bus_puck)
 PARR_SET_FUNC(group,struct bt_bus_group)
 
-/* Public Functions */
 
-struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_type update_type )
+struct bt_bus * bt_bus_create(config_setting_t * busconfig,
+                              enum bt_bus_update_type update_type)
 {
    struct bt_bus * bus;
    
@@ -183,7 +182,8 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    /* Wake all the pucks on the bus */
    syslog(LOG_ERR, "Waking all pucks");
    /* Must use '5' for STAT*/
-   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WHOLE_ARM), 5, 0, STATUS_READY);
+   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WHOLE_ARM), 5, 0,
+                           STATUS_READY);
    bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
    
    /* Iterate through all the pucks */
@@ -197,12 +197,14 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
          if (!(bus->p))
          {
             long fw_vers;
-            /* error? */
-            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers); /* Get the firmware version*/
+            /* Get the firmware version*/
+            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers);
             bus->p = prop_defs_create(fw_vers);
             if (!bus->p)
             {
-               syslog(LOG_ERR,"%s: Could not initialize property definitions.",__func__);
+               syslog(LOG_ERR,
+                      "%s: Could not initialize property definitions.",
+                      __func__);
                bt_bus_destroy(bus);
                return 0;
             }
@@ -212,20 +214,21 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             struct bt_bus_safety_puck * puck;
             if (bus->safety_puck)
             {
-               syslog(LOG_ERR,"%s: More than one safety puck found!.",__func__);
+               syslog(LOG_ERR,"%s: More than one safety puck found!.",
+                      __func__);
                bt_bus_destroy(bus);
                return 0;
             }
             if (status != STATUS_READY)
             {
-               syslog(LOG_ERR,
-                      "%s: The safety module on port %d is not functioning properly",
-                      __func__,bus->port);
+               syslog(LOG_ERR, "%s: The safety module on port %d is not "
+                      "functioning properly",__func__,bus->port);
                break;
             }
             /* Make a new safety puck */
             syslog(LOG_ERR,"Found a safety puck!\n");
-            puck = (struct bt_bus_safety_puck *) malloc(sizeof(struct bt_bus_safety_puck));
+            puck = (struct bt_bus_safety_puck *)
+               malloc(sizeof(struct bt_bus_safety_puck));
             if (!puck)
             {
                syslog(LOG_ERR,"%s: Out of memory.",__func__);
@@ -258,7 +261,7 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             }
             puck->id = id;
             /* Make sure the puck is in IDLE mode */
-            bt_bus_can_set_property(bus->dev, id, bus->p->MODE, 0, MODE_IDLE);
+            bt_bus_can_set_property(bus->dev, id, bus->p->MODE, 0,MODE_IDLE);
             bt_os_usleep(200);
             /* Fill the puck structure */
             bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply);
@@ -294,17 +297,20 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
             bus->num_pucks++;
             
             /* Make a new group if necessary */
-            if ( (puck->gid >= bus->groups_size) || !(bus->group[puck->gid]) )
+            if ( (puck->gid >= bus->groups_size)
+                || !(bus->group[puck->gid]) )
             {
                struct bt_bus_group * group;
-               group = (struct bt_bus_group *) malloc(sizeof(struct bt_bus_group));
+               group = (struct bt_bus_group *)
+                  malloc(sizeof(struct bt_bus_group));
                if (!group)
                {
                   syslog(LOG_ERR,"%s: Out of memory.",__func__);
                   bt_bus_destroy(bus);
                   return 0;
                }
-               parr_set_group(&(bus->group), &(bus->groups_size), puck->gid, group );
+               parr_set_group(&(bus->group), &(bus->groups_size), puck->gid,
+                              group );
             }
             
             /* Add the puck to the group */
@@ -322,7 +328,8 @@ struct bt_bus * bt_bus_create( config_setting_t * busconfig, enum bt_bus_update_
    return bus;
 }
 
-int bt_bus_destroy( struct bt_bus * bus )
+
+int bt_bus_destroy(struct bt_bus * bus)
 {
    int i;
    if (bus->p) prop_defs_destroy(bus->p);
@@ -338,9 +345,8 @@ int bt_bus_destroy( struct bt_bus * bus )
    return 0;
 }
 
-/* Use broadcast to get the positions of all the pucks on the bus
- * Maybe move this somewhere else? does btsys really want to know about dt? */
-int bt_bus_update( struct bt_bus * bus )
+
+int bt_bus_update(struct bt_bus * bus)
 {
    int i;
    bt_os_rtime rtime;
@@ -393,8 +399,7 @@ int bt_bus_update( struct bt_bus * bus )
 }
 
 
-/* Set torques on all the pucks using groups */
-int bt_bus_set_torques( struct bt_bus * bus )
+int bt_bus_set_torques(struct bt_bus * bus)
 {
    int gid,i;
    int data[4];
@@ -404,7 +409,7 @@ int bt_bus_set_torques( struct bt_bus * bus )
    {
       double tmp;
       tmp = bus->puck[i]->torque * bus->puck[i]->puckI_per_Nm;
-      bus->puck[i]->puck_torque = Border(tmp, -8191, 8191);
+      bus->puck[i]->puck_torque = BORDER(tmp, -8191, 8191);
    }
    
    /* Send a setTorques packet for each group */
@@ -423,19 +428,24 @@ int bt_bus_set_torques( struct bt_bus * bus )
    return 0;
 }
 
-int bt_bus_set_property(struct bt_bus * bus, int id, int property, int verify, long value)
+
+int bt_bus_get_property(struct bt_bus * bus, int id, int property,
+                        long * reply)
+{
+   if (property > bus->p->PROP_END)
+      return 1;
+   return bt_bus_can_get_property(bus->dev, id, property, reply);
+}
+
+
+int bt_bus_set_property(struct bt_bus * bus, int id, int property,
+                        int verify, long value)
 {
    if (property > bus->p->PROP_END)
       return 1;
    return bt_bus_can_set_property(bus->dev, id, property, verify, value);
 }
 
-int bt_bus_get_property(struct bt_bus * bus, int id, int property, long *reply)
-{
-   if (property > bus->p->PROP_END)
-      return 1;
-   return bt_bus_can_get_property(bus->dev, id, property, reply);
-}
 
 static int retrieve_puck_positions( struct bt_bus * bus )
 {
@@ -443,7 +453,8 @@ static int retrieve_puck_positions( struct bt_bus * bus )
    struct bt_bus_puck * p;
    
    /* Data must be bigger than the max ID (puck id is index) */
-   long int data[20]; /* Arbitrary for now -- allocate dynamically on startup! */
+   /* Arbitrary for now -- allocate dynamically on startup! */
+   long int data[MAXPUCKID];
    
    /* Fill with illegal values */
    for(i = 0; i < 20; i++)
@@ -485,20 +496,23 @@ static int retrieve_puck_positions( struct bt_bus * bus )
    return 0;
 }
 
+
 static int retrieve_puck_accelerations( struct bt_bus * bus )
 {
    int i;
    struct bt_bus_puck * p;
    
    /* Data must be bigger than the max ID (puck id is index) */
-   long int data[20]; /* Arbitrary for now -- allocate dynamically on startup! */
+   /* Arbitrary for now -- allocate dynamically on startup! */
+   long int data[MAXPUCKID]; 
    
    /* Fill with illegal values */
    for(i = 0; i < 20; i++)
       data[i] = 0x80000000;
    
    /* Update acceleration w/ broadcast */
-   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->MECH); /* CHANGE TO 'A' */
+   /* CHANGE TO 'A' */
+   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->MECH);
    
    /* Unpack from data into the pucks array */
    for (i=0; i<bus->pucks_size; i++) if ((p = bus->puck[i]))
@@ -525,7 +539,8 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
       p->puck_acceleration = data[i];
       
       /* Convert to radians/sec/sec */
-      p->acceleration = (5000.0 * 5000.0) * TWOPI * p->puck_acceleration / p->counts_per_rev / (1<<18);
+      p->acceleration = (5000.0 * 5000.0) * TWOPI * p->puck_acceleration /
+           p->counts_per_rev / (1<<18);
    }
    
    /* OK, this is no longer the first acceleration */
@@ -533,6 +548,7 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
    
    return 0;
 }
+
 
 static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
 {
@@ -716,7 +732,8 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->GRPA = i++;
       p->GRPB = i++;
       p->GRPC = i++;
-      p->CMD = i++; /* For commands w/o values: RESET,HOME,KEEP,PASS,LOOP,HI,IC,IO,TC,TO,C,O,T */
+      p->CMD = i++; /* For commands w/o values: RESET,HOME,KEEP,PASS,LOOP,
+                     * HI,IC,IO,TC,TO,C,O,T */
       p->SAVE = i++;
       p->LOAD = i++;
       p->DEF = i++;
@@ -822,6 +839,7 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
    
    return p;
 }
+
 
 static int prop_defs_destroy(struct bt_bus_properties * p)
 {

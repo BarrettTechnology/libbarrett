@@ -140,7 +140,7 @@ struct bt_bus
    /** \name CAN-specific data:
     *  \{ */
    int port;
-   struct bt_bus_can_device * dev;
+   struct bt_bus_can * dev;
    /*  \} */
    
    /** \name Lists and information about the Pucks found on the bus:
@@ -201,12 +201,30 @@ int bt_bus_update(struct bt_bus * bus);
 /** Set torques to Pucks in a bt_bus object.
  *
  * This function send the present values of the Pucks's torque value to all
- * of the motor Pucks on the bus.
+ * of the motor Pucks on the bus.  This function will use Puck groups to send
+ * the torques to up to 4 Pucks at once, preserving CAN bandwidth.
  *
  * \param[in] bus The bt_bus object to set torques to
  * \retval 0 Success
  */
 int bt_bus_set_torques(struct bt_bus * bus);
+
+
+/** Get a property value from a Puck.
+ *
+ * This function gets a property value from a given Puck.
+ *
+ * \param[in] bus The bt_bus object to use
+ * \param[in] id The ID of the Puck
+ * \param[in] property The property to get; se bt_bus_properties for a list
+ * \param[out] reply The location to save the value
+ * \retval 0 Success
+ * \retval 1 The property is beyond the maximum in the properties list
+ * \return For other return values, see bt_bus_can_get_property() in
+ *         bus_can.h
+ */
+int bt_bus_get_property(struct bt_bus * bus, int id, int property,
+                        long * reply);
 
 
 /** Set a property value on a Puck.
@@ -227,23 +245,6 @@ int bt_bus_set_torques(struct bt_bus * bus);
  */
 int bt_bus_set_property(struct bt_bus * bus, int id, int property,
                         int verify, long value);
-
-
-/** Get a property value from a Puck.
- *
- * This function gets a property value from a given Puck.
- *
- * \param[in] bus The bt_bus object to use
- * \param[in] id The ID of the Puck
- * \param[in] property The property to get; se bt_bus_properties for a list
- * \param[out] reply The location to save the value
- * \retval 0 Success
- * \retval 1 The property is beyond the maximum in the properties list
- * \return For other return values, see bt_bus_can_get_property() in
- *         bus_can.h
- */
-int bt_bus_get_property(struct bt_bus * bus, int id, int property,
-                        long * reply);
 
 
 /** A list of properties available on each Puck on the bus.
@@ -415,4 +416,4 @@ struct bt_bus_properties
 #ifdef __cplusplus
 }
 #endif
-#endif/* BT_BUS_H */
+#endif /* BT_BUS_H */
