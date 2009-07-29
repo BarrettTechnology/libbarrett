@@ -17,5 +17,23 @@ To compile on linux just type 'make' in the konsole.
 For windows compilation type 'make wamdisplay_win' in a cygwin terminal.
 The executable file will be created in the wamdisplay directory.
 
-
 Enjoy and have fun!!! :)
+
+*********************************************************************************
+Edited by vw. 7/29/2009
+NOTE:	Make sure global variable in wamdisplay/wamdisplay.cpp (line 71) is
+	correct (CAN vs ethernet connection)
+*********************************************************************************
+If WAM is connected through external CAN (CAN 1):
+1. launch executable server/Server
+2. launch wamdisplay/wamdisplay
+
+If WAM is connected through ethernet (CAN 0):
+1. ssh into internal WAM PC and run bt-wam-gw
+2. launch wamdisplay/wamdisplay
+
+
+
+
+
+
