@@ -35,13 +35,13 @@ extern "C" {
 #include "server_handler.h"
 
 #define SOCKET_CONNECT_TIMEOUT_USEC -1
-#define TEXTGUI 0
-#define SERVER_CONTROLLER_ON 1
+#define TEXTGUI 1      //! make 1 if want text gui
+#define SERVER_CONTROLLER_ON 0  //!make 1 if want gui control wam
 /* ------------------------------------------------------------------------ */
 
 static const int socket_port=2021;
 
-/**main server thread. should be launched on WAM machine locally.
+/**main server thread. should be launched on external machine via CAN.
 initializes:
     - a static server manager
     - 1 server controller per client
@@ -184,10 +184,10 @@ int main(int argc, char ** argv)
 
 
    /*spin off thread to process command queue */
-
-   //   pthread_t serverManager_t;
-   //   pthread_create( &serverManager_t, NULL, init_server_manager, (void *) NULL);
-
+#if SERVER_CONTROLLER_ON
+   pthread_t serverManager_t;
+   pthread_create( &serverManager_t, NULL, init_server_manager, (void *) NULL);
+#endif
 
    /* Start the demo program ... */
    screen = SCREEN_MAIN;
@@ -204,10 +204,8 @@ int main(int argc, char ** argv)
       /* Initialize server socket */
       connected = 0;
       
-      /* will lock until client connection made */
+      /* NOTE: will lock until client connection made */
       Sockets serverSocket(socket_port); //, SOCKET_CONNECT_TIMEOUT_USEC);
-
-      //TODO handle destroying of threads, have print statement
 
       if(!serverSocket.error)      //if no error upon connection, proceed
          connected = 1;
@@ -270,10 +268,7 @@ void * init_server_manager(void * params)
 
 void * initServerController(void * _serverControllerObj)
 {
-   //struct thread_data * my_data = (thread_data *)params;
-   //server_controller serverController(my_data->sock, my_data->pcmd_q, my_data->pconnected, my_data->pgoing);
    server_controller * serverControllerObj = (server_controller *) _serverControllerObj;
-   cout << "starting server controller" << endl;
    void * threadResult = serverControllerObj->run();
    delete serverControllerObj;
    return threadResult;
@@ -284,10 +279,7 @@ void * initServerController(void * _serverControllerObj)
 /*needs wam pointer and socket pointer */
 void * initServerHandler(void * _serverHandlerObj)
 {
-   //struct thread_data * my_data = (thread_data *)params;
-   //serverHandlerObj = new serverHandler(my_data->sock, my_data->wam, my_data->pconnected, my_data->pgoing);
    server_handler * serverHandlerObj = (server_handler *) _serverHandlerObj;
-   cout << "starting server handler " << endl;
    void * threadResult = serverHandlerObj->run();
    delete serverHandlerObj;
 

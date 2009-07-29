@@ -1,8 +1,8 @@
 ### Wam Display ###
 
 ## sources: ##
-OBJS = wamdisplay.o wamComponents.o dhTransform.o wamdisplay_controller.o CommunicationThread.o GraphicThread.o
-INCL_FILES = wamComponents.h dhTransform.h wamdisplay_controller.h
+OBJS = wamdisplay.o wamComponents.o dhTransform.o ClientController.o CommunicationThread.o GraphicThread.o
+INCL_FILES = wamComponents.h dhTransform.h ClientController.h
 PATH_DEPS = ../include/
 DEPS = $(PATH_DEPS)sockets.h $(PATH_DEPS)wam_Spec.h
 

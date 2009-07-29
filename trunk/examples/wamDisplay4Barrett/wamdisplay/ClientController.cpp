@@ -13,33 +13,35 @@ extern "C" {
 }
 #include "../sockets/sockets.h"
 #include "wamComponents.h"
-#include "wamdisplay_controller.h"
+#include "ClientController.h"
 
-/** requires btgw to be running on internal pc */
+//! requires bt-wam-gw to be running on internal pc */
 
 
 using namespace std;
 
 //STATE state;
 
-// TODO: may not need sockets
+/* TODO: add CONTROL state which has listens for GUI actions and 
+ * translates into WAM movement
+ */
 
 /*constructor */
-wamdisplay_controller::wamdisplay_controller(double * shared_angle, 
-										int shared_finish, 
-										pthread_mutex_t * shared_mutex): shared_angle(shared_angle), 
-																		shared_finish(shared_finish),
-																		shared_mutex(shared_mutex)
+ClientController::ClientController(double * shared_angle, 
+                              int shared_finish, 
+                              pthread_mutex_t * shared_mutex): shared_angle(shared_angle), 
+                                                      shared_finish(shared_finish),
+                                                      shared_mutex(shared_mutex)
 {
 }
 
 
 /*destructor */
-wamdisplay_controller::~wamdisplay_controller()
+ClientController::~ClientController()
 {
 }
 
-void * wamdisplay_controller::run(void )
+void * ClientController::run(void )
 {
 
     /* Stuff for starting up the WAM */
@@ -51,10 +53,9 @@ void * wamdisplay_controller::run(void )
     /* Initialize syslog */
     openlog("demo", LOG_CONS | LOG_NDELAY, LOG_USER);
 
-    /* Open the WAM (or WAMs!) */
-    char address[100] = "tcp+json://192.168.139.150/wam7";
+    /* Open the WAM (or WAMs!) */ //! address will vary
+    char address[100] = "tcp+json://wam15/wam7";//"tcp+json://192.168.139.150/wam7";
     
-    cout << "trying to create wam" << endl;
 
     wam = bt_wam_create(address);           //how to pass in argv[1]???
     if (!wam)
@@ -64,41 +65,41 @@ void * wamdisplay_controller::run(void )
         return 0;                                                           //return -1???
     }
 
-	cout << "wam created" << endl;
+   cout << "wam created" << endl;
     /* Loop until Ctrl-C is pressed ???*/
     int going = 1;
-	enum  
-	{
-	   VIEW,
-	   CONTROL
-	} state = VIEW;
+   enum  
+   {
+      VIEW,
+      //CONTROL
+   } state = VIEW;
     
-	char buf[256];
+   char buf[256];
    //char * line;
     while(going)
     {
-#if 0
+
         switch(state)
         {
             case VIEW:
-               pthread_mutex_lock( pmutex );
+               pthread_mutex_lock( shared_mutex );
                bt_wam_str_jposition(wam, buf);
-               if (!get_angles(buf, DOF,  darray ) )
+               if (!get_angles(buf, DOF,  shared_angle ) )
                {
                   printf("failed in retrieving joint-positions");
                   exit(1);
                }
-               pthread_mutex_unlock( pmutex );
+               pthread_mutex_unlock( shared_mutex );
                //       delete[] line;
                break;
-               
-            case CONTROL:
-			
-			
+            
+            default:
+         
+         
                break;
 
         }
-#endif
+
 
        /* ?????? Slow this loop down to about 10Hz ?????*/
        usleep(100000); /* Wait a moment*/
@@ -126,7 +127,7 @@ retval: true- correct parsing; false- incorrect parsing and/or input string
 
 */
 
-bool wamdisplay_controller::get_angles(char * angle_str, int num_angles, double * d_array)
+bool ClientController::get_angles(char * angle_str, int num_angles, double * d_array)
 {
     char store[20] = "";
     int current = 0;        //index pointer to string

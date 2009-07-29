@@ -69,9 +69,7 @@ void Sockets::reconnect(long timeout_usec)
 
 void Sockets::client_create()
 {
-   cout << "creating client" << endl;
    int cre = create();
-   cout << "create is " << cre<< endl;
    if(!cre)
    {
       if(print_errors)
@@ -79,7 +77,6 @@ void Sockets::client_create()
       error=-1;
    }
    int con = connect (targetIp,port);
-   cout << "con is " << con << " ip is " << targetIp << " port is " << port << endl;
    if(!con)
    {
       if(print_errors)
@@ -165,12 +162,9 @@ void Sockets::server_create(long timeout_usec)
 
 bool Sockets::create()
 {
-cout << "af and ss are " << AF_INET << endl;
-cout << SOCK_STREAM << endl;
 
   m_sock = socket ( AF_INET, SOCK_STREAM, 0);
 
-cout << "create m_sock is " << m_sock << endl;
 
   if ( ! is_valid() )
     return false;
@@ -247,11 +241,9 @@ bool Sockets::accept (int* new_df)
 
 bool Sockets::connect ( const char* host, const int port )
 {
-   cout << "hello?  " << endl;
    
   if ( ! is_valid() ) 
-  {
-   cout << "begin false" << endl;   
+  {   
      return false;
   }
   
@@ -262,21 +254,14 @@ bool Sockets::connect ( const char* host, const int port )
 
   if ( errno == EAFNOSUPPORT ) return false;
 
-  status = ::connect ( m_sock, ( sockaddr * ) &m_addr, sizeof ( m_addr ) );
-cout << "msock is " << m_sock << endl;
-cout << "sockaddr is " << &m_addr << endl;
-cout << "sizeof maddy " << sizeof(m_addr) << endl;
-cout << "status: " << status << endl;
+  status = ::connect ( m_sock, ( sockaddr * ) &m_addr, sizeof ( m_addr ) );;
 
   if ( status == 0 )
     return true;
   else
   {
-	strerror(errno);
-//	cout << buf << endl; 
-	printf("String Error is: %s\n",strerror(errno));
-//	cout << errno << endl;
-   cout << "end false" << endl;
+   strerror(errno);
+   printf("String Error is: %s\n",strerror(errno));
     return false;
   }
 }
@@ -284,9 +269,6 @@ cout << "status: " << status << endl;
 
 int Sockets::send (void* Data, const int data_size, const int flags)
 {   
-//   cout << "msock is " << m_sock << endl;
-//   cout << "data is " << Data << endl;
-//   cout << "data_size " << data_size << endl;
   return ::send ( m_sock, Data, data_size, MSG_NOSIGNAL | flags );
 }
 

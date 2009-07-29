@@ -32,7 +32,6 @@ extern "C" {
 #include "wamComponents.h"
 #include "dhTransform.h"
 #include "../sockets/sockets.h"
-#include "wamdisplay_controller.h"
 #include "client_handler.h"
 #include "../include/definitions.h"
 #include "../include/wam_Spec.h"
@@ -160,7 +159,7 @@ DHparam wam7DOFparam[7]={
   {a7,alpha7,d7,theta7},
 };
 
-		/** Functions */
+      /** Functions */
 //threads
 //void read_shared_memory();
 
@@ -191,22 +190,22 @@ GraphicThread * gra_thd;
 
 #if 0
 struct arguments {
-	int argc0;
-	char **argv0;
+   int argc0;
+   char **argv0;
 } argument;
 #endif
 
 
 
 GraphicThread::GraphicThread(double * shared_angle, 
-							int shared_finish, 
-							pthread_mutex_t * shared_mutex,
-							void * struct_ptr): shared_angle(shared_angle), 
-												shared_finish(shared_finish),
-												shared_mutex(shared_mutex)
+                     int shared_finish, 
+                     pthread_mutex_t * shared_mutex,
+                     void * struct_ptr): shared_angle(shared_angle), 
+                                    shared_finish(shared_finish),
+                                    shared_mutex(shared_mutex)
 {
-	gra_thd = this;
-	argument = (arguments *) struct_ptr;
+   gra_thd = this;
+   argument = (arguments *) struct_ptr;
 }
 
 GraphicThread::~GraphicThread()
@@ -214,7 +213,7 @@ GraphicThread::~GraphicThread()
 }
 
 
-		/** MAIN LOOP */
+      /** MAIN LOOP */
 void * GraphicThread::run(void){
   glutInit(&argument->argc0, argument->argv0);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
@@ -400,7 +399,7 @@ void world_draw(void)
 
   glTranslatef(WAM_LINK_ELBOW, 0.0, WAM_4LINK_HEIGHT);
   //quinta rotação
-  glRotatef(RAD_TO_DEG(wam7DOFparam[4].theta), 0.0, 0.0, 1.0);
+  glRotatef(RAD_TO_DEG(wam7DOFparam[4].theta)+180, 0.0, 0.0, 1.0);
   glCallList(wamJoint_5DOF);
 
 

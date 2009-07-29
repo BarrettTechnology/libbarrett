@@ -101,7 +101,6 @@ void * CommunicationThread::run(void)
       
       communicate=false;
      char string[100];
-      std::cout << "finish is " << shared_finish << std::endl;
       
       /* create client socket */
       std::cout << "trying to connect to server" << std::endl;
@@ -122,6 +121,8 @@ void * CommunicationThread::run(void)
 
             if (received == -1 )
             std::cout << "error occured when reading from socket" << std::endl;
+            
+            /* if no message received for 10 rounds, assumes server dropped*/
             else if (!received)
             {
                timeout++;
@@ -135,8 +136,6 @@ void * CommunicationThread::run(void)
             }
             else
             {
-                //std::cout << "received is " << received << std::endl;
-               //std::cout << string << std::endl;
 
                /*parse received string and store in local variable */
                parse_angles(string, 7, socket_angles);
@@ -146,7 +145,7 @@ void * CommunicationThread::run(void)
                for(int i=0;i<7;i++)
                   shared_angle[i]=socket_angles[i];
                pthread_mutex_unlock( shared_mutex ); 
-               usleep(10000);
+               usleep(10000);      //slow loop to 100 Hz
             }
             break;
 #if SIMPLE      
@@ -168,37 +167,10 @@ void * CommunicationThread::run(void)
 #endif
         }
         
-        
-        
-        
-
-           
-         
-         
-     /*    
-           char buf[256];
-           pthread_mutex_lock( mutex );
-           if (!get_angles(bt_wam_str_jposition(wam, buf), DOF,  shared.angles[0] ) )
-               printf("failed in retrieving joint-positions");
-           pthread_mutex_unlock( mutex );
-   */
-
-   /*
-         if(socket_recv_timeout_usec==-1)
-                socket.recv((void*)socket_angles,sizeof(socket_angles));
-         else
-            if(socket.recvtimeout((void*)socket_angles,sizeof(socket_angles),socket_recv_timeout_usec)<=0){
-   //             printf("recieve error\n");
-               communicate=false;
-               for(int i=0;i<7;i++)
-                  socket_angles[i]=0.0;
-            }
-             pthread_mutex_lock( &mutex1 );
-             for(int i=0;i<7;i++)
-               shared.angle[i]=socket_angles[i];
-             pthread_mutex_unlock( &mutex1 ); */
+  
       }
-
+      
+      /* asks user to attempt reconnection */
       while(loop)
       {
          std::cout << "retry connection?(y/n)" << std::endl;
@@ -218,11 +190,6 @@ void * CommunicationThread::run(void)
       } 
    return 0;
 }
-
-
-
-
-
 
 
 
@@ -254,11 +221,13 @@ bool parse_angles(char * angle_str, int num_angles, double * d_array)
     /*begin parsing  */
     while(*angle_str != '>')
     {
-        if ( ( (*angle_str >= 46) & (*angle_str <= 57) ) | (*angle_str == '-') )           //if character ascii value is betw. period and 9
+        //if character ascii value is betw. period and 9
+        if ( ( (*angle_str >= 46) & (*angle_str <= 57) ) | (*angle_str == '-') ) 
         {
             store[current++] = *angle_str;
             angle_str++;
         }
+        //if comma, reset
         else if (*angle_str == ',')   
         {
             angle_str++;
@@ -267,6 +236,7 @@ bool parse_angles(char * angle_str, int num_angles, double * d_array)
             d_array[counter++] = atof(store);         //stores values 
         }
         
+        //skip if empty space
         else if (*angle_str == ' ')
               angle_str++;
         else

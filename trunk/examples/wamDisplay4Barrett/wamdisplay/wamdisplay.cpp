@@ -26,7 +26,8 @@
    \Revised: 13 July 2009- 
          Victor J Wang, Barrett Technology Inc.
          * Moved communication and graphic threads into separate classes and files
-
+         * NOTE: check CAN global variable below (line 71)
+         
     \mainpage
 
 The main code ( wamdisplay.cpp )is compose by 2 threads. One of them is responsible to deal with openGL routines. The other one preforms the communications with other programs using sockets to receive WAM arm angles. Each socket carries a table with 7 floats:
@@ -60,7 +61,7 @@ extern "C" {
 
 #include "wamdisplayGlobals.h"
 #include "GraphicThread.h"
-#include "wamdisplay_controller.h"
+#include "ClientController.h"
 
 
 #if DOF != 7
@@ -105,14 +106,13 @@ struct arguments
 void * initCommThd(void * );
 void * initGraThd(void * );
 
-void * initWamContrThd(void * );
+void * initCliContrThd(void * );
 
 
 
-void * initWamContrThd(void * _wamContrObj)
+void * initCliContrThd(void * _wamContrObj)
 {
-   printf("init wamdisplay_controller");
-   wamdisplay_controller * wamContrObj = (wamdisplay_controller * ) _wamContrObj;
+   ClientController * wamContrObj = (ClientController * ) _wamContrObj;
    void * threadResult = wamContrObj->run();
    delete wamContrObj;
    return threadResult;
@@ -137,21 +137,56 @@ int main(int argc, char *argv[])
    /* initialize global variable */
    argument.argc0=argc;
    argument.argv0=argv;
-
+   char c;
+   
    /* make threads */
    pthread_t thread1, thread2;
+   
+   std::cout << "ENTER if WAM is in folded position" << std::endl;
+   getchar();
+   
+   std::cout << "ENTER if in IDLE mode" << std::endl;
+   getchar();
+
+
+#if 0
+   std::cout << "Enter 1 if connected through CAN or enter 2 if connected through ethernet" << std::endl;
+   c = getchar();
+
+   if (c == '1')
+   {
+      std::cout << "Enter 1 if server is listening" << std::endl;
+      
+      std::cin >> c;
+      CommunicationThread * t = new CommunicationThread(shared.angle, shared.finish, &mutex1);
+      pthread_create( &thread2, NULL, initCommThd, t);
+   }
+   else if ( c == '2')
+   {
+      std::cout << "Enter 1 if bt-wam-gw is on" << std::endl;
+      std::cin >> c;
+      ClientController * wc = new ClientController(shared.angle, shared.finish, &mutex1);
+      pthread_create( &thread2, NULL, initCliContrThd, wc);
+   }
+   else 
+   {
+      std::cout << "Invalid character. Aborting program." << std::endl;
+      exit(1);
+   }
+#endif
+   
    
    /* spin off graphics thread to maintain GUI */
    GraphicThread * g = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
    pthread_create( &thread1, NULL, initGraThd, g);
    
-   
+
 #if CAN
    CommunicationThread * t = new CommunicationThread(shared.angle, shared.finish, &mutex1);
    pthread_create( &thread2, NULL, initCommThd, t);
 #else
-   wamdisplay_controller * wc = new wamdisplay_controller(shared.angle, shared.finish, &mutex1);
-   pthread_create( &thread2, NULL, initWamContrThd, wc);
+   ClientController * wc = new ClientController(shared.angle, shared.finish, &mutex1);
+   pthread_create( &thread2, NULL, initCliContrThd, wc);
 #endif 
 
    pthread_join( thread1, NULL);
@@ -165,7 +200,6 @@ void * initCommThd(void * _commThdObj)
 {
    CommunicationThread * commThdObj = (CommunicationThread *) _commThdObj;
    //commThdObj = new CommunicationThread(shared.angle, shared.finish, &mutex1);
-   printf("starting comm thread");
    void * threadResult = commThdObj->run();
    delete commThdObj;
    return threadResult;
@@ -176,7 +210,6 @@ void * initGraThd(void * _graThdObj)
 {
    GraphicThread * graThdObj = (GraphicThread *) _graThdObj;
    //graThdObj = new GraphicThread(shared.angle, shared.finish, &mutex1, (void *) &argument);
-   printf("starting graphics thread");
    void * threadResult = graThdObj->run();
    delete graThdObj;
    return threadResult;
