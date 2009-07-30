@@ -25,6 +25,8 @@
 #include <string.h>
 
 #include <sys/mman.h>
+#include <sys/types.h> /* For select() */
+#include <sys/select.h> /* for fd_set */
 
 /* Package Dependencies */
 #include <syslog.h>
@@ -69,7 +71,21 @@ int main(int argc, char ** argv)
    going = 1;
    while (going)
    {
-      bt_rpc_server_select(rpc);
+      int err;
+      fd_set read_set;
+
+      FD_ZERO(&read_set);
+      
+      bt_rpc_server_select_pre(rpc,&read_set);
+
+      /* Select */
+      err = select(FD_SETSIZE, &read_set, NULL, NULL, NULL);
+      if (err == -1)
+      {
+         going = 0;
+      }
+
+      bt_rpc_server_select_post(rpc,&read_set);
    }
 
    bt_rpc_server_destroy(rpc);

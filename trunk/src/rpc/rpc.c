@@ -10,7 +10,6 @@
  *
  * ======================================================================== */
 
-#include <sys/types.h> /* For select() */
 #include <sys/select.h> /* for fd_set */
 
 #include <stdlib.h>
@@ -171,33 +170,31 @@ int bt_rpc_server_add_listener(struct bt_rpc_server * s, const struct bt_rpc_typ
    return 0;
 }
 
-int bt_rpc_server_select(struct bt_rpc_server * s)
+
+int bt_rpc_server_select_pre(struct bt_rpc_server * s, fd_set * read_set)
 {
    int i;
-   fd_set read_set;
-   int err;
-   
-   FD_ZERO(&read_set);
    
    /* Wait for all the listeners */
    for (i=0; i<s->listeners_num; i++)
-      FD_SET(s->listeners[i]->fd,&read_set);
+      FD_SET(s->listeners[i]->fd,read_set);
    
    /* Wait for all the callees */
    for (i=0; i<s->callees_num; i++)
-      FD_SET(s->callees[i]->fd,&read_set);
-   
-   /* Select */
-   err = select(FD_SETSIZE, &read_set, NULL, NULL, NULL);
-   if (err == -1)
-   {
-      syslog(LOG_ERR,"%s: select() error.",__func__);
-      return -1;
-   }
+      FD_SET(s->callees[i]->fd,read_set);
+
+   return 0;
+}
+
+
+int bt_rpc_server_select_post(struct bt_rpc_server * s, fd_set * read_set)
+{
+   int i;
+   int err;
    
    /* Handle any listener stuff */
    for (i=0; i<s->listeners_num; i++)
-   if (FD_ISSET(s->listeners[i]->fd,&read_set))
+   if (FD_ISSET(s->listeners[i]->fd,read_set))
    {
       struct bt_rpc_callee * callee;
       callee = bt_rpc_listener_callee_create(s->listeners[i]);
@@ -225,7 +222,7 @@ int bt_rpc_server_select(struct bt_rpc_server * s)
    
    /* Handle any callee stuff */
    for (i=0; i<s->callees_num; i++)
-   if (FD_ISSET(s->callees[i]->fd,&read_set))
+   if (FD_ISSET(s->callees[i]->fd,read_set))
    {
       err = bt_rpc_callee_handle(s->callees[i],s);
       if (err == 1)
@@ -248,6 +245,7 @@ int bt_rpc_server_select(struct bt_rpc_server * s)
    return 0;
 }
 
+
 struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * s, const char * funcname)
 {
    int i;
@@ -256,6 +254,7 @@ struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * 
       return s->interfaces[i];
    return 0;
 }
+
 
 const struct bt_rpc_interface_func * bt_rpc_interface_func_lookup(const struct bt_rpc_interface_funcs * funcs, const char * funcname)
 {

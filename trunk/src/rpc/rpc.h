@@ -13,6 +13,8 @@
 #ifndef BT_RPC_H
 #define BT_RPC_H
 
+#include <sys/select.h> /* for fd_set */
+
 /* Bound methods */
 #define bt_rpc_listener_create(rt) ((rt)->listener_create())
 #define bt_rpc_listener_destroy(l) ((l)->type->listener_destroy(l))
@@ -137,7 +139,9 @@ struct bt_rpc_server * bt_rpc_server_create();
 int bt_rpc_server_destroy(struct bt_rpc_server * server);
 int bt_rpc_server_add_interface(struct bt_rpc_server * server, const struct bt_rpc_interface_funcs * interface_funcs);
 int bt_rpc_server_add_listener(struct bt_rpc_server * server, const struct bt_rpc_type * type);
-int bt_rpc_server_select(struct bt_rpc_server * server);
+
+int bt_rpc_server_select_pre(struct bt_rpc_server * server, fd_set * read_set);
+int bt_rpc_server_select_post(struct bt_rpc_server * server, fd_set * read_set);
 
 /* These are used by callees to do things */
 struct bt_rpc_interface * bt_rpc_server_interface_lookup(struct bt_rpc_server * server, const char * funcname);
