@@ -317,19 +317,7 @@ char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
    }
 }
 
-char * bt_wam_str_con_position(struct bt_wam * wam, char * buf)
-{
-#ifndef ASYNC_ONLY
-   if (!wam->caller)
-      return bt_wam_local_str_con_position(wam->obj,buf);
-   else
-#endif
-   {
-      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
-         return proxy_err; /* Could not forward over RPC */
-      return buf;
-   }
-}
+
 
 int bt_wam_isgcomp(struct bt_wam * wam)
 {
@@ -361,48 +349,8 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
    }
 }
 
-char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
-{
-#ifndef ASYNC_ONLY
-   if (!wam->caller)
-      return bt_wam_local_get_current_controller_name(wam->obj,buf);
-   else
-#endif
-   {
-      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
-         return proxy_err; /* Could not forward over RPC */
-      return buf;
-   }
-}
 
-char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf)
-{
-#ifndef ASYNC_ONLY
-   if (!wam->caller)
-      return bt_wam_local_get_current_controller_space(wam->obj,buf);
-   else
-#endif
-   {
-      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
-         return proxy_err; /* Could not forward over RPC */
-      return buf;
-   }
-}
 
-int bt_wam_controller_toggle(struct bt_wam * wam)
-{
-#ifndef ASYNC_ONLY
-   if (!wam->caller)
-      return bt_wam_local_controller_toggle(wam->obj);
-   else
-#endif
-   {
-      int myint;
-      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
-         return -1; /* Could not forward over RPC */
-      return myint;
-   }
-}
 
 int bt_wam_idle(struct bt_wam * wam)
 {
@@ -448,6 +396,88 @@ int bt_wam_is_holding(struct bt_wam * wam)
       return myint;
    }
 }
+
+
+
+char * bt_wam_str_con_position(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_str_con_position(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
+char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_get_current_controller_name(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
+char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_get_current_controller_space(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
+
+int bt_wam_controller_toggle(struct bt_wam * wam)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_controller_toggle(wam->obj);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
+
+
+
+
+
+
+int bt_wam_refgen_clear(struct bt_wam * wam)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_refgen_clear(wam->obj);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
 
 char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf)
 {
@@ -507,20 +537,7 @@ int bt_wam_refgen_load(struct bt_wam * wam, char * filename)
    }
 }
 
-int bt_wam_refgen_clear(struct bt_wam * wam)
-{
-#ifndef ASYNC_ONLY
-   if (!wam->caller)
-      return bt_wam_local_refgen_clear(wam->obj);
-   else
-#endif
-   {
-      int myint;
-      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
-         return -1; /* Could not forward over RPC */
-      return myint;
-   }
-}
+
 
 int bt_wam_set_velocity(struct bt_wam * wam, double vel)
 {
@@ -582,6 +599,8 @@ int bt_wam_moveisdone(struct bt_wam * wam)
    }
 }
 
+
+
 int bt_wam_is_teaching(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY
@@ -626,6 +645,7 @@ int bt_wam_teach_end(struct bt_wam * wam)
       return myint;
    }
 }
+
 
 int bt_wam_run(struct bt_wam * wam)
 {

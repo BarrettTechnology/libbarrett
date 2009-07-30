@@ -370,9 +370,11 @@ src_libbtwam_la_SOURCES = src/wam/wam.c \
 if BT_WAM_LOCAL
 
 pkginclude_HEADERS += src/wam/wam_local.h \
+                      src/wam/wam_thread.h \
                       src/wam/wam_list.h
 
 src_libbtwam_la_SOURCES += src/wam/wam_local.c \
+                           src/wam/wam_thread.c \
                            src/wam/wam_list.c
 
 else

@@ -25,10 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* We also use gsl as an interface language.  Maybe change this to
- * arrays of doubles? */
-/*#include <gsl/gsl_vector.h>*/
+   
 
 /* A list of WAMs */
 struct bt_wam_list;
@@ -50,8 +47,6 @@ char * bt_wam_list_get_name(struct bt_wam_list * list, int i, char * buf);
 enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list, int i);
 int bt_wam_list_get_pid(struct bt_wam_list * list, int i);
 char * bt_wam_list_get_programname(struct bt_wam_list * list, int i, char * buf);
-
-
 
 
 /* The opaque WAM structure */
@@ -80,7 +75,7 @@ int bt_wam_destroy(struct bt_wam * wam);
 int bt_wam_loop_start(struct bt_wam * wam);
 int bt_wam_loop_stop(struct bt_wam * wam);
 
-/* String formatting functions */
+/* Kinematics functions */
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf);
 char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf);
 char * bt_wam_str_jtorque(struct bt_wam * wam, char * buf);
@@ -88,40 +83,39 @@ char * bt_wam_str_cposition(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf);
 char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf);
-char * bt_wam_str_con_position(struct bt_wam * wam, char * buf);
 
+/* Gravity comp functions */
 int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
 
+/* Controller functions */
+int bt_wam_idle(struct bt_wam * wam);
+int bt_wam_hold(struct bt_wam * wam);
+int bt_wam_is_holding(struct bt_wam * wam);
+char * bt_wam_str_con_position(struct bt_wam * wam, char * buf);
 char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf);
 char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf);
 int bt_wam_controller_toggle(struct bt_wam * wam);
 
-/* These are simple wrappers for the active controller */
-int bt_wam_idle(struct bt_wam * wam);
-int bt_wam_hold(struct bt_wam * wam);
-int bt_wam_is_holding(struct bt_wam * wam);
-
-/* Refgen commands */
+/* Refgen functions */
+int bt_wam_refgen_clear(struct bt_wam * wam);
 char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf);
 char * bt_wam_refgen_loaded_name(struct bt_wam * wam, char * buf);
-
 int bt_wam_refgen_save(struct bt_wam * wam, char * filename);
 int bt_wam_refgen_load(struct bt_wam * wam, char * filename);
-
-int bt_wam_refgen_clear(struct bt_wam * wam);
 
 /* For moves */
 int bt_wam_set_velocity(struct bt_wam * wam, double vel);
 int bt_wam_set_acceleration(struct bt_wam * wam, double acc);
-
-/*int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest);*/
 int bt_wam_movehome(struct bt_wam * wam);
 int bt_wam_moveisdone(struct bt_wam * wam);
 
+/* For teaching */
 int bt_wam_is_teaching(struct bt_wam * wam);
 int bt_wam_teach_start(struct bt_wam * wam);
 int bt_wam_teach_end(struct bt_wam * wam);
+
+/* Play a loaded refgen */
 int bt_wam_run(struct bt_wam * wam);
 
 #ifdef __cplusplus

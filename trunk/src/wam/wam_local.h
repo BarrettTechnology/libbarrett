@@ -39,7 +39,9 @@
 #include "control_cartesian_xyz.h"
 #include "control_cartesian_xyz_q.h"
 #include "rpc.h"
+
 #include "wam.h"
+#include "wam_thread.h"
 
 #define WAMCONFIGDIR "/etc/wam/"
 #define WAMLOCKDIR "/var/lock/"
@@ -125,52 +127,51 @@ int bt_wam_local_loop_stop(struct bt_wam_local * wam);
 char * bt_wam_local_str_jposition(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_jvelocity(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_jtorque(struct bt_wam_local * wam, char * buf);
-
 char * bt_wam_local_str_cposition(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r1(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r2(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_str_crotation_r3(struct bt_wam_local * wam, char * buf);
 
-
-
 int bt_wam_local_isgcomp(struct bt_wam_local * wam);
 int bt_wam_local_setgcomp(struct bt_wam_local * wam, int onoff);
 
-int bt_wam_local_controller_toggle(struct bt_wam_local * wam);
 int bt_wam_local_idle(struct bt_wam_local * wam);
 int bt_wam_local_hold(struct bt_wam_local * wam);
 int bt_wam_local_is_holding(struct bt_wam_local * wam);
-int bt_wam_local_control_use(struct bt_wam_local * wam, struct bt_control * control);
-
+char * bt_wam_local_str_con_position(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_get_current_controller_name(struct bt_wam_local * wam, char * buf);
 char * bt_wam_local_get_current_controller_space(struct bt_wam_local * wam, char * buf);
+int bt_wam_local_controller_toggle(struct bt_wam_local * wam);
 
-char * bt_wam_local_str_con_position(struct bt_wam_local * wam, char * buf);
+/* local only */
+int bt_wam_local_control_use(struct bt_wam_local * wam, struct bt_control * control);
 
-
-int bt_wam_local_refgen_addtype(struct bt_wam_local * wam, const struct bt_refgen_type * type);
 
 int bt_wam_local_refgen_clear(struct bt_wam_local * wam);
-
+char * bt_wam_local_refgen_active_name(struct bt_wam_local * wam, char * buf);
+char * bt_wam_local_refgen_loaded_name(struct bt_wam_local * wam, char * buf);
 int bt_wam_local_refgen_save(struct bt_wam_local * wam, char * filename);
 int bt_wam_local_refgen_load(struct bt_wam_local * wam, char * filename);
 
-char * bt_wam_local_refgen_active_name(struct bt_wam_local * wam, char * buf);
-char * bt_wam_local_refgen_loaded_name(struct bt_wam_local * wam, char * buf);
+/* local only */
+int bt_wam_local_refgen_addtype(struct bt_wam_local * wam, const struct bt_refgen_type * type);
 int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen);
 
 
 int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel);
 int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc);
-int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest);
 int bt_wam_local_movehome(struct bt_wam_local * wam);
 int bt_wam_local_moveisdone(struct bt_wam_local * wam);
+
+/* local only */
+int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest);
 
 int bt_wam_local_is_teaching(struct bt_wam_local * wam);
 int bt_wam_local_teach_start(struct bt_wam_local * wam);
 int bt_wam_local_teach_end(struct bt_wam_local * wam);
 int bt_wam_local_run(struct bt_wam_local * wam);
 
+/* local only */
 int bt_wam_local_set_callback(struct bt_wam_local * wam,
                               int (*callback)(struct bt_wam_local * wam));
 
