@@ -26,7 +26,6 @@
 #include <syslog.h>
 #include <math.h>     /* For sqrt() */
 
-#include <dirent.h>   /* For directories */
 #include <fcntl.h>    /* For open() */
 #include <sys/stat.h> /* For file permissions */
 #include <unistd.h>    /* For close(), getpid() */
@@ -37,7 +36,6 @@
 
 /*#include "wam.h"*/
 #include "wam_local.h"
-#include "wam_custom.h"
 
 #include "gsl.h"
 
@@ -189,9 +187,13 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->callback = 0;
    wam->vel = 0.5;
    wam->acc = 0.5;
-   wam->refgen_list = 0;
-   wam->refgen_current = 0;
-   wam->teach = 0;
+   wam->refgen_tempmove = 0;
+   wam->refgen_loaded = 0;
+   wam->refgen_active = 0;
+   wam->refgen_loaded_idestroy = 0;
+   wam->refgen_types = 0;
+   wam->refgen_types_num = 0;
+   wam->teaching = 0;
    wam->count = 0;
    wam->ts = 0;
    wam->rt_thread = 0;
@@ -310,8 +312,8 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
 
 #if 0
    /* ATTEMPT TO Decode the binary log file */
-   bt_log_decode("datafile.dat", "dat.oct", 1, 1); /* Woo octave! */
-   bt_log_decode("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
+   bt_log_decode_file("datafile.dat", "dat.oct", 1, 1); /* Woo octave! */
+   bt_log_decode_file("ts_log.dat", "ts_log.csv", 1, 0); /* Header, no octave */
 #endif
 
    /* Delete the lock file */
@@ -405,32 +407,55 @@ int bt_wam_local_setgcomp(struct bt_wam_local * wam, int onoff)
 
 int bt_wam_local_controller_toggle(struct bt_wam_local * wam)
 {
-   int i;
-   
+   int i, j;
+
+   /* If we're running a refgen, nope! */
+   if (wam->refgen_active)
+      return -1;
+
+   /* Get i to be the next controller in the list,
+    * or 0 if con_active is a custom controller */
    for (i=0; i<wam->con_num; i++)
-   if (wam->con_list[i] == wam->con_active)
+      if (wam->con_list[i] == wam->con_active)
+      {
+         i++;
+         break;
+      }
+   if (i >= wam->con_num)
+      i = 0;
+
+   /* If there's no loaded refgen, just use the next available controller */
+   if (!wam->refgen_loaded)
    {
-      if (i+1 < wam->con_num)
-         wam->con_active = wam->con_list[i+1];
-      else
-         wam->con_active = wam->con_list[0];
-      break;
+      wam->con_active = wam->con_list[i];
+      return 0;
    }
-   return 0;
+
+   /* If there is a loaded refgen, we need to find one with the same space */
+   for (j=0; j<wam->con_num; j++)
+   {
+      if (strcmp(wam->con_active->type->space,wam->con_list[(i+j)%(wam->con_num)]->type->space)==0)
+      {
+         wam->con_active = wam->con_list[(i+j)%(wam->con_num)];
+         return 0;
+      }
+   }
+
+   return -1;
 }
 
 /* Wrappers around the active controller */
 int bt_wam_local_idle(struct bt_wam_local * wam)
 {
    /* Make sure we're not doing any trajectories */
-   wam->refgen_current = 0;
+   wam->refgen_active = 0;
    return bt_control_idle(wam->con_active);
 }
 
 int bt_wam_local_hold(struct bt_wam_local * wam)
 {
    /* Make sure we're not doing any trajectories */
-   wam->refgen_current = 0;
+   wam->refgen_active = 0;
    return bt_control_hold(wam->con_active);
 }
 
@@ -448,85 +473,33 @@ char * bt_wam_local_get_current_controller_name(struct bt_wam_local * wam, char 
    return buf;
 }
 
-char * bt_wam_local_get_current_refgen_name(struct bt_wam_local * wam, char * buf)
+char * bt_wam_local_get_current_controller_space(struct bt_wam_local * wam, char * buf)
 {
-   if (!wam->refgen_current)
+   if (!wam->con_active)
       strcpy(buf,"(none)");
    else
-      strcpy(buf,wam->refgen_current->refgen->type->name);
+      strcpy(buf,wam->con_active->type->space);
    return buf;
-}
-
-int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen)
-{
-   struct bt_wam_refgen_list * refgen_list_element;
-   gsl_vector * refgen_start;
-   
-   /* Make sure we're in the right mode */
-   if (wam->refgen_current) return -1;
-   if (wam->teach) return -1;
-   if (!wam->con_active) return -1;
-   
-   /* Remove any refgens in the list */
-   {
-      struct bt_wam_refgen_list * refgen_list;
-      struct bt_wam_refgen_list * refgen_list_next;
-      
-      refgen_list = wam->refgen_list;
-      while (refgen_list)
-      {
-         refgen_list_next = refgen_list->next;
-         /* respect iown, idelete? */
-         if (refgen_list->iown)
-            bt_refgen_destroy(refgen_list->refgen);
-         free(refgen_list);
-         refgen_list = refgen_list_next;
-      }
-      wam->refgen_list = 0;
-   }
-   
-   /* Make a new refgen list element for the refgen */
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = 0;
-   wam->refgen_list->iown = 0;
-   wam->refgen_list->refgen = refgen;
-   
-   /* Insert the move list element before the refgen */
-   refgen_list_element = wam->refgen_list;
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = refgen_list_element;
-   wam->refgen_list->iown = 1;
-   
-   /* Get the refgen starting point */
-   syslog(LOG_ERR,"inside Type: %d",(int)(refgen->type));
-   bt_os_usleep(100000);
-   bt_refgen_get_start(refgen,&refgen_start);
-   
-   /* Create the move refgen itself */
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_move_create(&(wam->elapsed_time),
-                            wam->con_active->position, 0,
-                            refgen_start, wam->vel, wam->acc);
-   
-   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
-   /* Note, we should free more stuff here! */
-   
-   /* Save this refgen as the current one, and start it! */
-   bt_control_hold(wam->con_active);
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
-   bt_refgen_start( wam->refgen_list->refgen );
-   wam->refgen_current = wam->refgen_list;
-   
-   return 0;   
 }
 
 int bt_wam_local_control_use(struct bt_wam_local * wam, struct bt_control * control)
 {
+   /* If we're running a refgen, nope! */
+   if (wam->refgen_active)
+      return -1;
+
+   /* If there's a refgen loaded, make sure the space is the same */
+   if (strcmp(control->type->space,wam->con_active->type->space)!=0)
+      return -1;
+
+   /* OK fine, use the external controller */
    wam->con_active = control;
    return 0;
 }
+
+
+
+
 
 int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel)
 {
@@ -540,46 +513,267 @@ int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc)
    return 0;
 }
 
-int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest)
+
+
+int bt_wam_local_refgen_addtype(struct bt_wam_local * wam, const struct bt_refgen_type * type)
 {
-   /* Remove any refgens in the list */
+   wam->refgen_types = (const struct bt_refgen_type **) realloc(wam->refgen_types,
+                            (wam->refgen_types_num + 1)*sizeof(struct bt_refgen_type *));
+   wam->refgen_types[wam->refgen_types_num] = type;
+   wam->refgen_types_num++;
+   return 0;
+}
+
+
+int bt_wam_local_refgen_save(struct bt_wam_local * wam, char * filename)
+{
+   /* If we're currently using the refgen, don't try to save it */
+   if (wam->refgen_active)
+      return -1;
+
+   /* If there isn't a loaded refgen, ignore */
+   if (!wam->refgen_loaded)
+      return -1;
+
+   /* If the loaded refgen doesn't support load/save, ignore */
+   if (!bt_refgen_has_loadsave(wam->refgen_loaded))
+      return -1;
+
+   /* Attempt to save */
    {
-      struct bt_wam_refgen_list * refgen_list;
-      struct bt_wam_refgen_list * refgen_list_next;
+      config_t cfg;
+      config_setting_t * root;
+      config_setting_t * refgen;
+      config_setting_t * refgen_data;
+      config_setting_t * setting;
       
-      refgen_list = wam->refgen_list;
-      while (refgen_list)
+      config_init(&cfg);
+      root = config_root_setting(&cfg);
+      refgen = config_setting_add(root,"refgen",CONFIG_TYPE_GROUP);
+
+      setting = config_setting_add(refgen,"type",CONFIG_TYPE_STRING);
+      config_setting_set_string(setting,wam->refgen_loaded->type->name);
+
+      setting = config_setting_add(refgen,"control",CONFIG_TYPE_STRING);
+      config_setting_set_string(setting,wam->con_active->type->name);
+
+      setting = config_setting_add(refgen,"control-space",CONFIG_TYPE_STRING);
+      config_setting_set_string(setting,wam->con_active->type->space);
+      
+      refgen_data = config_setting_add(root,"refgen-data",CONFIG_TYPE_GROUP);
+      bt_refgen_save(wam->refgen_loaded,refgen_data);
+
+      config_write_file(&cfg,filename);
+
+      config_destroy(&cfg);
+   }
+
+   return 0;
+}
+
+int bt_wam_local_refgen_load(struct bt_wam_local * wam, char * filename)
+{
+   int i;
+   int err;
+   config_t cfg;
+   config_setting_t * root;
+   config_setting_t * refgen;
+   config_setting_t * refgen_data;
+   const char * strtype;
+   const char * strcontrol;
+   const char * strspace;
+   struct bt_control * con_match;
+   const struct bt_refgen_type * refgen_type_match;
+   struct bt_refgen * new_refgen;
+
+   if (wam->refgen_active)
+      return -1;
+
+   /* First, try to load; if it works, overwrite any currently-loaded refgen */
+   
+   config_init(&cfg);
+   err = config_read_file(&cfg,filename);
+   if (err != CONFIG_TRUE)
+   {
+      config_destroy(&cfg);
+      return -1;
+   }
+
+   root = config_root_setting(&cfg);
+
+   refgen = config_setting_get_member(root,"refgen");
+   refgen_data = config_setting_get_member(root,"refgen-data");
+
+   config_setting_lookup_string(refgen,"type",&strtype);
+   config_setting_lookup_string(refgen,"control",&strcontrol);
+   config_setting_lookup_string(refgen,"control-space",&strspace);
+
+   /* Find a matching controller and refgen type */
+   con_match = 0;
+   refgen_type_match = 0;
+
+   /* Try to match based on controller name */
+   if (strcmp(strcontrol,wam->con_active->type->name)==0)
+      con_match = wam->con_active;
+   else
+      for (i=0; i<wam->con_num; i++)
+         if (strcmp(strcontrol,wam->con_list[i]->type->name)==0)
+         {
+            con_match = wam->con_list[i];
+            break;
+         }
+
+   /* If no match yet, try to match based on controller space */
+   if (!con_match)
+   {
+      if (strcmp(strspace,wam->con_active->type->space)==0)
+         con_match = wam->con_active;
+      else
+         for (i=0; i<wam->con_num; i++)
+            if (strcmp(strspace,wam->con_list[i]->type->space)==0)
+            {
+               con_match = wam->con_list[i];
+               break;
+            }
+   }
+
+   /* Try to match refgen type */
+   for (i=0; i<wam->refgen_types_num; i++)
+      if (strcmp(strtype,wam->refgen_types[i]->name)==0)
       {
-         refgen_list_next = refgen_list->next;
-         /* respect iown, idelete? */
-         if (refgen_list->iown)
-            bt_refgen_destroy(refgen_list->refgen);
-         free(refgen_list);
-         refgen_list = refgen_list_next;
+         refgen_type_match = wam->refgen_types[i];
       }
-      wam->refgen_list = 0;
+
+   /* If we didn't find matches, give up
+    * It also must support creating blank refgens */
+   if (!con_match || !refgen_type_match || !bt_refgen_has_create(refgen_type_match))
+   {
+      config_destroy(&cfg);
+      return -1;
+   }
+
+   /* Create the new refgen */
+   new_refgen = bt_refgen_create(refgen_type_match,con_match->n);
+   if (!new_refgen)
+   {
+      config_destroy(&cfg);
+      return -1;
+   }
+
+   /* Load the refgen with the refgen-data */
+   if (!bt_refgen_has_loadsave(new_refgen))
+   {
+      config_destroy(&cfg);
+      bt_refgen_destroy(new_refgen);
+      return -1;
    }
    
-   /* Make a new refgen list element */
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = 0;
-   wam->refgen_list->iown = 1;
+   err = bt_refgen_load(new_refgen,refgen_data);
+   if (err)
+   {
+      config_destroy(&cfg);
+      bt_refgen_destroy(new_refgen);
+      return -1;
+   }
+
+   /* OK, we have a loaded refgen; replace any existing ones in the wam,
+    * and replace the controller as well! */
+   bt_wam_local_refgen_clear(wam);
+   
+   if (bt_control_is_holding(wam->con_active))
+      bt_control_hold(con_match);
+   else
+      bt_control_idle(con_match);
+   wam->con_active = con_match;
+
+   wam->refgen_loaded = new_refgen;
+   wam->refgen_loaded_idestroy = 1;
+
+   return 0;
+}
+
+
+char * bt_wam_local_refgen_active_name(struct bt_wam_local * wam, char * buf)
+{
+   if (!wam->refgen_active)
+      strcpy(buf,"(none)");
+   else
+      strcpy(buf,wam->refgen_active->type->name);
+   return buf;
+}
+
+char * bt_wam_local_refgen_loaded_name(struct bt_wam_local * wam, char * buf)
+{
+   if (!wam->refgen_loaded)
+      strcpy(buf,"(none)");
+   else
+      strcpy(buf,wam->refgen_loaded->type->name);
+   return buf;
+}
+
+/* Clear any loaded refgen */
+int bt_wam_local_refgen_clear(struct bt_wam_local * wam)
+{
+   /* If we're currently running a refgen, stop it */
+   if (wam->refgen_active)
+      wam->refgen_active = 0;
+
+   /* Remove the tempmove refgen, if it exists */
+   if (wam->refgen_tempmove)
+   {
+      bt_refgen_destroy(wam->refgen_tempmove);
+      wam->refgen_tempmove = 0;
+   }
+
+   /* Remove the loaded refgen, if it exists */
+   if (wam->refgen_loaded)
+   {
+      if (wam->refgen_loaded_idestroy)
+         bt_refgen_destroy(wam->refgen_loaded);
+      wam->refgen_loaded = 0;
+   }
+   
+   return 0;
+}
+
+
+/* Use an already-created refgen as the loaded refgen,
+ * removing any currently-loaded refgen;
+ * set idestroy = 0 */
+int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen)
+{
+   bt_wam_local_refgen_clear(wam);
+
+   /* Set up the loaded refgen */
+   wam->refgen_loaded = refgen;
+   wam->refgen_loaded_idestroy = 0;
+   
+   return 0;   
+}
+
+
+/* Move to a location, removing any currently-loaded refgen */
+int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest)
+{
+   bt_wam_local_refgen_clear(wam);
+
+   /* This will make wam->con_active->reference the current position */
+   bt_control_hold(wam->con_active); 
    
    /* Make the refgen itself */
 #if 0
    wam->refgen_list->refgen = (struct bt_refgen *)
       bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
 #endif
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_move_create(&(wam->elapsed_time), wam->con_active->reference, 0, dest, wam->vel, wam->acc);
-   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
-   
+   wam->refgen_loaded = bt_refgen_move_create(
+                                             wam->con_active->reference,
+                                             0, dest, wam->vel, wam->acc);
+   if (!wam->refgen_loaded) { return -1;}
+
    /* Save this refgen as the current one, and start it! */
-   bt_control_hold(wam->con_active);
    wam->start_time = 1e-9 * bt_os_rt_get_time();
-   bt_refgen_start( wam->refgen_list->refgen );
-   wam->refgen_current = wam->refgen_list;
+   bt_refgen_start(wam->refgen_loaded);
+   wam->refgen_active = wam->refgen_loaded;
    
    return 0;
 }
@@ -591,168 +785,114 @@ int bt_wam_local_movehome(struct bt_wam_local * wam)
 
 int bt_wam_local_moveisdone(struct bt_wam_local * wam)
 {
-   return (wam->refgen_current) ? 0 : 1;
+   return (wam->refgen_active) ? 0 : 1;
 }
 
 
 int bt_wam_local_is_teaching(struct bt_wam_local * wam)
 {
-   return (wam->teach) ? 1 : 0; 
+   return (wam->teaching) ? 1 : 0; 
 }
 
 int bt_wam_local_teach_start(struct bt_wam_local * wam)
 {
    /* Make sure we're in the right mode */
-   if (wam->refgen_current) return -1;
-   if (wam->teach) return -1;
+   if (wam->refgen_active) return -1;
+   if (wam->teaching) return -1;
    if (bt_control_is_holding(wam->con_active)) return -1;
    if (!wam->con_active) return -1;
-   
-   /* Remove any refgens in the list */
+
+   /* Delete any tempmove refgens */
+   if (wam->refgen_tempmove)
    {
-      struct bt_wam_refgen_list * refgen_list;
-      struct bt_wam_refgen_list * refgen_list_next;
-      
-      refgen_list = wam->refgen_list;
-      while (refgen_list)
-      {
-         refgen_list_next = refgen_list->next;
-         /* respect iown, idelete? */
-         if (refgen_list->iown)
-            bt_refgen_destroy(refgen_list->refgen);
-         free(refgen_list);
-         refgen_list = refgen_list_next;
-      }
-      wam->refgen_list = 0;
+      bt_refgen_destroy(wam->refgen_tempmove);
+      wam->refgen_tempmove = 0;
    }
-   
-   /* Make a new refgen list element */
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = 0;
-   wam->refgen_list->iown = 1;
-   
-   /* Make the refgen itself */
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_teachplay_create(&(wam->elapsed_time), wam->con_active->position,"teach");
-   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
-   
-   /* TODO:
-    * For now, we check if the log exists; if it does, we're teaching */
-   if (  ((struct bt_refgen_teachplay *)(wam->refgen_list->refgen))->log )
+
+   /* If there's already a loaded refgen,
+    * we'll teach with it.  Otherwise, make a new
+    * bt_refgen_teachplay */
+   if (!wam->refgen_loaded)
    {
-      /* Set the sync side start_time */
-      wam->start_time = 1e-9 * bt_os_rt_get_time();
-      wam->teach = 1;
+      wam->refgen_loaded = bt_refgen_create(bt_refgen_teachplay,wam->con_active->n);
+      wam->refgen_loaded_idestroy = 1;
+      if (!wam->refgen_loaded)
+         return -1;
    }
-   
+
+   /* Initialize teaching */
+   bt_refgen_teach_init(wam->refgen_loaded);
+
+   /* Start teaching */
+   bt_refgen_teach_start(wam->refgen_loaded);
+   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->teaching = 1;
+   wam->refgen_active = wam->refgen_loaded;
+
    return 0;
 }
+
+
+
 
 int bt_wam_local_teach_end(struct bt_wam_local * wam)
 {
-   if (!wam->teach) return -1;
-   wam->teach = 0;
-   
-   /* We should check that it's a teachplay first! */
-   bt_refgen_teachplay_save( (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
+   if (!wam->teaching) return -1;
+   wam->teaching = 0;
+
+   /* We should wait for it to finish teaching!!!! */
+
+   wam->refgen_active = 0;
+
+   /* End teaching (converting current refgen to playable refgen) */
+   bt_refgen_teach_end(wam->refgen_loaded);
    
    return 0;
    
 }
 
-int bt_wam_local_teach_start_custom(struct bt_wam_local * wam, struct bt_refgen * refgen)
-{
-   /* Make sure we're in the right mode */
-   if (wam->refgen_current) return -1;
-   if (wam->teach) return -1;
-   if (bt_control_is_holding(wam->con_active)) return -1;
-   if (!wam->con_active) return -1;
-   
-   /* Remove any refgens in the list */
-   {
-      struct bt_wam_refgen_list * refgen_list;
-      struct bt_wam_refgen_list * refgen_list_next;
-      
-      refgen_list = wam->refgen_list;
-      while (refgen_list)
-      {
-         refgen_list_next = refgen_list->next;
-         /* respect iown, idelete? */
-         if (refgen_list->iown)
-            bt_refgen_destroy(refgen_list->refgen);
-         free(refgen_list);
-         refgen_list = refgen_list_next;
-      }
-      wam->refgen_list = 0;
-   }
-   
-   /* Make a new refgen list element */
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = 0;
-   wam->refgen_list->iown = 0;
-   
-   /* Insert the already-made itself */
-   wam->refgen_list->refgen = refgen;
-   
-   /* Set the sync side start_time */
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
-   wam->teach = 1;
-   
-   return 0;
-}
 
-int bt_wam_local_teach_end_custom(struct bt_wam_local * wam)
+/* Run the loaded refgen */
+int bt_wam_local_run(struct bt_wam_local * wam)
 {
-   if (!wam->teach) return -1;
-   wam->teach = 0;
-   
-   return 0;
-}
-
-int bt_wam_local_playback(struct bt_wam_local * wam)
-{
-   gsl_vector * teachplay_start;
-   struct bt_wam_refgen_list * teachplay;
+   gsl_vector * refgen_start;
    
    /* Make sure we're not currently teaching */
-   if (wam->teach) return 1;
+   if (wam->teaching) return 1;
    
-   /* Make sure there's a loaded refgen_teachplay */
-   if ( wam->refgen_list->refgen->type != bt_refgen_teachplay)
+   /* Make sure there's a loaded refgen */
+   if ( ! wam->refgen_loaded )
       return -1;
+
+   /* Delete any existing tempmove refgen */
+   if (wam->refgen_tempmove)
+   {
+      bt_refgen_destroy(wam->refgen_tempmove);
+      wam->refgen_tempmove = 0;
+   }
    
-   /* Make a new move, from the current location
-    * to the start of the refgen */
-   teachplay = wam->refgen_list;
+   /* Get the starting position of the loaded refgen */
+   bt_refgen_get_start(wam->refgen_loaded,&refgen_start);
+
+   bt_control_hold(wam->con_active);
    
-   /* Insert a new refgen list element */
-   wam->refgen_list = (struct bt_wam_refgen_list *) malloc( sizeof(struct bt_wam_refgen_list) );
-   if (!wam->refgen_list) return -1;
-   wam->refgen_list->next = teachplay;
-   wam->refgen_list->iown = 1;
-   
-   /* Make the move refgen itself */
-   bt_refgen_get_start(teachplay->refgen,&teachplay_start);
+   /* Create a tempmove refgen to get us there */
 #if 0
    wam->refgen_list->refgen = (struct bt_refgen *)
       bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity,
                                    teachplay_start, wam->vel, wam->acc);
 #endif
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_move_create(&(wam->elapsed_time),
-                            wam->con_active->position, 0,
-                            teachplay_start, wam->vel, wam->acc);
+   wam->refgen_tempmove = (struct bt_refgen *)
+      bt_refgen_move_create(wam->con_active->reference, 0,
+                            refgen_start, wam->vel, wam->acc);
    
-   if (!wam->refgen_list->refgen) {free(wam->refgen_list); wam->refgen_list=0; return -1;}
+   if (!wam->refgen_tempmove) { return -1;}
    /* Note, we should free more stuff here! */
    
    /* Save this refgen as the current one, and start it! */
-   bt_control_hold(wam->con_active);
    wam->start_time = 1e-9 * bt_os_rt_get_time();
-   bt_refgen_start( wam->refgen_list->refgen );
-   wam->refgen_current = wam->refgen_list;
+   bt_refgen_start( wam->refgen_tempmove );
+   wam->refgen_active = wam->refgen_tempmove;
    
    return 0;
 }
@@ -831,8 +971,7 @@ static void rt_wam(struct bt_os_thread * thread)
       
       /* Get start-of-task time, increment counter */
       time = 1e-9 * bt_os_rt_get_time();
-      if (!wam->count) wam->start_time = time; 
-      wam->elapsed_time = time - wam->start_time;
+      if (!wam->count) wam->start_time = time;
       wam->count++;
       
       /* Grab the current joint positions */
@@ -857,21 +996,27 @@ static void rt_wam(struct bt_os_thread * thread)
       /* If there's an active trajectory, grab the reference into the joint controller
        * Note: this is a while loop for the case where the refgen is done,
        *       and we move on to the next refgen. */
-      while (wam->refgen_current)
+      while (wam->refgen_active && !wam->teaching)
       {
-         err = bt_refgen_eval( wam->refgen_current->refgen,
+         err = bt_refgen_eval( wam->refgen_active,
+                               time - wam->start_time,
                                wam->con_active->reference );
+
          if (!err) break;
          
          if (err == 1) /* finished */
          {
-            /* destroy the current refgen? */
-            wam->refgen_current = wam->refgen_current->next;
-            if (!wam->refgen_current) break;
-            wam->start_time = time;
-            wam->elapsed_time = 0;
-            bt_refgen_start( wam->refgen_current->refgen );
-            /* continue ... */
+            if ( (wam->refgen_active == wam->refgen_tempmove)
+                && (wam->refgen_loaded) )
+            {
+               wam->start_time = time;
+               bt_refgen_start(wam->refgen_loaded);
+               wam->refgen_active = wam->refgen_loaded;
+            }
+            else
+            {
+               wam->refgen_active = 0;
+            }
          }
       }
       bt_os_timestat_trigger(wam->ts,TS_REFGEN);
@@ -882,8 +1027,10 @@ static void rt_wam(struct bt_os_thread * thread)
 
       /* If we're teaching, trigger the teach trajectory
        * (eventually we want to adjust the trigger rate?) */
-      if (wam->teach && (((wam->count) & 0x4F) == 0) )
-         bt_refgen_trigger( wam->refgen_list->refgen );
+      if (wam->teaching && wam->refgen_active && (((wam->count) & 0x4F) == 0) )
+         bt_refgen_teach_trigger(wam->refgen_active,
+                                 time - wam->start_time,
+                                 wam->con_active->position);
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
  
       /* Do gravity compensation (if flagged) */
@@ -1060,6 +1207,11 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    wam->con_list[3] = (struct bt_control *) wam->con_cartesian_xyz_q;
    wam->con_num = 4;
 
+   wam->refgen_types = (const struct bt_refgen_type **) malloc((2)*sizeof(struct bt_refgen_type *));
+   wam->refgen_types[0] = bt_refgen_move;
+   wam->refgen_types[1] = bt_refgen_teachplay;
+   wam->refgen_types_num = 2;
+
    return 0;
 }
 
@@ -1067,6 +1219,8 @@ static void rt_wam_destroy(struct bt_wam_local * wam)
 {
    if (wam->con_list)
       free(wam->con_list);
+   if (wam->refgen_types)
+      free(wam->refgen_types);
    if (wam->con_joint)
       bt_control_joint_destroy(wam->con_joint);
    if (wam->con_joint_legacy)
@@ -1101,10 +1255,9 @@ static void nonrt_thread_function(struct bt_os_thread * thread)
          bt_log_flush( wam->log );
       }
       
-      if (wam->teach)
+      if (wam->refgen_active && wam->teaching)
       {
-         bt_refgen_teachplay_flush(
-            (struct bt_refgen_teachplay *) (wam->refgen_list->refgen) );
+         bt_refgen_teach_flush(wam->refgen_active);
       }
       
       bt_os_usleep(1000000);
@@ -1120,161 +1273,3 @@ static void nonrt_thread_function(struct bt_os_thread * thread)
 
 
 
-
-
-struct bt_wam_list_local * bt_wam_list_local_create()
-{
-   struct bt_wam_list_local * list;
-   DIR * etcwam;
-   struct dirent * file;
-   
-   /* Create */
-   list = (struct bt_wam_list_local *) malloc(sizeof(struct bt_wam_list_local));
-   if (!list)
-   {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
-   }
-   
-   /* Initialize */
-   list->entries = 0;
-   list->num = 0;
-   
-   /* Open the /etc/wam directory */
-   etcwam = opendir(WAMCONFIGDIR);
-   if (!etcwam)
-   {
-      syslog(LOG_ERR,"%s: Directory %s not found.",__func__,WAMCONFIGDIR);
-      return list;
-   }
-   
-   /* Note: this is not thread-safe. */
-   while ((file = readdir(etcwam)))
-   {
-      int n;
-      /* Check if the name is ***.config */
-      n = strlen(file->d_name);
-      if (n < 8) continue;
-      if (strcmp(".config",file->d_name + n - 7)==0)
-      {
-         struct bt_wam_list_entry * entry;
-         char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
-         FILE * lockfile;
-         char pscommand[100];
-         FILE * pspipe;
-         int err;
-         
-         entry = (struct bt_wam_list_entry *) malloc(sizeof(struct bt_wam_list_entry));
-         if (!list->num)
-            list->entries = (struct bt_wam_list_entry **)
-                            malloc(sizeof(struct bt_wam_list_entry *));
-         else
-            list->entries = (struct bt_wam_list_entry **)
-                            realloc(list->entries,(list->num+1)*sizeof(struct bt_wam_list_entry *));
-         list->entries[list->num] = entry;
-         list->num++;
-         
-         strncpy(entry->name,file->d_name,n-7);
-         entry->name[n-7] = '\0';
-         
-         /* Attempt to read the lock file */
-         strcpy(lockfilename,WAMLOCKDIR);
-         strcat(lockfilename,entry->name);
-         lockfile = fopen(lockfilename,"r");
-         if (!lockfile)
-         {
-            entry->status = BT_WAM_LIST_ENTRY_STATUS_FREE;
-            entry->programpid = 0;
-            strcpy(entry->programname,"(none)");
-            continue;
-         }
-         
-         /* Copy in the pid */
-         err = fscanf(lockfile,"%10d\n",&(entry->programpid));
-         if (err != 1)
-         {
-            entry->status = BT_WAM_LIST_ENTRY_STATUS_DEFUNCT;
-            entry->programpid = 0;
-            strcpy(entry->programname,"(none)");
-            fclose(lockfile);
-            continue;
-         }
-         
-         /* Attempt to grab the program name from ps */
-         sprintf(pscommand,"ps -p %d -o comm=",entry->programpid);
-         pspipe = popen(pscommand,"r");
-         if (!pspipe)
-         {
-            entry->status = BT_WAM_LIST_ENTRY_STATUS_INUSE;
-            strcpy(entry->programname,"(unknown)");
-            fclose(lockfile);
-            continue;
-         }
-         
-         err = fscanf(pspipe,"%s\n",entry->programname);
-         if (err != 1)
-         {
-            entry->status = BT_WAM_LIST_ENTRY_STATUS_DEFUNCT;
-            strcpy(entry->programname,"(unknown)");
-            pclose(pspipe);
-            fclose(lockfile);
-            continue;
-         }
-         
-         entry->status = BT_WAM_LIST_ENTRY_STATUS_INUSE;
-         
-         pclose(pspipe);
-         fclose(lockfile);
-      }
-   }
-   
-   closedir(etcwam);
-   return list;
-}
-
-int bt_wam_list_local_destroy(struct bt_wam_list_local * list)
-{
-   int i;
-   
-   for (i=0; i<list->num; i++)
-      free(list->entries[i]);
-   if (list->num)
-      free(list->entries);
-   free(list);
-   return 0;
-}
-
-int bt_wam_list_local_get_num(struct bt_wam_list_local * list)
-{
-   return list->num;
-}
-
-char * bt_wam_list_local_get_name(struct bt_wam_list_local * list, int i, char * buf)
-{
-   if (i >= list->num)
-      return 0;
-   strcpy(buf,list->entries[i]->name);
-   return buf;
-}
-
-enum bt_wam_list_entry_status bt_wam_list_local_get_status(struct bt_wam_list_local * list, int i)
-{
-   if (i >= list->num)
-      return -1;
-   return list->entries[i]->status;
-}
-
-int bt_wam_list_local_get_pid(struct bt_wam_list_local * list, int i)
-{
-   if (i >= list->num)
-      return -1;
-   return list->entries[i]->programpid;
-}
-
-char * bt_wam_list_local_get_programname(struct bt_wam_list_local * list, int i, char * buf)
-{
-   if (i >= list->num)
-      return 0;
-   strcpy(buf,list->entries[i]->programname);
-   return buf;
-}

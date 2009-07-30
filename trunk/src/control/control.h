@@ -46,6 +46,7 @@ struct bt_control;
 struct bt_control_type
 {
    char name[30]; /* points to the same place for a given type */
+   char space[30];
    
    /* Simple state switching */
    int (*idle)(struct bt_control * c);

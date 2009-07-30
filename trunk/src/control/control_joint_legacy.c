@@ -39,7 +39,8 @@ static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
 static const struct bt_control_type bt_control_joint_legacy_type = {
-   "joint-space-legacy",
+   "pid-torque",
+   "joint",
    &idle,
    &hold,
    &is_holding,

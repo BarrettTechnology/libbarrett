@@ -63,6 +63,7 @@ struct bt_log * bt_log_create(unsigned int num_fields)
       log->fields[i].size = 0;
    
    log->initialized = 0;
+   log->finished = 0;
    
    return log;
 }
@@ -122,10 +123,24 @@ int bt_log_init(struct bt_log * log, int num_records, char * filename)
       syslog(LOG_ERR,"bt_log_init: logger already initialized.");
       return -1;
    }
-   
-   if ((log->file = fopen(filename,"w"))==NULL) {
-      syslog(LOG_ERR,"bt_log_init: Could not open datalogger file %s",filename);
-      return -2;
+
+   if (filename)
+   {
+      log->binfile = fopen(filename,"wb");
+      if (!log->binfile)
+      {
+         syslog(LOG_ERR,"%s: Could not open datalogger file %s",__func__,filename);
+         return -2;
+      }
+   }
+   else
+   {
+      log->binfile = tmpfile();
+      if (!log->binfile)
+      {
+         syslog(LOG_ERR,"%s: Could not open temporary datalogger file.",__func__);
+         return -2;
+      }
    }
 
    /* Figure out the total size per record */
@@ -138,14 +153,14 @@ int bt_log_init(struct bt_log * log, int num_records, char * filename)
    log->buf_A = malloc(log->num_records * log->record_size);
    if (!log->buf_A)
    {
-      fclose(log->file);
+      fclose(log->binfile);
       return -3;
    }
    log->buf_B = malloc(log->num_records * log->record_size);
    if (!log->buf_B)
    {
       free(log->buf_A);
-      fclose(log->file);
+      fclose(log->binfile);
       return -3;
    }
 
@@ -160,12 +175,14 @@ int bt_log_init(struct bt_log * log, int num_records, char * filename)
     *
     *              ... (num_fields of these)
     */
-   fwrite(&(log->num_fields),sizeof(int),1,log->file);   /* number of fields */
+   fwrite(&(log->num_fields),sizeof(int),1,log->binfile);   /* number of fields */
    for(i = 0; i < log->num_fields; i++) {
-      fwrite(&(log->fields[i].type),sizeof(int),1,log->file);
-      fwrite(&(log->fields[i].size),sizeof(int),1,log->file); /* record size = arraysize + sizeof(variable) */
-      fwrite(log->fields[i].name,sizeof(char),50,log->file);
+      fwrite(&(log->fields[i].type),sizeof(int),1,log->binfile);
+      fwrite(&(log->fields[i].size),sizeof(int),1,log->binfile); /* record size = arraysize + sizeof(variable) */
+      fwrite(log->fields[i].name,sizeof(char),50,log->binfile);
    }
+   /* Save the current location (location of the data, after the header) */
+   log->binfile_dataloc = ftell(log->binfile);
 
    log->buf = log->buf_A;
    log->buf_record_idx = 0;
@@ -178,24 +195,11 @@ int bt_log_init(struct bt_log * log, int num_records, char * filename)
 
 int bt_log_destroy(struct bt_log * log)
 {
-   /* Was flushDL() */
-   long chunk_size;
+   /* Finish the live logging if it's not already done */
+   if (log->initialized && !log->finished)
+      bt_log_finish(log);
 
-   if (log->initialized) {
-      /* If our data logging files are open and everything is peachy */
-      fwrite(&log->chunk_idx,sizeof(int),1,log->file);     /*Write Record index as a binary integer*/
-      
-      chunk_size = log->buf_record_idx * log->record_size;         /*Calculate the chunk size*/
-      fwrite(&chunk_size,sizeof(long),1,log->file);     /*Write the Record length in bytes*/
-
-      fwrite(log->buf, log->record_size, log->buf_record_idx, log->file);  /*Write all the data in binary form*/
-      log->chunk_idx++;                                        /*ncrement the record index*/
-      
-      free(log->buf_A);
-      free(log->buf_B);
-      fclose(log->file);
-   }
-   
+   fclose(log->binfile);
    free(log->fields);
    free(log);
    return 0;
@@ -208,6 +212,7 @@ int bt_log_trigger(struct bt_log * log)
    char * start; /* it's indexed by bytes, anyways */
 
    if (!log->initialized) return -1;
+   if (log->finished) return -1;
    
    /* point to the present location in the buffer */
    start = log->buf + log->buf_record_idx * log->record_size; /* ######## MADE THIS CHANGE 08-12 */
@@ -252,6 +257,7 @@ int bt_log_flush(struct bt_log * log)
       syslog(LOG_ERR,"%s: logger not yet initialized.",__func__);
       return -1;
    }
+   if (log->finished) return -1;
    
    /* Make sure some buffer is full, and if so,
     * point buf_full to the full buffer.*/
@@ -267,18 +273,18 @@ int bt_log_flush(struct bt_log * log)
          buf_full = log->buf_B;
          break;
    }
-
+   
    /* Write record index (full buffer counter) as binary integer
     * Start of chunk : 4 bytes for the chunk index */
-   fwrite(&(log->chunk_idx),sizeof(int),1,log->file);
+   fwrite(&(log->chunk_idx),sizeof(int),1,log->binfile);
    
    /* Calculate / write the chunk size in bytes
     * (this is a full chunk) */
    chunk_size = log->num_records * log->record_size;
-   fwrite(&chunk_size,sizeof(long),1,log->file);
+   fwrite(&chunk_size,sizeof(long),1,log->binfile);
 
    /* Write all the data in binary form */
-   fwrite(buf_full, log->record_size, log->num_records, log->file);
+   fwrite(buf_full, log->record_size, log->num_records, log->binfile);
    
    /* Increment the chunk index */
    log->chunk_idx++;
@@ -290,7 +296,93 @@ int bt_log_flush(struct bt_log * log)
 }
 
 
-int bt_log_decode(char * infile, char * outfile, int header, int octave)
+int bt_log_finish(struct bt_log * log)
+{
+   long chunk_size;
+   
+   if (!log->initialized) return -1;
+   if (log->finished) return -1;
+
+   /* Write what's remaining in the current buffer
+    * if there's something there */
+   if (log->buf_record_idx)
+   {
+      fwrite(&log->chunk_idx,sizeof(int),1,log->binfile);     /*Write Record index as a binary integer*/
+      
+      chunk_size = log->buf_record_idx * log->record_size;         /*Calculate the chunk size*/
+      fwrite(&chunk_size,sizeof(long),1,log->binfile);     /*Write the Record length in bytes*/
+
+      fwrite(log->buf, log->record_size, log->buf_record_idx, log->binfile);  /*Write all the data in binary form*/
+      log->chunk_idx++;                                        /*ncrement the record index*/
+   }
+   
+   free(log->buf_A);
+   free(log->buf_B);
+
+   log->finished = 1;
+
+   return 0;
+}
+
+
+int bt_log_decode_start(struct bt_log * log)
+{
+   /* Make sure we're finished writing live data to the binfile */
+   if (!log->finished) return -1;
+
+   /* Go to the beginning of the binfile, just after the binary header */
+   fseek(log->binfile, log->binfile_dataloc, SEEK_SET);
+
+   /* We haven't read any records,
+    * and there are no more records to read in the current chunk */
+   log->records_read = 0;
+   log->chunk_records_to_read = 0;
+   
+   return 0;
+}
+
+
+int bt_log_decode_next(struct bt_log * log, int * record_num_ptr)
+{
+   int i;
+   
+   /* Make sure we're finished writing live data to the binfile */
+   if (!log->finished) return -1;
+
+   /* If we're about to decode the next chunk */
+   if (!log->chunk_records_to_read)
+   {
+      int chunk_idx;
+      long chunk_size;
+
+      /* Attempt to read (and ignore) the chunk index */
+      fread(&chunk_idx,sizeof(int),1,log->binfile);
+
+      /* Quit if we're done decoding */
+      if(feof(log->binfile)) return 1;
+
+      /* Read the chunk size (in bytes) */
+      fread(&chunk_size,sizeof(long),1,log->binfile);
+      log->chunk_records_to_read = chunk_size / log->record_size;
+   }
+
+   /* chunk_records_to_read should be non-zero at this point */
+
+   /* read a record */
+   for(i = 0; i < log->num_fields; i++)
+      fread(log->fields[i].data, log->fields[i].size, 1, log->binfile);
+
+   if (record_num_ptr)
+      (*record_num_ptr) = log->records_read;
+   
+   log->records_read++;
+   log->chunk_records_to_read--;
+
+   return 0;
+}
+
+
+int bt_log_decode_file(char * infile, char * outfile, int header, int octave)
 {
    struct bt_log * log; /*use this just because it is convinient*/
    FILE *inf,*outf;
@@ -520,176 +612,5 @@ int bt_log_decode(char * infile, char * outfile, int header, int octave)
    
    fclose(inf);
    fclose(outf);
-   return 0;
-}
-
-
-struct bt_log_read * bt_log_read_create(unsigned int num_fields)
-{
-   int i;
-   struct bt_log_read * logread;
-   
-   logread = (struct bt_log_read *) malloc(sizeof(struct bt_log_read));
-   
-   logread->fields = (struct bt_log_field *)
-      malloc( num_fields * sizeof(struct bt_log_field) );
-   logread->num_fields_max = num_fields;
-   logread->num_fields = 0;
-   
-   for (i=0; i<logread->num_fields_max; i++)
-      logread->fields[i].size = 0;
-   
-   logread->initialized = 0;
-   
-   return logread;
-}
-
-
-int bt_log_read_addfield(struct bt_log_read * logread, void * data, int num,
-                         enum bt_log_fieldtype type)
-{
-   int i;
-   
-   if (logread->initialized)
-   {
-      syslog(LOG_ERR,"bt_log_read_addfield: logger already initialized.");
-      return -1;
-   }
-   
-   i = logread->num_fields;
-   
-   if (i >= logread->num_fields_max)
-   {
-      syslog(LOG_ERR,"bt_log_read_addfield: No more field slots left. Use a higher value in btlog_create()");
-      return -2;
-   }
-   
-   logread->fields[i].data = data;
-   logread->fields[i].type = type;
-   switch (type)
-   {
-      case BT_LOG_INT:
-         logread->fields[i].size = num * sizeof(int);
-         break;
-      case BT_LOG_LONG:
-         logread->fields[i].size = num * sizeof(long int);
-         break;
-      case BT_LOG_LONGLONG:
-         logread->fields[i].size = num * sizeof(long long int);
-         break;
-      case BT_LOG_ULONGLONG:
-         logread->fields[i].size = num * sizeof(unsigned long long int);
-         break;
-      case BT_LOG_DOUBLE:
-         logread->fields[i].size = num * sizeof(double);
-         break;
-   }
-   
-   logread->num_fields++;
-   return 0;
-}
-
-int bt_log_read_init(struct bt_log_read * logread, char * filename,
-                     int header)
-{
-   
-   if (logread->initialized)
-   {
-      syslog(LOG_ERR,"bt_log_read_init: logger already initialized.");
-      return -1;
-   }
-   
-   if ((logread->file = fopen(filename,"r"))==NULL) {
-      syslog(LOG_ERR,"bt_log_read_init: Could not open datalogger file %s",filename);
-      return -2;
-   }
-   
-   logread->line_length = 0;
-   logread->line = 0;
-   
-   /* Skip the header, if its there ... */
-   if (header)
-      getline( &logread->line, &logread->line_length, logread->file );
-   
-   logread->records_read = 0;
-   
-   logread->initialized = 1;
-   return 0;
-}
-
-
-int bt_log_read_destroy(struct bt_log_read * logread)
-{
-   if (logread->initialized) fclose(logread->file);
-   if (logread->line) free(logread->line);
-   free(logread);
-   return 0;
-}
-
-
-int bt_log_read_get(struct bt_log_read * logread, int * record_num_ptr)
-{
-   int ret;
-   char * field;
-   int i;
-   
-   if (!logread->initialized)
-   {
-      syslog(LOG_ERR,"bt_log_read_get: logger not yet initialized.");
-      return -1;
-   }
-   
-   /* Grab the next line */
-   ret = getline( &logread->line, &logread->line_length, logread->file );
-   if (ret == -1)
-   {
-      /* End of file (or error) */
-      return -2;
-   }
-   
-   /* Tokenize the string by ',' */
-   for(i = 0; i < logread->num_fields; i++)
-   {
-      if (i==0)
-         field = strtok( logread->line, "," );
-      else
-         field = strtok( 0, "," );
-      if (!field)
-         return -3; /* Shouldn't happen (not enough commas?) */
-      
-      /* Copy the value */
-      switch (logread->fields[i].type)
-      {
-         int var_int;
-         long int var_long_int;
-         long long int var_long_long_int;
-         unsigned long long int var_unsigned_long_long_int;
-         double var_double;
-         case BT_LOG_INT:
-            var_int = strtol(field,0,0);
-            memcpy( logread->fields[i].data, &var_int, sizeof(int) );
-            break;
-         case BT_LOG_LONG:
-            var_long_int = strtol(field,0,0);
-            memcpy( logread->fields[i].data, &var_long_int, sizeof(long int) );
-            break;
-         case BT_LOG_LONGLONG:
-            var_long_long_int = strtoll(field,0,0);
-            memcpy( logread->fields[i].data, &var_long_long_int, sizeof(long long int) );
-            break;
-         case BT_LOG_ULONGLONG:
-            var_unsigned_long_long_int = strtoull(field,0,0);
-            memcpy( logread->fields[i].data, &var_unsigned_long_long_int, sizeof(unsigned long long int) );
-            break;
-         case BT_LOG_DOUBLE:
-            var_double = strtod(field,0);
-            memcpy( logread->fields[i].data, &var_double, sizeof(double) );
-            break;
-      }
-   }
-   
-   if (record_num_ptr) (*record_num_ptr) = logread->records_read;
-   logread->records_read++;
-   
    return 0;
 }

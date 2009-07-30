@@ -15,6 +15,7 @@
 
 #ifndef ASYNC_ONLY
 # include "wam_local.h"
+# include "wam_list.h"
 # include <libconfig.h> /* We should push this into wam_local.c ... */
 #endif
 
@@ -374,6 +375,20 @@ char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
    }
 }
 
+char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_get_current_controller_space(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
 int bt_wam_controller_toggle(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY
@@ -434,17 +449,76 @@ int bt_wam_is_holding(struct bt_wam * wam)
    }
 }
 
-char * bt_wam_get_current_refgen_name(struct bt_wam * wam, char * buf)
+char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf)
 {
 #ifndef ASYNC_ONLY
    if (!wam->caller)
-      return bt_wam_local_get_current_refgen_name(wam->obj,buf);
+      return bt_wam_local_refgen_active_name(wam->obj,buf);
    else
 #endif
    {
       if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
          return proxy_err; /* Could not forward over RPC */
       return buf;
+   }
+}
+
+char * bt_wam_refgen_loaded_name(struct bt_wam * wam, char * buf)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_refgen_loaded_name(wam->obj,buf);
+   else
+#endif
+   {
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, buf))
+         return proxy_err; /* Could not forward over RPC */
+      return buf;
+   }
+}
+
+int bt_wam_refgen_save(struct bt_wam * wam, char * filename)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_refgen_save(wam->obj,filename);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, filename, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
+int bt_wam_refgen_load(struct bt_wam * wam, char * filename)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_refgen_load(wam->obj,filename);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, filename, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
+int bt_wam_refgen_clear(struct bt_wam * wam)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_refgen_clear(wam->obj);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
    }
 }
 
@@ -553,11 +627,11 @@ int bt_wam_teach_end(struct bt_wam * wam)
    }
 }
 
-int bt_wam_playback(struct bt_wam * wam)
+int bt_wam_run(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY
    if (!wam->caller)
-      return bt_wam_local_playback(wam->obj);
+      return bt_wam_local_run(wam->obj);
    else
 #endif
    {

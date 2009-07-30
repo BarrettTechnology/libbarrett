@@ -10,62 +10,61 @@ static int get_start(struct bt_refgen * base, gsl_vector ** start);
 static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
-static int eval(struct bt_refgen * base, gsl_vector * ref);
-static int trigger(struct bt_refgen * base);
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref);
 static const struct bt_refgen_type bt_refgen_move_type = {
    "move",
+   0, /* create */
    &destroy,
+   0, 0, 0, 0, 0, /* teach functions */
+   0, 0, /* load/save functions */
    &get_start,
    &get_total_time,
    &get_num_points,
    &start,
-   &eval,
-   &trigger
+   &eval
 };
 const struct bt_refgen_type * bt_refgen_move = &bt_refgen_move_type;
 
+
 /* refgen-specific creation function */
-struct bt_refgen_move * bt_refgen_move_create(
-   double * elapsed_time,
+struct bt_refgen * bt_refgen_move_create(
    gsl_vector * cur_pos, gsl_vector * cur_vel, gsl_vector * dest,
    double vel, double acc)
 {
-   struct bt_refgen_move * t;
-   t = (struct bt_refgen_move *) malloc( sizeof(struct bt_refgen_move) );
-   if (!t) return 0;
+   struct bt_refgen_move * r;
+   
+   r = (struct bt_refgen_move *) malloc( sizeof(struct bt_refgen_move) );
+   if (!r) return 0;
    
    /* Set the type */
-   t->base.type = bt_refgen_move;
-   
-   /* Save the elapsed time */
-   t->elapsed_time = elapsed_time;
+   r->base.type = bt_refgen_move;
    
    /* Make a new spline, starting at the current position */
-   t->spline = bt_spline_create(cur_pos,BT_SPLINE_MODE_ARCLEN);
+   r->spline = bt_spline_create(cur_pos,BT_SPLINE_MODE_ARCLEN);
    
    /* Add the destination as a second point */
-   bt_spline_add( t->spline, dest, 0.0 ); /* The 0.0 is meaningless for ARCLEN type */
+   bt_spline_add( r->spline, dest, 0.0 ); /* The 0.0 is meaningless for ARCLEN type */
    
    /* Initialize the spline, using the velocity as the direction */
-   bt_spline_init( t->spline, 0, cur_vel );
+   bt_spline_init( r->spline, 0, cur_vel );
    
    /* Make a new profile, using the spline length */
    if (cur_vel)
-      t->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), t->spline->length);
+      r->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), r->spline->length);
    else
-      t->profile = bt_profile_create(vel, acc, 0, t->spline->length);
+      r->profile = bt_profile_create(vel, acc, 0, r->spline->length);
    
-   return t;
+   return (struct bt_refgen *)r;
 }
 
-/* Interface functions (from refgen.h) */
+
 static int destroy(struct bt_refgen * base)
 {
-   struct bt_refgen_move * t;
-   t = (struct bt_refgen_move *) base;
-   bt_spline_destroy(t->spline);
-   bt_profile_destroy(t->profile);
-   free(t);
+   struct bt_refgen_move * r;
+   r = (struct bt_refgen_move *) base;
+   bt_spline_destroy(r->spline);
+   bt_profile_destroy(r->profile);
+   free(r);
    return 0;
 }
 
@@ -93,22 +92,17 @@ static int start(struct bt_refgen * base)
    return -1; /* Not Implemented */
 }
 
-static int eval(struct bt_refgen * base, gsl_vector * ref)
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref)
 {
-   struct bt_refgen_move * t;
+   struct bt_refgen_move * r;
    double s;
-   t = (struct bt_refgen_move *) base;
+   r = (struct bt_refgen_move *) base;
    
-   if ( *(t->elapsed_time) > t->profile->time_end )
+   if ( time > r->profile->time_end )
       return 1; /* finished */
    
-   bt_profile_get( t->profile, &s, *(t->elapsed_time) );
-   bt_spline_get( t->spline, ref, s );
+   bt_profile_get( r->profile, &s, time );
+   bt_spline_get( r->spline, ref, s );
    
    return 0;
-}
-
-static int trigger(struct bt_refgen * base)
-{
-   return -1;
 }

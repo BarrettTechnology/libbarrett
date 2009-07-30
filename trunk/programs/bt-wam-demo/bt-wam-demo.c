@@ -179,20 +179,22 @@ int main(int argc, char ** argv)
 
             /* Show controller name (joint space, cartesian space) */
             mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam,buf) );
+            mvprintw(line++, 0, "      Space: %s", bt_wam_get_current_controller_space(wam,buf) );
             mvprintw(line++, 0, "   Position: %s", bt_wam_str_con_position(wam,buf) );
             line++;
             
             /* Show GRAVTIY COMPENSATION */
-            mvprintw(line++, 0, "GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
+            mvprintw(line++, 0, "   GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
             
             /* Show HOLDING */
-            mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
+            mvprintw(line++, 0, "       Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
+
+            mvprintw(line++, 0, " Loaded Refgen: %s", bt_wam_refgen_loaded_name(wam,buf) );
+            mvprintw(line++, 0, " Active Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
             
-            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
+            mvprintw(line++, 0, "    MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             
-            mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
-            
-            mvprintw(line++, 0, "   Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
+            mvprintw(line++, 0, "      Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
             line++;
 
             /* Show HAPTICS */
@@ -260,7 +262,16 @@ int main(int argc, char ** argv)
             bt_wam_teach_end(wam);
             break;
          case '.':
-            bt_wam_playback(wam);
+            bt_wam_run(wam);
+            break;
+         case 's':
+            bt_wam_refgen_save(wam,"savefile.txt");
+            break;
+         case 'l':
+            bt_wam_refgen_load(wam,"savefile.txt");
+            break;
+         case 'c':
+            bt_wam_refgen_clear(wam);
             break;
          default:
             break;

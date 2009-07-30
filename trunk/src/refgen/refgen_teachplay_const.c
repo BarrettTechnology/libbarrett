@@ -82,7 +82,7 @@ int bt_refgen_teachplay_const_save(struct bt_refgen_teachplay_const * t)
    filename_csv = (char *) malloc( strlen(t->filename) + 4 + 1 );
    strcpy(filename_csv,t->filename);
    strcat(filename_csv,".csv");
-   bt_log_decode( t->filename, filename_csv, 1, 0 );
+   bt_log_decode_file( t->filename, filename_csv, 1, 0 );
    
    /* Create an interable log reader from the CSV file */
    position = gsl_vector_calloc( t->n );

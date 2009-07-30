@@ -94,6 +94,7 @@ int bt_wam_isgcomp(struct bt_wam * wam);
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff);
 
 char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf);
+char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf);
 int bt_wam_controller_toggle(struct bt_wam * wam);
 
 /* These are simple wrappers for the active controller */
@@ -102,7 +103,13 @@ int bt_wam_hold(struct bt_wam * wam);
 int bt_wam_is_holding(struct bt_wam * wam);
 
 /* Refgen commands */
-char * bt_wam_get_current_refgen_name(struct bt_wam * wam, char * buf);
+char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf);
+char * bt_wam_refgen_loaded_name(struct bt_wam * wam, char * buf);
+
+int bt_wam_refgen_save(struct bt_wam * wam, char * filename);
+int bt_wam_refgen_load(struct bt_wam * wam, char * filename);
+
+int bt_wam_refgen_clear(struct bt_wam * wam);
 
 /* For moves */
 int bt_wam_set_velocity(struct bt_wam * wam, double vel);
@@ -115,7 +122,7 @@ int bt_wam_moveisdone(struct bt_wam * wam);
 int bt_wam_is_teaching(struct bt_wam * wam);
 int bt_wam_teach_start(struct bt_wam * wam);
 int bt_wam_teach_end(struct bt_wam * wam);
-int bt_wam_playback(struct bt_wam * wam);
+int bt_wam_run(struct bt_wam * wam);
 
 #ifdef __cplusplus
 }

@@ -226,17 +226,20 @@ noinst_LTLIBRARIES += src/libbtrefgen.la
 # Header files to include in the package
 pkginclude_HEADERS += src/refgen/refgen.h \
                       src/refgen/refgen_move.h \
-                      src/refgen/refgen_teachplay_const.h \
-                      src/refgen/refgen_teachplay.h
+                      src/refgen/refgen_teachplay.h #\
+                      #src/refgen/refgen_teachplay_const.h
+                      
 
 # Source files to complile
 src_libbtrefgen_la_CPPFLAGS = -Isrc/spline \
                               -Isrc/profile \
-                              -Isrc/log
+                              -Isrc/log \
+                              -Isrc/gsl
 src_libbtrefgen_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror
 src_libbtrefgen_la_SOURCES = src/refgen/refgen_move.c \
-                             src/refgen/refgen_teachplay_const.c \
-                             src/refgen/refgen_teachplay.c
+                             src/refgen/refgen_teachplay.c #\
+                             #src/refgen/refgen_teachplay_const.c
+                             
 
 ####### BT_SPLINE
 
@@ -366,10 +369,11 @@ src_libbtwam_la_SOURCES = src/wam/wam.c \
 
 if BT_WAM_LOCAL
 
-pkginclude_HEADERS += src/wam/wam_custom.h \
-                      src/wam/wam_local.h
+pkginclude_HEADERS += src/wam/wam_local.h \
+                      src/wam/wam_list.h
 
-src_libbtwam_la_SOURCES += src/wam/wam_local.c
+src_libbtwam_la_SOURCES += src/wam/wam_local.c \
+                           src/wam/wam_list.c
 
 else
 
