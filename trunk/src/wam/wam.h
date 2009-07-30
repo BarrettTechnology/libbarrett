@@ -107,6 +107,7 @@ int bt_wam_refgen_load(struct bt_wam * wam, char * filename);
 /* For moves */
 int bt_wam_set_velocity(struct bt_wam * wam, double vel);
 int bt_wam_set_acceleration(struct bt_wam * wam, double acc);
+int bt_wam_moveto(struct bt_wam * wam, int n, double * dest);
 int bt_wam_movehome(struct bt_wam * wam);
 int bt_wam_moveisdone(struct bt_wam * wam);
 

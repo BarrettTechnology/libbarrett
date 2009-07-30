@@ -569,6 +569,21 @@ int bt_wam_set_acceleration(struct bt_wam * wam, double vel)
    }
 }
 
+int bt_wam_moveto(struct bt_wam * wam, int n, double * dest)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_moveto(wam->obj,n,dest);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, n, dest, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
 int bt_wam_movehome(struct bt_wam * wam)
 {
 #ifndef ASYNC_ONLY

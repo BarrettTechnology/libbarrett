@@ -687,10 +687,26 @@ int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc)
    return 0;
 }
 
+int bt_wam_local_moveto(struct bt_wam_local * wam, int n, double * dest)
+{
+   gsl_vector vecval;
+
+   if (n != wam->con_active->n)
+      return -1;
+
+   vecval.size = n;
+   vecval.stride = 1;
+   vecval.data = dest;
+   vecval.block = 0;
+   vecval.owner = 0;
+
+   return bt_wam_local_moveto_vec(wam,&vecval);
+}
+
 
 int bt_wam_local_movehome(struct bt_wam_local * wam)
 {
-   return bt_wam_local_moveto(wam,wam->wambot->home);
+   return bt_wam_local_moveto_vec(wam,wam->wambot->home);
 }
 
 int bt_wam_local_moveisdone(struct bt_wam_local * wam)
@@ -699,7 +715,7 @@ int bt_wam_local_moveisdone(struct bt_wam_local * wam)
 }
 
 /* Move to a location, removing any currently-loaded refgen */
-int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest)
+int bt_wam_local_moveto_vec(struct bt_wam_local * wam, gsl_vector * dest)
 {
    bt_wam_local_refgen_clear(wam);
 

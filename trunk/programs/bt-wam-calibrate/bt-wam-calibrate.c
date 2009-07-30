@@ -484,7 +484,7 @@ static int do_mode_zero(char * wamname)
                case MODE_TOZERO:
                   if (!bt_wam_moveisdone(wam)) break;
                   gsl_vector_set_zero(jangle);
-                  bt_wam_local_moveto(wam_local,jangle);
+                  bt_wam_local_moveto_vec(wam_local,jangle);
                   break;
                case MODE_CANCEL:
                   done = -1;
@@ -535,7 +535,7 @@ static int do_mode_zero(char * wamname)
          case BTKEY_UP:
             if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) += pow(10,-decplace);
-            err = bt_wam_local_moveto(wam_local,jangle);
+            err = bt_wam_local_moveto_vec(wam_local,jangle);
             if (err)
             {
                syslog(LOG_ERR,"Error with moveto: %d.",err);
@@ -545,7 +545,7 @@ static int do_mode_zero(char * wamname)
          case BTKEY_DOWN:
             if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) -= pow(10,-decplace);
-            err = bt_wam_local_moveto(wam_local,jangle);
+            err = bt_wam_local_moveto_vec(wam_local,jangle);
             if (err)
             {
                syslog(LOG_ERR,"Error with moveto: %d.",err);

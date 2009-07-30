@@ -157,13 +157,24 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
       free(c);
       return 0;
    }
+   c->strbuf_len = 302;
+
+   c->doublebuf = (double *) malloc(20*sizeof(double));
+   if (!c->doublebuf)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      free(c->strbuf);
+      close(new);
+      free(c);
+      return 0;
+   }
+   c->doublebuf_len = 20;
    
    /* Initialize */
    c->base.type = base->type;
    c->base.fd = new;
    /* c->buf[] statically allocated */
    c->buf_already = 0;
-   c->strbuf_len = 302;
    
    /* Success! */
    return (struct bt_rpc_callee *)c;
@@ -174,6 +185,8 @@ static int callee_destroy(struct bt_rpc_callee * base)
    struct bt_rpc_tcpjson_callee * c;
    c = (struct bt_rpc_tcpjson_callee *)base;
    close(c->base.fd);
+   free(c->strbuf);
+   free(c->doublebuf);
    free(c);
    return 0;
 }
@@ -295,6 +308,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
    /* Call the method */
    switch (func->type)
    {
+      struct json_object * jsonobj;
       int myint;
       int myint2;
       int myint3;
@@ -643,6 +657,56 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          }
          json_object_put(req);
          return 0;
+      case BT_RPC_FUNC_INT_OBJ_NDOUBLE:
+         /* Check for two parameters, an obj and an array */
+         if (json_object_array_length(params)!=2)
+         {
+            syslog(LOG_ERR,"%s: Request does not have two parameters.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         vptr = (void *) json_object_get_int(json_object_array_get_idx(params,0));
+         /* Check object */
+         err = bt_rpc_interface_object_check(interface, vptr);
+         if (err)
+         {
+            syslog(LOG_ERR,"%s: Could not find object.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         /* Get array */
+         jsonobj = json_object_array_get_idx(params,1);
+         if (!json_object_get_array(jsonobj))
+         {
+            syslog(LOG_ERR,"%s: Request does not have array parameter.",__func__);
+            json_object_put(req);
+            return -1;
+         }
+         myint3 = json_object_array_length(jsonobj);
+         /* Enlarge the double buffer if necessary */
+         if (myint3 > c->doublebuf_len)
+         {
+            c->doublebuf = (double *) realloc( c->doublebuf, myint3*sizeof(double) );
+            c->doublebuf_len = myint3;
+         }
+         for (myint2=0; myint2<myint3; myint2++)
+         {
+            c->doublebuf[myint2] = json_object_get_double(
+                           json_object_array_get_idx(jsonobj,myint2) );
+         }
+         /* Cast and call the funcion */
+         myint = (*(int (*)(void *,int,double *))(func->ptr))(vptr,myint3,c->doublebuf);
+         /* Return success */
+         {
+            int err;
+            /* Return success */
+            sprintf(c->writebuf,"{\"result\":%d}\n",myint);
+            err = write( c->base.fd, c->writebuf,
+                         strlen(c->writebuf) );
+            /* What should we do with this error??? */
+         }
+         json_object_put(req);
+         return 0;
       default:
          break;
    }
@@ -746,6 +810,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       void * vptr;
       int myint;
       int myint2;
+      double * doubleptr;
       case BT_RPC_FUNC_OBJ_STR_CREATE:
          mystr = va_arg(ap, char *);
          sprintf(cr->buf,"{'method':'%s','params':['%s']}\n", function, mystr);
@@ -785,6 +850,17 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          vptr = va_arg(ap, void *);
          mystr = va_arg(ap, char *);
          sprintf(cr->buf,"{'method':'%s','params':[%d,'%s']}\n", function, (int)vptr, mystr);
+         break;
+      case BT_RPC_FUNC_INT_OBJ_NDOUBLE:
+         vptr = va_arg(ap, void *);
+         myint = va_arg(ap, int);
+         doubleptr = va_arg(ap, double *);
+         sprintf(cr->buf,"{'method':'%s','params':[%d,[", function, (int)vptr);
+         if (myint)
+            sprintf(cr->buf + strlen(cr->buf),"%.4f",doubleptr[0]);
+         for (myint2=1; myint2<myint; myint2++)
+            sprintf(cr->buf + strlen(cr->buf),",%.4f",doubleptr[myint2]);
+         sprintf(cr->buf + strlen(cr->buf),"]]}\n");
          break;
       default:
          syslog(LOG_ERR,"%s: Non-supported function type.",__func__);
@@ -881,6 +957,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       case BT_RPC_FUNC_INT_OBJ_INT:
       case BT_RPC_FUNC_INT_OBJ_STR:
       case BT_RPC_FUNC_INT_OBJ_INT_INT:
+      case BT_RPC_FUNC_INT_OBJ_NDOUBLE:
          myint = json_object_get_int(json_object_object_get(req,"result"));
          result = va_arg(ap, void *);
          *((int *)result) = myint;

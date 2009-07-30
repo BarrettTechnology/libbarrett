@@ -160,11 +160,12 @@ int bt_wam_local_refgen_use(struct bt_wam_local * wam, struct bt_refgen * refgen
 
 int bt_wam_local_set_velocity(struct bt_wam_local * wam, double vel);
 int bt_wam_local_set_acceleration(struct bt_wam_local * wam, double acc);
+int bt_wam_local_moveto(struct bt_wam_local * wam, int n, double * dest);
 int bt_wam_local_movehome(struct bt_wam_local * wam);
 int bt_wam_local_moveisdone(struct bt_wam_local * wam);
 
 /* local only */
-int bt_wam_local_moveto(struct bt_wam_local * wam, gsl_vector * dest);
+int bt_wam_local_moveto_vec(struct bt_wam_local * wam, gsl_vector * dest);
 
 int bt_wam_local_is_teaching(struct bt_wam_local * wam);
 int bt_wam_local_teach_start(struct bt_wam_local * wam);

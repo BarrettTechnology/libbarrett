@@ -24,6 +24,8 @@
  */
 
 /* System Libraries */
+#include <stdlib.h> /* For atof() */
+#include <string.h>
 #include <signal.h>
 #include <sys/mman.h>
 
@@ -97,6 +99,12 @@ enum btkey btkey_get()
    }
 }
 
+/* User-input string */
+char string[200];
+int get_string(int line, char * format);
+double vector[10];
+int vector_length;
+int string_to_vector();
 
 /* We have a global flag and signal handler
  * to allow the user to close the program
@@ -161,6 +169,8 @@ int main(int argc, char ** argv)
 
    while(going)
    {
+      int line;
+      line = 0;
       
       /* Clear the screen buffer */
       clear();
@@ -168,33 +178,11 @@ int main(int argc, char ** argv)
       /* Display the display or help screen */
       switch (screen)
       {
-         int line;
          char buf[256];
          case SCREEN_MAIN:
-            line = 0;
             
             /* Show HEADER */
             mvprintw(line++, 0, "Barrett Technology - Demo Application\t\tPress 'h' for help");
-            line++;
-
-            /* Show controller name (joint space, cartesian space) */
-            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam,buf) );
-            mvprintw(line++, 0, "      Space: %s", bt_wam_get_current_controller_space(wam,buf) );
-            mvprintw(line++, 0, "   Position: %s", bt_wam_str_con_position(wam,buf) );
-            line++;
-            
-            /* Show GRAVTIY COMPENSATION */
-            mvprintw(line++, 0, "   GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
-            
-            /* Show HOLDING */
-            mvprintw(line++, 0, "       Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
-
-            mvprintw(line++, 0, " Loaded Refgen: %s", bt_wam_refgen_loaded_name(wam,buf) );
-            mvprintw(line++, 0, " Active Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
-            
-            mvprintw(line++, 0, "    MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
-            
-            mvprintw(line++, 0, "      Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
             line++;
 
             /* Show HAPTICS */
@@ -204,22 +192,42 @@ int main(int argc, char ** argv)
             /* Show NAME */
             
             /* Show JOINT POSTITION + TORQUE */
-            mvprintw(line++, 0, "J Position : %s", bt_wam_str_jposition(wam,buf) );
-            mvprintw(line++, 0, "J Velocity : %s", bt_wam_str_jvelocity(wam,buf) );
-            mvprintw(line++, 0, "J Torque   : %s", bt_wam_str_jtorque(wam,buf) );
+            mvprintw(line++, 0, " J Position: %s", bt_wam_str_jposition(wam,buf) );
+            mvprintw(line++, 0, " J Velocity: %s", bt_wam_str_jvelocity(wam,buf) );
+            mvprintw(line++, 0, " J Torque  : %s", bt_wam_str_jtorque(wam,buf) );
             line++;
    #if 0
-            mvprintw(line++, 0, "J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
+            mvprintw(line++, 0, " J Reference: %s", bt_gsl_vector_sprintf(buf,wam->con_joint->reference) );
             line++;
    #endif
             /* Show CARTESION POSITION, ROTATION */
-            mvprintw(line++, 0, "C Position : %s", bt_wam_str_cposition(wam,buf) );
+            mvprintw(line++, 0, " C Position: %s", bt_wam_str_cposition(wam,buf) );
             
-            mvprintw(line,   0, "C Rotation :");
+            mvprintw(line,   0, " C Rotation:");
             mvprintw(line++, 13, "%s", bt_wam_str_crotation_r1(wam,buf) );
             mvprintw(line++, 13, "%s", bt_wam_str_crotation_r2(wam,buf) );
             mvprintw(line++, 13, "%s", bt_wam_str_crotation_r3(wam,buf) );
             line++;
+
+            /* Show controller name (joint space, cartesian space) */
+            mvprintw(line++, 0, " Controller: %s", bt_wam_get_current_controller_name(wam,buf) );
+            mvprintw(line++, 0, "      Space: %s", bt_wam_get_current_controller_space(wam,buf) );
+            mvprintw(line++, 0, "   Position: %s", bt_wam_str_con_position(wam,buf) );
+            line++;
+
+            /* Show GRAVTIY COMPENSATION */
+            mvprintw(line+0, 0, "   GravityComp: %s", bt_wam_isgcomp(wam) ? "On" : "Off" );
+            
+            /* Show HOLDING */
+            mvprintw(line+1, 0, "       Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
+            mvprintw(line+2, 0, "      Teaching: %s", bt_wam_is_teaching(wam) ? "On" : "Off" );
+
+            mvprintw(line+0, 25, " Loaded Refgen: %s", bt_wam_refgen_loaded_name(wam,buf) );
+            mvprintw(line+1, 25, " Active Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
+            
+            mvprintw(line+2, 25, "    MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
+            
+            line+=4;
 
             break;
          case SCREEN_HELP:
@@ -252,8 +260,18 @@ int main(int argc, char ** argv)
             else
                bt_wam_hold(wam);
             break;
-         case 'm':
+         case 'M':
             bt_wam_movehome(wam);
+            break;
+         case 'm':
+            if (get_string(line,"    Move To: < %s >"))
+            {
+               string_to_vector();
+               if (vector_length)
+               {
+                  bt_wam_moveto(wam,vector_length,vector);
+               }
+            }
             break;
          case 'Y':
             bt_wam_teach_start(wam);
@@ -278,7 +296,7 @@ int main(int argc, char ** argv)
          }
       
       /* Slow this loop down to about 10Hz */
-      usleep(100000); /* Wait a moment*/
+      usleep(100000); /* ~10Hz */
    }
 
    /* Close the WAM */
@@ -289,6 +307,65 @@ int main(int argc, char ** argv)
 
    /* Close syslog */
    closelog();
+   
+   return 0;
+}
+
+int get_string(int line, char * format)
+{
+   string[0] = '\0';
+   while (1)
+   {
+      enum btkey key;
+      key = btkey_get();
+
+      /* Print the line as it is now */
+      mvprintw(line,0,format,string);
+
+      if (key == BTKEY_NOKEY)
+      {
+         usleep(50000); /* ~20hz */
+         continue;
+      }
+
+      /* Are we done? */
+      if (key == BTKEY_ENTER)
+         return 1; /* Success */
+      if (key == BTKEY_ESCAPE)
+         return 0;
+
+      /* Add a character */
+      if (32 <= key && key <= 126)
+      {
+         string[strlen(string)+1] = '\0';
+         string[strlen(string)] = key;
+         continue;
+      }
+
+      /* Remove a character */
+      if (key == BTKEY_BACKSPACE && strlen(string))
+      {
+         string[strlen(string)-1] = '\0';
+         continue;
+      }
+   }
+   return 0;
+}
+
+int string_to_vector()
+{
+   char * value;
+
+   vector_length = 0;
+
+   value = strtok(string,",");
+   while (value)
+   {
+      vector[vector_length] = atof(value);
+      vector_length++;
+      value = strtok(0,",");
+   }
 
    return 0;
 }
+

@@ -58,6 +58,7 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_refgen_load,       "bt_wam_refgen_load",       BT_RPC_FUNC_INT_OBJ_STR},
    {(void (*)())&bt_wam_refgen_clear,      "bt_wam_refgen_clear",      BT_RPC_FUNC_INT_OBJ},
    /* int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest); */
+   {(void (*)())&bt_wam_moveto,            "bt_wam_moveto",            BT_RPC_FUNC_INT_OBJ_NDOUBLE},
    {(void (*)())&bt_wam_movehome,          "bt_wam_movehome",          BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_moveisdone,        "bt_wam_moveisdone",        BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_is_teaching,       "bt_wam_is_teaching",       BT_RPC_FUNC_INT_OBJ},
