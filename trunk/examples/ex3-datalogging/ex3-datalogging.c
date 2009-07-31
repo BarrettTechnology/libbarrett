@@ -26,6 +26,7 @@ void quit()
 int main(int argc, char ** argv)
 {
    int err;
+   int n;
    struct bt_wam * wam;
    struct bt_wam_local * wam_local;
    struct bt_log * log;
@@ -100,9 +101,10 @@ int main(int argc, char ** argv)
    }
    
    /* Initialize logging fields */
+   n = bt_wam_dof(wam);
    bt_log_addfield(log, &(wam_local->wam_time), 1, BT_LOG_DOUBLE, "time");
-   bt_log_addfield(log, wam_local->jposition->data, wam_local->wambot->dof, BT_LOG_DOUBLE, "jpos");
-   bt_log_addfield(log, wam_local->jtorque->data, wam_local->wambot->dof, BT_LOG_DOUBLE, "jtorq");
+   bt_log_addfield(log, wam_local->jposition->data, n, BT_LOG_DOUBLE, "jpos");
+   bt_log_addfield(log, wam_local->jtorque->data, n, BT_LOG_DOUBLE, "jtorq");
    err = bt_log_init(log, 1000, "logdata.bin");
    if (err)
    {

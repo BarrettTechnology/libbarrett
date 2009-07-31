@@ -250,6 +250,12 @@ int bt_wam_local_loop_stop(struct bt_wam_local * wam)
 }
 
 
+int bt_wam_local_dof(struct bt_wam_local * wam)
+{
+   return wam->wambot->dof;
+}
+
+
 /* String formatting functions */
 char * bt_wam_local_str_jposition(struct bt_wam_local * wam, char * buf)
 {
@@ -407,6 +413,74 @@ int bt_wam_local_controller_toggle(struct bt_wam_local * wam)
 
    wam->con_active = con_new;
 
+   return 0;
+}
+
+int bt_wam_local_control_use_name(struct bt_wam_local * wam, char * name)
+{
+   int i;
+   struct bt_control * con_new;
+   
+   /* If we're running a refgen, nope! */
+   if (wam->refgen_active)
+      return -1;
+
+   con_new = 0;
+   for (i=0; i<wam->con_num; i++)
+      if (strcmp(name,wam->con_list[i]->type->name)==0)
+         con_new = wam->con_list[i];
+
+   if (!con_new)
+      return -1;
+
+   /* Set new controller to same state as the old one */
+   bt_control_idle(con_new);
+   if (bt_control_is_holding(wam->con_active))
+      bt_control_hold(con_new);
+
+   wam->con_active = con_new;
+   
+   return 0;
+}
+
+int bt_wam_local_control_use_space(struct bt_wam_local * wam, char * space)
+{
+   int i;
+   struct bt_control * con_new;
+   
+   /* If we're running a refgen, nope! */
+   if (wam->refgen_active)
+      return -2;
+
+   con_new = 0;
+
+   /* Set to defaults */
+   if (strcmp(space,wam->con_joint_legacy->base.type->space)==0)
+      con_new = (struct bt_control *)(wam->con_joint_legacy);
+   else if (strcmp(space,wam->con_cartesian_xyz->base.type->space)==0)
+      con_new = (struct bt_control *)(wam->con_cartesian_xyz);
+   else if (strcmp(space,wam->con_cartesian_xyz_q->base.type->space)==0)
+      con_new = (struct bt_control *)(wam->con_cartesian_xyz_q);
+
+   /* Set to others, if they exist */
+   if (!con_new)
+      for (i=0; i<wam->con_num; i++)
+         if (strcmp(space,wam->con_list[i]->type->space)==0)
+            con_new = wam->con_list[i];
+
+   if (!con_new)
+      return -3;
+
+   if (con_new == wam->con_active)
+      return 0;
+
+   /* Set new controller to same state as the old one */
+   bt_control_idle(con_new);
+   if (bt_control_is_holding(wam->con_active))
+      bt_control_hold(con_new);
+
+   wam->con_active = con_new;
+   
    return 0;
 }
 
@@ -706,6 +780,8 @@ int bt_wam_local_moveto(struct bt_wam_local * wam, int n, double * dest)
 
 int bt_wam_local_movehome(struct bt_wam_local * wam)
 {
+   if (bt_wam_local_control_use_space(wam,"joint"))
+      return -1;
    return bt_wam_local_moveto_vec(wam,wam->wambot->home);
 }
 

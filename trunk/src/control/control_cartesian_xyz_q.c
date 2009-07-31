@@ -153,7 +153,7 @@ static int is_holding(struct bt_control * base);
 static int get_position(struct bt_control * base);
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time);
 static const struct bt_control_type bt_control_cartesian_xyz_q_type = {
-   "pid-force-torque",
+   "Cartesian-xyz-q-pid",
    "Cartesian-xyz-q",
    &idle,
    &hold,

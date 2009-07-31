@@ -75,6 +75,8 @@ int bt_wam_destroy(struct bt_wam * wam);
 int bt_wam_loop_start(struct bt_wam * wam);
 int bt_wam_loop_stop(struct bt_wam * wam);
 
+int bt_wam_dof(struct bt_wam * wam);
+
 /* Kinematics functions */
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf);
 char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf);
@@ -96,6 +98,8 @@ char * bt_wam_str_con_position(struct bt_wam * wam, char * buf);
 char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf);
 char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf);
 int bt_wam_controller_toggle(struct bt_wam * wam);
+int bt_wam_control_use_name(struct bt_wam * wam, char * name);
+int bt_wam_control_use_space(struct bt_wam * wam, char * space);
 
 /* Refgen functions */
 int bt_wam_refgen_clear(struct bt_wam * wam);

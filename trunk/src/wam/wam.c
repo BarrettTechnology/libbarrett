@@ -219,6 +219,21 @@ int bt_wam_loop_stop(struct bt_wam * wam)
    }
 }
 
+int bt_wam_dof(struct bt_wam * wam)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_dof(wam->obj);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf)
 {
 #ifndef ASYNC_ONLY
@@ -457,6 +472,35 @@ int bt_wam_controller_toggle(struct bt_wam * wam)
    }
 }
 
+int bt_wam_control_use_name(struct bt_wam * wam, char * name)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_control_use_name(wam->obj,name);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, name, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
+
+int bt_wam_control_use_space(struct bt_wam * wam, char * space)
+{
+#ifndef ASYNC_ONLY
+   if (!wam->caller)
+      return bt_wam_local_control_use_space(wam->obj,space);
+   else
+#endif
+   {
+      int myint;
+      if (bt_rpc_caller_handle(wam->caller, bt_wam_rpc, __func__, wam->obj, space, &myint))
+         return -1; /* Could not forward over RPC */
+      return myint;
+   }
+}
 
 
 

@@ -32,6 +32,7 @@ static const struct bt_rpc_interface_func list[] =
    
    {(void (*)())&bt_wam_loop_start,        "bt_wam_loop_start",        BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_loop_stop,         "bt_wam_loop_stop",         BT_RPC_FUNC_INT_OBJ},
+   {(void (*)())&bt_wam_dof,               "bt_wam_dof",               BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_str_jposition,     "bt_wam_str_jposition",     BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_str_jvelocity,     "bt_wam_str_jvelocity",     BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_str_jtorque,       "bt_wam_str_jtorque",       BT_RPC_FUNC_STR_OBJ},
@@ -49,6 +50,8 @@ static const struct bt_rpc_interface_func list[] =
                                            "bt_wam_get_current_controller_space",
                                                                        BT_RPC_FUNC_STR_OBJ},
    {(void (*)())&bt_wam_controller_toggle, "bt_wam_controller_toggle", BT_RPC_FUNC_INT_OBJ},
+   {(void (*)())&bt_wam_control_use_name,  "bt_wam_control_user_name", BT_RPC_FUNC_INT_OBJ_STR},
+   {(void (*)())&bt_wam_control_use_space, "bt_wam_control_user_space",BT_RPC_FUNC_INT_OBJ_STR},
    {(void (*)())&bt_wam_idle,              "bt_wam_idle",              BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_hold,              "bt_wam_hold",              BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_is_holding,        "bt_wam_is_holding",        BT_RPC_FUNC_INT_OBJ},
@@ -57,7 +60,6 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_refgen_save,       "bt_wam_refgen_save",       BT_RPC_FUNC_INT_OBJ_STR},
    {(void (*)())&bt_wam_refgen_load,       "bt_wam_refgen_load",       BT_RPC_FUNC_INT_OBJ_STR},
    {(void (*)())&bt_wam_refgen_clear,      "bt_wam_refgen_clear",      BT_RPC_FUNC_INT_OBJ},
-   /* int bt_wam_moveto(struct bt_wam * wam, gsl_vector * dest); */
    {(void (*)())&bt_wam_moveto,            "bt_wam_moveto",            BT_RPC_FUNC_INT_OBJ_NDOUBLE},
    {(void (*)())&bt_wam_movehome,          "bt_wam_movehome",          BT_RPC_FUNC_INT_OBJ},
    {(void (*)())&bt_wam_moveisdone,        "bt_wam_moveisdone",        BT_RPC_FUNC_INT_OBJ},
