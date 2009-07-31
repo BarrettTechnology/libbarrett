@@ -100,11 +100,8 @@ enum btkey btkey_get()
 }
 
 /* User-input string */
-char string[200];
-int get_string(int line, char * format);
-double vector[10];
-int vector_length;
-int string_to_vector();
+int get_string(int line, char * format, char * buf);
+int string_to_vector(char * buf, double * vec, int * len);
 
 /* We have a global flag and signal handler
  * to allow the user to close the program
@@ -244,6 +241,10 @@ int main(int argc, char ** argv)
       /* Grab a key */
       switch (btkey_get())
       {
+         char inbuf[200];
+         double invector[10];
+         int inveclen;
+         
          case 'x':
          case 'X':
             going = 0;
@@ -264,13 +265,11 @@ int main(int argc, char ** argv)
             bt_wam_movehome(wam);
             break;
          case 'm':
-            if (get_string(line,"    Move To: < %s >"))
+            if (get_string(line,"    Move To: < %s >",inbuf))
             {
-               string_to_vector();
-               if (vector_length)
-               {
-                  bt_wam_moveto(wam,vector_length,vector);
-               }
+               string_to_vector(inbuf, invector, &inveclen);
+               if (inveclen)
+                  bt_wam_moveto(wam,inveclen,invector);
             }
             break;
          case 'Y':
@@ -283,10 +282,12 @@ int main(int argc, char ** argv)
             bt_wam_run(wam);
             break;
          case 's':
-            bt_wam_refgen_save(wam,"savefile.txt");
+            if (get_string(line,"Save To File: %s",inbuf))
+               bt_wam_refgen_save(wam,inbuf);
             break;
          case 'l':
-            bt_wam_refgen_load(wam,"savefile.txt");
+            if (get_string(line,"Load From File: %s",inbuf))
+               bt_wam_refgen_load(wam,inbuf);
             break;
          case 'c':
             bt_wam_refgen_clear(wam);
@@ -311,16 +312,16 @@ int main(int argc, char ** argv)
    return 0;
 }
 
-int get_string(int line, char * format)
+int get_string(int line, char * format, char * buf)
 {
-   string[0] = '\0';
+   buf[0] = '\0';
    while (1)
    {
       enum btkey key;
       key = btkey_get();
 
       /* Print the line as it is now */
-      mvprintw(line,0,format,string);
+      mvprintw(line,0,format,buf);
 
       if (key == BTKEY_NOKEY)
       {
@@ -330,39 +331,39 @@ int get_string(int line, char * format)
 
       /* Are we done? */
       if (key == BTKEY_ENTER)
-         return 1; /* Success */
+         return strlen(buf); /* Success */
       if (key == BTKEY_ESCAPE)
          return 0;
 
       /* Add a character */
       if (32 <= key && key <= 126)
       {
-         string[strlen(string)+1] = '\0';
-         string[strlen(string)] = key;
+         buf[strlen(buf)+1] = '\0';
+         buf[strlen(buf)] = key;
          continue;
       }
 
       /* Remove a character */
-      if (key == BTKEY_BACKSPACE && strlen(string))
+      if (key == BTKEY_BACKSPACE && strlen(buf))
       {
-         string[strlen(string)-1] = '\0';
+         buf[strlen(buf)-1] = '\0';
          continue;
       }
    }
    return 0;
 }
 
-int string_to_vector()
+int string_to_vector(char * buf, double * vec, int * len)
 {
    char * value;
 
-   vector_length = 0;
+   (*len) = 0;
 
-   value = strtok(string,",");
+   value = strtok(buf,",");
    while (value)
    {
-      vector[vector_length] = atof(value);
-      vector_length++;
+      vec[(*len)] = atof(value);
+      (*len)++;
       value = strtok(0,",");
    }
 

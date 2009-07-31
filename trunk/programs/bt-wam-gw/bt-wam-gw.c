@@ -33,8 +33,9 @@
 
 #include "rpc.h"
 #include "rpc_tcpjson.h"
-
 #include "wam_rpc.h"
+
+#include "discover.h"
 
 /* We have a global flag and signal handler
  * to allow the user to close the program
@@ -49,6 +50,7 @@ void sigint_handler()
 int main(int argc, char ** argv)
 {
    struct bt_rpc_server * rpc;
+   struct bt_discover_server * discover;
    
    /* Lock memory */
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -67,6 +69,14 @@ int main(int argc, char ** argv)
    bt_rpc_server_add_interface(rpc, bt_wam_rpc);
    bt_rpc_server_add_listener(rpc, bt_rpc_tcpjson);
 
+   discover = bt_discover_server_create(1337,"eth0");
+   if (!discover)
+   {
+      printf("could not create discover server.\n");
+      bt_rpc_server_destroy(rpc);
+      exit(-1);
+   }
+
    /* Loop until Control+C ... */
    going = 1;
    while (going)
@@ -77,6 +87,7 @@ int main(int argc, char ** argv)
       FD_ZERO(&read_set);
       
       bt_rpc_server_select_pre(rpc,&read_set);
+      bt_discover_server_select_pre(discover,&read_set);
 
       /* Select */
       err = select(FD_SETSIZE, &read_set, NULL, NULL, NULL);
@@ -86,9 +97,11 @@ int main(int argc, char ** argv)
       }
 
       bt_rpc_server_select_post(rpc,&read_set);
+      bt_discover_server_select_post(discover,&read_set);
    }
 
    bt_rpc_server_destroy(rpc);
+   bt_discover_server_destroy(discover);
    
    /* Close syslog */
    closelog();

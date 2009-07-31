@@ -412,7 +412,7 @@ programs_bt_wam_demo_bt_wam_demo_CFLAGS = -std=gnu89 -pedantic-errors -Wall -Wer
 programs_bt_wam_demo_bt_wam_demo_LDADD = src/libbarrett.la -lcurses $(libbarrett_lib_deps)
 
 programs_bt_wam_gw_bt_wam_gw_SOURCES = programs/bt-wam-gw/bt-wam-gw.c
-programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/rpc -Isrc/wam -Isrc/file
+programs_bt_wam_gw_bt_wam_gw_CPPFLAGS = -Isrc/rpc -Isrc/wam -Isrc/file -Isrc/discover
 programs_bt_wam_gw_bt_wam_gw_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
 programs_bt_wam_gw_bt_wam_gw_LDADD = src/libbarrett.la $(libbarrett_lib_deps)
 

@@ -28,15 +28,20 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
+#define _BSD_SOURCE /* For struct ifreq in net/if.h */
+
 #include <stdlib.h>
+#include <stdio.h> /* For sprintf() */
 #include <string.h>
 
-#include <sys/types.h> /* For select() */
 #include <sys/select.h> /* for fd_set */
 #include <unistd.h> /* For close() */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h> /* For struct ifreq */
+#include <sys/ioctl.h> /* For ioctl() stuff */
+
 
 #include <syslog.h>
 
@@ -45,6 +50,9 @@
 /* Note - see SVN/internal/tools/wamdiscover/client for example
  *        to make this Windows-compatible */
 
+/* Return Data Format is 17 + 1 + (7 to 15) = (25 to 33) bytes
+ * "XX:XX:XX:XX:XX:XX|xxx.xxx.xxx.xxx" 
+ */
 
 struct bt_discover_client * bt_discover_client_create(void)
 {
@@ -164,3 +172,122 @@ int bt_discover_client_discover(struct bt_discover_client * c)
    return 0;
    
 }
+
+
+struct bt_discover_server * bt_discover_server_create(int port, char * iface)
+{
+   int err;
+   struct bt_discover_server * s;
+
+   struct sockaddr_in bind_addr;
+   struct ifreq ifr_mac;
+   struct ifreq ifr_ip;
+
+   s = (struct bt_discover_server *) malloc(sizeof(struct bt_discover_server));
+   if (!s)
+      return 0;
+
+   s->sock = -1;
+
+   /* Create the UDP socket */
+   s->sock = socket(PF_INET, SOCK_DGRAM, 0);
+   if (s->sock == -1)
+   {
+      syslog(LOG_ERR,"%s: Couldn't create UDP socket.",__func__);
+      bt_discover_server_destroy(s);
+      return 0;
+   }
+
+   /* Bind to address */
+   bind_addr.sin_family = AF_INET;
+   bind_addr.sin_port = htons(port);
+   bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+   err = bind(s->sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
+   if (err == -1)
+   {
+      syslog(LOG_ERR,"%s: Couldn't bind UDP to the port.",__func__);
+      bt_discover_server_destroy(s);
+      return 0;
+   }
+
+   /* Get some information about the interface */
+   strcpy(ifr_mac.ifr_name,iface);
+   strcpy(ifr_ip.ifr_name,iface);
+   err = ioctl(s->sock,SIOCGIFHWADDR,&ifr_mac)
+      || ioctl(s->sock,SIOCGIFADDR,&ifr_ip);
+   if (err)
+   {
+      syslog(LOG_ERR,"%s: Couldn't get the interface's MAC/IP address.",__func__);
+      bt_discover_server_destroy(s);
+      return 0;
+   }   
+   sprintf(s->data,"%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X|%d.%d.%d.%d",
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[0],
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[1],
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[2],
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[3],
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[4],
+      (unsigned char)ifr_mac.ifr_hwaddr.sa_data[5],
+      (unsigned char)ifr_ip.ifr_ifru.ifru_addr.sa_data[2],
+      (unsigned char)ifr_ip.ifr_ifru.ifru_addr.sa_data[3],
+      (unsigned char)ifr_ip.ifr_ifru.ifru_addr.sa_data[4],
+      (unsigned char)ifr_ip.ifr_ifru.ifru_addr.sa_data[5]);
+   syslog(LOG_ERR,"MAC|IP identified: |%s|\n",s->data);
+
+   return s;
+}
+
+int bt_discover_server_destroy(struct bt_discover_server * s)
+{
+   if (s->sock != -1)
+      close(s->sock);
+   free(s);
+   return 0;
+}
+
+int bt_discover_server_select_pre(struct bt_discover_server * s, fd_set * read_set)
+{
+   FD_SET(s->sock,read_set);
+   return 0;
+}
+
+int bt_discover_server_select_post(struct bt_discover_server * s, fd_set * read_set)
+{
+   struct sockaddr_in their_addr;
+   size_t addr_len;
+   int numbytes;
+   
+   if (! FD_ISSET(s->sock,read_set) )
+      return 0;
+
+   /* Await an incoming packet */
+   addr_len = sizeof(their_addr);
+   numbytes = recvfrom(s->sock, 0, 0, 0,
+                       (struct sockaddr *)&their_addr, &addr_len);
+   if (numbytes == -1)
+   {
+      syslog(LOG_ERR,"%s: Error receiving packet.",__func__);
+      return -1;
+   }
+
+   /* Send the data ... */
+   numbytes = sendto(s->sock, s->data, strlen(s->data), 0,
+                     (struct sockaddr *)&their_addr, sizeof(their_addr));
+   if (numbytes == -1)
+   {
+      syslog(LOG_ERR,"%s: Error sending packet.",__func__);
+      return -1;
+   }
+   
+   syslog(LOG_ERR,"Successfully responded to a UDP Broadcast.");
+   return 0;
+}
+
+
+
+
+
+
+
+
+

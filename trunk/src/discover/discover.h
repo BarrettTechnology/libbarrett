@@ -45,6 +45,9 @@ extern "C" {
 #endif
 
 
+#include <sys/select.h> /* for fd_set */
+
+
 /** This is a client entry, including the MAC address and the IP address in
  *  string format.
  */
@@ -91,6 +94,18 @@ int bt_discover_client_destroy(struct bt_discover_client * client);
  * \retval -1 Could not send broadcast packet
  */
 int bt_discover_client_discover(struct bt_discover_client * client);
+
+
+struct bt_discover_server
+{
+   int sock;
+   char data[34];
+};
+
+struct bt_discover_server * bt_discover_server_create(int port, char * iface);
+int bt_discover_server_destroy(struct bt_discover_server * server);
+int bt_discover_server_select_pre(struct bt_discover_server * s, fd_set * read_set);
+int bt_discover_server_select_post(struct bt_discover_server * s, fd_set * read_set);
 
 
 #ifdef __cplusplus
