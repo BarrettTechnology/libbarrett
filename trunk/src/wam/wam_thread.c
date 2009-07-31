@@ -117,7 +117,8 @@ void bt_wam_thread(struct bt_os_thread * thread)
       
       /* Get start-of-task time, increment counter */
       time = 1e-9 * bt_os_rt_get_time();
-      if (!wam->count) wam->start_time = time;
+      if (!wam->count) wam->wam_start_time = time;
+      wam->wam_time = time - wam->wam_start_time;
       wam->count++;
       
       /* Grab the current joint positions */
@@ -145,7 +146,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
       while (wam->refgen_active && !wam->teaching)
       {
          err = bt_refgen_eval( wam->refgen_active,
-                               time - wam->start_time,
+                               time - wam->refgen_start_time,
                                wam->con_active->reference );
 
          if (!err) break;
@@ -155,7 +156,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
             if ( (wam->refgen_active == wam->refgen_tempmove)
                 && (wam->refgen_loaded) )
             {
-               wam->start_time = time;
+               wam->refgen_start_time = time;
                bt_refgen_start(wam->refgen_loaded);
                wam->refgen_active = wam->refgen_loaded;
             }
@@ -175,7 +176,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
        * (eventually we want to adjust the trigger rate?) */
       if (wam->teaching && wam->refgen_active && (((wam->count) & 0x4F) == 0) )
          bt_refgen_teach_trigger(wam->refgen_active,
-                                 time - wam->start_time,
+                                 time - wam->refgen_start_time,
                                  wam->con_active->position);
       bt_os_timestat_trigger(wam->ts,TS_TEACH);
  
@@ -199,10 +200,10 @@ void bt_wam_thread(struct bt_os_thread * thread)
 #endif
             
       /* Log data (including timing statistics) */
-      if (wam->log)
-         bt_log_trigger( wam->log );
+      if (wam->user_log)
+         bt_log_trigger(wam->user_log);
       if (wam->ts_log)
-         bt_log_trigger( wam->ts_log );
+         bt_log_trigger(wam->ts_log);
       bt_os_timestat_trigger(wam->ts,TS_LOG);
       
       /* Calculate timing statistics */
@@ -325,27 +326,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
 
 #if 0
-   /* Create a datalogger
-    * For now, we're just logging pos and accelerations */
-   wam->log = bt_log_create( 3 );
-   if (!wam->log)
-   {
-      syslog(LOG_ERR,"%s: Could not create logger.",__func__);
-      rt_wam_destroy(wam);
-      return 1;
-   }
-   
-   /* Initialize logging fields */
-   bt_log_addfield( wam->log, wam->wambot->jposition->data, wam->wambot->dof, BT_LOG_DOUBLE, "jpos");
-   bt_log_addfield( wam->log, wam->wambot->jtorque->data, wam->wambot->dof, BT_LOG_DOUBLE, "jtorq");
-   bt_log_addfield( wam->log, wam->wambot->jacceleration->data, wam->wambot->dof, BT_LOG_DOUBLE, "jacc");
-   err = bt_log_init( wam->log, 1000, "datafile.dat");
-   if (err)
-   {
-      syslog(LOG_ERR,"%s: Could not initialize logging.",__func__);
-      rt_wam_destroy(wam);
-      return 1;
-   }
+
    
    /* Create the ts datalogger */
    wam->ts_log = bt_log_create( TSNUM+1 );
@@ -374,8 +355,6 @@ static void rt_wam_destroy(struct bt_wam_local * wam)
 {
    if (wam->ts_log)
       bt_log_destroy(wam->ts_log);
-   if (wam->log)
-      bt_log_destroy(wam->log);
    /* Print timer means and variances */
    if (wam->ts)
    {
@@ -426,10 +405,16 @@ void bt_wam_thread_nonrt(struct bt_os_thread * thread)
    
    while (!bt_os_thread_isdone(thread))
    {
-      if (wam->log)
+      if (wam->user_log)
       {
          /*syslog(LOG_ERR,"Flushing Log Files ...");*/
-         bt_log_flush( wam->log );
+         bt_log_flush(wam->user_log);
+      }
+
+      if (wam->ts_log)
+      {
+         /*syslog(LOG_ERR,"Flushing Log Files ...");*/
+         bt_log_flush(wam->ts_log);
       }
       
       if (wam->refgen_active && wam->teaching)

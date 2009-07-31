@@ -1,6 +1,7 @@
 
 # List of all examples to make
-EXAMPLES = cylinder draw draw2d draw2dq ex1-jointposition ex2-gcomp \
+EXAMPLES = cylinder draw draw2d draw2dq \
+           ex1-jointposition ex2-gcomp ex3-datalogging \
            example-cpp mastermaster mastermaster_loc trimesh
 
 

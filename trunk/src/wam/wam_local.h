@@ -58,24 +58,25 @@ struct bt_wam_local
 
    /* The WAM control stuff is in a separate realtime thread;
     * this is for synchronization. */
-   struct bt_os_thread * rt_thread;
+   struct bt_os_thread * thread;
    
    /* We also have a non-realtime thread,
     * which just cleans up log files and the like */
-   struct bt_os_thread * nonrt_thread;
-   
-   struct bt_os_timestat * ts; /* For timing things */
+   struct bt_os_thread * thread_nonrt;
    
    int gcomp;
    int count;
+   double wam_start_time;
+   double wam_time;
 
    /* realtime WAM stuff */
    struct bt_wambot * wambot; /* wambot has dof */
    struct bt_kinematics * kin;
    struct bt_dynamics * dyn;
    struct bt_calgrav * grav;
-   struct bt_log * log; /* woo datalogger! */
+   struct bt_os_timestat * ts; /* For timing things */
    struct bt_log * ts_log; /* logger for timing statistics */
+   struct bt_log * user_log; /* woo datalogger! */
 
    /* Some pointers for easy access */
    gsl_vector * jposition; /* From wambot */
@@ -102,8 +103,7 @@ struct bt_wam_local
    double vel, acc;
    
    /* This is used for both moves and teaches */
-   double start_time;
-   double elapsed_time;
+   double refgen_start_time;
 
    const struct bt_refgen_type ** refgen_types;
    int refgen_types_num;

@@ -482,6 +482,8 @@ nobase_dist_pkgdata_DATA = \
    examples/ex1-jointposition/ex1-jointposition.c \
    examples/ex2-gcomp/Makefile \
    examples/ex2-gcomp/ex2-gcomp.c \
+   examples/ex3-datalogging/Makefile \
+   examples/ex3-datalogging/ex3-datalogging.c \
    examples/mastermaster/Makefile \
    examples/mastermaster/mastermaster.c \
    examples/mastermaster/refgen_mastermaster.c \

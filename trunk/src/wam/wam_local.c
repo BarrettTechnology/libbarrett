@@ -139,8 +139,8 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->teaching = 0;
    wam->count = 0;
    wam->ts = 0;
-   wam->rt_thread = 0;
-   wam->nonrt_thread = 0;
+   wam->thread = 0;
+   wam->thread_nonrt = 0;
    
    /* Set anything in options */
    if (opts & BT_WAM_OPT_NO_LOOP_START)
@@ -151,7 +151,7 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->kin = 0;
    wam->dyn = 0;
    wam->grav = 0;
-   wam->log = 0;
+   wam->user_log = 0;
    wam->ts_log = 0;
    wam->con_joint = 0;
    wam->con_joint_legacy = 0;
@@ -159,8 +159,8 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->con_list = 0;
 
    /* Spin off the non-realtime log-saving thread */
-   wam->nonrt_thread = bt_os_thread_create(BT_OS_NONRT, "NONRTT", 10, bt_wam_thread_nonrt, (void *)wam);
-   if (!wam->nonrt_thread)
+   wam->thread_nonrt = bt_os_thread_create(BT_OS_NONRT, "NONRTT", 10, bt_wam_thread_nonrt, (void *)wam);
+   if (!wam->thread_nonrt)
    {
       syslog(LOG_ERR,"%s: Could not create non-realtime thread.",__func__);
       bt_wam_destroy((struct bt_wam *)wam);
@@ -177,8 +177,8 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    }
    /* TODO: FIX THIS! */
    /*wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);*/
-   wam->rt_thread = bt_os_thread_create(BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);
-   if (!wam->rt_thread)
+   wam->thread = bt_os_thread_create(BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);
+   if (!wam->thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime thread.",__func__);
       bt_wam_thread_helper_destroy(helper);
@@ -209,16 +209,16 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
    char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
    
    /* Tell the non-realtime thread to exit */
-   if (wam->nonrt_thread)
+   if (wam->thread_nonrt)
    {
-      bt_os_thread_stop(wam->nonrt_thread);
-      bt_os_thread_destroy(wam->nonrt_thread);
+      bt_os_thread_stop(wam->thread_nonrt);
+      bt_os_thread_destroy(wam->thread_nonrt);
    }
    
-   if (wam->rt_thread)
+   if (wam->thread)
    {
-      bt_os_thread_stop(wam->rt_thread);
-      bt_os_thread_destroy(wam->rt_thread);
+      bt_os_thread_stop(wam->thread);
+      bt_os_thread_destroy(wam->thread);
    }
    
 #if 0
@@ -733,7 +733,7 @@ int bt_wam_local_moveto_vec(struct bt_wam_local * wam, gsl_vector * dest)
    if (!wam->refgen_loaded) { return -1;}
 
    /* Save this refgen as the current one, and start it! */
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->refgen_start_time = 1e-9 * bt_os_rt_get_time();
    bt_refgen_start(wam->refgen_loaded);
    wam->refgen_active = wam->refgen_loaded;
    
@@ -779,7 +779,7 @@ int bt_wam_local_teach_start(struct bt_wam_local * wam)
 
    /* Start teaching */
    bt_refgen_teach_start(wam->refgen_loaded);
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->refgen_start_time = 1e-9 * bt_os_rt_get_time();
    wam->teaching = 1;
    wam->refgen_active = wam->refgen_loaded;
 
@@ -844,7 +844,7 @@ int bt_wam_local_run(struct bt_wam_local * wam)
    /* Note, we should free more stuff here! */
    
    /* Save this refgen as the current one, and start it! */
-   wam->start_time = 1e-9 * bt_os_rt_get_time();
+   wam->refgen_start_time = 1e-9 * bt_os_rt_get_time();
    bt_refgen_start( wam->refgen_tempmove );
    wam->refgen_active = wam->refgen_tempmove;
    
