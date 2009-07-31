@@ -40,5 +40,3 @@ struct refgen_cylinder * refgen_cylinder_create(gsl_vector * cpos);
 
 int refgen_cylinder_set_top(struct refgen_cylinder * r);
 int refgen_cylinder_set_bottom(struct refgen_cylinder * r);
-
-int refgen_cylinder_init(struct refgen_cylinder * r);

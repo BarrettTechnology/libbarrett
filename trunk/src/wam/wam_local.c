@@ -42,10 +42,13 @@
 
 
 /* Local function prototype */
-struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t * wamconfig, enum bt_wam_opt opts);
+int bt_wam_local_create_cfg(struct bt_wam_local ** wamptr, char * wamname,
+                            config_setting_t * wamconfig,
+                            enum bt_wam_opt opts);
 
 /* Here we take care of the configuration file and lock files */
-struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts)
+int bt_wam_local_create(struct bt_wam_local ** wamptr, char * wamname,
+                        enum bt_wam_opt opts)
 {
    /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
    char filename[WAMCONFIGDIRLEN+WAMNAMELEN+1];
@@ -56,6 +59,7 @@ struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts)
    struct bt_wam_local * wam;
    
    syslog(LOG_ERR,"%s: Opening local wam %s.",__func__,wamname);
+   (*wamptr) = 0;
    
    strcpy(filename,WAMCONFIGDIR);
    strcat(filename,wamname);
@@ -70,7 +74,7 @@ struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts)
           config_error_text(&cfg), config_error_line(&cfg));
       config_destroy(&cfg);
       /* Failure */
-      return 0;
+      return -1;
    }
    
    /* Check lock file */
@@ -83,7 +87,7 @@ struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts)
    {
       syslog(LOG_ERR,"%s: Lock file could not be created. Already in use?",__func__);
       config_destroy(&cfg);
-      return 0;
+      return -1;
    }
    
    /* Write the PID to the file, close the file */
@@ -91,21 +95,24 @@ struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts)
    write(err,lockfiletxt,11);
    close(err);
 
-   wam = bt_wam_local_create_cfg(wamname, config_lookup(&cfg,"wam"), opts);
+   bt_wam_local_create_cfg(&wam, wamname, config_lookup(&cfg,"wam"), opts);
    if (!wam)
    {
       /* Check if failed, unlink lock file */
       config_destroy(&cfg);
       unlink(lockfilename);
-      return 0;
+      return -1;
    }
    
    config_destroy(&cfg);
-   return wam;
+   (*wamptr) = wam;
+   return 0;
 }
 
 /* Here are the non-realtime create/destroy functions */
-struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t * wamconfig, enum bt_wam_opt opts)
+int bt_wam_local_create_cfg(struct bt_wam_local ** wamptr, char * wamname,
+                            config_setting_t * wamconfig,
+                            enum bt_wam_opt opts)
 {
    struct bt_wam_local * wam;
    struct bt_wam_thread_helper * helper;
@@ -115,11 +122,12 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    bt_os_rt_allow_nonroot();
    
    /* Make a new wam structure */
+   (*wamptr) = 0;
    wam = (struct bt_wam_local *) malloc( sizeof(struct bt_wam_local) );
    if (!wam)
    {
       syslog(LOG_ERR,"%s: No memory for a new WAM.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize the wam */
@@ -159,31 +167,31 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
    wam->con_list = 0;
 
    /* Spin off the non-realtime log-saving thread */
-   wam->thread_nonrt = bt_os_thread_create(BT_OS_NONRT, "NONRTT", 10, bt_wam_thread_nonrt, (void *)wam);
+   bt_os_thread_create(&wam->thread_nonrt, BT_OS_NONRT, "NONRTT", 10, bt_wam_thread_nonrt, (void *)wam);
    if (!wam->thread_nonrt)
    {
       syslog(LOG_ERR,"%s: Could not create non-realtime thread.",__func__);
       bt_wam_destroy((struct bt_wam *)wam);
-      return 0;
+      return -1;
    }
    
    /* Spin off the realtime thread to set everything up */
-   helper = bt_wam_thread_helper_create(wam,wamconfig);
+   bt_wam_thread_helper_create(&helper,wam,wamconfig);
    if (!helper)
    {
       syslog(LOG_ERR,"%s: Could not create setup helper.",__func__);
       bt_wam_destroy((struct bt_wam *)wam);
-      return 0;
+      return -1;
    }
    /* TODO: FIX THIS! */
    /*wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);*/
-   wam->thread = bt_os_thread_create(BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);
+   bt_os_thread_create(&wam->thread, BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);
    if (!wam->thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime thread.",__func__);
       bt_wam_thread_helper_destroy(helper);
       bt_wam_destroy((struct bt_wam *)wam);
-      return 0;
+      return -1;
    }
    
    /* Wait until the thread is done starting */
@@ -196,12 +204,13 @@ struct bt_wam_local * bt_wam_local_create_cfg(char * wamname, config_setting_t *
       syslog(LOG_ERR,"%s: WAM realtime setup failed.",__func__);
       bt_wam_thread_helper_destroy(helper);
       bt_wam_destroy((struct bt_wam *)wam);
-      return 0;
+      return -1;
    }
    
    /* Success! */
    bt_wam_thread_helper_destroy(helper);
-   return wam;
+   (*wamptr) = wam;
+   return 0;
 }
 
 int bt_wam_local_destroy(struct bt_wam_local * wam)
@@ -682,7 +691,7 @@ int bt_wam_local_refgen_load(struct bt_wam_local * wam, char * filename)
    }
 
    /* Create the new refgen */
-   new_refgen = bt_refgen_create(refgen_type_match,con_match->n);
+   bt_refgen_create(&new_refgen,refgen_type_match,con_match->n);
    if (!new_refgen)
    {
       config_destroy(&cfg);
@@ -799,13 +808,8 @@ int bt_wam_local_moveto_vec(struct bt_wam_local * wam, gsl_vector * dest)
    bt_control_hold(wam->con_active); 
    
    /* Make the refgen itself */
-#if 0
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity, dest, wam->vel, wam->acc);
-#endif
-   wam->refgen_loaded = bt_refgen_move_create(
-                                             wam->con_active->reference,
-                                             0, dest, wam->vel, wam->acc);
+   bt_refgen_move_create(&wam->refgen_loaded,wam->con_active->reference,
+                         0, dest, wam->vel, wam->acc);
    if (!wam->refgen_loaded) { return -1;}
 
    /* Save this refgen as the current one, and start it! */
@@ -844,7 +848,7 @@ int bt_wam_local_teach_start(struct bt_wam_local * wam)
     * bt_refgen_teachplay */
    if (!wam->refgen_loaded)
    {
-      wam->refgen_loaded = bt_refgen_create(bt_refgen_teachplay,wam->con_active->n);
+      bt_refgen_create(&wam->refgen_loaded,bt_refgen_teachplay,wam->con_active->n);
       wam->refgen_loaded_idestroy = 1;
       if (!wam->refgen_loaded)
          return -1;
@@ -907,14 +911,8 @@ int bt_wam_local_run(struct bt_wam_local * wam)
    bt_control_hold(wam->con_active);
    
    /* Create a tempmove refgen to get us there */
-#if 0
-   wam->refgen_list->refgen = (struct bt_refgen *)
-      bt_refgen_move_create(&(wam->elapsed_time), wam->jposition, wam->jvelocity,
-                                   teachplay_start, wam->vel, wam->acc);
-#endif
-   wam->refgen_tempmove = (struct bt_refgen *)
-      bt_refgen_move_create(wam->con_active->reference, 0,
-                            refgen_start, wam->vel, wam->acc);
+   bt_refgen_move_create(&wam->refgen_tempmove, wam->con_active->reference,
+                         0, refgen_start, wam->vel, wam->acc);
    
    if (!wam->refgen_tempmove) { return -1;}
    /* Note, we should free more stuff here! */

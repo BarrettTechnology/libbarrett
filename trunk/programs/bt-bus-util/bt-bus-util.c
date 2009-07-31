@@ -107,7 +107,7 @@ void bus_thread_func(struct bt_os_thread * thd)
    config_init(&cfg);
    set = config_setting_add(config_root_setting(&cfg),"port",CONFIG_TYPE_INT);
    config_setting_set_int(set,0);
-   bus = bt_bus_create( config_root_setting(&cfg), bt_bus_UPDATE_POS_ONLY );
+   bt_bus_create(&bus, config_root_setting(&cfg), bt_bus_UPDATE_POS_ONLY);
    config_destroy(&cfg);
    if (!bus)
    {
@@ -163,7 +163,7 @@ int main(int argc, char ** argv)
 
    /* Do bus setup */
    setup_done = 0;
-   bus_thread = bt_os_thread_create(BT_OS_RT, "BUS", 90, &bus_thread_func, 0);
+   bt_os_thread_create(&bus_thread, BT_OS_RT, "BUS", 90, &bus_thread_func, 0);
    while (!setup_done) bt_os_usleep(1000);
    if (setup_err)
    {

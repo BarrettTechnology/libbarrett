@@ -67,10 +67,11 @@ struct bt_bus_can;
  * The bt_bus_can_create() function opens the CAN port given as its argument.
  * The port argument is zero-indexed.
  *
+ * \param[out] devptr The bt_bus_can object on success, or 0 on failure
  * \param[in] port The CAN port to open (0, 1, etc.)
- * \return The bt_bus_can object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_bus_can * bt_bus_can_create(int port);
+int bt_bus_can_create(struct bt_bus_can ** devptr, int port);
 
 
 /** Destroy a bt_bus_can object.

@@ -18,6 +18,6 @@ struct bt_refgen_move
 };
 
 /* refgen-specific creation function */
-struct bt_refgen * bt_refgen_move_create(
+int bt_refgen_move_create(struct bt_refgen ** refgenptr,
    gsl_vector * cur_pos, gsl_vector * cur_vel, gsl_vector * dest,
    double vel, double acc);

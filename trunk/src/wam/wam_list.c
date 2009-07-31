@@ -8,18 +8,19 @@
 
 #include "wam_list.h"
 
-struct bt_wam_list_local * bt_wam_list_local_create()
+int bt_wam_list_local_create(struct bt_wam_list_local ** listptr)
 {
    struct bt_wam_list_local * list;
    DIR * etcwam;
    struct dirent * file;
    
    /* Create */
+   (*listptr) = 0;
    list = (struct bt_wam_list_local *) malloc(sizeof(struct bt_wam_list_local));
    if (!list)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -31,7 +32,8 @@ struct bt_wam_list_local * bt_wam_list_local_create()
    if (!etcwam)
    {
       syslog(LOG_ERR,"%s: Directory %s not found.",__func__,WAMCONFIGDIR);
-      return list;
+      (*listptr) = list;
+      return 0;
    }
    
    /* Note: this is not thread-safe. */
@@ -115,7 +117,8 @@ struct bt_wam_list_local * bt_wam_list_local_create()
    }
    
    closedir(etcwam);
-   return list;
+   (*listptr) = list;
+   return 0;
 }
 
 int bt_wam_list_local_destroy(struct bt_wam_list_local * list)

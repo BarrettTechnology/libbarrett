@@ -95,10 +95,12 @@ struct bt_os_mutex
  *
  * Simply supply the typf of mutex (either BT_OS_RT or BT_OS_NONRT).
  *
+ * \param[out] The bt_os_mutex object on success, 0 on failure
  * \param[in] type Type of the mutex
- * \returns The bt_os_mutex object on success, 0 on failure.
+ * \retval 0 Success
  */
-struct bt_os_mutex * bt_os_mutex_create(enum bt_os_rt_type type);
+int bt_os_mutex_create(struct bt_os_mutex ** mutexptr,
+                       enum bt_os_rt_type type);
 
 /** Destroy a bt_os_mutex.
  *
@@ -166,14 +168,17 @@ struct bt_os_thread
  * funcptr is called in the new thread, and the data object is sated in the
  * bt_os_thread object for reference by called function.
  *
+ * \param[out] The bt_os_thread object on success, or 0 on failure
  * \param[in] type Type of the thread
  * \param[in] name The name of the thread
  * \param[in] priority The priority of the thread [1-99] (inclusive),
  *            with 99 highest priority
+ * \retval 0 Success
  */
-struct bt_os_thread * bt_os_thread_create(
-   enum bt_os_rt_type type, const char * name, int priority,
-   void (*funcptr)(struct bt_os_thread *), void * data);
+int bt_os_thread_create(struct bt_os_thread ** threadptr,
+                        enum bt_os_rt_type type, const char * name,
+                        int priority, void (*funcptr)(struct bt_os_thread *),
+                        void * data);
 
 /** Destroy a bt_os_thread.
  *
@@ -273,10 +278,11 @@ struct bt_os_timestat
 
 /** Create a bt_os_timestat object.
  *
+ * \param[out] The bt_os_timestat object on success, or 0 on failure
  * \param[in] numchans The number of sequential channels to measure
- * \returns The bt_os_timestat object on success, 0 on failure
+ * \retval 0 Success 
  */
-struct bt_os_timestat * bt_os_timestat_create(int numchans);
+int bt_os_timestat_create(struct bt_os_timestat ** tsptr, int numchans);
 
 /** Destroy a bt_os_timestat object.
  *

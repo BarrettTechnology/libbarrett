@@ -91,12 +91,13 @@ struct bt_spline
  * This function creates a new bt_spline object, with the given vector as its
  * starting point.
  *
+ * \param[out] The bt_spline object on success, or 0 on failure
  * \param[in] start Starting point
  * \param[in] mode Spline mode; either arclen or external.
- * \return The bt_spline object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_spline * bt_spline_create(gsl_vector * start,
-                                    enum bt_spline_mode mode);
+int bt_spline_create(struct bt_spline ** splineptr, gsl_vector * start,
+                     enum bt_spline_mode mode);
 
 
 /** Add a point to a bt_spline.

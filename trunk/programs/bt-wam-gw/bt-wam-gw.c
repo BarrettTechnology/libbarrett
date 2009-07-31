@@ -58,7 +58,7 @@ int main(int argc, char ** argv)
    /* Initialize syslog */
    openlog("wamgwd", LOG_CONS | LOG_NDELAY, LOG_USER);
    
-   rpc = bt_rpc_server_create();
+   bt_rpc_server_create(&rpc);
    if (!rpc)
    {
       printf("could not create rpc server.\n");
@@ -69,7 +69,7 @@ int main(int argc, char ** argv)
    bt_rpc_server_add_interface(rpc, bt_wam_rpc);
    bt_rpc_server_add_listener(rpc, bt_rpc_tcpjson);
 
-   discover = bt_discover_server_create(1337,"eth0");
+   bt_discover_server_create(&discover,1337,"eth0");
    if (!discover)
    {
       printf("could not create discover server.\n");

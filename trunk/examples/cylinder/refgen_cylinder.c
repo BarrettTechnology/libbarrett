@@ -22,21 +22,32 @@ static int compute_unit(struct refgen_cylinder * r);
 #define BINARY_DEPTH (8)
 
 static int destroy(struct bt_refgen * base);
+static int teach_init(struct bt_refgen * base);
+static int teach_flush(struct bt_refgen * base);
+static int teach_end(struct bt_refgen * base);
+static int teach_start(struct bt_refgen * base);
+static int teach_trigger(struct bt_refgen * base, double time,
+                         gsl_vector * cur_position);
 static int get_start(struct bt_refgen * base, gsl_vector ** start);
 static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
-static int eval(struct bt_refgen * base, gsl_vector * ref);
-static int trigger(struct bt_refgen * base);
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref);
 static const struct bt_refgen_type refgen_cylinder_type = {
    "cylinder",
+   0, /* create */
    &destroy,
+   &teach_init,
+   &teach_flush,
+   &teach_end,
+   &teach_start,
+   &teach_trigger,
+   0, 0, /* load/save functions */
    &get_start,
    &get_total_time,
    &get_num_points,
    &start,
    &eval,
-   &trigger
 };
 const struct bt_refgen_type * refgen_cylinder = &refgen_cylinder_type;
 
@@ -158,10 +169,38 @@ static int compute_unit(struct refgen_cylinder * r)
    return 0;
 }
 
-int refgen_cylinder_init(struct refgen_cylinder * r)
+/* Generic refgen functions */
+static int destroy(struct bt_refgen * base)
+{
+   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
+   if (r->top) gsl_vector_free(r->top);
+   if (r->bottom) gsl_vector_free(r->bottom);
+   gsl_vector_free(r->e1);
+   gsl_vector_free(r->e2);
+   if (r->hs) free(r->hs);
+   if (r->rs) free(r->rs);
+   gsl_vector_free(r->temp);
+   if (r->interp) gsl_interp_free(r->interp);
+   if (r->acc) gsl_interp_accel_free(r->acc);
+   gsl_vector_free(r->start);
+   free(r);
+   return 0;
+}
+
+
+static int teach_init(struct bt_refgen * base)
+{
+   return 0;
+}
+static int teach_flush(struct bt_refgen * base)
+{
+   return 0;
+}
+static int teach_end(struct bt_refgen * base)
 {
    int oi; /* old index */
    int ni; /* old index */
+   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
 
    if (r->interp)
       return -1;
@@ -194,25 +233,49 @@ int refgen_cylinder_init(struct refgen_cylinder * r)
    
    return 0;
 }
-
-
-/* Generic refgen functions */
-static int destroy(struct bt_refgen * base)
+static int teach_start(struct bt_refgen * base)
 {
-   struct refgen_cylinder * r = (struct refgen_cylinder *) base;
-   if (r->top) gsl_vector_free(r->top);
-   if (r->bottom) gsl_vector_free(r->bottom);
-   gsl_vector_free(r->e1);
-   gsl_vector_free(r->e2);
-   if (r->hs) free(r->hs);
-   if (r->rs) free(r->rs);
-   gsl_vector_free(r->temp);
-   if (r->interp) gsl_interp_free(r->interp);
-   if (r->acc) gsl_interp_accel_free(r->acc);
-   gsl_vector_free(r->start);
-   free(r);
    return 0;
 }
+static int teach_trigger(struct bt_refgen * base, double time,
+                         gsl_vector * cur_position)
+{
+   struct refgen_cylinder * r;
+   double h;
+   double bb; /* length of b squared */
+   double rad;
+   int i;
+   
+   r = (struct refgen_cylinder *) base;
+   
+   if (r->interp)
+      return -1;
+   
+   /* Get the current h and r */
+   gsl_blas_dcopy( r->cpos, r->temp );
+   gsl_blas_daxpy( -1.0, r->bottom, r->temp );
+   gsl_blas_ddot( r->temp, r->unit, &h);
+   gsl_blas_ddot( r->temp, r->temp, &bb );
+   rad = sqrt( bb - h*h );
+   
+   /* Ignore if h is out of range */
+   if (h < 0 || r->h_max < h)
+      return 0;
+   
+   /* Lookup the index for h */
+   i = (int) floor(h / RES);
+   if ( !r->rs_set[i] )
+   {
+      r->rs[i] = rad;
+      r->rs_set[i] = 1;
+   }
+   else if ( r->rs[i] > rad )
+      r->rs[i] = rad;
+   
+   return 0;
+}
+
+
 static int get_start(struct bt_refgen * base, gsl_vector ** start)
 {
    struct refgen_cylinder * r = (struct refgen_cylinder *) base;
@@ -236,7 +299,7 @@ static int start(struct bt_refgen * base)
    r->theta = 0.0;
    return 0;
 }
-static int eval(struct bt_refgen * base, gsl_vector * ref)
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref)
 {
    int i;
    double h, theta;
@@ -296,43 +359,6 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
    
    r->h = h;
    r->theta = theta;
-   
-   return 0;
-}
-
-static int trigger(struct bt_refgen * base)
-{
-   struct refgen_cylinder * r;
-   double h;
-   double bb; /* length of b squared */
-   double rad;
-   int i;
-   
-   r = (struct refgen_cylinder *) base;
-   
-   if (r->interp)
-      return -1;
-   
-   /* Get the current h and r */
-   gsl_blas_dcopy( r->cpos, r->temp );
-   gsl_blas_daxpy( -1.0, r->bottom, r->temp );
-   gsl_blas_ddot( r->temp, r->unit, &h);
-   gsl_blas_ddot( r->temp, r->temp, &bb );
-   rad = sqrt( bb - h*h );
-   
-   /* Ignore if h is out of range */
-   if (h < 0 || r->h_max < h)
-      return 0;
-   
-   /* Lookup the index for h */
-   i = (int) floor(h / RES);
-   if ( !r->rs_set[i] )
-   {
-      r->rs[i] = rad;
-      r->rs_set[i] = 1;
-   }
-   else if ( r->rs[i] > rad )
-      r->rs[i] = rad;
    
    return 0;
 }

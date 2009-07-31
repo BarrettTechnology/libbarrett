@@ -164,17 +164,21 @@ static const struct bt_control_type bt_control_cartesian_xyz_q_type = {
 const struct bt_control_type * bt_control_cartesian_xyz_q = &bt_control_cartesian_xyz_q_type;
 
 /* Controller-specific functions */
-struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_setting_t * config,
-   struct bt_kinematics * kin, struct bt_dynamics * dyn)
+int bt_control_cartesian_xyz_q_create(
+                          struct bt_control_cartesian_xyz_q ** conptr,
+                          config_setting_t * config,
+                          struct bt_kinematics * kin,
+                          struct bt_dynamics * dyn)
 {
    struct bt_control_cartesian_xyz_q * c;
    
    /* Create */
+   (*conptr) = 0;
    c = (struct bt_control_cartesian_xyz_q *) malloc( sizeof(struct bt_control_cartesian_xyz_q) );
    if (!c)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -205,7 +209,7 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_control_cartesian_xyz_q_destroy(c);
-         return 0;
+         return -1;
       }
       
       view = gsl_vector_subvector( c->base.position, 0, 3);
@@ -255,7 +259,7 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
       {
          syslog(LOG_ERR,"%s: The 'pids' configuration is not a 4-element group.",__func__);
          bt_control_cartesian_xyz_q_destroy(c);
-         return 0;
+         return -1;
       }
       /* Read in the XYZ PID values */
       for (j=0; j<3; j++)
@@ -271,7 +275,7 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
          {
             syslog(LOG_ERR,"%s: No p, i, and/or d value in %s.",__func__,str_dimension[j]);
             bt_control_cartesian_xyz_q_destroy(c);
-            return 0;
+            return -1;
          }
          
          gsl_vector_set(c->Kp,j,p);
@@ -288,12 +292,13 @@ struct bt_control_cartesian_xyz_q * bt_control_cartesian_xyz_q_create(config_set
          {
             syslog(LOG_ERR,"%s: No p and/or d value in rot.",__func__);
             bt_control_cartesian_xyz_q_destroy(c);
-            return 0;
+            return -1;
          }
       }
    }
-   
-   return c;
+
+   (*conptr) = c;
+   return 0;
 }
 
 void bt_control_cartesian_xyz_q_destroy(struct bt_control_cartesian_xyz_q * c)

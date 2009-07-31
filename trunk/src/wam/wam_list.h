@@ -28,7 +28,7 @@ struct bt_wam_list_local
    int num;
 };
 
-struct bt_wam_list_local * bt_wam_list_local_create();
+int bt_wam_list_local_create(struct bt_wam_list_local ** listptr);
 int bt_wam_list_local_destroy(struct bt_wam_list_local * list);
 int bt_wam_list_local_get_num(struct bt_wam_list_local * list);
 char * bt_wam_list_local_get_name(struct bt_wam_list_local * list, int i, char * buf);

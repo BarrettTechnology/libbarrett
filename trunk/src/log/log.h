@@ -51,7 +51,7 @@
  * the number of fields in the log.
  * \code
  * struct bt_log * mylog;
- * mylog = bt_log_create(3); 
+ * bt_log_create(&mylog,3); 
  * \endcode
  * 
  * Next, add the fields using bt_log_addfield() and initialize using
@@ -176,10 +176,11 @@ struct bt_log
  * before it can be triggered / flushed.  See log.h for a detailed usage
  * example.
  *
+ * \param[out] logptr The bt_log object on success, or 0 on failure
  * \param[in] num_fields The number of fields to allocate
- * \return The bt_log object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_log * bt_log_create(unsigned int num_fields);
+int bt_log_create(struct bt_log ** logptr, unsigned int num_fields);
 
 
 /** Adds a field to log to the bt_log object.

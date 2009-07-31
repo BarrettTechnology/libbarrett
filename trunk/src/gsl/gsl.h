@@ -127,6 +127,6 @@ int bt_gsl_fill_matrix(gsl_matrix * mat, config_setting_t * parent,
 
 
 #ifdef __cplusplus
-extern "C" }
+}
 #endif
 #endif /* BT_GSL_H */

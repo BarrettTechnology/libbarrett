@@ -73,6 +73,9 @@ struct bt_control_cartesian_xyz
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting_t * config,
-   struct bt_kinematics * kin, struct bt_dynamics * dyn);
+int bt_control_cartesian_xyz_create(
+                           struct bt_control_cartesian_xyz ** conptr,
+                           config_setting_t * config,
+                           struct bt_kinematics * kin,
+                           struct bt_dynamics * dyn);
 void bt_control_cartesian_xyz_destroy(struct bt_control_cartesian_xyz * c);

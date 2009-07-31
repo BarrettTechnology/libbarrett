@@ -16,12 +16,12 @@
 #include <sys/select.h> /* for fd_set */
 
 /* Bound methods */
-#define bt_rpc_listener_create(rt) ((rt)->listener_create())
+#define bt_rpc_listener_create(lp,type) ((type)->listener_create(lp))
 #define bt_rpc_listener_destroy(l) ((l)->type->listener_destroy(l))
-#define bt_rpc_listener_callee_create(l) ((l)->type->listener_callee_create((l)))
+#define bt_rpc_listener_callee_create(cp,l) ((l)->type->listener_callee_create(cp,l))
 #define bt_rpc_callee_destroy(c) ((c)->type->callee_destroy(c))
 #define bt_rpc_callee_handle(c,s) ((c)->type->callee_handle(c,s))
-#define bt_rpc_caller_create(rt,h) ((rt)->caller_create(h))
+#define bt_rpc_caller_create(cp,type,h) ((type)->caller_create(cp,h))
 #define bt_rpc_caller_destroy(c) ((c)->type->caller_destroy(c))
 #define bt_rpc_caller_handle(c,fs,f,...) ((c)->type->caller_handle(c,fs,f,__VA_ARGS__))
 
@@ -38,16 +38,17 @@ struct bt_rpc_type
    char name[20];
    
    /* Listener functions */
-   struct bt_rpc_listener * (* listener_create)();
+   int (* listener_create)(struct bt_rpc_listener ** listenerptr);
    int (* listener_destroy)(struct bt_rpc_listener *);
-   struct bt_rpc_callee * (* listener_callee_create)(struct bt_rpc_listener *);
+   int (* listener_callee_create)(struct bt_rpc_callee ** calleeptr,
+                                  struct bt_rpc_listener *);
    
    /* Callee functions */
    int (* callee_destroy)(struct bt_rpc_callee *);
    int (* callee_handle)(struct bt_rpc_callee *, struct bt_rpc_server *);
    
    /* Caller functions */
-   struct bt_rpc_caller * (* caller_create)(char * host);
+   int (* caller_create)(struct bt_rpc_caller ** callerptr, char * host);
    int (* caller_destroy)(struct bt_rpc_caller *);
    int (* caller_handle)(struct bt_rpc_caller *, const struct bt_rpc_interface_funcs * funcs, const char * function, ...);
 };
@@ -74,8 +75,8 @@ struct bt_rpc_caller
 enum bt_rpc_interface_func_type
 {
 /*   BT_RPC_FUNC_OBJ_STR_CREATE,*/
-   BT_RPC_FUNC_OBJ_STR_CREATE,
-   BT_RPC_FUNC_OBJ_STR_INT_CREATE,
+   BT_RPC_FUNC_INT_POBJ_STR_CREATE,
+   BT_RPC_FUNC_INT_POBJ_STR_INT_CREATE,
    BT_RPC_FUNC_INT_OBJ_DESTROY,
    BT_RPC_FUNC_INT_OBJ,
    BT_RPC_FUNC_STR_OBJ,
@@ -131,11 +132,11 @@ struct bt_rpc_server
 };
 
 /* Functions for caller creation */
-struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...);
-const struct bt_rpc_type * bt_rpc_type_search(char * prefix);
+int bt_rpc_caller_search_create(struct bt_rpc_caller ** callerptr,
+                                char * prefixhost, ...);
 
 /* Functions for bt_rcp_server */
-struct bt_rpc_server * bt_rpc_server_create();
+int bt_rpc_server_create(struct bt_rpc_server ** serverptr);
 int bt_rpc_server_destroy(struct bt_rpc_server * server);
 int bt_rpc_server_add_interface(struct bt_rpc_server * server, const struct bt_rpc_interface_funcs * interface_funcs);
 int bt_rpc_server_add_listener(struct bt_rpc_server * server, const struct bt_rpc_type * type);
@@ -150,54 +151,5 @@ int bt_rpc_interface_object_add(struct bt_rpc_interface * interface, void * vptr
 int bt_rpc_interface_object_check(struct bt_rpc_interface * interface, void * vptr);
 int bt_rpc_interface_object_remove(struct bt_rpc_interface * interface, void * vptr);
 
-
-/* ======================================================================== */
-
-#if 0
-
-enum bt_rpc_val_types
-{
-   BT_RPC_VAL_INT,
-   BT_RPC_VAL_HANDLE,
-   BT_RPC_VAL_CHARPTR
-};
-
-/* A prototype has a list of value types as args
- * and a return type. */
-struct bt_rpc_prototype
-{
-   enum bt_rpc_val_types params[];
-   enum bt_rpc_val_types ret;
-};
-
-/* An example prototype caller;
- *   RPC-type independent;
- *   knows about basic type;
- *   auto-generatable given list of arg types */
-int call_int_from_handle_int(struct bt_rpc_type * rpctype, void (*fptr)(), void * params, void * ret)
-{
-   void * a0_handle;
-   int    a1_int;
-   int    r_int;
-   a0_handle = rpctype->get_param_handle(params,0);
-   a1_int      rpctype->get_param_int(params,1);
-   r_int = (*(int (*)(void *, int))(fptr))(a0_handle,a1_int);
-   rpc->set_return_int(ret,r_int);
-   return 0;
-}
-
-int call_int_from_handle_charptr(struct bt_rpc_type * rpctype, void (*fptr)(), void * params, void * ret)
-{
-   void * a0_handle;
-   int    a1_charptr;
-   int    r_int;
-   a0_handle  = rpctype->get_param_handle(params,0);
-   a1_charptr = rpctype->get_param_charptr(params,1);
-   r_int = (*(int (*)(void *, int))(fptr))(a0_handle,a1_int);
-   rpc->set_return_int(ret,r_int);
-   return 0;
-}
-
-#endif
 
 #endif /* BT_RPC_H */

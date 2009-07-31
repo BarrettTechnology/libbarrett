@@ -25,7 +25,6 @@
 
 /* Include the high-level WAM header file */
 #include <libbarrett/wam.h>
-#include <libbarrett/wam_custom.h>
 #include <libbarrett/wam_local.h>
 #include <libbarrett/gsl.h>
 
@@ -137,14 +136,14 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
    
    /* Open the WAM (or WAMs!) */\
-   wam[0] = bt_wam_create(argv[1]);
-   if (!wam[0] || !wam[1])
+   bt_wam_create(&wam[0], argv[1]);
+   if (!wam[0])
    {
       endwin();
       printf("Could not open the WAM %s.\n",argv[1]);
       return -1;
    }
-   wam[1] = bt_wam_create(argv[2]);
+   bt_wam_create(&wam[1],argv[2]);
    if (!wam[1])
    {
       bt_wam_destroy(wam[0]);
@@ -202,8 +201,8 @@ int main(int argc, char ** argv)
             mvprintw(line,    0, "    Holding: %s", bt_wam_is_holding(wam[0]) ? "On" : "Off" );
             mvprintw(line++, 40, "    Holding: %s", bt_wam_is_holding(wam[1]) ? "On" : "Off" );
             
-            mvprintw(line,    0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam[0],buf) );
-            mvprintw(line++, 40, "     Refgen: %s", bt_wam_get_current_refgen_name(wam[1],buf) );
+            mvprintw(line,    0, "     Refgen: %s", bt_wam_refgen_active_name(wam[0],buf) );
+            mvprintw(line++, 40, "     Refgen: %s", bt_wam_refgen_active_name(wam[1],buf) );
             
             mvprintw(line,    0, " MoveIsDone: %s", bt_wam_moveisdone(wam[0]) ? "Done" : "Moving" );
             mvprintw(line++, 40, " MoveIsDone: %s", bt_wam_moveisdone(wam[1]) ? "Done" : "Moving" );
@@ -325,8 +324,8 @@ int main(int argc, char ** argv)
             bt_wam_teach_end(wam[1]);
             break;
          case '.':
-            bt_wam_playback(wam[0]);
-            bt_wam_playback(wam[1]);
+            bt_wam_run(wam[0]);
+            bt_wam_run(wam[1]);
             break;
          /* mastermaster refgen stuff */
          case 'U': /* Use our mastermaster refgen! */

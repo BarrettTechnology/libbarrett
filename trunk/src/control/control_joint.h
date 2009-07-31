@@ -64,6 +64,8 @@ struct bt_control_joint
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
-   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity);
+int bt_control_joint_create(struct bt_control_joint ** conptr,
+                            config_setting_t * config,
+                            struct bt_dynamics * dyn,
+                            gsl_vector * jposition, gsl_vector * jvelocity);
 void bt_control_joint_destroy(struct bt_control_joint * c);

@@ -57,7 +57,7 @@
 
 /* Bound methods */
 #define bt_refgen_has_create(type) (type->create)
-#define bt_refgen_create(type,n) (type->create(n))
+#define bt_refgen_create(rp,type,n) (type->create(rp,n))
 #define bt_refgen_destroy(r) ((r)->type->destroy(r))
 
 #define bt_refgen_has_teach(r) ((r)->type->teach_init)
@@ -94,7 +94,7 @@ struct bt_refgen_type
    char name[20];
 
    
-   struct bt_refgen * (*create)(int n);
+   int (*create)(struct bt_refgen ** rp, int n);
    
    /* Destroy the refgen; self-explanatory. */
    int (*destroy)(struct bt_refgen * r);

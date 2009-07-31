@@ -72,7 +72,8 @@ int define_pos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
 
 /* NOW, THE GLOBAL FUNCTIONS ... */
 
-struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
+int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
+                          config_setting_t * config)
 {
    int err;
    struct bt_wambot_phys * wambot;
@@ -82,11 +83,12 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    if (config == 0) return 0;
    
    /* Make a new wambot */
+   (*wambotptr) = 0;
    wambot = (struct bt_wambot_phys *) malloc(sizeof(struct bt_wambot_phys));
    if (!wambot)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
     
    /* Initialize to zeros */
@@ -115,16 +117,16 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       {
          syslog(LOG_ERR,"%s: No bus in configuration.",__func__);
          bt_wambot_phys_destroy(wambot);
-         return 0;
+         return -1;
       }
       
       /* Attempt to open the system */
-      wambot->bus = bt_bus_create( setting, bt_bus_UPDATE_POS_DIFF );
+      bt_bus_create(&wambot->bus, setting, bt_bus_UPDATE_POS_DIFF );
       if (!wambot->bus)
       {
          syslog(LOG_ERR,"%s: Could not create the bus.",__func__);
          bt_wambot_phys_destroy(wambot);
-         return 0;
+         return -1;
       }
 
       /* Grab the degrees-of-freedom */
@@ -133,7 +135,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       {
          syslog(LOG_ERR,"%s: No (or zero) dof in configuration.",__func__);
          bt_wambot_phys_destroy(wambot);
-         return 0; 
+         return -1; 
       }
    }
 
@@ -162,7 +164,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
    ) {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_wambot_phys_destroy(wambot);
-      return 0;
+      return -1;
    }
    
    /* Parse values from config file */
@@ -190,7 +192,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_wambot_phys_destroy(wambot);
-         return 0;
+         return -1;
       }
       p = gsl_permutation_alloc(n);
       if (!p)
@@ -198,7 +200,7 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          gsl_matrix_free(lu);
          bt_wambot_phys_destroy(wambot);
-         return 0;
+         return -1;
       }
       
       /* m2jp = inv(j2mp) */
@@ -295,8 +297,9 @@ struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config )
          gsl_vector_free(err_angle);
       }
    }
-   
-   return wambot;
+
+   (*wambotptr) = wambot;
+   return 0;
 }
 
 int bt_wambot_phys_destroy( struct bt_wambot_phys * wambot )

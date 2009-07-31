@@ -313,7 +313,7 @@ static int do_mode_zero(char * wamname)
    while (btkey_get()!=BTKEY_ENTER) bt_os_usleep(10000);
 
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create(wamname);
+   bt_wam_create(&wam,wamname);
    if (!wam)
    {
       endwin();
@@ -340,7 +340,7 @@ static int do_mode_zero(char * wamname)
    mz_magvals   = (int *)calloc( n, sizeof(int) );
    mz_angles    = (double *)malloc( n * sizeof(double) );
    mz_magvals_get = 0;
-   magenc_thd = bt_os_thread_create(BT_OS_RT, "mag", 91, magenc_thd_function, 0); /* This is global! */
+   bt_os_thread_create(&magenc_thd, BT_OS_RT, "mag", 91, magenc_thd_function, 0); /* This is global! */
    if (!magenc_thd)
    {
       free(mz_mechisset);

@@ -190,12 +190,13 @@ struct bt_kinematics
  * creating fails if the number of moving links read from the configuration
  * file does not match the expected number.
  *
+ * \param[out] kinptr The bt_kinematics object on success, or 0 on failure
  * \param[in] kinconfig Kinematics configuration, from libconfig
  * \param[in] ndofs Expected number of moving links
- * \return The bt_kinematics object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_kinematics * bt_kinematics_create(config_setting_t * kinconfig,
-                                            int ndofs);
+int bt_kinematics_create(struct bt_kinematics ** kinptr,
+                         config_setting_t * kinconfig, int ndofs);
 
 
 /** Destroy a bt_kinematics object.

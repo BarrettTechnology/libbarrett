@@ -55,5 +55,8 @@ struct bt_control_joint_legacy
 };
 
 /* The controller-specific create/destroy functions */
-struct bt_control_joint_legacy * bt_control_joint_legacy_create(config_setting_t * config, gsl_vector * jposition, gsl_vector * jvelocity);
+int bt_control_joint_legacy_create(struct bt_control_joint_legacy ** conptr,
+                                   config_setting_t * config,
+                                   gsl_vector * jposition,
+                                   gsl_vector * jvelocity);
 void bt_control_joint_legacy_destroy(struct bt_control_joint_legacy * c);

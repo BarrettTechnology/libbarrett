@@ -27,7 +27,7 @@
 
 static const struct bt_rpc_interface_func list[] =
 {
-   {(void (*)())&bt_wam_create_opt,        "bt_wam_create_opt",        BT_RPC_FUNC_OBJ_STR_INT_CREATE},
+   {(void (*)())&bt_wam_create_opt,        "bt_wam_create_opt",        BT_RPC_FUNC_INT_POBJ_STR_INT_CREATE},
    {(void (*)())&bt_wam_destroy,           "bt_wam_destroy",           BT_RPC_FUNC_INT_OBJ_DESTROY},
    
    {(void (*)())&bt_wam_loop_start,        "bt_wam_loop_start",        BT_RPC_FUNC_INT_OBJ},
@@ -69,7 +69,7 @@ static const struct bt_rpc_interface_func list[] =
    {(void (*)())&bt_wam_run,               "bt_wam_run",               BT_RPC_FUNC_INT_OBJ},
    
    /* WAM list stuff */
-   {(void (*)())&bt_wam_list_create,       "bt_wam_list_create",       BT_RPC_FUNC_OBJ_STR_CREATE},
+   {(void (*)())&bt_wam_list_create,       "bt_wam_list_create",       BT_RPC_FUNC_INT_POBJ_STR_CREATE},
    {(void (*)())&bt_wam_list_destroy,      "bt_wam_list_destroy",      BT_RPC_FUNC_INT_OBJ_DESTROY},
    
    {(void (*)())&bt_wam_list_get_num,      "bt_wam_list_get_num",      BT_RPC_FUNC_INT_OBJ},

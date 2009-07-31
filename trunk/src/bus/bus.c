@@ -126,17 +126,20 @@ PARR_SET_FUNC(puck,struct bt_bus_puck)
 PARR_SET_FUNC(group,struct bt_bus_group)
 
 
-struct bt_bus * bt_bus_create(config_setting_t * busconfig,
-                              enum bt_bus_update_type update_type)
+int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
+                  enum bt_bus_update_type update_type)
 {
    struct bt_bus * bus;
+
+   (*busptr) = 0;
    
    /* Create */
    bus = (struct bt_bus *) malloc(sizeof(struct bt_bus));
    if (!bus)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      (*busptr) = 0;
+      return -1;
    }
    
    /* Initialize */
@@ -165,18 +168,18 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
       {
          printf("no port\n");
          bt_bus_destroy(bus);
-         return 0;
+         return -1;
       }
       bus->port = config_setting_get_int(setting);
    }
    
    /* Initialize CAN on the port */
-   bus->dev = bt_bus_can_create(bus->port);
+   bt_bus_can_create(&(bus->dev), bus->port);
    if(!(bus->dev))
    {
       syslog(LOG_ERR, "Could not initialize can bus port %d", bus->port);
       bt_bus_destroy(bus);
-      return 0;
+      return -1;
    }
    
    /* Wake all the pucks on the bus */
@@ -206,7 +209,7 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
                       "%s: Could not initialize property definitions.",
                       __func__);
                bt_bus_destroy(bus);
-               return 0;
+               return -1;
             }
          }
          if (id == BT_BUS_PUCK_ID_WAMSAFETY)
@@ -217,7 +220,7 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
                syslog(LOG_ERR,"%s: More than one safety puck found!.",
                       __func__);
                bt_bus_destroy(bus);
-               return 0;
+               return -1;
             }
             if (status != STATUS_READY)
             {
@@ -233,7 +236,7 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
             {
                syslog(LOG_ERR,"%s: Out of memory.",__func__);
                bt_bus_destroy(bus);
-               return 0;
+               return -1;
             }
             puck->id = id;
             bus->safety_puck = puck;
@@ -257,7 +260,7 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
             {
                syslog(LOG_ERR,"%s: Out of memory.",__func__);
                bt_bus_destroy(bus);
-               return 0;
+               return -1;
             }
             puck->id = id;
             /* Make sure the puck is in IDLE mode */
@@ -307,7 +310,7 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
                {
                   syslog(LOG_ERR,"%s: Out of memory.",__func__);
                   bt_bus_destroy(bus);
-                  return 0;
+                  return -1;
                }
                parr_set_group(&(bus->group), &(bus->groups_size), puck->gid,
                               group );
@@ -324,8 +327,9 @@ struct bt_bus * bt_bus_create(config_setting_t * busconfig,
    /* Did we not get a safety puck? */
    
    /* CPU cycle time (to time things? huh?) */
-   
-   return bus;
+
+   (*busptr) = bus;
+   return 0;
 }
 
 

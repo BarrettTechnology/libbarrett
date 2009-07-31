@@ -47,19 +47,22 @@ struct bt_wam
    void * obj;
 };
 
+
 /* Just a shortcut */
-struct bt_wam * bt_wam_create(char * wamname)
+int bt_wam_create(struct bt_wam ** wamptr, char * wamname)
 {
-   return bt_wam_create_opt(wamname,0);
+   return bt_wam_create_opt(wamptr,wamname,0);
 }
 
-struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
+int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt opts)
 {
    /* Does it have a '/' character in it? */
    char prefixhost[100]; /* TODO size */
    char * sep;
    char * host;
    char * rname;
+
+   (*wamptr) = 0;
    
    strcpy(prefixhost,wamname);
    host = 0;
@@ -85,18 +88,18 @@ struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
       struct bt_wam * wam;
       struct bt_rpc_caller * rpc_caller;
       void * obj;
+      int myint;
       
       syslog(LOG_ERR,"%s: Opening remote wam, rcp prefixhost %s, rname %s.",
              __func__,prefixhost,rname);
       
       /* Create the caller */
-      rpc_caller = bt_rpc_caller_search_create(prefixhost,
-                                               bt_rpc_tcpjson,
-                                               0);
+      bt_rpc_caller_search_create(&rpc_caller, prefixhost,
+                                  bt_rpc_tcpjson, 0);
       if (!rpc_caller)
       {
          syslog(LOG_ERR,"%s: Could not create caller.",__func__);
-         return 0;
+         return -1;
       }
       
       /* Create wam_proxy object, save caller, obj */
@@ -105,29 +108,31 @@ struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_rpc_caller_destroy(rpc_caller);
-         return 0;
+         return -1;
       }
       
       /* Attempt to open the remote wam */
-      err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_create_opt",rname,opts,&obj);
+      err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_create_opt",rname,opts,&obj,&myint);
       if (err || !obj)
       {
          syslog(LOG_ERR,"%s: Could not open remote WAM.",__func__);
          free(wam);
          bt_rpc_caller_destroy(rpc_caller);
-         return 0;
+         return -1;
       }
       
       /* Initialize */
       wam->caller = rpc_caller;
       wam->obj = obj;
-      return wam;
+      (*wamptr) = wam;
+      return myint;
    }
    
 #ifndef ASYNC_ONLY
    /* OK, it's local. If we're not ASYNC_ONLY, open locally ... */
    {
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
+      int err;
       struct bt_wam * wam;
       
       syslog(LOG_ERR,"%s: Opening local wam %s.",__func__,wamname);
@@ -137,23 +142,24 @@ struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts)
       if (!wam)
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
-         return 0;
+         return -1;
       }
       
-      wam->obj = bt_wam_local_create(wamname, opts);
+      err = bt_wam_local_create((struct bt_wam_local **)(&wam->obj), wamname, opts);
       if (!wam->obj)
       {
          free(wam);
-         return 0;
+         return -1;
       }
       
       wam->caller = 0;
-      return wam;
+      (*wamptr) = wam;
+      return err;
    }
 #endif
    
    /* No wam found.*/
-   return 0;
+   return -1;
 }
 
 int bt_wam_destroy(struct bt_wam * wam)
@@ -735,66 +741,69 @@ struct bt_wam_list
    void * obj;
 };
 
-struct bt_wam_list * bt_wam_list_create(char * wamloc)
+int bt_wam_list_create(struct bt_wam_list ** listptr, char * wamloc)
 {
    int err;
    struct bt_wam_list * list;
    struct bt_rpc_caller * rpc_caller;
    void * obj;
+   int myint;
    
    /* Create */
+   (*listptr) = 0;
    list = (struct bt_wam_list *) malloc(sizeof(struct bt_wam_list));
    if (!list)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
 
    /* Handle the local case */
    if (!wamloc || strlen(wamloc) == 0)
    {
 #ifndef ASYNC_ONLY
-      list->obj = bt_wam_list_local_create();
+      err = bt_wam_list_local_create((struct bt_wam_list_local **)(&list->obj));
       if (!list->obj)
       {
          syslog(LOG_ERR,"%s: Could not create local wam list.",__func__);
          free(list);
-         return 0;
+         return -1;
       }
       list->caller = 0;
-      return list;
+      (*listptr) = list;
+      return err;
 #endif
       free(list);
-      return 0;
+      return -1;
    }
 
    syslog(LOG_ERR,"%s: Opening remote wam list, rcp prefixhost %s.",__func__,wamloc);
    
    /* Create the caller */
-   rpc_caller = bt_rpc_caller_search_create(wamloc,
-                                            bt_rpc_tcpjson,
-                                            0);
+   bt_rpc_caller_search_create(&rpc_caller, wamloc,
+                               bt_rpc_tcpjson, 0);
    if (!rpc_caller)
    {
       syslog(LOG_ERR,"%s: Could not create caller.",__func__);
       free(list);
-      return 0;
+      return -1;
    }
    
    /* Attempt to open the remote wam list */
-   err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_list_create","",&obj);
+   err = bt_rpc_caller_handle(rpc_caller,bt_wam_rpc,"bt_wam_list_create","",&obj,&myint);
    if (err || !obj)
    {
       syslog(LOG_ERR,"%s: Could not open remote WAM list.",__func__);
       bt_rpc_caller_destroy(rpc_caller);
       free(list);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
    list->caller = rpc_caller;
    list->obj = obj;
-   return list;
+   (*listptr) = list;
+   return myint;
 }
 
 int bt_wam_list_destroy(struct bt_wam_list * list)

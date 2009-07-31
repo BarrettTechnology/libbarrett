@@ -76,7 +76,6 @@ pkginclude_HEADERS += src/control/control.h \
 
 # Source files to complile
 src_libbtcontrol_la_CPPFLAGS = -Isrc/gsl \
-                               -Isrc/trajectory \
                                -Isrc/dynamics \
                                -Isrc/kinematics
 src_libbtcontrol_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
@@ -461,21 +460,6 @@ nobase_dist_pkgdata_DATA = \
    examples/cylinder/cylinder.c \
    examples/cylinder/refgen_cylinder.c \
    examples/cylinder/refgen_cylinder.h \
-   examples/draw/Makefile \
-   examples/draw/control_draw.c \
-   examples/draw/control_draw.h \
-   examples/draw/draw.c \
-   examples/draw/draw.config \
-   examples/draw2d/Makefile \
-   examples/draw2d/control_draw2d.c \
-   examples/draw2d/control_draw2d.h \
-   examples/draw2d/draw2d.c \
-   examples/draw2d/draw2d.config \
-   examples/draw2dq/Makefile \
-   examples/draw2dq/control_draw2dq.c \
-   examples/draw2dq/control_draw2dq.h \
-   examples/draw2dq/draw2dq.c \
-   examples/draw2dq/draw2dq.config \
    examples/example-cpp/Makefile \
    examples/example-cpp/example-cpp.cpp \
    examples/ex1-jointposition/Makefile \
@@ -484,6 +468,8 @@ nobase_dist_pkgdata_DATA = \
    examples/ex2-gcomp/ex2-gcomp.c \
    examples/ex3-datalogging/Makefile \
    examples/ex3-datalogging/ex3-datalogging.c \
+   examples/ex5-simplemove/Makefile \
+   examples/ex5-simplemove/ex5-simplemove.c \
    examples/mastermaster/Makefile \
    examples/mastermaster/mastermaster.c \
    examples/mastermaster/refgen_mastermaster.c \

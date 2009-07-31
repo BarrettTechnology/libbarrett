@@ -75,9 +75,11 @@ int bt_os_usleep(int useconds)
 /* Note - create() used to not have the mattr stuff for RTAI
  * (it used NULL in pthread_mutex_init)
  * What's the difference? */
-struct bt_os_mutex * bt_os_mutex_create(enum bt_os_rt_type type)
+int bt_os_mutex_create(struct bt_os_mutex ** mutexptr,
+                       enum bt_os_rt_type type)
 {
    int err;
+   (*mutexptr) = 0;
    struct bt_os_mutex * m; /* The return mutex abstraction */
    m = (struct bt_os_mutex *) malloc(sizeof(struct bt_os_mutex));
    
@@ -93,7 +95,7 @@ struct bt_os_mutex * bt_os_mutex_create(enum bt_os_rt_type type)
          syslog(LOG_ERR,"%s: Could not initialize mutex.",__func__);
          free(sys_mutex);
          free(m);
-         return NULL;
+         return -1;
       }
       m->p = (void *)sys_mutex;
    }
@@ -112,14 +114,15 @@ struct bt_os_mutex * bt_os_mutex_create(enum bt_os_rt_type type)
          syslog(LOG_ERR,"%s: Could not initialize mutex.",__func__);
          free(sys_mutex);
          free(m);
-         return NULL;
+         return -1;
       }
       m->p = (void *)sys_mutex;
    }
 
    /* Save mutex type */
    m->type = type;
-   return m;
+   (*mutexptr) = m;
+   return 0;
 }
 
 
@@ -245,18 +248,20 @@ static bt_os_thread * thread_list_current()
 #endif
 
 
-struct bt_os_thread * bt_os_thread_create(
-   enum bt_os_rt_type type, const char * name, int priority,
-   void (*funcptr)(struct bt_os_thread *), void * data)
+int bt_os_thread_create(struct bt_os_thread ** threadptr,
+                        enum bt_os_rt_type type, const char * name,
+                        int priority, void (*funcptr)(struct bt_os_thread *),
+                        void * data)
 {
    struct bt_os_thread * thd;
    
    /* Allocate space for a new thread */
+   (*threadptr) = 0;
    thd = (struct bt_os_thread *) malloc(sizeof(struct bt_os_thread));
    if (!thd)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Save the extra stuff for the thread ..
@@ -274,12 +279,12 @@ struct bt_os_thread * bt_os_thread_create(
    thd->mutex = 0;
    thd->type = type;
    
-   thd->mutex = bt_os_mutex_create(type);
+   bt_os_mutex_create(&thd->mutex,type);
    if (!thd->mutex)
    {
       syslog(LOG_ERR,"%s: Could not create thread mutex.",__func__);
       bt_os_thread_destroy(thd);
-      return 0;
+      return -1;
    }
    
    /* Initialize sys-dependent stuff */
@@ -293,7 +298,7 @@ struct bt_os_thread * bt_os_thread_create(
       {
          syslog(LOG_ERR, "%s: Out of memory.", __func__);
          bt_os_thread_destroy(thd);
-         return 0;
+         return -1;
       } 
       thd->sys = (void *)sys;
       err = rt_task_create(sys, name, 0, priority, T_JOINABLE);
@@ -301,14 +306,14 @@ struct bt_os_thread * bt_os_thread_create(
       {
          syslog(LOG_ERR, "%s: Could not create task! %d", __func__,err);
          bt_os_thread_destroy(thd);
-         return 0;
+         return -1;
       }
       err = rt_task_start(sys, (void (*)(void *))funcptr, (void *)thd);
       if(err)
       {
          syslog(LOG_ERR, "%s: Could not start task! %d", __func__,err);
          bt_os_thread_destroy(thd);
-         return 0;
+         return -1;
       }
    }
    else
@@ -320,7 +325,7 @@ struct bt_os_thread * bt_os_thread_create(
       {
          syslog(LOG_ERR, "%s: Out of memory.", __func__);
          bt_os_thread_destroy(thd);
-         return 0;
+         return -1;
       }
       pthread_attr_init(&( sys->attr ));
       pthread_attr_setschedpolicy( &(sys->attr), SCHED_FIFO);
@@ -335,7 +340,7 @@ struct bt_os_thread * bt_os_thread_create(
       {
          syslog(LOG_ERR, "%s: Couldn't start thread.", __func__);
          bt_os_thread_destroy(thd);
-         return 0;
+         return -1;
       }
    }
    
@@ -346,8 +351,9 @@ struct bt_os_thread * bt_os_thread_create(
       exit(-1);
    }
 #endif
-   
-   return thd;
+
+   (*threadptr) = thd;
+   return 0;
 }
 
 
@@ -557,10 +563,12 @@ int bt_os_rt_task_wait_period(void)
 }
 
 
-struct bt_os_timestat * bt_os_timestat_create(int numchans)
+int bt_os_timestat_create(struct bt_os_timestat ** tsptr, int numchans)
 {
    int i;
    struct bt_os_timestat * ts;
+
+   (*tsptr) = 0;
    ts = (struct bt_os_timestat *)malloc(sizeof(struct bt_os_timestat));
    
    ts->numchans = numchans;
@@ -582,8 +590,9 @@ struct bt_os_timestat * bt_os_timestat_create(int numchans)
       ts->sums[i] = 0;
       ts->sumsqs[i] = 0;
    }
-   
-   return ts;
+
+   (*tsptr) = ts;
+   return 0;
 }
 
 

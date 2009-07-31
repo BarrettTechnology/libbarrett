@@ -53,7 +53,8 @@ static int eval_trans_to_world( struct bt_kinematics_link * link );
 /*  \} */
 
 
-struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int ndofs )
+int bt_kinematics_create(struct bt_kinematics ** kinptr,
+                         config_setting_t * kinconfig, int ndofs)
 {
    int err;
    int i;
@@ -62,12 +63,13 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    
    /* Check arguments */
    if (kinconfig == 0) return 0;
-   
+
+   (*kinptr) = 0;
    kin = (struct bt_kinematics *) malloc( sizeof(struct bt_kinematics) );
    if (!kin)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -92,7 +94,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    for (i=0; i<kin->nlinks; i++)
       kin->link_array[i] = 0;
@@ -105,7 +107,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_kinematics_destroy(kin);
-         return 0;
+         return -1;
       }
       /* Initialize */
       link->next = 0;
@@ -134,7 +136,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    ) {
       syslog(LOG_ERR,"%s: kin:moving not a list with %d elements.",__func__,ndofs);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    
    /* Initialize each link */
@@ -156,7 +158,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          gsl_matrix_set_identity( link->trans_to_prev );
          
@@ -176,7 +178,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          ) {
             syslog(LOG_ERR,"%s: kin:toolplate not a group.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          
          /* Grab each of the dh parameters */
@@ -188,7 +190,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: No alpha_pi, theta_pi, a, and/or d in toolplate, or not a number.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          link->alpha *= M_PI;
          link->theta *= M_PI;
@@ -204,7 +206,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          gsl_matrix_set( link->trans_to_prev, 2,1, link->sin_alpha );
          gsl_matrix_set( link->trans_to_prev, 2,2, link->cos_alpha );
@@ -217,7 +219,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
       }
       else if (link == kin->tool)
@@ -228,7 +230,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          gsl_matrix_set_identity( link->trans_to_prev );
          
@@ -237,7 +239,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
       }
       else
@@ -254,7 +256,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: kin:moving:#%d not a group.",__func__,j);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          
          /* Grab each of the dh parameters */
@@ -265,7 +267,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: No alpha_pi, theta_pi, a, and/or d in link %d, or not a number.",__func__,j);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          link->alpha *= M_PI;
          
@@ -279,7 +281,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          gsl_matrix_set( link->trans_to_prev, 2,1, link->sin_alpha );
          gsl_matrix_set( link->trans_to_prev, 2,2, link->cos_alpha );
@@ -291,7 +293,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
       }
       
@@ -304,7 +306,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_subrow( link->trans_to_prev, 2, 0, 3);
          *(link->prev_axis_z) = view.vector;
@@ -314,7 +316,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_subcolumn( link->trans_to_prev, 3, 0, 3);
          *(link->prev_origin_pos) = view.vector;
@@ -324,7 +326,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_subcolumn( link->trans_to_world, 2, 0, 3);
          *(link->axis_z) = view.vector;
@@ -334,7 +336,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_subcolumn( link->trans_to_world, 3, 0, 3);
          *(link->origin_pos) = view.vector;
@@ -348,7 +350,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_submatrix( link->trans_to_prev, 0,0, 3,3 );
          *(link->rot_to_prev) = view.matrix;
@@ -358,7 +360,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_kinematics_destroy(kin);
-            return 0;
+            return -1;
          }
          view = gsl_matrix_submatrix( link->trans_to_world, 0,0, 3,3 );
          *(link->rot_to_world) = view.matrix;
@@ -371,7 +373,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    {
       gsl_matrix_view view;
@@ -381,7 +383,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_kinematics_destroy(kin);
-         return 0;
+         return -1;
       }
       view = gsl_matrix_submatrix( kin->tool_jacobian, 0,0, 3,ndofs );
       *(kin->tool_jacobian_linear) = view.matrix;
@@ -391,7 +393,7 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_kinematics_destroy(kin);
-         return 0;
+         return -1;
       }
       view = gsl_matrix_submatrix( kin->tool_jacobian, 3,0, 3,ndofs );
       *(kin->tool_jacobian_angular) = view.matrix;
@@ -401,14 +403,14 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    kin->tool_velocity_angular = gsl_vector_alloc( 3 );
    if (!kin->tool_velocity_angular)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    
    /* Make temporary vectors */
@@ -417,10 +419,11 @@ struct bt_kinematics * bt_kinematics_create( config_setting_t * kinconfig, int n
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
 
-   return kin;
+   (*kinptr) = kin;
+   return 0;
 }
 
 

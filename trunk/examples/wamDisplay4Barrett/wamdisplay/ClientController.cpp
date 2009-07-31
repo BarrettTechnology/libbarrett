@@ -57,7 +57,7 @@ void * ClientController::run(void )
     char address[100] = "tcp+json://wam15/wam7";//"tcp+json://192.168.139.150/wam7";
     
 
-    wam = bt_wam_create(address);           //how to pass in argv[1]???
+    bt_wam_create(&wam,address);           //how to pass in argv[1]???
     if (!wam)
     {
         closelog();

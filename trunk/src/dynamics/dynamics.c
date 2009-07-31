@@ -68,9 +68,9 @@ static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
 /*  \} */
 
 
-struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
-                                        int ndofs,
-                                        struct bt_kinematics * kin)
+int bt_dynamics_create(struct bt_dynamics ** dynptr,
+                       config_setting_t * dynconfig, int ndofs,
+                       struct bt_kinematics * kin)
 {
    int err;
    int i;
@@ -79,12 +79,13 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
    
    /* Check arguments */
    if (dynconfig == 0) return 0;
-   
+
+   (*dynptr) = 0;
    dyn = (struct bt_dynamics *) malloc( sizeof(struct bt_dynamics) );
    if (!dyn)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -109,7 +110,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
    for (i=0; i<dyn->nlinks; i++)
       dyn->link_array[i] = 0;
@@ -122,7 +123,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
       {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_dynamics_destroy(dyn);
-         return 0;
+         return -1;
       }
       /* Initialize */
       link->next = 0;
@@ -156,7 +157,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
    ) {
       syslog(LOG_ERR,"%s: dyn:moving not a list with %d elements.",__func__,ndofs);
       bt_kinematics_destroy(kin);
-      return 0;
+      return -1;
    }
    
    /* Initialize each link */
@@ -207,7 +208,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          ) {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /*gsl_vector_set( link->a, 2, 9.81 );*/
@@ -254,7 +255,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          ) {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /*gsl_vector_set( link->a, 2, 9.81 );*/
@@ -277,7 +278,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          {
             syslog(LOG_ERR,"%s: dyn:moving:#%d not a group.",__func__,j);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
 
          link->com = gsl_vector_alloc(3);
@@ -312,7 +313,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          ) {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /* Allocate space for the COM-jacobian */
@@ -321,7 +322,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          {
             syslog(LOG_ERR,"%s: Out of memory.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /* Allocate matrix views into COM jacobian */
@@ -333,7 +334,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
             {
                syslog(LOG_ERR,"%s: Out of memory.",__func__);
                bt_dynamics_destroy(dyn);
-               return 0;
+               return -1;
             }
             view = gsl_matrix_submatrix( link->com_jacobian, 0,0, 3,dyn->dof );
             *(link->com_jacobian_linear) = view.matrix;
@@ -343,7 +344,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
             {
                syslog(LOG_ERR,"%s: Out of memory.",__func__);
                bt_dynamics_destroy(dyn);
-               return 0;
+               return -1;
             }
             view = gsl_matrix_submatrix( link->com_jacobian, 3,0, 3,dyn->dof );
             *(link->com_jacobian_angular) = view.matrix;
@@ -355,7 +356,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          {
             syslog(LOG_ERR,"%s: No mass in link, or not a number.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /* Read the center of mass vector */
@@ -364,7 +365,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          {
             syslog(LOG_ERR,"%s: No com in link, or not a number.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
          
          /* Read the inertia matrix */
@@ -373,7 +374,7 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
          {
             syslog(LOG_ERR,"%s: No I in link, or not a number.",__func__);
             bt_dynamics_destroy(dyn);
-            return 0;
+            return -1;
          }
       }   
    }
@@ -384,14 +385,14 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
    dyn->temp2_v3 = gsl_vector_alloc(3);
    if (!dyn->temp2_v3)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
    
    /* Make temporary matrices */
@@ -400,24 +401,25 @@ struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
    dyn->temp3x3_2 = gsl_matrix_alloc(3,3);
    if (!dyn->temp3x3_2)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
    dyn->temp3xn_1 = gsl_matrix_alloc(3,dyn->dof);
    if (!dyn->temp3xn_1)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_dynamics_destroy(dyn);
-      return 0;
+      return -1;
    }
-   
-   return dyn;
+
+   (*dynptr) = dyn;
+   return 0;
 }
 
 

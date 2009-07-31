@@ -54,10 +54,15 @@ static const struct bt_control_type bt_control_cartesian_xyz_type = {
 const struct bt_control_type * bt_control_cartesian_xyz = &bt_control_cartesian_xyz_type;
 
 /* Controller-specific functions */
-struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting_t * config,
-   struct bt_kinematics * kin, struct bt_dynamics * dyn)
+int bt_control_cartesian_xyz_create(
+                           struct bt_control_cartesian_xyz ** conptr,
+                           config_setting_t * config,
+                           struct bt_kinematics * kin,
+                           struct bt_dynamics * dyn)
 {
    struct bt_control_cartesian_xyz * c;
+
+   (*conptr) = 0;
    c = (struct bt_control_cartesian_xyz *) malloc( sizeof(struct bt_control_cartesian_xyz) );
    
    /* Set the type, and other generic stuff */
@@ -108,7 +113,7 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
       {
          syslog(LOG_ERR,"%s: The 'pids' configuration is not a 3-element group.",__func__);
          bt_control_cartesian_xyz_destroy(c);
-         return 0;
+         return -1;
       }
       /* Read in the PID values */
       for (j=0; j<3; j++)
@@ -123,7 +128,7 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
          {
             syslog(LOG_ERR,"%s: No p, i, and/or d value",__func__);
             bt_control_cartesian_xyz_destroy(c);
-            return 0;
+            return -1;
          }
          
          gsl_vector_set(c->Kp,j,p);
@@ -131,8 +136,9 @@ struct bt_control_cartesian_xyz * bt_control_cartesian_xyz_create(config_setting
          gsl_vector_set(c->Kd,j,d);
       }
    }
-   
-   return c;
+
+   (*conptr) = c;
+   return 0;
 }
 
 void bt_control_cartesian_xyz_destroy(struct bt_control_cartesian_xyz * c)

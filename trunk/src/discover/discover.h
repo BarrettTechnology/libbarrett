@@ -71,9 +71,10 @@ struct bt_discover_client
 
 /** Create a bt_discover_client object.
  *
- * \return The bt_discover_client object on success, or 0 on failure
+ * \param[out] clientptr The bt_discover_client object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_discover_client * bt_discover_client_create(void);
+int bt_discover_client_create(struct bt_discover_client ** clientptr);
 
 
 /** Destroy a bt_discover_client object.
@@ -102,7 +103,7 @@ struct bt_discover_server
    char data[34];
 };
 
-struct bt_discover_server * bt_discover_server_create(int port, char * iface);
+int bt_discover_server_create(struct bt_discover_server ** serverptr, int port, char * iface);
 int bt_discover_server_destroy(struct bt_discover_server * server);
 int bt_discover_server_select_pre(struct bt_discover_server * s, fd_set * read_set);
 int bt_discover_server_select_post(struct bt_discover_server * s, fd_set * read_set);

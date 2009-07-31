@@ -40,21 +40,22 @@
 
 #include "log.h"
 
-struct bt_log * bt_log_create(unsigned int num_fields)
+int bt_log_create(struct bt_log ** logptr, unsigned int num_fields)
 {
    int i;
    struct bt_log * log;
-   
+
+   (*logptr) = 0;
    log = (struct bt_log *) malloc(sizeof(struct bt_log));
    if (!log)
-      return 0;
+      return -1;
    
    log->fields = (struct bt_log_field *)
       malloc( num_fields * sizeof(struct bt_log_field) );
    if (!log->fields)
    {
       free(log);
-      return 0;
+      return -1;
    }
    log->num_fields_max = num_fields;
    log->num_fields = 0;
@@ -64,8 +65,9 @@ struct bt_log * bt_log_create(unsigned int num_fields)
    
    log->initialized = 0;
    log->finished = 0;
-   
-   return log;
+
+   (*logptr) = log;
+   return 0;
 }
 
 
@@ -424,7 +426,7 @@ int bt_log_decode_file(char * infile, char * outfile, int header, int octave)
    /*print fields*/
    fread(&fieldcnt,sizeof(int),1,inf);
    syslog(LOG_ERR,"DecodeDL:Fields %d",fieldcnt);
-   log = bt_log_create(fieldcnt);
+   bt_log_create(&log,fieldcnt);
 
    /* Octave Header */
    if (octave) fprintf(outf,"# Created by btlog: ");

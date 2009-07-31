@@ -51,7 +51,7 @@ int main(int argc, char ** argv)
    while (getchar()!='\n') bt_os_usleep(10000);
 
    /* Open the WAM given as the first program argument */
-   wam = bt_wam_create(argv[1]);
+   bt_wam_create(&wam,argv[1]);
    if (!wam)
    {
       printf("Could not open WAM.\n");

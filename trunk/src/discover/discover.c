@@ -54,18 +54,19 @@
  * "XX:XX:XX:XX:XX:XX|xxx.xxx.xxx.xxx" 
  */
 
-struct bt_discover_client * bt_discover_client_create(void)
+int bt_discover_client_create(struct bt_discover_client ** clientptr)
 {
    struct bt_discover_client * c;
    int optval;
    int err;
    
    /* Create */
+   (*clientptr) = 0;
    c = (struct bt_discover_client *) malloc(sizeof(struct bt_discover_client));
    if (!c)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -76,7 +77,7 @@ struct bt_discover_client * bt_discover_client_create(void)
    {
       syslog(LOG_ERR,"%s: Could not create socket.",__func__);
       free(c);
-      return 0;
+      return -1;
    }
    
    /* Toggle broadcast flag on socket */
@@ -87,10 +88,11 @@ struct bt_discover_client * bt_discover_client_create(void)
       syslog(LOG_ERR,"%s: Could not toggle broadcast flag.",__func__);
       close(c->sock);
       free(c);
-      return 0;
+      return -1;
    }
-   
-   return c;
+
+   (*clientptr) = c;
+   return 0;
 }
 
 
@@ -174,7 +176,7 @@ int bt_discover_client_discover(struct bt_discover_client * c)
 }
 
 
-struct bt_discover_server * bt_discover_server_create(int port, char * iface)
+int bt_discover_server_create(struct bt_discover_server ** serverptr, int port, char * iface)
 {
    int err;
    struct bt_discover_server * s;
@@ -183,9 +185,10 @@ struct bt_discover_server * bt_discover_server_create(int port, char * iface)
    struct ifreq ifr_mac;
    struct ifreq ifr_ip;
 
+   (*serverptr) = 0;
    s = (struct bt_discover_server *) malloc(sizeof(struct bt_discover_server));
    if (!s)
-      return 0;
+      return -1;
 
    s->sock = -1;
 
@@ -195,7 +198,7 @@ struct bt_discover_server * bt_discover_server_create(int port, char * iface)
    {
       syslog(LOG_ERR,"%s: Couldn't create UDP socket.",__func__);
       bt_discover_server_destroy(s);
-      return 0;
+      return -1;
    }
 
    /* Bind to address */
@@ -207,7 +210,7 @@ struct bt_discover_server * bt_discover_server_create(int port, char * iface)
    {
       syslog(LOG_ERR,"%s: Couldn't bind UDP to the port.",__func__);
       bt_discover_server_destroy(s);
-      return 0;
+      return -1;
    }
 
    /* Get some information about the interface */
@@ -219,7 +222,7 @@ struct bt_discover_server * bt_discover_server_create(int port, char * iface)
    {
       syslog(LOG_ERR,"%s: Couldn't get the interface's MAC/IP address.",__func__);
       bt_discover_server_destroy(s);
-      return 0;
+      return -1;
    }   
    sprintf(s->data,"%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X|%d.%d.%d.%d",
       (unsigned char)ifr_mac.ifr_hwaddr.sa_data[0],
@@ -234,7 +237,8 @@ struct bt_discover_server * bt_discover_server_create(int port, char * iface)
       (unsigned char)ifr_ip.ifr_ifru.ifru_addr.sa_data[5]);
    syslog(LOG_ERR,"MAC|IP identified: |%s|\n",s->data);
 
-   return s;
+   (*serverptr) = s;
+   return 0;
 }
 
 int bt_discover_server_destroy(struct bt_discover_server * s)

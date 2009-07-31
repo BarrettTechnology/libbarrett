@@ -10,7 +10,7 @@
 #include <gsl/gsl_vector.h>
 
 /* Define the type (see refgen.h for details) */
-static struct bt_refgen * create(int n);
+static int create(struct bt_refgen ** refgenptr, int n);
 static int destroy(struct bt_refgen * base);
 
 static int teach_init(struct bt_refgen * base);
@@ -49,12 +49,13 @@ static const struct bt_refgen_type bt_refgen_teachplay_type = {
 const struct bt_refgen_type * bt_refgen_teachplay = &bt_refgen_teachplay_type;
 
 
-static struct bt_refgen * create(int n)
+static int create(struct bt_refgen ** refgenptr, int n)
 {
    struct bt_refgen_teachplay * r;
-   
+
+   (*refgenptr) = 0;
    r = (struct bt_refgen_teachplay *) malloc( sizeof(struct bt_refgen_teachplay) );
-   if (!r) return 0;
+   if (!r) return -1;
    
    /* Set the type */
    r->base.type = bt_refgen_teachplay;
@@ -69,7 +70,8 @@ static struct bt_refgen * create(int n)
    r->start = gsl_vector_calloc(r->n);
    r->position = gsl_vector_calloc(r->n);
 
-   return (struct bt_refgen *)r;
+   (*refgenptr) = (struct bt_refgen *)r;
+   return 0;
 }
 
 
@@ -97,7 +99,7 @@ static int teach_init(struct bt_refgen * base)
    /* Make sure we're ready to initialize teaching */
 
    /* Create a log object (a time field, plus a field for each dimension) */
-   r->log = bt_log_create(1 + r->position->size);
+   bt_log_create(&r->log, 1 + r->position->size);
    bt_log_addfield(r->log, &r->time, 1, BT_LOG_DOUBLE, "time");
    for (i=0; i<r->position->size; i++)
       bt_log_addfield(r->log, gsl_vector_ptr(r->position,i), 1, BT_LOG_DOUBLE, "pos");
@@ -131,7 +133,7 @@ static int teach_end(struct bt_refgen * base)
    /* Get the first point, create the spline  */
    bt_log_decode_next(r->log, 0);
    gsl_vector_memcpy(r->start, r->position);
-   r->spline = bt_spline_create(r->start, BT_SPLINE_MODE_EXTERNAL);
+   bt_spline_create(&r->spline,r->start, BT_SPLINE_MODE_EXTERNAL);
    
    /* Iterate through every subsequent point; don't mind the time, for now */
    while ( !bt_log_decode_next(r->log, 0) )
@@ -212,7 +214,7 @@ static int load(struct bt_refgen * base, config_setting_t * setting)
       if (!record_num)
       {
          gsl_vector_memcpy(r->start, r->position);
-         r->spline = bt_spline_create(r->start, BT_SPLINE_MODE_EXTERNAL);
+         bt_spline_create(&r->spline, r->start, BT_SPLINE_MODE_EXTERNAL);
       }
       else
       {

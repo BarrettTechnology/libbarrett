@@ -20,13 +20,16 @@
 #include "rpc.h"
 #include "rpc_tcpjson.h"
 
-struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...)
+int bt_rpc_caller_search_create(struct bt_rpc_caller ** callerptr,
+                                char * prefixhost, ...)
 {
    va_list ap;
    char prefix[100]; /* TODO: length */
    char * host;
    char * sep;
    struct bt_rpc_type * rpc_type;
+
+   (*callerptr) = 0;
    
    /* Find something like prefix://host */
    host = 0;
@@ -40,7 +43,7 @@ struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...)
    if (!host)
    {
       syslog(LOG_ERR,"%s: \"%s\" not in prefix://host format.",__func__,prefixhost);
-      return 0;
+      return -1;
    }
    
    /* Attempt to find type among those listed */
@@ -52,25 +55,26 @@ struct bt_rpc_caller * bt_rpc_caller_search_create(char * prefixhost, ...)
    if (!rpc_type)
    {
       syslog(LOG_ERR,"%s: Could not find RPC to match prefix \"%s\".",__func__,prefix);
-      return 0;
+      return -1;
    }
     
     /* Create the caller */
-    return bt_rpc_caller_create(rpc_type,host);
+    return bt_rpc_caller_create(callerptr,rpc_type,host);
 }
 
 
 /* Define what a server is */
-struct bt_rpc_server * bt_rpc_server_create()
+int bt_rpc_server_create(struct bt_rpc_server ** serverptr)
 {
    struct bt_rpc_server * s;
    
    /* Create */
+   (*serverptr) = 0;
    s = (struct bt_rpc_server *) malloc(sizeof(struct bt_rpc_server));
    if (!s)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -80,8 +84,9 @@ struct bt_rpc_server * bt_rpc_server_create()
    s->listeners_num = 0;
    s->callees = 0;
    s->callees_num = 0;
-   
-   return s;
+
+   (*serverptr) = s;
+   return 0;
 }
 
 int bt_rpc_server_destroy(struct bt_rpc_server * s)
@@ -146,7 +151,7 @@ int bt_rpc_server_add_listener(struct bt_rpc_server * s, const struct bt_rpc_typ
    struct bt_rpc_listener * l;
    
    /* Attempt to make the new listener */
-   l = bt_rpc_listener_create(type);
+   bt_rpc_listener_create(&l,type);
    if (!l)
    {
       syslog(LOG_ERR,"%s: Could not create listener.",__func__);
@@ -197,7 +202,7 @@ int bt_rpc_server_select_post(struct bt_rpc_server * s, fd_set * read_set)
    if (FD_ISSET(s->listeners[i]->fd,read_set))
    {
       struct bt_rpc_callee * callee;
-      callee = bt_rpc_listener_callee_create(s->listeners[i]);
+      bt_rpc_listener_callee_create(&callee, s->listeners[i]);
       if (!callee)
       {
          syslog(LOG_ERR,"%s: Could not create callee from listener.",__func__);

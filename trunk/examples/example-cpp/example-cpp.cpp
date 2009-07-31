@@ -33,8 +33,6 @@ int main(int argc, char ** argv)
       return -1;
    }
 
-   
-
    /* Lock all memory, to prevent it from being swapped to disk ... */
    mlockall(MCL_CURRENT | MCL_FUTURE);
 
@@ -56,7 +54,7 @@ int main(int argc, char ** argv)
    while (getch()!=10) bt_os_usleep(10000);
 
    /* Open the WAM given as the first program argument */
-   wam = bt_wam_create(argv[1]);
+   bt_wam_create(&wam,argv[1]);
    if (!wam)
    {
       printf("Could not open WAM.\n");

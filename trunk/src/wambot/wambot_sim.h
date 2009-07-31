@@ -86,7 +86,8 @@ struct bt_wambot_sim
  * This function creates a new wambot_sim object, given a libconfig
  * configuration group.
  */
-struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config );
+int bt_wambot_sim_create(struct bt_wambot_sim ** wambotptr,
+                         config_setting_t * config);
 
 /** bt_wambot_sim destroy function.
  *

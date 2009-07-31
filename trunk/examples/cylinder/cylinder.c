@@ -141,7 +141,7 @@ int main(int argc, char ** argv)
    clear();
    
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create(argv[1]);
+   bt_wam_create(&wam,argv[1]);
    if (!wam)
    {
       printf("Could not open the WAM.\n");
@@ -197,7 +197,7 @@ int main(int argc, char ** argv)
             /* Show HOLDING */
             mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
             
-            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
+            mvprintw(line++, 0, "     Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
             
             mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             
@@ -282,7 +282,7 @@ int main(int argc, char ** argv)
             bt_wam_teach_end(wam);
             break;
          case '.':
-            bt_wam_playback(wam);
+            bt_wam_run(wam);
             break;
          /* cyl refgen stuff */
          case 't': /* top of the cylinder */
@@ -297,12 +297,8 @@ int main(int argc, char ** argv)
             break;
          case 'R': /* record the radius function of height */
             if (!cyl) break;
-            bt_wam_local_teach_start_custom(wam_local,(struct bt_refgen *)cyl);
-            break;
-         case 'r': /* end record */
-            if (!cyl) break;
-            bt_wam_local_teach_end_custom(wam_local);
-            refgen_cylinder_init(cyl);
+            bt_wam_local_refgen_use(wam_local,(struct bt_refgen *)cyl);
+            bt_wam_teach_start(wam);
             break;
          case 'u': /* Use our surface refgen! */
             if (!cyl) break;

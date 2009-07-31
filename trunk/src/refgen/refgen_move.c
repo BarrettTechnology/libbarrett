@@ -27,20 +27,21 @@ const struct bt_refgen_type * bt_refgen_move = &bt_refgen_move_type;
 
 
 /* refgen-specific creation function */
-struct bt_refgen * bt_refgen_move_create(
+int bt_refgen_move_create(struct bt_refgen ** refgenptr,
    gsl_vector * cur_pos, gsl_vector * cur_vel, gsl_vector * dest,
    double vel, double acc)
 {
    struct bt_refgen_move * r;
-   
+
+   (*refgenptr) = 0;
    r = (struct bt_refgen_move *) malloc( sizeof(struct bt_refgen_move) );
-   if (!r) return 0;
+   if (!r) return -1;
    
    /* Set the type */
    r->base.type = bt_refgen_move;
    
    /* Make a new spline, starting at the current position */
-   r->spline = bt_spline_create(cur_pos,BT_SPLINE_MODE_ARCLEN);
+   bt_spline_create(&r->spline,cur_pos,BT_SPLINE_MODE_ARCLEN);
    
    /* Add the destination as a second point */
    bt_spline_add( r->spline, dest, 0.0 ); /* The 0.0 is meaningless for ARCLEN type */
@@ -50,11 +51,12 @@ struct bt_refgen * bt_refgen_move_create(
    
    /* Make a new profile, using the spline length */
    if (cur_vel)
-      r->profile = bt_profile_create(vel, acc, gsl_blas_dnrm2(cur_vel), r->spline->length);
+      bt_profile_create(&r->profile, vel, acc, gsl_blas_dnrm2(cur_vel), r->spline->length);
    else
-      r->profile = bt_profile_create(vel, acc, 0, r->spline->length);
-   
-   return (struct bt_refgen *)r;
+      bt_profile_create(&r->profile, vel, acc, 0, r->spline->length);
+
+   (*refgenptr) = (struct bt_refgen *)r;
+   return 0;
 }
 
 

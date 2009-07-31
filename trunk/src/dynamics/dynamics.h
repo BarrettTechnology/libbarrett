@@ -199,14 +199,15 @@ struct bt_dynamics
  * file does not match the expected number.  It is also necessary to pass a
  * previously-created bt_kinematics object for kinematics information.
  *
+ * \param[out] dynptr The bt_dynamics object on success, or 0 on failure
  * \param[in] dynconfig Dynamics configuration, from libconfig
  * \param[in] ndofs Expected number of moving links
  * \param[in] kin Previously-created bt_kinematics object describing robot
- * \return The bt_dynamics object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_dynamics * bt_dynamics_create(config_setting_t * dynconfig,
-                                        int ndofs,
-                                        struct bt_kinematics * kin);
+int bt_dynamics_create(struct bt_dynamics ** dynptr,
+                       config_setting_t * dynconfig, int ndofs,
+                       struct bt_kinematics * kin);
 
 
 /** Destroy a bt_dynamics object.

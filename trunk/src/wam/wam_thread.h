@@ -19,7 +19,9 @@ struct bt_wam_thread_helper
    int is_setup;
    int setup_failed;
 };
-struct bt_wam_thread_helper * bt_wam_thread_helper_create(struct bt_wam_local * wam, config_setting_t * config);
+int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr,
+                                struct bt_wam_local * wam,
+                                config_setting_t * config);
 void bt_wam_thread_helper_destroy(struct bt_wam_thread_helper * helper);
 
 #endif /* BT_WAM_THREAD_H */

@@ -163,7 +163,7 @@ int main(int argc, char ** argv)
 
    /* Open the WAM (or WAMs!) */
    char str[50] = "wam7";
-   wam = bt_wam_create(str);
+   bt_wam_create(&wam,str);
    if (!wam)
    {
       printw("Could not open the Wam.");
@@ -320,7 +320,7 @@ void textUI(struct bt_wam * wam, struct bt_wam_local * wam_local)
          /* Show HOLDING */
          mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
          
-         mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
+         mvprintw(line++, 0, "     Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
          
          mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
          
@@ -392,7 +392,7 @@ void textUI(struct bt_wam * wam, struct bt_wam_local * wam_local)
                bt_wam_teach_end(wam);
                break;
             case '.':
-               bt_wam_playback(wam);
+               bt_wam_run(wam);
                break;
             case 'u': /* Use our surface refgen! */
                if (!tri) break;

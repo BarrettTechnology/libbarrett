@@ -75,7 +75,8 @@ struct bt_wambot_phys
  * This function creates a new wambot_phys object, given a libconfig
  * configuration group.
  */
-struct bt_wambot_phys * bt_wambot_phys_create( config_setting_t * config );
+int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
+                          config_setting_t * config);
 
 /** bt_wambot_phys destroy function.
  *

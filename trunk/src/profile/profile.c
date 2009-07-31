@@ -38,11 +38,13 @@
 
 /* Public functions */
 
-struct bt_profile * bt_profile_create(double vel, double acc, double v_init, double length)
+int bt_profile_create(struct bt_profile ** profileptr, double vel,
+                      double acc, double v_init, double length)
 {
    struct bt_profile * profile;
    double v_diff;
-   
+
+   (*profileptr) = 0;
    profile = (struct bt_profile *) malloc(sizeof(struct bt_profile));
    
    /* Save parameters */
@@ -69,7 +71,8 @@ struct bt_profile * bt_profile_create(double vel, double acc, double v_init, dou
       /* We need to readjust the acceleration */
       profile->acc = v_init / profile->time_end;
       
-      return profile;
+      (*profileptr) = profile;
+      return 0;
    }
    
    
@@ -92,7 +95,8 @@ struct bt_profile * bt_profile_create(double vel, double acc, double v_init, dou
       profile->time_end = profile->time_startdown + v_top / acc;
       profile->s_end = profile->s_startdown + 0.5 * v_top * v_top / acc; /* Let's home this is length! */
       
-      return profile;
+      (*profileptr) = profile;
+      return 0;
    }
    
    /* OK, we're going to plateau, either up or down
@@ -109,7 +113,8 @@ struct bt_profile * bt_profile_create(double vel, double acc, double v_init, dou
    profile->s_end = length;
    profile->time_end = profile->time_startdown + vel / acc;
 
-   return profile;
+   (*profileptr) = profile;
+   return 0;
 }
 
 int bt_profile_destroy( struct bt_profile * profile )

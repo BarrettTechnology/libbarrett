@@ -167,12 +167,13 @@ struct bt_bus
 
 /** Create a bt_bus given a configuration and an update type.
  *
+ * \param[out] busptr The bt_bus object on success, or 0 on failure
  * \param[in] busconfig Bus configuration, from libconfig
  * \param[in] update_type Update type
- * \return The bt_bus object on success, or 0 on failure
+ * \retval 0 Success
  */
-struct bt_bus * bt_bus_create(config_setting_t * busconfig,
-                              enum bt_bus_update_type update_type);
+int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
+                  enum bt_bus_update_type update_type);
 
 
 /** Destroy a bt_bus object.

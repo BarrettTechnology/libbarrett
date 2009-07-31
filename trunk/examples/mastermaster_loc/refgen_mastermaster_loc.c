@@ -14,17 +14,18 @@ static int get_start(struct bt_refgen * base, gsl_vector ** start);
 static int get_total_time(struct bt_refgen * base, double * time);
 static int get_num_points(struct bt_refgen * base, int * points);
 static int start(struct bt_refgen * base);
-static int eval(struct bt_refgen * base, gsl_vector * ref);
-static int trigger(struct bt_refgen * base);
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref);
 static const struct bt_refgen_type refgen_mastermaster_loc_type = {
    "mastermaster-loc",
+   0, /* create */
    &destroy,
+   0, 0, 0, 0, 0, /* teach functions */
+   0, 0, /* load/save functions */
    &get_start,
    &get_total_time,
    &get_num_points,
    &start,
-   &eval,
-   &trigger
+   &eval
 };
 const struct bt_refgen_type * refgen_mastermaster_loc = &refgen_mastermaster_loc_type;
 
@@ -112,7 +113,7 @@ static int start(struct bt_refgen * base)
    return 0;
 }
 
-static int eval(struct bt_refgen * base, gsl_vector * ref)
+static int eval(struct bt_refgen * base, double time, gsl_vector * ref)
 {
    struct refgen_mastermaster_loc * r = (struct refgen_mastermaster_loc *) base;
    
@@ -136,7 +137,3 @@ static int eval(struct bt_refgen * base, gsl_vector * ref)
 
    return 0;
 }
-
-/* We don't teach ... */
-static int trigger(struct bt_refgen * base)
-{ return -1; }

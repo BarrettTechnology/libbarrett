@@ -95,12 +95,14 @@ struct bt_calgrav
  * from the configuration given by gravconfig. It is also necessary to pass a
  * previously-created bt_kinematics object for kinematics information.
  *
+ * \param[out] gravptr The bt_calgrav object on success, or 0 on failure
  * \param[in] gravconfig Calgrav configuration, from libconfig
  * \param[in] kin Previously-created bt_kinematics object describing robot
- * \return The bt_calgrav object on success, or 0 on failure
+ * \retval 0 Success 
  */
-struct bt_calgrav * bt_calgrav_create(config_setting_t * gravconfig,
-                                      struct bt_kinematics * kin);
+int bt_calgrav_create(struct bt_calgrav ** gravptr,
+                      config_setting_t * gravconfig,
+                      struct bt_kinematics * kin);
 
 
 /** Destroy a bt_calgrav object.

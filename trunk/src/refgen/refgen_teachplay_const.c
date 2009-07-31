@@ -28,13 +28,17 @@ static const struct bt_refgen_type bt_refgen_teachplay_const_type = {
 const struct bt_refgen_type * bt_refgen_teachplay_const = &bt_refgen_teachplay_const_type;
 
 /* Trajectory-specific create function */
-struct bt_refgen_teachplay_const * bt_refgen_teachplay_const_create(
-   double * elapsed_time, gsl_vector * cur_position, char * filename)
+bt_refgen_teachplay_const_create(
+                       struct bt_refgen_teachplay_const ** refgenptr,
+                       double * elapsed_time, gsl_vector * cur_position,
+                       char * filename))
 {
    struct bt_refgen_teachplay_const * t;
    int i;
+
+   (*refgenptr) = 0;
    t = (struct bt_refgen_teachplay_const *) malloc( sizeof(struct bt_refgen_teachplay_const) );
-   if (!t) return 0;
+   if (!t) return -1;
    
    /* Set the type */
    t->base.type = bt_refgen_teachplay_const;
@@ -53,13 +57,14 @@ struct bt_refgen_teachplay_const * bt_refgen_teachplay_const_create(
    /* Create a log object (a time field, plus a field for each dimension) */
    t->filename = (char *) malloc( strlen(filename) + 1 );
    strcpy(t->filename,filename);
-   t->log = bt_log_create(1 + cur_position->size);
+   bt_log_create(&t->log, 1 + cur_position->size);
    bt_log_addfield( t->log, &t->time, 1, BT_LOG_DOUBLE, "time" );
    for (i=0; i<cur_position->size; i++)
       bt_log_addfield( t->log, gsl_vector_ptr(cur_position,i), 1, BT_LOG_DOUBLE, "pos" );
    bt_log_init( t->log, 1000, filename );
-   
-   return t;
+
+   (*refgenptr) = t;
+   return 0;
 }
 
 int bt_refgen_teachplay_const_flush(struct bt_refgen_teachplay_const * t)
@@ -95,7 +100,7 @@ int bt_refgen_teachplay_const_save(struct bt_refgen_teachplay_const * t)
    /* Get the first point, create the spline  */
    bt_log_read_get( logread, 0 );
    gsl_vector_memcpy( t->start, position );
-   t->spline = bt_spline_create( position, BT_SPLINE_MODE_ARCLEN );
+   bt_spline_create(&t->spline,position,BT_SPLINE_MODE_ARCLEN);
    
    /* Iterate through every subsequent point; don't mind the time, for now */
    while ( !bt_log_read_get( logread, 0 ) )
@@ -105,7 +110,7 @@ int bt_refgen_teachplay_const_save(struct bt_refgen_teachplay_const * t)
    bt_spline_init( t->spline, 0, 0 );
    
    /* Make a new profile */
-   t->profile = bt_profile_create(0.5, 0.5, 0.0, t->spline->length);
+   bt_profile_create(&t->profile, 0.5, 0.5, 0.0, t->spline->length);
    
    /* Clean up after outselves ... */
    bt_log_read_destroy( logread );

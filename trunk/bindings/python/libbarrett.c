@@ -92,7 +92,7 @@ static int Wam_init(Wam * self, PyObject * args, PyObject * kwds)
       return -1;
    
    /* Attempt to initialize the wam */
-   self->wam = bt_wam_create(wamname);
+   bt_wam_create(&self->wam, wamname);
    if (!self->wam)
       return -1;
    
@@ -386,7 +386,7 @@ static int WamList_init(WamList * self, PyObject * args, PyObject * kwds)
       return -1;
    
    /* Attempt to initialize the wam_list */
-   self->list = bt_wam_list_create(prefixhost);
+   bt_wam_list_create(&self->list,prefixhost);
    if (!self->list)
       return -1;
    
@@ -546,7 +546,7 @@ static PyObject * DiscoverClient_new(PyTypeObject * type, PyObject * args, PyObj
 static int DiscoverClient_init(DiscoverClient * self, PyObject * args, PyObject * kwds)
 {
    /* Attempt to initialize the wam_list */
-   self->client = bt_discover_client_create();
+   bt_discover_client_create(&self->client);
    if (!self->client)
       return -1;
    

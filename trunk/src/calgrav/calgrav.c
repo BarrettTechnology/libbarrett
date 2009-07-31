@@ -40,7 +40,9 @@
 #include "gsl.h"
 
 
-struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_kinematics * kin )
+int bt_calgrav_create(struct bt_calgrav ** gravptr,
+                      config_setting_t * gravconfig,
+                      struct bt_kinematics * kin)
 {
    int j;
    config_setting_t * mus;
@@ -48,12 +50,13 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    
    /* Check arguments */
    if (gravconfig == 0) return 0;
-   
+
+   (*gravptr) = 0;
    grav = (struct bt_calgrav *) malloc(sizeof(struct bt_calgrav));
    if (!grav)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -70,7 +73,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    gsl_vector_set( grav->world_g, 2, -9.805 );
    
@@ -80,7 +83,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    for (j=0; j<kin->dof; j++) grav->g[j] = 0;
    
@@ -89,7 +92,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    for (j=0; j<kin->dof; j++) grav->mu[j] = 0;
    
@@ -98,7 +101,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    for (j=0; j<kin->dof; j++) grav->t[j] = 0;
    
@@ -107,7 +110,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    for (j=0; j<kin->dof; j++) grav->pt[j] = 0;
    
@@ -118,7 +121,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
    ) {
       syslog(LOG_ERR,"%s: grav:mus not a list with %d elements.",__func__,kin->dof);
       bt_calgrav_destroy(grav);
-      return 0;
+      return -1;
    }
    
    /* Create each vector */
@@ -140,7 +143,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
       ) {
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          bt_calgrav_destroy(grav);
-         return 0;
+         return -1;
       }
       
       /* Grab the mu value from the configuration */
@@ -150,7 +153,7 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
       ) {
          syslog(LOG_ERR,"%s: grav:mu #%d not a 3-element list.",__func__,j);
          bt_calgrav_destroy(grav);
-         return 0;
+         return -1;
       }
       
       for (i=0; i<3; i++)
@@ -168,12 +171,13 @@ struct bt_calgrav * bt_calgrav_create( config_setting_t * gravconfig, struct bt_
             default:
                syslog(LOG_ERR,"%s: that's not a number!",__func__);
                bt_calgrav_destroy(grav);
-               return 0;
+               return -1;
          }
       }
    }
-   
-   return grav;
+
+   (*gravptr) = grav;
+   return 0;
 }
 
 

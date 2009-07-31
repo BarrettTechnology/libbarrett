@@ -51,11 +51,15 @@ static const struct bt_control_type bt_control_joint_type = {
 const struct bt_control_type * bt_control_joint = &bt_control_joint_type;
 
 /* Controller-specific functions */
-struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
-   struct bt_dynamics * dyn, gsl_vector * jposition, gsl_vector * jvelocity)
+int bt_control_joint_create(struct bt_control_joint ** conptr,
+                            config_setting_t * config,
+                            struct bt_dynamics * dyn,
+                            gsl_vector * jposition, gsl_vector * jvelocity)
 {
    int n;
    struct bt_control_joint * c;
+
+   (*conptr) = 0;
    c = (struct bt_control_joint *) malloc( sizeof(struct bt_control_joint) );
    n = jposition->size;
    
@@ -95,7 +99,7 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
       {
          syslog(LOG_ERR,"%s: The 'pids' configuration is not a %d-element list.",__func__,n);
          bt_control_joint_destroy(c);
-         return 0;
+         return -1;
       }
       /* Read in the PID values */
       for (j=0; j<n; j++)
@@ -110,7 +114,7 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
          {
             syslog(LOG_ERR,"%s: No p, i, and/or d value",__func__);
             bt_control_joint_destroy(c);
-            return 0;
+            return -1;
          }
          
          gsl_vector_set(c->Kp,j,p);
@@ -118,8 +122,9 @@ struct bt_control_joint * bt_control_joint_create(config_setting_t * config,
          gsl_vector_set(c->Kd,j,d);
       }
    }
-   
-   return c;
+
+   (*conptr) = c;
+   return 0;
 }
 
 void bt_control_joint_destroy(struct bt_control_joint * c)

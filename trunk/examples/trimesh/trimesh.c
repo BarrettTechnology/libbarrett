@@ -31,7 +31,6 @@
 
 /* Include the high-level WAM header file */
 #include <libbarrett/wam.h>
-#include <libbarrett/wam_custom.h>
 #include <libbarrett/wam_local.h>
 #include <libbarrett/gsl.h>
 
@@ -145,7 +144,7 @@ int main(int argc, char ** argv)
    /* Look for (-q) or (-ns) flags?? */
    
    /* Open the WAM (or WAMs!) */
-   wam = bt_wam_create(argv[1]);
+   bt_wam_create(&wam, argv[1]);
    if (!wam)
    {
       endwin();
@@ -205,7 +204,7 @@ int main(int argc, char ** argv)
             /* Show HOLDING */
             mvprintw(line++, 0, "    Holding: %s", bt_wam_is_holding(wam) ? "On" : "Off" );
             
-            mvprintw(line++, 0, "     Refgen: %s", bt_wam_get_current_refgen_name(wam,buf) );
+            mvprintw(line++, 0, "     Refgen: %s", bt_wam_refgen_active_name(wam,buf) );
             
             mvprintw(line++, 0, " MoveIsDone: %s", bt_wam_moveisdone(wam) ? "Done" : "Moving" );
             
@@ -282,7 +281,7 @@ int main(int argc, char ** argv)
             bt_wam_teach_end(wam);
             break;
          case '.':
-            bt_wam_playback(wam);
+            bt_wam_run(wam);
             break;
          /* tri refgen stuff */
          case 'u': /* Use our surface refgen! */

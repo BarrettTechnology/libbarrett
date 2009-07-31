@@ -39,7 +39,7 @@ enum bt_wam_list_entry_status
 
 /* List the status of available WAMs at a location
  * (use 0 or "" for "locally") */
-struct bt_wam_list * bt_wam_list_create(char * wamloc);
+int bt_wam_list_create(struct bt_wam_list ** listptr, char * wamloc);
 int bt_wam_list_destroy(struct bt_wam_list * list);
 
 int bt_wam_list_get_num(struct bt_wam_list * list);
@@ -63,8 +63,8 @@ enum bt_wam_opt {
  *
  * return values:
  *   0 (null pointer) - config or memory failure */
-struct bt_wam * bt_wam_create(char * wamname);
-struct bt_wam * bt_wam_create_opt(char * wamname, enum bt_wam_opt opts);
+int bt_wam_create(struct bt_wam ** wamptr, char * wamname);
+int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt opts);
 
 /* Get the local WAM if it exists */
 struct bt_wam_local * bt_wam_get_local(struct bt_wam * wam);

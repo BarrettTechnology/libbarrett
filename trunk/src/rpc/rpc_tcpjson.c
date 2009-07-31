@@ -27,12 +27,13 @@
 #include "rpc_tcpjson.h"
 
 /* Define the type (see rpc.h for details) */
-static struct bt_rpc_listener * listener_create();
+static int listener_create(struct bt_rpc_listener ** listenerptr);
 static int listener_destroy(struct bt_rpc_listener * base);
-static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * base);
+static int listener_callee_create(struct bt_rpc_callee ** calleeptr,
+                                  struct bt_rpc_listener * base);
 static int callee_destroy(struct bt_rpc_callee * base);
 static int callee_handle(struct bt_rpc_callee * base, struct bt_rpc_server * s);
-static struct bt_rpc_caller * caller_create(char * host);
+static int caller_create(struct bt_rpc_caller ** callerptr, char * host);
 static int caller_destroy(struct bt_rpc_caller *);
 static int caller_handle(struct bt_rpc_caller *, const struct bt_rpc_interface_funcs * funcs, const char * function, ...);
 
@@ -53,18 +54,19 @@ const struct bt_rpc_type * bt_rpc_tcpjson = &bt_rpc_tcpjson_type;
 static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s, char * msg);
 
 /* Create a new listener */
-static struct bt_rpc_listener * listener_create()
+static int listener_create(struct bt_rpc_listener ** listenerptr)
 {
    int err;
    struct bt_rpc_tcpjson_listener * l;
    struct sockaddr_in listener_addr;
    
    /* Create */
+   (*listenerptr) = 0;
    l = (struct bt_rpc_tcpjson_listener *) malloc(sizeof(struct bt_rpc_tcpjson_listener));
    if (!l)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -77,7 +79,7 @@ static struct bt_rpc_listener * listener_create()
    {
       syslog(LOG_ERR,"%s: Could not create socket.",__func__);
       listener_destroy(&l->base);
-      return 0;
+      return -1;
    }
    
    /* Bind to a port */
@@ -89,7 +91,7 @@ static struct bt_rpc_listener * listener_create()
    {
       syslog(LOG_ERR,"%s: Could not bind to port %d.",__func__,PORT);
       listener_destroy(&l->base);
-      return 0;
+      return -1;
    }
 
    /* Start listening */
@@ -98,11 +100,12 @@ static struct bt_rpc_listener * listener_create()
    {
       syslog(LOG_ERR,"%s: could not listen on socket.",__func__);
       listener_destroy(&l->base);
-      return 0;
+      return -1;
    }
    
    /* Success! */
-   return &l->base;
+   (*listenerptr) = &l->base;
+   return 0;
 }
 
 static int listener_destroy(struct bt_rpc_listener * base)
@@ -117,7 +120,8 @@ static int listener_destroy(struct bt_rpc_listener * base)
    return 0;
 }
 
-static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * base)
+static int listener_callee_create(struct bt_rpc_callee ** calleeptr,
+                                  struct bt_rpc_listener * base)
 {
    struct bt_rpc_tcpjson_listener * l;
    int new;
@@ -126,6 +130,8 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    struct bt_rpc_tcpjson_callee * c;
    
    l = (struct bt_rpc_tcpjson_listener *)base;
+
+   (*calleeptr) = 0;
    
    /* Accept to create new socket */
    new_addr_size = sizeof(new_addr);
@@ -133,7 +139,7 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    if (new == -1)
    {
       syslog(LOG_ERR,"%s: Could not accept new connection.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Print to the log */
@@ -146,7 +152,7 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       close(new);
-      return 0;
+      return -1;
    }
    
    c->strbuf = (char *) malloc(302*sizeof(char));
@@ -155,7 +161,7 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       close(new);
       free(c);
-      return 0;
+      return -1;
    }
    c->strbuf_len = 302;
 
@@ -166,7 +172,7 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
       free(c->strbuf);
       close(new);
       free(c);
-      return 0;
+      return -1;
    }
    c->doublebuf_len = 20;
    
@@ -177,7 +183,8 @@ static struct bt_rpc_callee * listener_callee_create(struct bt_rpc_listener * ba
    c->buf_already = 0;
    
    /* Success! */
-   return (struct bt_rpc_callee *)c;
+   (*calleeptr) = (struct bt_rpc_callee *)c;
+   return 0;
 }
 
 static int callee_destroy(struct bt_rpc_callee * base)
@@ -314,7 +321,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
       int myint3;
       char * str;
       void * vptr;
-      case BT_RPC_FUNC_OBJ_STR_CREATE:
+      case BT_RPC_FUNC_INT_POBJ_STR_CREATE:
          /* Check for one string parameter */
          if (json_object_array_length(params)!=1)
          {
@@ -330,7 +337,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
             return -1;
          }
          /* Cast and call the create funcion */
-         vptr = (*(void * (*)(char *))(func->ptr))(str);
+         myint = (*(int (*)(void **, char *))(func->ptr))(&vptr,str);
          /* Save the object into the interface, if it was created */
          if (vptr)
             bt_rpc_interface_object_add(interface, vptr);
@@ -338,7 +345,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          {
             int err;
             /* Return success */
-            sprintf(c->writebuf,"{\"result\":%d}\n",(int)vptr);
+            sprintf(c->writebuf,"{\"result\":[%d,%d]}\n",myint,(int)vptr);
             err = write( c->base.fd, c->writebuf,
                          strlen(c->writebuf) );
             /* What should we do with this error??? */
@@ -371,7 +378,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          json_object_put(req);
          return 0;
 #endif
-      case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
+      case BT_RPC_FUNC_INT_POBJ_STR_INT_CREATE:
          /* Check for one string, one int parameter */
          if (json_object_array_length(params)!=2)
          {
@@ -388,7 +395,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          }
          myint2 = json_object_get_int(json_object_array_get_idx(params,1));
          /* Cast and call the create funcion */
-         vptr = (*(void * (*)(char *,int))(func->ptr))(str,myint2);
+         myint = (*(int (*)(void **,char *,int))(func->ptr))(&vptr,str,myint2);
          /* Save the object into the interface, if it was created */
          if (vptr)
             bt_rpc_interface_object_add(interface, vptr);
@@ -396,7 +403,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
          {
             int err;
             /* Return success */
-            sprintf(c->writebuf,"{\"result\":%d}\n",(int)vptr);
+            sprintf(c->writebuf,"{\"result\":[%d,%d]}\n",myint,(int)vptr);
             err = write( c->base.fd, c->writebuf,
                          strlen(c->writebuf) );
             /* What should we do with this error??? */
@@ -717,7 +724,7 @@ static int msg_parse(struct bt_rpc_tcpjson_callee * c, struct bt_rpc_server * s,
 }
 
 
-static struct bt_rpc_caller * caller_create(char * host)
+static int caller_create(struct bt_rpc_caller ** callerptr, char * host)
 {
    int err;
    struct bt_rpc_tcpjson_caller * cr;
@@ -725,11 +732,12 @@ static struct bt_rpc_caller * caller_create(char * host)
    struct hostent * hostinfo;
    
    /* Create */
+   (*callerptr) = 0;
    cr = (struct bt_rpc_tcpjson_caller *) malloc(sizeof(struct bt_rpc_tcpjson_caller));
    if (!cr)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    
    /* Initialize */
@@ -742,7 +750,7 @@ static struct bt_rpc_caller * caller_create(char * host)
    {
       syslog(LOG_ERR,"%s: Could not create socket.",__func__);
       caller_destroy(&cr->base);
-      return 0;
+      return -1;
    }
    
    /* Look up host */
@@ -753,7 +761,7 @@ static struct bt_rpc_caller * caller_create(char * host)
    {
       syslog(LOG_ERR,"%s: Could not find host %s.",__func__,host);
       caller_destroy(&cr->base);
-      return 0;
+      return -1;
    }
    callee_addr.sin_addr = *(struct in_addr *)(hostinfo->h_addr_list[0]);
    
@@ -763,11 +771,12 @@ static struct bt_rpc_caller * caller_create(char * host)
    {
       syslog(LOG_ERR,"%s: Could not connect to host %s.",__func__,host);
       caller_destroy(&cr->base);
-      return 0;
+      return -1;
    }
    
    /* Success! */
-   return (struct bt_rpc_caller *)cr;
+   (*callerptr) = (struct bt_rpc_caller *)cr;
+   return 0;
 }
 
 static int caller_destroy(struct bt_rpc_caller * base)
@@ -811,7 +820,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       int myint;
       int myint2;
       double * doubleptr;
-      case BT_RPC_FUNC_OBJ_STR_CREATE:
+      case BT_RPC_FUNC_INT_POBJ_STR_CREATE:
          mystr = va_arg(ap, char *);
          sprintf(cr->buf,"{'method':'%s','params':['%s']}\n", function, mystr);
          break;
@@ -820,7 +829,7 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
          sprintf(cr->buf,"{'method':'%s','params':[]}\n", function);
          break;
 #endif
-      case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
+      case BT_RPC_FUNC_INT_POBJ_STR_INT_CREATE:
          mystr = va_arg(ap, char *);
          myint = va_arg(ap, int);
          sprintf(cr->buf,"{'method':'%s','params':['%s',%d]}\n", function, mystr, myint);
@@ -943,14 +952,21 @@ static int caller_handle(struct bt_rpc_caller * base, const struct bt_rpc_interf
       char ** strptr;
       int * intptr;
 
-      case BT_RPC_FUNC_OBJ_STR_CREATE:
+      case BT_RPC_FUNC_INT_POBJ_STR_CREATE:
 #if 0
       case BT_RPC_FUNC_OBJ_CREATE:
 #endif
-      case BT_RPC_FUNC_OBJ_STR_INT_CREATE:
-         vptr = (void *) json_object_get_int(json_object_object_get(req,"result"));
+      case BT_RPC_FUNC_INT_POBJ_STR_INT_CREATE:
+         vptr = (void *) json_object_get_int(
+                            json_object_array_get_idx(
+                               json_object_object_get(req,"result"),0) );
+         myint = json_object_get_int(
+                            json_object_array_get_idx(
+                               json_object_object_get(req,"result"),1) );
          result = va_arg(ap, void *);
+         intptr = va_arg(ap, int *);
          *((void **)result) = vptr;
+         (*intptr) = myint;
          break;
       case BT_RPC_FUNC_INT_OBJ_DESTROY:
       case BT_RPC_FUNC_INT_OBJ:

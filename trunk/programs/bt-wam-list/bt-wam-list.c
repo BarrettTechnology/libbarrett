@@ -35,7 +35,7 @@ int main(int argc, char ** argv)
    char buf2[100];
    int i;
    
-   list = bt_wam_list_create("tcp+json://wam15");
+   bt_wam_list_create(&list,"tcp+json://wam15");
    if (!list)
    {
       printf("Could not get wam list.\n");

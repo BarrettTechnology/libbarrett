@@ -32,16 +32,20 @@ static void rt_wam_destroy(struct bt_wam_local * wam);
 
 
 
-struct bt_wam_thread_helper * bt_wam_thread_helper_create(struct bt_wam_local * wam, config_setting_t * config)
+int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr,
+                                struct bt_wam_local * wam,
+                                config_setting_t * config)
 {
    struct bt_wam_thread_helper * helper;
+   (*helperptr) = 0;
    helper = (struct bt_wam_thread_helper *) malloc(sizeof(struct bt_wam_thread_helper));
-   if (!helper) return 0;
+   if (!helper) return -1;
    helper->wam = wam;
    helper->config = config;
    helper->is_setup = 0;
    helper->setup_failed = 0;
-   return helper;
+   (*helperptr) = helper;
+   return 0;
 }
 void bt_wam_thread_helper_destroy(struct bt_wam_thread_helper * helper)
 {
@@ -228,7 +232,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
  
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
-   wam->wambot = (struct bt_wambot *) bt_wambot_phys_create( config_setting_get_member(wamconfig,"wambot") );
+   bt_wambot_phys_create((struct bt_wambot_phys **)(&wam->wambot), config_setting_get_member(wamconfig,"wambot") );
    if (!wam->wambot)
    {
       syslog(LOG_ERR,"%s: Could not create wambot.",__func__);
@@ -237,7 +241,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
    
    /* Create a kinematics object */
-   wam->kin = bt_kinematics_create( config_setting_get_member(wamconfig,"kinematics"), wam->wambot->dof );
+   bt_kinematics_create(&wam->kin, config_setting_get_member(wamconfig,"kinematics"), wam->wambot->dof);
    if (!wam->kin)
    {
       syslog(LOG_ERR,"%s: Could not create kinematics.",__func__);
@@ -246,7 +250,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
 
    /* Create a dynamics object */
-   wam->dyn = bt_dynamics_create( config_setting_get_member(wamconfig,"dynamics"), wam->wambot->dof, wam->kin );
+   bt_dynamics_create(&wam->dyn, config_setting_get_member(wamconfig,"dynamics"), wam->wambot->dof, wam->kin);
    if (!wam->dyn)
    {
       syslog(LOG_ERR,"%s: Could not create dynamics.",__func__);
@@ -255,7 +259,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
    
    /* Create a gravity object */
-   wam->grav = bt_calgrav_create( config_setting_get_member(wamconfig,"calgrav"), wam->kin );
+   bt_calgrav_create(&wam->grav, config_setting_get_member(wamconfig,"calgrav"), wam->kin);
    if (!wam->grav)
    {
       syslog(LOG_ERR,"%s: Could not create gravity compensation.",__func__);
@@ -264,9 +268,11 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
 
    /* Create a joint-space controller */
-   wam->con_joint = bt_control_joint_create(config_setting_get_member(wamconfig,"control_joint"),
-                                            wam->dyn,
-                                            wam->wambot->jposition, wam->wambot->jvelocity);
+   bt_control_joint_create(&wam->con_joint,
+                           config_setting_get_member(wamconfig,
+                                                     "control_joint"),
+                           wam->dyn, wam->wambot->jposition,
+                           wam->wambot->jvelocity);
    if (!wam->con_joint)
    {
       syslog(LOG_ERR,"%s: Could not create joint-space controller.",__func__);
@@ -275,8 +281,11 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
 
    /* Create a legacy joint-space controller */
-   wam->con_joint_legacy = bt_control_joint_legacy_create(config_setting_get_member(wamconfig,"control_joint_legacy"),
-                                            wam->wambot->jposition, wam->wambot->jvelocity);
+   bt_control_joint_legacy_create(&wam->con_joint_legacy,
+                                  config_setting_get_member(wamconfig,
+                                                   "control_joint_legacy"),
+                                  wam->wambot->jposition,
+                                  wam->wambot->jvelocity);
    if (!wam->con_joint_legacy)
    {
       syslog(LOG_ERR,"%s: Could not create legacy joint-space controller.",__func__);
@@ -285,8 +294,10 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
    
    /* Create a Cartesian-xyz-space controller */
-   wam->con_cartesian_xyz = bt_control_cartesian_xyz_create(config_setting_get_member(wamconfig,"control_cartesian_xyz"),
-                                            wam->kin, wam->dyn );
+   bt_control_cartesian_xyz_create(&wam->con_cartesian_xyz,
+                                   config_setting_get_member(wamconfig,
+                                                    "control_cartesian_xyz"),
+                                   wam->kin, wam->dyn);
    if (!wam->con_cartesian_xyz)
    {
       syslog(LOG_ERR,"%s: Could not create Cartesian-xyz-space controller.",__func__);
@@ -295,8 +306,10 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    }
    
    /* Create a Cartesian-xyz-q-space controller */
-   wam->con_cartesian_xyz_q = bt_control_cartesian_xyz_q_create(config_setting_get_member(wamconfig,"control_cartesian_xyz_q"),
-                                            wam->kin, wam->dyn );
+   bt_control_cartesian_xyz_q_create(&wam->con_cartesian_xyz_q,
+                                     config_setting_get_member(wamconfig,
+                                                  "control_cartesian_xyz_q"),
+                                     wam->kin, wam->dyn );
    if (!wam->con_cartesian_xyz_q)
    {
       syslog(LOG_ERR,"%s: Could not create Cartesian-xyz-q-space controller.",__func__);
@@ -317,7 +330,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
    wam->refgen_types_num = 2;
 
    /* Set up the timer */
-   wam->ts = bt_os_timestat_create(TSNUM);
+   bt_os_timestat_create(&wam->ts, TSNUM);
    if (!wam->ts)
    {
       syslog(LOG_ERR,"%s: Could not create timestat.",__func__);
@@ -329,7 +342,7 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
 
    
    /* Create the ts datalogger */
-   wam->ts_log = bt_log_create( TSNUM+1 );
+   bt_log_create(&wam->ts_log, TSNUM+1);
    if (!wam->ts_log)
    {
       syslog(LOG_ERR,"%s: Could not create ts logger.",__func__);

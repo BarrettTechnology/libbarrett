@@ -137,7 +137,7 @@ struct bt_bus_can
 };
 
 
-struct bt_bus_can * bt_bus_can_create(int port)
+int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 {
    long err;
 
@@ -146,7 +146,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
    if (!dev)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
     
    /* Initialize */
@@ -154,12 +155,13 @@ struct bt_bus_can * bt_bus_can_create(int port)
    dev->mutex = 0;
    dev->iterator = 0;
     
-   dev->mutex = bt_os_mutex_create(BT_OS_RT);
+   bt_os_mutex_create(&dev->mutex, BT_OS_RT);
    if (!dev->mutex)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
    
 #ifdef CANTYPE_PEAKISA
@@ -177,7 +179,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
          syslog(LOG_ERR, "%s: incorrect bus number, cannot open port %d",
                 __func__,port);
          bt_bus_can_destroy(dev);
-         return 0;
+         (*devptr) = 0;
+         return -1;
    }
 
    if (!dev->handle)
@@ -189,7 +192,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
              (port==0) ? "0x300" : "0x320", 
              (port==0) ? "7" : "5");
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
 #endif /* CANTYPE_PEAKISA */
 
@@ -201,7 +205,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
              "%s: CAN_Open(): cannot open device with type=pci, port=%d",
              __func__,port);
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
 #endif /* CANTYPE_PEAKPCI */
       
@@ -215,7 +220,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
    {
       syslog(LOG_ERR, "%s: CAN_Init() failed with %d,", __func__,errno);
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
    
    CAN_ResetFilter(dev->handle);
@@ -232,7 +238,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
       syslog(LOG_ERR, "%s: canOpen() failed with error %ld", __func__, err);
       dev->handle = 0;
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
 
    /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
@@ -242,7 +249,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
       syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld",
              err);
       bt_bus_can_destroy(dev);
-      return 0;
+      (*devptr) = 0;
+      return -1;
    }
    
    allow_msg(dev, 0x0000, 0x03E0); /* Messages sent directly to host*/
@@ -252,7 +260,8 @@ struct bt_bus_can * bt_bus_can_create(int port)
    
    /* Note: Removed private acceptance mask filter stuff. */
 
-   return dev;
+   (*devptr) = dev;
+   return 0;
 }
 
 

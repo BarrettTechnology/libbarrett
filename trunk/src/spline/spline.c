@@ -37,12 +37,13 @@
 #include "interp.h"
 
 
-struct bt_spline * bt_spline_create(gsl_vector * start,
-                                    enum bt_spline_mode mode)
+int bt_spline_create(struct bt_spline ** splineptr, gsl_vector * start,
+                     enum bt_spline_mode mode)
 {
    int i;
    struct bt_spline * spline;
-   
+
+   (*splineptr) = 0;
    spline = (struct bt_spline *) malloc(sizeof(struct bt_spline));
    spline->dimension = start->size;
    spline->mode = mode;
@@ -69,8 +70,9 @@ struct bt_spline * bt_spline_create(gsl_vector * start,
    
    spline->interps = 0;
    spline->acc = 0;
-      
-   return spline;
+
+   (*splineptr) = spline;
+   return 0;
 }
 
 

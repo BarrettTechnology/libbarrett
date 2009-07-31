@@ -64,7 +64,8 @@ struct bt_profile {
 };
 
 /** bt_profile create function */
-struct bt_profile * bt_profile_create(double vel, double acc, double v_init, double length);
+int bt_profile_create(struct bt_profile ** profileptr, double vel,
+                      double acc, double v_init, double length);
 
 /** bt_profile destroy function */
 int bt_profile_destroy( struct bt_profile * profile );

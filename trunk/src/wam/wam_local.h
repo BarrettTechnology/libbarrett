@@ -118,7 +118,8 @@ struct bt_wam_local
    int teaching;
 };
 
-struct bt_wam_local * bt_wam_local_create(char * wamname, enum bt_wam_opt opts);
+int bt_wam_local_create(struct bt_wam_local ** wamptr, char * wamname,
+                        enum bt_wam_opt opts);
 int bt_wam_local_destroy(struct bt_wam_local * wam);
 
 int bt_wam_local_loop_start(struct bt_wam_local * wam);

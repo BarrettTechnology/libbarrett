@@ -97,7 +97,8 @@ static int glue_fill_vector(gsl_vector * vec, config_setting_t * parent, const c
 }
 
 /* NOW, THE GLOBAL FUNCTIONS ... */
-struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
+int bt_wambot_sim_create(struct bt_wambot_sim ** wambotptr,
+                         config_setting_t * config)
 {
    int err;
    struct bt_wambot_sim * wambot;
@@ -108,11 +109,12 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
    if (config == 0) return 0;
    
    /* Make a new wambot */
+   (*wambotptr) = 0;
    wambot = (struct bt_wambot_sim *) malloc(sizeof(struct bt_wambot_sim));
    if (!wambot)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      return -1;
    }
    base = (struct bt_wambot *) wambot;
     
@@ -134,14 +136,14 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
       {
          syslog(LOG_ERR,"%s: No (or zero) dof in configuration.",__func__);
          bt_wambot_sim_destroy(wambot);
-         return 0; 
+         return -1; 
       }
    }
    if (base->dof != 4)
    {
       syslog(LOG_ERR,"%s: We can only simulate a 4DOF WAM!",__func__);
       bt_wambot_sim_destroy(wambot);
-      return 0;
+      return -1;
    }
    
    /* Make sure we have pucks with the IDs we expect */
@@ -173,15 +175,15 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
    {
       syslog(LOG_ERR,"%s: Could not create setup helper.",__func__);
       bt_wambot_sim_destroy(wambot);
-      return 0;
+      return -1;
    }
-   wambot->sim_thread = bt_os_thread_create(BT_OS_RT, "SIM", 90, sim_func, (void *)helper);
+   bt_os_thread_create(&wambot->sim_thread, BT_OS_RT, "SIM", 90, sim_func, (void *)helper);
    if (!wambot->sim_thread)
    {
       syslog(LOG_ERR,"%s: Could not create realtime simulation thread.",__func__);
       helper_destroy(helper);
       bt_wambot_sim_destroy(wambot);
-      return 0;
+      return -1;
    }
    
    /* Wait until the thread is done starting */
@@ -194,12 +196,13 @@ struct bt_wambot_sim * bt_wambot_sim_create( config_setting_t * config )
       syslog(LOG_ERR,"%s: WAM simulation setup failed.",__func__);
       helper_destroy(helper);
       bt_wambot_sim_destroy(wambot);
-      return 0;
+      return -1;
    }
    
    /* Success! */
    helper_destroy(helper);
-   return wambot;
+   (*wambotptr) = wambot;
+   return 0;
 }
 
 int bt_wambot_sim_destroy( struct bt_wambot_sim * wambot )
