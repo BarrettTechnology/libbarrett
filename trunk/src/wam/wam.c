@@ -134,6 +134,7 @@ int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt o
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
       int err;
       struct bt_wam * wam;
+      struct bt_wam_local * wam_local;
       
       syslog(LOG_ERR,"%s: Opening local wam %s.",__func__,wamname);
       
@@ -144,14 +145,15 @@ int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt o
          syslog(LOG_ERR,"%s: Out of memory.",__func__);
          return -1;
       }
-      
-      err = bt_wam_local_create((struct bt_wam_local **)(&wam->obj), wamname, opts);
-      if (!wam->obj)
+
+      err = bt_wam_local_create(&wam_local, wamname, opts);
+      if (!wam_local)
       {
          free(wam);
          return -1;
       }
       
+      wam->obj = (void *)wam_local;
       wam->caller = 0;
       (*wamptr) = wam;
       return err;
@@ -762,13 +764,15 @@ int bt_wam_list_create(struct bt_wam_list ** listptr, char * wamloc)
    if (!wamloc || strlen(wamloc) == 0)
    {
 #ifndef ASYNC_ONLY
-      err = bt_wam_list_local_create((struct bt_wam_list_local **)(&list->obj));
-      if (!list->obj)
+      struct bt_wam_list_local * wam_list_local;
+      err = bt_wam_list_local_create(&wam_list_local);
+      if (!wam_list_local)
       {
          syslog(LOG_ERR,"%s: Could not create local wam list.",__func__);
          free(list);
          return -1;
       }
+      list->obj = (void *)wam_list_local;
       list->caller = 0;
       (*listptr) = list;
       return err;

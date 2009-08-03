@@ -225,6 +225,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
 /* realtime WAM initialization stuff */
 static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig)
 {
+   struct bt_wambot_phys * wambot_phys;
 #if 0
    int err;
    int i;
@@ -232,13 +233,14 @@ static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig
  
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
-   bt_wambot_phys_create((struct bt_wambot_phys **)(&wam->wambot), config_setting_get_member(wamconfig,"wambot") );
-   if (!wam->wambot)
+   bt_wambot_phys_create(&wambot_phys, config_setting_get_member(wamconfig,"wambot") );
+   if (!wambot_phys)
    {
       syslog(LOG_ERR,"%s: Could not create wambot.",__func__);
       rt_wam_destroy(wam);
       return 1;
    }
+   wam->wambot = (struct bt_wambot *)wambot_phys;
    
    /* Create a kinematics object */
    bt_kinematics_create(&wam->kin, config_setting_get_member(wamconfig,"kinematics"), wam->wambot->dof);
