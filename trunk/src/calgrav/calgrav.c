@@ -48,10 +48,11 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    config_setting_t * mus;
    struct bt_calgrav * grav;
    
-   /* Check arguments */
-   if (gravconfig == 0) return 0;
-
    (*gravptr) = 0;
+
+   /* Check arguments */
+   if (!gravconfig) return -1;
+
    grav = (struct bt_calgrav *) malloc(sizeof(struct bt_calgrav));
    if (!grav)
    {
