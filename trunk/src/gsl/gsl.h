@@ -106,8 +106,14 @@ int bt_gsl_config_double_from_group(config_setting_t * grp, char * name,
  * \retval -2 At least one of the array or list's values is not convertable
  *            to double
  */
-int bt_gsl_fill_vector(gsl_vector * vec, config_setting_t * parent,
+int bt_gsl_fill_vector_cfggroup(gsl_vector * vec, config_setting_t * parent,
                        const char * name);
+
+
+int bt_gsl_fill_vector_cfgarray(gsl_vector * vec, config_setting_t * array);
+
+
+int bt_gsl_fill_vector(gsl_vector * vec, ...);
 
 
 /** Fill a matrix from a libconfig list of arrays or lists.

@@ -16,12 +16,11 @@ struct bt_wam_thread_helper
 {
    struct bt_wam_local * wam;
    config_setting_t * config;
+   int no_wambot_zeroangle;
    int is_setup;
    int setup_failed;
 };
-int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr,
-                                struct bt_wam_local * wam,
-                                config_setting_t * config);
+int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr);
 void bt_wam_thread_helper_destroy(struct bt_wam_thread_helper * helper);
 
 #endif /* BT_WAM_THREAD_H */

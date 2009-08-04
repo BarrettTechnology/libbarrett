@@ -30,6 +30,7 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
@@ -103,19 +104,26 @@ int bt_gsl_config_double_from_group(config_setting_t * grp, char * name,
 }
 
 
-int bt_gsl_fill_vector(gsl_vector * vec, config_setting_t * parent, const char * name)
+int bt_gsl_fill_vector_cfggroup(gsl_vector * vec, config_setting_t * parent,
+                       const char * name)
+{
+   config_setting_t * array;
+   array = config_setting_get_member( parent, name );
+   if (!array) return -1;
+   return bt_gsl_fill_vector_cfgarray(vec, array);
+}
+
+
+int bt_gsl_fill_vector_cfgarray(gsl_vector * vec, config_setting_t * array)
 {
    int i;
-   config_setting_t * child;
-   child = config_setting_get_member( parent, name );
-   if (child == NULL) return -1;
-   if (   config_setting_type(child) != CONFIG_TYPE_ARRAY
-       && config_setting_type(child) != CONFIG_TYPE_LIST ) return -1;
-   if (config_setting_length(child) != vec->size) return -1;
+   if (   config_setting_type(array) != CONFIG_TYPE_ARRAY
+       && config_setting_type(array) != CONFIG_TYPE_LIST ) return -1;
+   if (config_setting_length(array) != vec->size) return -1;
    for (i=0; i<vec->size; i++)
    {
       config_setting_t * element;
-      element = config_setting_get_elem(child,i);
+      element = config_setting_get_elem(array,i);
       switch (config_setting_type(element))
       {
          case CONFIG_TYPE_INT:
@@ -128,6 +136,20 @@ int bt_gsl_fill_vector(gsl_vector * vec, config_setting_t * parent, const char *
             return -1;
       }
    }
+   return 0;
+}
+
+
+int bt_gsl_fill_vector(gsl_vector * vec, ...)
+{
+   int i;
+   va_list ap;
+
+   va_start(ap,vec);
+   for (i=0; i<vec->size; i++)
+      gsl_vector_set(vec,i,va_arg(ap,double));
+   va_end(ap);
+   
    return 0;
 }
 

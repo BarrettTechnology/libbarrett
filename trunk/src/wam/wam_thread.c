@@ -26,22 +26,19 @@
 #undef T
 
 
-static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig);
+static int rt_wam_create(struct bt_wam_local * wam,
+                         struct bt_wam_thread_helper * helper);
 static void rt_wam_destroy(struct bt_wam_local * wam);
 
 
 
 
-int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr,
-                                struct bt_wam_local * wam,
-                                config_setting_t * config)
+int bt_wam_thread_helper_create(struct bt_wam_thread_helper ** helperptr)
 {
    struct bt_wam_thread_helper * helper;
    (*helperptr) = 0;
    helper = (struct bt_wam_thread_helper *) malloc(sizeof(struct bt_wam_thread_helper));
    if (!helper) return -1;
-   helper->wam = wam;
-   helper->config = config;
    helper->is_setup = 0;
    helper->setup_failed = 0;
    (*helperptr) = helper;
@@ -68,7 +65,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
    wam = helper->wam;
    
    /* Initialize the WAM data structure (wambot, kinematics, gravity, etc) */
-   err = rt_wam_create(helper->wam, helper->config);
+   err = rt_wam_create(wam, helper);
    if (err)
    {
       syslog(LOG_ERR,"%s: Could not create realtime WAM stuff.",__func__);
@@ -133,7 +130,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
        * NOTE: Should this be common for all refgens/controllers?
        *       It's definitely needed for Barrett Dynamics,
        *       but this is encapsulated in Controllers right now ... */
-      bt_kinematics_eval( wam->kin, wam->wambot->jposition, wam->wambot->jvelocity );
+      bt_kinematics_eval(wam->kin, wam->wambot->jposition, wam->wambot->jvelocity);
       bt_os_timestat_trigger(wam->ts,TS_KINEMATICS);
       
       /* Get the position from the current controller */
@@ -188,6 +185,11 @@ void bt_wam_thread(struct bt_os_thread * thread)
       if (wam->gcomp) bt_calgrav_eval( wam->grav, wam->wambot->jtorque );
       bt_os_timestat_trigger(wam->ts,TS_GCOMP);
 
+      /* Call the user callback
+       * (WHERE SHOULD THIS GO?) */
+      if (wam->callback)
+         wam->callback(wam);
+
       /* Apply the current joint torques */
       bt_wambot_setjtor( wam->wambot );
       bt_os_timestat_trigger(wam->ts,TS_SETJTOR);
@@ -223,17 +225,23 @@ void bt_wam_thread(struct bt_os_thread * thread)
 }
 
 /* realtime WAM initialization stuff */
-static int rt_wam_create(struct bt_wam_local * wam, config_setting_t * wamconfig)
+static int rt_wam_create(struct bt_wam_local * wam,
+                         struct bt_wam_thread_helper * helper)
 {
    struct bt_wambot_phys * wambot_phys;
+   config_setting_t * wamconfig;
 #if 0
    int err;
    int i;
 #endif
+
+   wamconfig = helper->config;
  
    /* Create a wambot object (which sets the dof)
     * NOTE - this should be configurable! */
-   bt_wambot_phys_create(&wambot_phys, config_setting_get_member(wamconfig,"wambot") );
+   bt_wambot_phys_create(&wambot_phys,
+                         config_setting_get_member(wamconfig,"wambot"),
+                         helper->no_wambot_zeroangle);
    if (!wambot_phys)
    {
       syslog(LOG_ERR,"%s: Could not create wambot.",__func__);

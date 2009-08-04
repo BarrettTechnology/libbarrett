@@ -55,7 +55,8 @@ struct bt_wam_local;
 
 /* WAM options */
 enum bt_wam_opt {
-   BT_WAM_OPT_NO_LOOP_START = 1
+   BT_WAM_OPT_NO_LOOP_START = 1,
+   BT_WAM_OPT_NO_WAMBOT_ZEROANGLE = 2
 };
 
 /* This function sets up a new WAM,

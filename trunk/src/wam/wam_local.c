@@ -176,13 +176,17 @@ int bt_wam_local_create_cfg(struct bt_wam_local ** wamptr, char * wamname,
    }
    
    /* Spin off the realtime thread to set everything up */
-   bt_wam_thread_helper_create(&helper,wam,wamconfig);
+   bt_wam_thread_helper_create(&helper);
    if (!helper)
    {
       syslog(LOG_ERR,"%s: Could not create setup helper.",__func__);
       bt_wam_destroy((struct bt_wam *)wam);
       return -1;
    }
+   helper->wam = wam;
+   helper->config = wamconfig;
+   helper->no_wambot_zeroangle = opts & BT_WAM_OPT_NO_WAMBOT_ZEROANGLE;
+   
    /* TODO: FIX THIS! */
    /*wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);*/
    bt_os_thread_create(&wam->thread, BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);

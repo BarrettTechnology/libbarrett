@@ -6,7 +6,7 @@
 #  - @BT_BUS_CANTYPE@
 #  - @BT_BUS_LIBS@
 # Contitionals:
-#  - BT_ASYNC_ONLY
+#  - BT_WAM_LOCAL
 #  - BT_WAMBOT_PHYSICAL
 #  - BT_WAMBOT_SIMULATED
 #  - BT_BUS_ENABLE
@@ -376,9 +376,7 @@ src_libbtwam_la_SOURCES += src/wam/wam_local.c \
                            src/wam/wam_thread.c \
                            src/wam/wam_list.c
 
-else
-
-src_libbtwam_la_CPPFLAGS += -DASYNC_ONLY
+src_libbtwam_la_CPPFLAGS += -DHAS_WAM_LOCAL
 
 endif
 
@@ -389,7 +387,10 @@ bin_PROGRAMS = programs/bt-wam-demo/bt-wam-demo \
                programs/bt-wam-list/bt-wam-list
 
 # It sucks that I have to include all of this crap ...
-programs_bt_wam_calibrate_bt_wam_calibrate_SOURCES = programs/bt-wam-calibrate/bt-wam-calibrate.c
+programs_bt_wam_calibrate_bt_wam_calibrate_SOURCES = programs/bt-wam-calibrate/bt-wam-calibrate.c \
+                                                     programs/bt-wam-calibrate/btkey.c \
+                                                     programs/bt-wam-calibrate/zero.c \
+                                                     programs/bt-wam-calibrate/gravity.c
 programs_bt_wam_calibrate_bt_wam_calibrate_CPPFLAGS = -Isrc/gsl \
                                                       -Isrc/os \
                                                       -Isrc/bus \
@@ -447,7 +448,8 @@ etcwamdir = $(sysconfdir)/wam
 etcwamsamplesdir = $(etcwamdir)/samples
 dist_etcwamsamples_DATA = config/wam4.config \
                           config/wam7.config \
-                          config/wamg.config
+                          config/wamg.config \
+                          config/cal.config
 
 # Examples, usually installed to /usr/share/libbarrett
 # or /usr/local/share/libbarrett;

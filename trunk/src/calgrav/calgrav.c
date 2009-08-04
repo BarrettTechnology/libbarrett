@@ -209,7 +209,7 @@ int bt_calgrav_destroy( struct bt_calgrav * grav )
 }
 
 
-int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque )
+int bt_calgrav_eval(struct bt_calgrav * grav, gsl_vector * jtorque)
 {
    int j;
    /* For each moving link, backwards ... */
@@ -231,7 +231,8 @@ int bt_calgrav_eval( struct bt_calgrav * grav, gsl_vector * jtorque )
       gsl_blas_dgemv(CblasNoTrans, 1.0, link->rot_to_prev,
                      grav->t[j], 0.0, grav->pt[j]);
       /* Add into the torque vector the z component */
-      *gsl_vector_ptr(jtorque,j) += gsl_vector_get(grav->pt[j],2);
+      if (jtorque)
+         *gsl_vector_ptr(jtorque,j) += gsl_vector_get(grav->pt[j],2);
    }
    return 0;
 }

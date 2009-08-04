@@ -146,6 +146,7 @@ static int idle(struct bt_control * base)
 static int hold(struct bt_control * base)
 {
    struct bt_control_joint_legacy * c = (struct bt_control_joint_legacy *) base;
+   if (c->is_holding) return 0;
    gsl_vector_memcpy(base->reference,base->position);
    gsl_vector_set_zero(c->integrator);
    c->last_time_saved = 0;

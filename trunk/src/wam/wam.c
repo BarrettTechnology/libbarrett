@@ -13,7 +13,7 @@
 #include "rpc_tcpjson.h"
 
 
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
 # include "wam_local.h"
 # include "wam_list.h"
 # include <libconfig.h> /* We should push this into wam_local.c ... */
@@ -128,7 +128,7 @@ int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt o
       return myint;
    }
    
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    /* OK, it's local. If we're not ASYNC_ONLY, open locally ... */
    {
       /* First, see if we have a local config file at {WAMCONFIGDIR}{NAME}.config */
@@ -166,7 +166,7 @@ int bt_wam_create_opt(struct bt_wam ** wamptr, char * wamname, enum bt_wam_opt o
 
 int bt_wam_destroy(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
    {
       bt_wam_local_destroy(wam->obj);
@@ -187,7 +187,7 @@ int bt_wam_destroy(struct bt_wam * wam)
 
 struct bt_wam_local * bt_wam_get_local(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return wam->obj;
    else
@@ -199,7 +199,7 @@ struct bt_wam_local * bt_wam_get_local(struct bt_wam * wam)
 
 int bt_wam_loop_start(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_loop_start(wam->obj);
    else
@@ -214,7 +214,7 @@ int bt_wam_loop_start(struct bt_wam * wam)
 
 int bt_wam_loop_stop(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_loop_stop(wam->obj);
    else
@@ -229,7 +229,7 @@ int bt_wam_loop_stop(struct bt_wam * wam)
 
 int bt_wam_dof(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_dof(wam->obj);
    else
@@ -244,7 +244,7 @@ int bt_wam_dof(struct bt_wam * wam)
 
 char * bt_wam_str_jposition(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_jposition(wam->obj,buf);
    else
@@ -258,7 +258,7 @@ char * bt_wam_str_jposition(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_jvelocity(wam->obj,buf);
    else
@@ -272,7 +272,7 @@ char * bt_wam_str_jvelocity(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_jtorque(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_jtorque(wam->obj,buf);
    else
@@ -286,7 +286,7 @@ char * bt_wam_str_jtorque(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_cposition(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_cposition(wam->obj,buf);
    else
@@ -300,7 +300,7 @@ char * bt_wam_str_cposition(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_crotation_r1(wam->obj,buf);
    else
@@ -314,7 +314,7 @@ char * bt_wam_str_crotation_r1(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_crotation_r2(wam->obj,buf);
    else
@@ -328,7 +328,7 @@ char * bt_wam_str_crotation_r2(struct bt_wam * wam, char * buf)
 
 char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_crotation_r3(wam->obj,buf);
    else
@@ -344,7 +344,7 @@ char * bt_wam_str_crotation_r3(struct bt_wam * wam, char * buf)
 
 int bt_wam_isgcomp(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_isgcomp(wam->obj);
    else
@@ -359,7 +359,7 @@ int bt_wam_isgcomp(struct bt_wam * wam)
 
 int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_setgcomp(wam->obj,onoff);
    else
@@ -377,7 +377,7 @@ int bt_wam_setgcomp(struct bt_wam * wam, int onoff)
 
 int bt_wam_idle(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_idle(wam->obj);
    else
@@ -392,7 +392,7 @@ int bt_wam_idle(struct bt_wam * wam)
 
 int bt_wam_hold(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_hold(wam->obj);
    else
@@ -407,7 +407,7 @@ int bt_wam_hold(struct bt_wam * wam)
 
 int bt_wam_is_holding(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_is_holding(wam->obj);
    else
@@ -424,7 +424,7 @@ int bt_wam_is_holding(struct bt_wam * wam)
 
 char * bt_wam_str_con_position(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_str_con_position(wam->obj,buf);
    else
@@ -438,7 +438,7 @@ char * bt_wam_str_con_position(struct bt_wam * wam, char * buf)
 
 char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_get_current_controller_name(wam->obj,buf);
    else
@@ -452,7 +452,7 @@ char * bt_wam_get_current_controller_name(struct bt_wam * wam, char * buf)
 
 char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_get_current_controller_space(wam->obj,buf);
    else
@@ -467,7 +467,7 @@ char * bt_wam_get_current_controller_space(struct bt_wam * wam, char * buf)
 
 int bt_wam_controller_toggle(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_controller_toggle(wam->obj);
    else
@@ -482,7 +482,7 @@ int bt_wam_controller_toggle(struct bt_wam * wam)
 
 int bt_wam_control_use_name(struct bt_wam * wam, char * name)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_control_use_name(wam->obj,name);
    else
@@ -497,7 +497,7 @@ int bt_wam_control_use_name(struct bt_wam * wam, char * name)
 
 int bt_wam_control_use_space(struct bt_wam * wam, char * space)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_control_use_space(wam->obj,space);
    else
@@ -517,7 +517,7 @@ int bt_wam_control_use_space(struct bt_wam * wam, char * space)
 
 int bt_wam_refgen_clear(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_refgen_clear(wam->obj);
    else
@@ -533,7 +533,7 @@ int bt_wam_refgen_clear(struct bt_wam * wam)
 
 char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_refgen_active_name(wam->obj,buf);
    else
@@ -547,7 +547,7 @@ char * bt_wam_refgen_active_name(struct bt_wam * wam, char * buf)
 
 char * bt_wam_refgen_loaded_name(struct bt_wam * wam, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_refgen_loaded_name(wam->obj,buf);
    else
@@ -561,7 +561,7 @@ char * bt_wam_refgen_loaded_name(struct bt_wam * wam, char * buf)
 
 int bt_wam_refgen_save(struct bt_wam * wam, char * filename)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_refgen_save(wam->obj,filename);
    else
@@ -576,7 +576,7 @@ int bt_wam_refgen_save(struct bt_wam * wam, char * filename)
 
 int bt_wam_refgen_load(struct bt_wam * wam, char * filename)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_refgen_load(wam->obj,filename);
    else
@@ -593,7 +593,7 @@ int bt_wam_refgen_load(struct bt_wam * wam, char * filename)
 
 int bt_wam_set_velocity(struct bt_wam * wam, double vel)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_set_velocity(wam->obj,vel);
    else
@@ -608,7 +608,7 @@ int bt_wam_set_velocity(struct bt_wam * wam, double vel)
 
 int bt_wam_set_acceleration(struct bt_wam * wam, double vel)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_set_velocity(wam->obj,vel);
    else
@@ -623,7 +623,7 @@ int bt_wam_set_acceleration(struct bt_wam * wam, double vel)
 
 int bt_wam_moveto(struct bt_wam * wam, int n, double * dest)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_moveto(wam->obj,n,dest);
    else
@@ -638,7 +638,7 @@ int bt_wam_moveto(struct bt_wam * wam, int n, double * dest)
 
 int bt_wam_movehome(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_movehome(wam->obj);
    else
@@ -653,7 +653,7 @@ int bt_wam_movehome(struct bt_wam * wam)
 
 int bt_wam_moveisdone(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_moveisdone(wam->obj);
    else
@@ -670,7 +670,7 @@ int bt_wam_moveisdone(struct bt_wam * wam)
 
 int bt_wam_is_teaching(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_is_teaching(wam->obj);
    else
@@ -685,7 +685,7 @@ int bt_wam_is_teaching(struct bt_wam * wam)
 
 int bt_wam_teach_start(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_teach_start(wam->obj);
    else
@@ -700,7 +700,7 @@ int bt_wam_teach_start(struct bt_wam * wam)
 
 int bt_wam_teach_end(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_teach_end(wam->obj);
    else
@@ -716,7 +716,7 @@ int bt_wam_teach_end(struct bt_wam * wam)
 
 int bt_wam_run(struct bt_wam * wam)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!wam->caller)
       return bt_wam_local_run(wam->obj);
    else
@@ -763,7 +763,7 @@ int bt_wam_list_create(struct bt_wam_list ** listptr, char * wamloc)
    /* Handle the local case */
    if (!wamloc || strlen(wamloc) == 0)
    {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
       struct bt_wam_list_local * wam_list_local;
       err = bt_wam_list_local_create(&wam_list_local);
       if (!wam_list_local)
@@ -812,7 +812,7 @@ int bt_wam_list_create(struct bt_wam_list ** listptr, char * wamloc)
 
 int bt_wam_list_destroy(struct bt_wam_list * list)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
    {
       bt_wam_list_local_destroy(list->obj);
@@ -833,7 +833,7 @@ int bt_wam_list_destroy(struct bt_wam_list * list)
 
 int bt_wam_list_get_num(struct bt_wam_list * list)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
       return bt_wam_list_local_get_num(list->obj);
    else
@@ -848,7 +848,7 @@ int bt_wam_list_get_num(struct bt_wam_list * list)
 
 char * bt_wam_list_get_name(struct bt_wam_list * list, int i, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
       return bt_wam_list_local_get_name(list->obj,i,buf);
    else
@@ -862,7 +862,7 @@ char * bt_wam_list_get_name(struct bt_wam_list * list, int i, char * buf)
 
 enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list, int i)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
       return bt_wam_list_local_get_status(list->obj,i);
    else
@@ -877,7 +877,7 @@ enum bt_wam_list_entry_status bt_wam_list_get_status(struct bt_wam_list * list, 
 
 int bt_wam_list_get_pid(struct bt_wam_list * list, int i)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
       return bt_wam_list_local_get_pid(list->obj,i);
    else
@@ -892,7 +892,7 @@ int bt_wam_list_get_pid(struct bt_wam_list * list, int i)
 
 char * bt_wam_list_get_programname(struct bt_wam_list * list, int i, char * buf)
 {
-#ifndef ASYNC_ONLY
+#ifdef HAS_WAM_LOCAL
    if (!list->caller)
       return bt_wam_list_local_get_programname(list->obj,i,buf);
    else

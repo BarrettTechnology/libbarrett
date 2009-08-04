@@ -73,7 +73,8 @@ int define_pos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
 /* NOW, THE GLOBAL FUNCTIONS ... */
 
 int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
-                          config_setting_t * config)
+                          config_setting_t * config,
+                          int no_zeroangle)
 {
    int err;
    struct bt_wambot_phys * wambot;
@@ -169,13 +170,13 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
    
    /* Parse values from config file */
    /* NOTE - DO BETTER ERROR CHECKING HERE! */
-   err = bt_gsl_fill_vector(wambot->base.home, config, "home");
+   err = bt_gsl_fill_vector_cfggroup(wambot->base.home, config, "home");
    if (err) { bt_wambot_phys_destroy(wambot); return 0; }
-   err = bt_gsl_fill_vector(wambot->zeroangle, config, "zeroangle");
+   err = bt_gsl_fill_vector_cfggroup(wambot->zeroangle, config, "zeroangle");
    if (err)
    {
       syslog(LOG_ERR,"No zeroangle entry found.\n");
-      gsl_vector_free( wambot->zeroangle );
+      gsl_vector_free(wambot->zeroangle);
       wambot->zeroangle = 0;
    }
    err = bt_gsl_fill_matrix(wambot->j2mp, config, "j2mp");
@@ -235,7 +236,7 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
          err_angle = gsl_vector_calloc(n);
          
          /* Do we do zero compensation? */
-         if (wambot->zeroangle)
+         if (wambot->zeroangle && !no_zeroangle)
          {
             int m;
             gsl_vector * cur_angle;

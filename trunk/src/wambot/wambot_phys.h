@@ -76,7 +76,8 @@ struct bt_wambot_phys
  * configuration group.
  */
 int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
-                          config_setting_t * config);
+                          config_setting_t * config,
+                          int no_zeroangle);
 
 /** bt_wambot_phys destroy function.
  *

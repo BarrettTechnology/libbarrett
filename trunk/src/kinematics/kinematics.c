@@ -511,13 +511,21 @@ int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_
    bt_kinematics_eval_jacobian( kin,
       kin->dof, kin->tool->origin_pos, kin->tool_jacobian );
    /* Calculate the tool Cartesian velocity */
-   gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_linear,
-                   jvelocity,
-                   0.0, kin->tool_velocity );
-   /* Calculate the tool Cartesian angular velocity */
-   gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_angular,
-                   jvelocity,
-                   0.0, kin->tool_velocity_angular );
+   if (jvelocity)
+   {
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_linear,
+                      jvelocity,
+                      0.0, kin->tool_velocity );
+      /* Calculate the tool Cartesian angular velocity */
+      gsl_blas_dgemv( CblasNoTrans, 1.0, kin->tool_jacobian_angular,
+                      jvelocity,
+                      0.0, kin->tool_velocity_angular );
+   }
+   else
+   {
+      gsl_vector_set_zero(kin->tool_velocity);
+      gsl_vector_set_zero(kin->tool_velocity_angular);
+   }
    
    return 0;
 }

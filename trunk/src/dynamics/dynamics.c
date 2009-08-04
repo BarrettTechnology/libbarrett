@@ -360,7 +360,7 @@ int bt_dynamics_create(struct bt_dynamics ** dynptr,
          }
          
          /* Read the center of mass vector */
-         err = bt_gsl_fill_vector(link->com, link_grp, "com");
+         err = bt_gsl_fill_vector_cfggroup(link->com, link_grp, "com");
          if (err)
          {
             syslog(LOG_ERR,"%s: No com in link, or not a number.",__func__);
