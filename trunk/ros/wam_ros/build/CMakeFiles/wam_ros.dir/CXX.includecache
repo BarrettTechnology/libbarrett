@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/robot/libbarrett/bindings/cpp/BtWam.cpp
+iostream
+-
+cassert
+-
+signal.h
+-
+sys/mman.h
+-
+stdio.h
+-
+stdlib.h
+-
+math.h
+-
+syslog.h
+-
+libbarrett/wam.h
+-
+BtWam.hpp
+/home/robot/libbarrett/bindings/cpp/BtWam.hpp
+
+/home/robot/libbarrett/bindings/cpp/BtWam.hpp
+string
+-
+WamException.hpp
+/home/robot/libbarrett/bindings/cpp/WamException.hpp
+

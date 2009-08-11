@@ -17,6 +17,9 @@
 /* System Libraries */
 #include <signal.h>
 #include <sys/mman.h>
+#include <stdio.h>
+#include <stdlib.h>`
+#include <math.h>
 
 /* Package Dependencies */
 #include <syslog.h>

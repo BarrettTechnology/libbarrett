@@ -179,7 +179,7 @@ noinst_LTLIBRARIES += src/libbtlog.la
 pkginclude_HEADERS += src/log/log.h
 
 # Source files to complile
-src_libbtlog_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtlog_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Wno-long-long
 src_libbtlog_la_SOURCES = src/log/log.c
 
 ####### BT_OS
@@ -362,7 +362,7 @@ src_libbtwam_la_CPPFLAGS = -Isrc/gsl \
 #src_libbtwam_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long -Wno-variadic-macros
 # Note: c99 doesn't include popen (!!)
 #src_libbtwam_la_CFLAGS = -std=c99 -pedantic-errors -Wall -Werror -Wno-long-long
-src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtwam_la_CFLAGS = -std=gnu99 -pedantic-errors -Wall -Wno-long-long
 src_libbtwam_la_SOURCES = src/wam/wam.c \
                           src/wam/wam_rpc.c
 
