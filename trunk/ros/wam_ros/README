@@ -1,0 +1,6 @@
+Make instructions:
+1. In wam_ros folder, make a build folder (mkdir build)
+2. Move into the build folder (cd build)
+3. Run cmake from outside folder (cmake ..)
+4. Run make (make)
+5. All executables are now stored in wam_ros/bin folder by default.

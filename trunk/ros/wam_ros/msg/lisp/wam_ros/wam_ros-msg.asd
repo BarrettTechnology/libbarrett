@@ -6,4 +6,6 @@
   :components ((:file "_package")
     (:file "Joints" :depends-on ("_package"))
     (:file "_package_Joints" :depends-on ("_package"))
+    (:file "WamState" :depends-on ("_package"))
+    (:file "_package_WamState" :depends-on ("_package"))
     ))

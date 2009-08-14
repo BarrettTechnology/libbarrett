@@ -13,7 +13,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
-#genmsg()
+genmsg()
 #uncomment if you have defined services
 #gensrv()
 #common commands for building c++ executables and libraries
@@ -25,14 +25,21 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rospack_add_library(wam_ros ../../bindings/cpp/BtWam.cpp)
+rospack_add_library(wam_ros ../../bindings/cpp/Mutex.hpp)
+rospack_add_library(wam_ros ../../bindings/cpp/Posix.cpp)
 
 rospack_add_executable(WamJpos src/WamJpos.cpp)
 target_link_libraries(WamJpos wam_ros)
 target_link_libraries(WamJpos -lbarrett)
 
+rospack_add_executable(WamState src/WamState.cpp)
+target_link_libraries(WamState wam_ros)
+target_link_libraries(WamState -lbarrett)
+
 rospack_add_executable(WamViewer src/WamViewer.cpp)
 target_link_libraries(WamViewer wam_ros)
 target_link_libraries(WamViewer -lbarrett) # barrett libbarrett -lbarrett
+target_link_libraries(WamViewer -lcurses)
 
 #include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 #pkg_check_modules(LIBBARRETT libbarrett)

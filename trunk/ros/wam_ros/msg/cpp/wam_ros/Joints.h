@@ -18,36 +18,34 @@ public:
   typedef boost::shared_ptr<Joints> Ptr;
   typedef boost::shared_ptr<Joints const> ConstPtr;
 
-  typedef std::vector<double> _j_type;
+  typedef std::string _j_type;
 
-  std::vector<double> j;
+  std::string j;
 
   Joints() : ros::Message()
   {
   }
-  Joints(const Joints &copy) : ros::Message()
+  Joints(const Joints &copy) : ros::Message(),
+    j(copy.j)
   {
     (void)copy;
-    j = copy.j;
   }
   Joints &operator =(const Joints &copy)
   {
     if (this == &copy)
       return *this;
-    j.clear();
     j = copy.j;
     return *this;
   }
   virtual ~Joints() 
   {
-    j.clear();
   }
   inline static std::string __s_getDataType() { return std::string("wam_ros/Joints"); }
-  inline static std::string __s_getMD5Sum() { return std::string("59542e81b1fd2eaee58892b9055022e8"); }
+  inline static std::string __s_getMD5Sum() { return std::string("0faeaaa42c2070611310a54ecba6c3ef"); }
   inline static std::string __s_getMessageDefinition()
   {
     return std::string(
-    "float64[] j\n"
+    "string j\n"
     "\n"
     "\n"
     );
@@ -55,40 +53,25 @@ public:
   inline virtual const std::string __getDataType() const { return __s_getDataType(); }
   inline virtual const std::string __getMD5Sum() const { return __s_getMD5Sum(); }
   inline virtual const std::string __getMessageDefinition() const { return __s_getMessageDefinition(); }
-  void set_j_size(uint32_t __ros_new_size)
-  {
-    this->j.resize(__ros_new_size);
-  }
-  inline uint32_t get_j_size() const { return j.size(); }
-  inline void get_j_vec (std::vector<double> &__ros_vec) const
-  {
-    __ros_vec = this->j;
-  }
-  inline void set_j_vec(const std::vector<double> &__ros_vec)
-  {
-    this->j = __ros_vec;
-  }
   inline uint32_t serializationLength() const
   {
     unsigned __l = 0;
-    __l += 4 + (j.size() ? j.size() * 8 : 0); // j
+    __l += 4 + j.length(); // j
     return __l;
   }
   virtual uint8_t *serialize(uint8_t *write_ptr, uint32_t seq) const
   {
-    uint32_t __j_size = j.size();
-    SROS_SERIALIZE_PRIMITIVE(write_ptr, __j_size);
-    memcpy(write_ptr, &j[0], sizeof(double) * __j_size);
-    write_ptr += sizeof(double) * __j_size;
+    unsigned __ros_j_len = j.length();
+    SROS_SERIALIZE_PRIMITIVE(write_ptr, __ros_j_len);
+    SROS_SERIALIZE_BUFFER(write_ptr, j.c_str(), __ros_j_len);
     return write_ptr;
   }
   virtual uint8_t *deserialize(uint8_t *read_ptr)
   {
-    uint32_t __j_size;
-    SROS_DESERIALIZE_PRIMITIVE(read_ptr, __j_size);
-    set_j_size(__j_size);
-    memcpy(&j[0], read_ptr, sizeof(double) * __j_size);
-    read_ptr += sizeof(double) * __j_size;
+    unsigned __ros_j_len;
+    SROS_DESERIALIZE_PRIMITIVE(read_ptr, __ros_j_len);
+    j = std::string((const char *)read_ptr, __ros_j_len);
+    read_ptr += __ros_j_len;
     return read_ptr;
   }
 };

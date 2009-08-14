@@ -7,19 +7,19 @@ import java.nio.ByteBuffer;
 public  class Joints extends ros.communication.Message
 {
 
-  public double[] j;
+  public java.lang.String j;
 
   public Joints() {
  super();
-  j = new double[0];
+    j = new java.lang.String();
 
   }
   public static java.lang.String __s_getDataType() { return "wam_ros/Joints"; }
-  public static java.lang.String __s_getMD5Sum() { return "59542e81b1fd2eaee58892b9055022e8"; }
+  public static java.lang.String __s_getMD5Sum() { return "0faeaaa42c2070611310a54ecba6c3ef"; }
   public static java.lang.String __s_getMessageDefinition()
   {
     return 
-    "float64[] j\n" + 
+    "string j\n" + 
     "\n" + 
     "\n" + 
     "";
@@ -29,12 +29,11 @@ public  class Joints extends ros.communication.Message
   public java.lang.String getMessageDefinition() { return __s_getMessageDefinition(); }
   public Joints clone() {
     Joints clone = (Joints)super.clone();
-      j =  (double[])(clone.j.clone());
     return clone;
   }
 
   public static java.util.Map<java.lang.String, java.lang.String> fieldTypes() {
-         java.util.HashMap<java.lang.String, java.lang.String> m = new java.util.HashMap<java.lang.String, java.lang.String>  ();      m.put("j", "double[]");
+         java.util.HashMap<java.lang.String, java.lang.String> m = new java.util.HashMap<java.lang.String, java.lang.String>  ();      m.put("j", "java.lang.String");
      return m;
   }
 
@@ -51,15 +50,14 @@ public  class Joints extends ros.communication.Message
   public int serializationLength() 
   {
     int __l = 0;
-    __l += 4 + (j.length == 0 ? 0 : j.length * (8)); // j
+    __l += 4 + j.length(); // j
     return __l;
   }
   public void serialize(ByteBuffer bb, int seq) {
-    bb.putInt(j.length);
-    bb.asDoubleBuffer().put(j);  }
+    Serialization.writeString(bb, j);
+  }
   public void deserialize(ByteBuffer bb)  {
-     int j_len = bb.getInt();
-    j = new double[j_len];
-    bb.asDoubleBuffer().get(j);  }
+    j = Serialization.readString(bb);
+  }
 }
 
