@@ -1,22 +1,21 @@
 /* ======================================================================== *
  *  Module ............. WAM-ROS
- *  File ............... WamJpos.cpp
+ *  File ............... WamDemo.cpp
  *  Author ............. vw
- *  Creation Date ...... 30 July 2009
+ *  Creation Date ...... 17 Au 2009
  *                                                                          *
  *  **********************************************************************  *
  *                                                                          *
- *  This program demonstrates simple sending of messages over the ROS system 
- *  integrated withlibbt. Requires WamServer to be running.
+ *  bt-wam-demo like program using ROS communication. Displays wam data and
+ *  calls wam functions remotely. Needs WamServer to be running.
  *
  * ======================================================================== */
-
 
 #include "ros/ros.h"
 #include "ros/master.h"
 #include "std_msgs/String.h"
 #include "wam_ros/WamState.h"
-#include "wam_ros/Joints.h"
+#include "wam_ros/WamCommands.h"
 #include "../../../bindings/cpp/Posix.hpp"
 #include "../../../bindings/cpp/Mutex.hpp"
 
@@ -35,11 +34,12 @@ using namespace std;
 /* function prototypes*/
 void getWamState(const wam_ros::WamState::ConstPtr& msg);
 void * display(void * _obj);
+void * charListener(void * _obj);
 
 /* global shared wam state variable structure*/
 struct WamData
 {
-	int status; 		//! 0 = can't find master. 1 = can't find publisher node. 2 = successful subscription
+//	int status; 		//! 0 = can't find master. 1 = can't find publisher node. 2 = successful subscription
 	string jpos;
 	string jvel;
 	string jtor;
@@ -75,43 +75,50 @@ void sigint_handler(int param)
 
 int main(int argc, char **argv)
 {
-   wamdata.status =0;
+//	wamdata.status =0;
+	going = 1;
+	/* Initializes ROS system. wam_listener is name of node */
+	ros::init(argc, argv, "wam_demo");
 
-   Posix thd(display, NULL);
-   thd.start();
+	/* NodeHandle is the main access point to communications with the ROS system.
+	* The first NodeHandle constructed will fully initialize this node, and the last
+	* NodeHandle destructed will close down the node.   */
+	ros::NodeHandle n;
 
-   /* Initializes ROS system. wam_listener is name of node */
-   ros::init(argc, argv, "wam_listener");
+	/* Start display thread */
+	Posix displayThd(display, NULL);
+	displayThd.start();
 
-   /* NodeHandle is the main access point to communications with the ROS system.
-    * The first NodeHandle constructed will fully initialize this node, and the last
-    * NodeHandle destructed will close down the node.   */
-   ros::NodeHandle n;
+	/* Start keyboard listener thread */
+	Posix inputThd(charListener, (void*) &n); //pass in pointer to ros nodehandle object 
+	inputThd.start();
 
+	/* Subscribe to wam_jpos topic. Data passed to chatterCallBack function.   */
+	ros::Subscriber sub = n.subscribe("wam_state", 1000, getWamState);
 
+	/* Set loop frequency to 10Hz */
+	ros::Rate loop_rate(10);
 
-   /* Subscribe to wam_jpos topic. Data passed to chatterCallBack function.   */
-   ros::Subscriber sub = n.subscribe("wam_state", 1000, getWamState);
+	/* Maintains ROS update functionality. Listens for Ctrl-C to exit */
+	while (n.ok() & going)
+	{ 
+		/* To keep subscribing */
+		ros::spinOnce();
 
-   /* Set loop frequency to 10Hz */
-   ros::Rate loop_rate(10);
-	
-   while (n.ok())
-   { 
-	/* To keep subscribing */
-	ros::spinOnce();
+		/* Sleep to ensure correct loop time */
+		loop_rate.sleep();
+	}
 
-	/* Sleep to ensure correct loop time */
-	loop_rate.sleep();
-   }
+	/* Wait for all threads to finish */
+	displayThd.stop();
+	inputThd.stop();
+		
+	endwin();  //weird. declared twice here and also in display()
 
-//  thd.stop();  /* not needed? weird. must be declared twice */
-   endwin();
-    
-   return 0;
+	return 0;
 }
 
-/* Reads and stores incoming data from WAM state */
+/* Reads and stores incoming data from wam_state topic */
 void getWamState(const wam_ros::WamState::ConstPtr & msg)
 {
 	mutex.lock();
@@ -140,6 +147,50 @@ void getWamState(const wam_ros::WamState::ConstPtr & msg)
 
 }
 
+
+void * charListener(void * _obj)
+{
+
+	ros::NodeHandle * n = (ros::NodeHandle *) _obj;
+
+	/* Create service client */
+	ros::ServiceClient client;
+
+	/* Subscribe to commands service */
+	client = n->serviceClient<wam_ros::WamCommands>("commands");
+
+        /* Create service message to package commands*/
+        wam_ros::WamCommands srv;
+
+	char c;
+	while ( (going) )
+	{
+		/* Wait for keyboard input */		
+		cin >> c;  //cin cannot handle spaces. thread will lock here when waiting
+		
+		if ( (c == 'x') | ( c == 'X') )
+		{
+			going = 0;
+			break;
+		}
+		/* Package character as uint64 to send to service via ROS */
+		srv.request.command = c;
+				
+		/* Send srv to WamServer */
+		if (client.call(srv))
+		{
+			ROS_INFO("success!");//, srv.response.response);
+		}
+		else
+		{
+			ROS_ERROR("Failed to call service");
+			return 0;
+		}
+	}
+
+   return 0;
+}
+
 /* Text GUI, looks like bt-wam-demo */
 void * display(void * _obj)
 {
@@ -164,7 +215,7 @@ void * display(void * _obj)
     * to close the WAM nicely */
    signal(SIGINT, sigint_handler);
    /* Loop until Ctrl-C is pressed */
-   going = 1;
+//   going = 1;
 
    while (going)
    {
@@ -256,6 +307,8 @@ void * display(void * _obj)
        
    /* Close ncurses, not needed? called in main function */
    endwin();
+
+   cout << "Enter any key to quit" << endl;
   
    return 0;
 }

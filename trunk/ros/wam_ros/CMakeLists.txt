@@ -15,7 +15,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 genmsg()
 #uncomment if you have defined services
-#gensrv()
+gensrv()
 #common commands for building c++ executables and libraries
 #rospack_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -28,18 +28,35 @@ rospack_add_library(wam_ros ../../bindings/cpp/BtWam.cpp)
 rospack_add_library(wam_ros ../../bindings/cpp/Mutex.hpp)
 rospack_add_library(wam_ros ../../bindings/cpp/Posix.cpp)
 
-rospack_add_executable(WamJpos src/WamJpos.cpp)
-target_link_libraries(WamJpos wam_ros)
-target_link_libraries(WamJpos -lbarrett)
+#rospack_add_executable(WamJpos src/WamJpos.cpp)
+#target_link_libraries(WamJpos wam_ros)
+#target_link_libraries(WamJpos -lbarrett)
 
-rospack_add_executable(WamState src/WamState.cpp)
-target_link_libraries(WamState wam_ros)
-target_link_libraries(WamState -lbarrett)
+#rospack_add_executable(WamState src/WamState.cpp)
+#target_link_libraries(WamState wam_ros)
+#target_link_libraries(WamState -lbarrett)
 
 rospack_add_executable(WamViewer src/WamViewer.cpp)
 target_link_libraries(WamViewer wam_ros)
 target_link_libraries(WamViewer -lbarrett) # barrett libbarrett -lbarrett
 target_link_libraries(WamViewer -lcurses)
+
+#rospack_add_executable(WamServer src/WamServer.cpp)
+#target_link_libraries(WamServer wam_ros)
+#target_link_libraries(WamServer -lbarrett)
+
+rospack_add_executable(WamClient src/WamClient.cpp)
+target_link_libraries(WamClient wam_ros)
+target_link_libraries(WamClient -lbarrett) 
+
+rospack_add_executable(WamServer src/WamServerAll.cpp)
+target_link_libraries(WamServer wam_ros)
+target_link_libraries(WamServer -lbarrett)
+
+rospack_add_executable(WamDemo src/WamDemo.cpp)
+target_link_libraries(WamDemo wam_ros)
+target_link_libraries(WamDemo -lbarrett)
+target_link_libraries(WamDemo -lcurses)
 
 #include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 #pkg_check_modules(LIBBARRETT libbarrett)

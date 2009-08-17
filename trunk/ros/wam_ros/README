@@ -4,3 +4,14 @@ Make instructions:
 3. Run cmake from outside folder (cmake ..)
 4. Run make (make)
 5. All executables are now stored in wam_ros/bin folder by default.
+
+Note: Default executables are the following:
+1. WamServer- Establishes connection with actual WAM and is able to call asynchronous functions. Publishes wam state data on wam_state topic. Also advertises commands service.
+2. WamViewer- Client program that just subscribes to wam_state topic and prints data in text GUI.
+3. WamClient- Client program that just subscribes to commands service and issues remote function calls.
+4. WamDemo- Client program that can view WAM state and issue remote function calls. Modeled after bt-wam-demo.
+
+Optional executables (uncomment in CMakefile):
+1. WamJpos- Server program that only publishes joint information.
+2. WamState- Server program that publishes WAM state information.
+3. WamServer- Server program that allows basic function calls. 
