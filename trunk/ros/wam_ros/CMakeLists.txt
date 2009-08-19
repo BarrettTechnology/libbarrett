@@ -58,6 +58,15 @@ target_link_libraries(WamDemo wam_ros)
 target_link_libraries(WamDemo -lbarrett)
 target_link_libraries(WamDemo -lcurses)
 
+rospack_add_executable(WamMoveServer src/WamMoveServer.cpp)
+target_link_libraries(WamMoveServer wam_ros)
+target_link_libraries(WamMoveServer -lbarrett)
+
+rospack_add_executable(WamMoveClient src/WamMoveClient.cpp)
+target_link_libraries(WamMoveClient wam_ros)
+target_link_libraries(WamMoveClient -lbarrett)
+
+
 #include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 #pkg_check_modules(LIBBARRETT libbarrett)
 #nclude_directories(${LIBBARRETT_INCLUDE_DIRS})

@@ -10,7 +10,11 @@
   ((command
     :accessor command-val
     :initarg :command
-    :initform 0))
+    :initform 0)
+   (desiredJoints
+    :accessor desiredJoints-val
+    :initarg :desiredJoints
+    :initform #()))
 )
 (defmethod serialize ((msg <WamCommands-request>) ostream)
   "Serializes a message object of type '<WamCommands-request>"
@@ -22,6 +26,15 @@
   (write-byte (ldb (byte 8 40) (slot-value msg 'command)) ostream)
   (write-byte (ldb (byte 8 48) (slot-value msg 'command)) ostream)
   (write-byte (ldb (byte 8 56) (slot-value msg 'command)) ostream)
+    (map nil #'(lambda (ele) (let ((bits (roslisp-utils:encode-double-float-bits ele)))
+    (write-byte (ldb (byte 8 0) bits) ostream)
+    (write-byte (ldb (byte 8 8) bits) ostream)
+    (write-byte (ldb (byte 8 16) bits) ostream)
+    (write-byte (ldb (byte 8 24) bits) ostream)
+    (write-byte (ldb (byte 8 32) bits) ostream)
+    (write-byte (ldb (byte 8 40) bits) ostream)
+    (write-byte (ldb (byte 8 48) bits) ostream)
+    (write-byte (ldb (byte 8 56) bits) ostream)))(slot-value msg 'desiredJoints))
 )
 (defmethod deserialize ((msg <WamCommands-request>) istream)
   "Deserializes a message object of type '<WamCommands-request>"
@@ -33,6 +46,19 @@
   (setf (ldb (byte 8 40) (slot-value msg 'command)) (read-byte istream))
   (setf (ldb (byte 8 48) (slot-value msg 'command)) (read-byte istream))
   (setf (ldb (byte 8 56) (slot-value msg 'command)) (read-byte istream))
+  (setf (slot-value msg 'desiredJoints) (make-array 7))
+  (let ((vals (slot-value msg 'desiredJoints)))
+    (dotimes (i 7)
+(let ((bits 0))
+    (setf (ldb (byte 8 0) bits) (read-byte istream))
+    (setf (ldb (byte 8 8) bits) (read-byte istream))
+    (setf (ldb (byte 8 16) bits) (read-byte istream))
+    (setf (ldb (byte 8 24) bits) (read-byte istream))
+    (setf (ldb (byte 8 32) bits) (read-byte istream))
+    (setf (ldb (byte 8 40) bits) (read-byte istream))
+    (setf (ldb (byte 8 48) bits) (read-byte istream))
+    (setf (ldb (byte 8 56) bits) (read-byte istream))
+    (setf (aref vals i) (roslisp-utils:decode-double-float-bits bits)))))
   msg
 )
 (defmethod ros-datatype ((msg (eql '<WamCommands-request>)))
@@ -40,18 +66,20 @@
   "wam_ros/WamCommandsRequest")
 (defmethod md5sum ((type (eql '<WamCommands-request>)))
   "Returns md5sum for a message object of type '<WamCommands-request>"
-  #xa4d35f165bc8241b74b54e4eef915a13)
+  #x5487903b3c35697e058b56c00a8836fa)
 (defmethod message-definition ((type (eql '<WamCommands-request>)))
   "Returns full string definition for message of type '<WamCommands-request>"
-  (format nil "uint64 command~%~%"))
+  (format nil "uint64 command~%float64[7] desiredJoints~%~%"))
 (defmethod serialization-length ((msg <WamCommands-request>))
   (+ 0
      8
+     0 (reduce #'+ (slot-value msg 'desiredJoints) :key #'(lambda (ele) (declare (ignorable ele)) (+ 8)))
 ))
 (defmethod ros-message-to-list ((msg <WamCommands-request>))
   "Converts a ROS message object to a list"
   (list '<WamCommands-request>
     (cons ':command (ros-message-to-list (command-val msg)))
+    (cons ':desiredJoints (ros-message-to-list (desiredJoints-val msg)))
 ))
 ;//! \htmlinclude WamCommands-response.msg.html
 
@@ -87,7 +115,7 @@
   "wam_ros/WamCommandsResponse")
 (defmethod md5sum ((type (eql '<WamCommands-response>)))
   "Returns md5sum for a message object of type '<WamCommands-response>"
-  #xa4d35f165bc8241b74b54e4eef915a13)
+  #x5487903b3c35697e058b56c00a8836fa)
 (defmethod message-definition ((type (eql '<WamCommands-response>)))
   "Returns full string definition for message of type '<WamCommands-response>"
   (format nil "string response~%~%~%"))

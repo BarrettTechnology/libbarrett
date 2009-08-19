@@ -16,6 +16,7 @@ end
 %
 % Request message type, fields include:
 % uint64 command
+% double{} desiredJoints
 
 % //! \htmlinclude Request.msg.html
 function msg = wam_ros_Request()
@@ -23,6 +24,7 @@ function msg = wam_ros_Request()
 msg = [];
 msg.create_response_ = @wam_ros_Response;
 msg.command = uint64(0);
+msg.desiredJoints = zeros(7, 1, 'double');
 msg.md5sum_ = @wam_ros_Request___md5sum;
 msg.server_md5sum_ = @wam_ros_Request___server_md5sum;
 msg.type_ = @wam_ros_Request___type;
@@ -34,14 +36,15 @@ function x = wam_ros_Request___md5sum()
 x = '';
 
 function x = wam_ros_Request___server_md5sum()
-x = 'a4d35f165bc8241b74b54e4eef915a13';
+x = '5487903b3c35697e058b56c00a8836fa';
 
 function x = wam_ros_Request___type()
 x = 'wam_ros/WamCommandsRequest';
 
 function l__ = wam_ros_Request___serializationLength(msg)
 l__ =  ...
-    + 8;
+    + 8 ...
+    + 7 * (8);
 
 function dat__ = wam_ros_Request___serialize(msg__, seq__, fid__)
 global rosoct
@@ -53,7 +56,8 @@ if( ~exist('fid__','var') )
     file_created__ = 1;
 end
 c__ = c__ + fwrite(fid__, msg__.command, 'uint64');
-if( c__ ~= 1 )
+c__ = c__ + fwrite(fid__, msg__.desiredJoints(1:7), 'double');
+if( c__ ~= 8 )
     error('some members of msg wam_ros:Request are initialized incorrectly!');
 end
 if( file_created__ )
@@ -72,6 +76,7 @@ if( ~exist('fid__','var') )
     fseek(fid__,0,SEEK_SET);
 end
 msg__.command = fread(fid__,1,'uint64=>uint64');
+msg__.desiredJoints(1:7) = fread(fid__, 7, 'double=>double');
 if( file_created__ )
     fclose(fid__);
 end
@@ -103,7 +108,7 @@ function x = wam_ros_Response___md5sum()
 x = '';
 
 function x = wam_ros_Response___server_md5sum()
-x = 'a4d35f165bc8241b74b54e4eef915a13';
+x = '5487903b3c35697e058b56c00a8836fa';
 
 function x = wam_ros_Response___type()
 x = 'wam_ros/WamCommandsResponse';

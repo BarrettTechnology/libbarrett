@@ -7,7 +7,7 @@ public class WamCommands extends ros.communication.Service<WamCommands.Request, 
 {
 
 public static String __s_getDataType() { return "wam_ros/WamCommands"; }
-public static String __s_getMD5Sum() { return "a4d35f165bc8241b74b54e4eef915a13"; }
+public static String __s_getMD5Sum() { return "5487903b3c35697e058b56c00a8836fa"; }
 
 public String getDataType() { return WamCommands.__s_getDataType(); }
 public String getMD5Sum() { return WamCommands.__s_getMD5Sum(); }
@@ -16,9 +16,11 @@ public static class Request extends ros.communication.Message
 {
 
   public long command;
+  public double[] desiredJoints;
 
   public Request() {
  super();
+  desiredJoints = new double[7];
 
   }
   public static java.lang.String __s_getDataType() { return "wam_ros/WamCommandsRequest"; }
@@ -27,23 +29,26 @@ public static class Request extends ros.communication.Message
   {
     return 
     "uint64 command\n" + 
+    "float64[7] desiredJoints\n" + 
     "\n" + 
     "";
   }
   public java.lang.String getDataType() { return __s_getDataType(); }
   public java.lang.String getMD5Sum()   { return __s_getMD5Sum(); }
   public java.lang.String getMessageDefinition() { return __s_getMessageDefinition(); }
-  public static java.lang.String __s_getServerMD5Sum() { return ("a4d35f165bc8241b74b54e4eef915a13"); }
+  public static java.lang.String __s_getServerMD5Sum() { return ("5487903b3c35697e058b56c00a8836fa"); }
   public java.lang.String getServerMD5Sum() { return __s_getServerMD5Sum(); }
   public static java.lang.String  __s_getServiceDataType() { return ("wam_ros/WamCommands"); }
   public java.lang.String getServiceDataType() { return __s_getServiceDataType(); }
   public Request clone() {
     Request clone = (Request)super.clone();
+      desiredJoints =  (double[])(clone.desiredJoints.clone());
     return clone;
   }
 
   public static java.util.Map<java.lang.String, java.lang.String> fieldTypes() {
          java.util.HashMap<java.lang.String, java.lang.String> m = new java.util.HashMap<java.lang.String, java.lang.String>  ();      m.put("command", "long");
+     m.put("desiredJoints", "double[]");
      return m;
   }
 
@@ -55,20 +60,24 @@ public static class Request extends ros.communication.Message
     if (!(__m instanceof Request)) throw new RuntimeException("Invalid Type");
     Request __m2 = (Request) __m;
     command = __m2.command;
+    desiredJoints = __m2.desiredJoints;
     }
 
   public int serializationLength() 
   {
     int __l = 0;
     __l += 8; // command
+    __l += 0; // desiredJoints
     return __l;
   }
   public void serialize(ByteBuffer bb, int seq) {
     bb.putLong(command);
-  }
+    bb.asDoubleBuffer().put(desiredJoints);  }
   public void deserialize(ByteBuffer bb)  {
     command = bb.getLong();
-  }
+     int desiredJoints_len = 7;
+    desiredJoints = new double[desiredJoints_len];
+    bb.asDoubleBuffer().get(desiredJoints);  }
 }
 
 public static class Response extends ros.communication.Message
@@ -94,7 +103,7 @@ public static class Response extends ros.communication.Message
   public java.lang.String getDataType() { return __s_getDataType(); }
   public java.lang.String getMD5Sum()   { return __s_getMD5Sum(); }
   public java.lang.String getMessageDefinition() { return __s_getMessageDefinition(); }
-  public static java.lang.String __s_getServerMD5Sum() { return ("a4d35f165bc8241b74b54e4eef915a13"); }
+  public static java.lang.String __s_getServerMD5Sum() { return ("5487903b3c35697e058b56c00a8836fa"); }
   public java.lang.String getServerMD5Sum() { return __s_getServerMD5Sum(); }
   public static java.lang.String  __s_getServiceDataType() { return ("wam_ros/WamCommands"); }
   public java.lang.String getServiceDataType() { return __s_getServiceDataType(); }

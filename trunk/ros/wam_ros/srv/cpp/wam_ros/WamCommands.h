@@ -14,7 +14,7 @@ struct WamCommands
 {
 
 inline static std::string getDataType() { return "wam_ros/WamCommands"; }
-inline static std::string getMD5Sum() { return "a4d35f165bc8241b74b54e4eef915a13"; }
+inline static std::string getMD5Sum() { return "5487903b3c35697e058b56c00a8836fa"; }
 
 //! \htmlinclude Request.msg.html
 
@@ -25,27 +25,34 @@ public:
   typedef boost::shared_ptr<Request const> ConstPtr;
 
   typedef uint64_t _command_type;
+  typedef std::vector<double> _desiredJoints_type;
 
   uint64_t command;
+  std::vector<double> desiredJoints;
 
   Request() : ros::Message(),
     command(0)
   {
+  desiredJoints.resize(7);
   }
   Request(const Request &copy) : ros::Message(),
     command(copy.command)
   {
     (void)copy;
+    desiredJoints = copy.desiredJoints;
   }
   Request &operator =(const Request &copy)
   {
     if (this == &copy)
       return *this;
+    desiredJoints.clear();
     command = copy.command;
+    desiredJoints = copy.desiredJoints;
     return *this;
   }
   virtual ~Request() 
   {
+    desiredJoints.clear();
   }
   inline static std::string __s_getDataType() { return std::string("wam_ros/WamCommandsRequest"); }
   inline static std::string __s_getMD5Sum() { return std::string(""); }
@@ -53,30 +60,45 @@ public:
   {
     return std::string(
     "uint64 command\n"
+    "float64[7] desiredJoints\n"
     "\n"
     );
   }
   inline virtual const std::string __getDataType() const { return __s_getDataType(); }
   inline virtual const std::string __getMD5Sum() const { return __s_getMD5Sum(); }
   inline virtual const std::string __getMessageDefinition() const { return __s_getMessageDefinition(); }
-  inline static std::string __s_getServerMD5Sum() { return std::string("a4d35f165bc8241b74b54e4eef915a13"); }
+  inline static std::string __s_getServerMD5Sum() { return std::string("5487903b3c35697e058b56c00a8836fa"); }
   inline virtual const std::string __getServerMD5Sum() const { return __s_getServerMD5Sum(); }
   inline static std::string __s_getServiceDataType() { return std::string("wam_ros/WamCommands"); }
   inline virtual const std::string __getServiceDataType() const { return __s_getServiceDataType(); }
+  inline uint32_t get_desiredJoints_size() const { return 7; }
+  inline void get_desiredJoints_vec (std::vector<double> &__ros_vec) const
+  {
+    __ros_vec = this->desiredJoints;
+  }
+  inline void set_desiredJoints_vec(const std::vector<double> &__ros_vec)
+  {
+    this->desiredJoints = __ros_vec;
+  }
   inline uint32_t serializationLength() const
   {
     unsigned __l = 0;
     __l += 8; // command
+    __l += 7 * 8; // desiredJoints
     return __l;
   }
   virtual uint8_t *serialize(uint8_t *write_ptr, uint32_t seq) const
   {
     SROS_SERIALIZE_PRIMITIVE(write_ptr, command);
+    memcpy(write_ptr, &desiredJoints[0], sizeof(double) * 7);
+    write_ptr += sizeof(double) * 7;
     return write_ptr;
   }
   virtual uint8_t *deserialize(uint8_t *read_ptr)
   {
     SROS_DESERIALIZE_PRIMITIVE(read_ptr, command);
+    memcpy(&desiredJoints[0], read_ptr, sizeof(double) * 7);
+    read_ptr += sizeof(double) * 7;
     return read_ptr;
   }
 };
@@ -127,7 +149,7 @@ public:
   inline virtual const std::string __getDataType() const { return __s_getDataType(); }
   inline virtual const std::string __getMD5Sum() const { return __s_getMD5Sum(); }
   inline virtual const std::string __getMessageDefinition() const { return __s_getMessageDefinition(); }
-  inline static std::string __s_getServerMD5Sum() { return std::string("a4d35f165bc8241b74b54e4eef915a13"); }
+  inline static std::string __s_getServerMD5Sum() { return std::string("5487903b3c35697e058b56c00a8836fa"); }
   inline virtual const std::string __getServerMD5Sum() const { return __s_getServerMD5Sum(); }
   inline static std::string __s_getServiceDataType() { return std::string("wam_ros/WamCommands"); }
   inline virtual const std::string __getServiceDataType() const { return __s_getServiceDataType(); }
