@@ -1,0 +1,26 @@
+what,kind,bundleId,bundleVersion,description,time
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.text.contentAssist.proposals",1253562429693
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.text.contentAssist.proposals",1253562432696
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.save",1253562435886
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562440040
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562444404
+activated,view,org.eclipse.ui.navigator.resources,3.4.0.I20090525-2000,"org.eclipse.ui.navigator.ProjectExplorer",1253562446097
+opened,editor,org.eclipse.cdt.ui,5.1.0.200906161748,"org.eclipse.cdt.ui.editor.CEditor",1253562446317
+activated,editor,org.eclipse.cdt.ui,5.1.0.200906161748,"org.eclipse.cdt.ui.editor.CEditor",1253562446463
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.text.contentAssist.proposals",1253562455653
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.text.contentAssist.proposals",1253562457349
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.save",1253562459249
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562462005
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562465487
+activated,view,org.eclipse.ui.console,3.4.0.v20090513,"org.eclipse.ui.console.ConsoleView",1253562466371
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562471501
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562474547
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562478094
+started,bundle,org.eclipse.cdt.launch,6.0.0.200906161748,"org.eclipse.cdt.launch",1253562486330
+started,bundle,org.eclipse.cdt.debug.mi.ui,6.0.0.200906161748,"org.eclipse.cdt.debug.mi.ui",1253562486682
+started,bundle,org.eclipse.cdt.debug.mi.core,6.0.0.200906161748,"org.eclipse.cdt.debug.mi.core",1253562486764
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562566803
+error,log,,,"Error logged from Debug Core: ",1253562569915
+activated,editor,org.eclipse.cdt.ui,5.1.0.200906161748,"org.eclipse.cdt.ui.editor.CEditor",1253562601264
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.save",1253562606955
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562620195
