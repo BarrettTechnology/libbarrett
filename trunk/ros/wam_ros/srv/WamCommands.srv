@@ -1,4 +1,0 @@
-uint64 command
-float64[7] desiredJoints
----
-string response
