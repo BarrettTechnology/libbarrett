@@ -1,0 +1,26 @@
+what,kind,bundleId,bundleVersion,description,time
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562624909
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562645976
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562663534
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562671016
+executed,command,org.eclipse.ui.ide,3.5.0.I20090525-2000,"org.eclipse.ui.project.properties",1253562734122
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562734199
+activated,view,org.eclipse.ui.navigator.resources,3.4.0.I20090525-2000,"org.eclipse.ui.navigator.ProjectExplorer",1253562759609
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562806050
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.properties",1253562823346
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562823412
+error,log,,,"Error logged from Debug Core: ",1253562828256
+activated,view,org.eclipse.ui.console,3.4.0.v20090513,"org.eclipse.ui.console.ConsoleView",1253562947673
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.copy",1253562954630
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253562958225
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253563846468
+activated,editor,org.eclipse.cdt.ui,5.1.0.200906161748,"org.eclipse.cdt.ui.editor.CEditor",1253563846626
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253563850751
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253565596732
+activated,view,org.eclipse.ui.navigator.resources,3.4.0.I20090525-2000,"org.eclipse.ui.navigator.ProjectExplorer",1253565600272
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253565602661
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.copy",1253565789760
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.paste",1253565858190
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.cut",1253565883936
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.paste",1253565888406
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.properties",1253565933316

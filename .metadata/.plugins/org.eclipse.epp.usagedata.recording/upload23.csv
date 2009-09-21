@@ -1,0 +1,26 @@
+what,kind,bundleId,bundleVersion,description,time
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566022454
+activated,view,org.eclipse.ui.navigator.resources,3.4.0.I20090525-2000,"org.eclipse.ui.navigator.ProjectExplorer",1253566025487
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566028453
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.file.properties",1253566040020
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566040078
+error,log,,,"Error logged from Debug Core: ",1253566042371
+activated,view,org.eclipse.ui.console,3.4.0.v20090513,"org.eclipse.ui.console.ConsoleView",1253566044078
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566077498
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566170018
+activated,editor,org.eclipse.cdt.ui,5.1.0.200906161748,"org.eclipse.cdt.ui.editor.CEditor",1253566170223
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566186631
+executed,command,org.eclipse.ui.ide,3.5.0.I20090525-2000,"org.eclipse.ui.project.cleanAction",1253566194586
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566194793
+activated,view,org.eclipse.ui.navigator.resources,3.4.0.I20090525-2000,"org.eclipse.ui.navigator.ProjectExplorer",1253566203992
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566223158
+executed,command,org.eclipse.ltk.ui.refactoring,3.4.100.v20090604,"org.eclipse.ltk.ui.refactoring.commands.deleteResources",1253566226476
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.delete",1253566226476
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566226547
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566229380
+executed,command,org.eclipse.ltk.ui.refactoring,3.4.100.v20090604,"org.eclipse.ltk.ui.refactoring.commands.deleteResources",1253566230506
+executed,command,org.eclipse.ui,3.5.0.I20090604-2000,"org.eclipse.ui.edit.delete",1253566230506
+activated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566230708
+deactivated,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566237353
+closed,workbench,org.eclipse.ui.workbench,3.5.0.I20090603-2000,"",1253566239728
+stopped,bundle,org.eclipse.cdt.debug.mi.ui,6.0.0.200906161748,"org.eclipse.cdt.debug.mi.ui",1253566240050
