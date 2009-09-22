@@ -1,0 +1,17 @@
+Dan Cody
+libbarrett
+Barrett Technology
+9-22-2009
+
+
+Some of these subdirectories contain Eclipse projects, but Eclipse's workspace metadata is not included in the repository. To regenerate it:
+
+1) Open Eclipse
+2) Set your Workspace directory to libbarrett/trunk (this folder)
+3) Select File -> Import
+4) Under the General category, choose "Existing Projects into Workspace", and then Next
+5) Choose "Select root directory" and use libbarrett/trunk as the directory
+6) At this point, the projects should be listed. Select them all and click Finish.
+
+When committing, do not add the libbarrett/trunk/.metedata directory to the repository. This directory should be ignored automatically.
+
