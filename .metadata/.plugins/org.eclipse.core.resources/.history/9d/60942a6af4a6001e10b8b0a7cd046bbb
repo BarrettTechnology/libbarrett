@@ -9,6 +9,7 @@
 #define SYSTEMS_H_
 
 
+#include "systems/abstract/system.h"  // for access to System::Input, System::Output FIXME: needed?
 #include "systems/helpers.h"
 
 // sources

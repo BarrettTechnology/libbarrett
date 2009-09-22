@@ -36,9 +36,9 @@
 </folder>
 </info>
 </editorArea>
-<editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="systems.h" partName="systems.h" path="/home/dc/svn/libbarrett/trunk/library/src/barrett/systems.h" title="systems.h" tooltip="library/src/barrett/systems.h" workbook="DefaultEditorWorkbook">
+<editor id="org.eclipse.cdt.ui.editor.CEditor" name="systems.h" partName="systems.h" path="/home/dc/svn/libbarrett/trunk/library/src/barrett/systems.h" title="systems.h" tooltip="library/src/barrett/systems.h" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/library/src/barrett/systems.h"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="46" selectionTopPixel="0"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="109" selectionTopPixel="0"/>
 </editor>
 <editor id="org.eclipse.cdt.ui.editor.CEditor" name="exposed_io_system.h" partName="exposed_io_system.h" path="/home/dc/svn/libbarrett/trunk/library-tests/src/systems/exposed_io_system.h" title="exposed_io_system.h" tooltip="library-tests/src/systems/exposed_io_system.h" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/library-tests/src/systems/exposed_io_system.h"/>
@@ -48,16 +48,18 @@
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/library-tests/src/systems/helpers.cpp"/>
 <editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="195" selectionTopPixel="0"/>
 </editor>
-<editor id="org.eclipse.cdt.ui.editor.CEditor" name="system.cpp" partName="system.cpp" path="/home/dc/svn/libbarrett/trunk/library-tests/src/systems/system.cpp" title="system.cpp" tooltip="library-tests/src/systems/system.cpp" workbook="DefaultEditorWorkbook">
+<editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="system.cpp" partName="system.cpp" path="/home/dc/svn/libbarrett/trunk/library-tests/src/systems/system.cpp" title="system.cpp" tooltip="library-tests/src/systems/system.cpp" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/library-tests/src/systems/system.cpp"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="1878" selectionTopPixel="843"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="477" selectionTopPixel="221"/>
 </editor>
 </editors>
 <views>
 <view id="org.eclipse.ui.navigator.ProjectExplorer" partName="Project Explorer">
 <viewState CommonNavigator.LINKING_ENABLED="0" CommonNavigator.LINKING_ENABLED.delayed="0" org.eclipse.cdt.ui.cview.groupincludes="false" org.eclipse.cdt.ui.editor.CUChildren="true" org.eclipse.ui.navigator.resources.workingSets.showTopLevelWorkingSets="0"/>
 </view>
-<view id="org.eclipse.ui.views.PropertySheet" partName="Properties"/>
+<view id="org.eclipse.ui.views.PropertySheet" partName="Properties">
+<viewState/>
+</view>
 <view id="org.eclipse.cdt.make.ui.views.MakeView" partName="Make Targets">
 <viewState/>
 </view>
@@ -90,7 +92,7 @@
 <viewState/>
 </view>
 </views>
-<perspectives activePart="org.eclipse.ui.navigator.ProjectExplorer" activePerspective="org.eclipse.cdt.ui.CPerspective">
+<perspectives activePart="org.eclipse.cdt.ui.editor.CEditor" activePerspective="org.eclipse.cdt.ui.CPerspective">
 <perspective editorAreaTrimState="2" editorAreaVisible="1" fixed="0" version="0.016">
 <descriptor class="org.eclipse.cdt.internal.ui.CPerspectiveFactory" id="org.eclipse.cdt.ui.CPerspective" label="C/C++"/>
 <alwaysOnActionSet id="org.eclipse.mylyn.context.ui.actionSet"/>
@@ -169,11 +171,12 @@
 </info>
 <info part="org.eclipse.ui.editorss" ratio="0.24950495" ratioLeft="252" ratioRight="758" relationship="2" relative="topLeft"/>
 <info folder="true" part="bottom" ratio="0.6655173" ratioLeft="579" ratioRight="291" relationship="4" relative="org.eclipse.ui.editorss">
-<folder activePageID="org.eclipse.ui.console.ConsoleView" appearance="2" expanded="2">
+<folder activePageID="org.eclipse.ui.views.PropertySheet" appearance="2" expanded="2">
 <page content="org.eclipse.ui.views.ProblemView" label="Problems"/>
 <page content="org.eclipse.ui.views.TaskList" label="Tasks"/>
 <page content="org.eclipse.ui.console.ConsoleView" label="Console"/>
 <page content="org.eclipse.ui.views.PropertySheet" label="Properties"/>
+<page content="org.eclipse.search.ui.views.SearchView" label="LabelNotFound"/>
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
 <part id="0"/>
 <part id="1"/>
@@ -183,7 +186,7 @@
 </folder>
 </info>
 <info folder="true" part="topRight" ratio="0.74934036" ratioLeft="568" ratioRight="190" relationship="2" relative="org.eclipse.ui.editorss">
-<folder activePageID="org.eclipse.cdt.make.ui.views.MakeView" appearance="2" expanded="2">
+<folder activePageID="org.eclipse.ui.views.ContentOutline" appearance="2" expanded="2">
 <page content="org.eclipse.ui.views.ContentOutline" label="Outline"/>
 <page content="org.eclipse.cdt.make.ui.views.MakeView" label="Make Targets"/>
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
@@ -298,6 +301,9 @@
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library/src/barrett/do_stuff.cpp"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library-tests/src/systems/helpers.cpp"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library-tests/src/systems/system.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library-tests/src/systems/helpers.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library-tests/src/systems/system.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/library/src/barrett/systems/helpers.h"/>
 </editors>
 <item historyLabel="systems.h" index="0">
 <position info="not_deleted" x="0" y="0"/>
@@ -344,8 +350,20 @@
 <item historyLabel="system.cpp" index="6">
 <position info="not_deleted" x="1878" y="0"/>
 </item>
-<item active="true" historyLabel="systems.h" index="3">
+<item historyLabel="systems.h" index="3">
 <position/>
+</item>
+<item historyLabel="helpers.cpp" index="7">
+<position info="not_deleted" x="195" y="0"/>
+</item>
+<item historyLabel="system.cpp" index="8">
+<position info="not_deleted" x="477" y="0"/>
+</item>
+<item historyLabel="helpers.h" index="9">
+<position info="not_deleted" x="144" y="0"/>
+</item>
+<item active="true" historyLabel="system.cpp" index="8">
+<position info="not_deleted" x="477" y="0"/>
 </item>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
@@ -364,6 +382,9 @@
 </trimLayout>
 </window>
 <mruList>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helpers.h" tooltip="library/src/barrett/systems/helpers.h">
+<persistable path="/library/src/barrett/systems/helpers.h"/>
+</file>
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="system.cpp" tooltip="library-tests/src/systems/system.cpp">
 <persistable path="/library-tests/src/systems/system.cpp"/>
 </file>
