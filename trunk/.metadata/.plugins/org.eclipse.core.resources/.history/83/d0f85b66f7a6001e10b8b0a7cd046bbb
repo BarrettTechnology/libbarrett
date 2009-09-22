@@ -7,7 +7,7 @@
 
 #ifndef HELPERS_H_
 #define HELPERS_H_
-// FIXME: rename to manipulators.h?
+
 
 #include <stdexcept>
 #include "./abstract/system.h"
