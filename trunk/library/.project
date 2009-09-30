@@ -3,6 +3,7 @@
 	<name>library</name>
 	<comment></comment>
 	<projects>
+		<project>cdlbt</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

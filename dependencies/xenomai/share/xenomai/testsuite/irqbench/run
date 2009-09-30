@@ -1,0 +1,1 @@
+${DESTDIR}/usr/xenomai/bin/xeno-load `dirname $0` $*
