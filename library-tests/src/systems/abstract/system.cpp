@@ -8,7 +8,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include <barrett/systems.h>
-#include "./exposed_io_system.h"
+#include "../exposed_io_system.h"
 
 
 namespace {
@@ -56,7 +56,7 @@ TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
 		<< "input.getValue() didn't throw when value undefined";
 }
 
-TEST_F(SystemTest, OutputInitialValueConstructor) {
+TEST_F(SystemTest, OutputInitialValueCtor) {
 	Systems::System::Output<double>::Value* outputValue;
 	Systems::System::Output<double> output(38.12, &outputValue);
 	Systems::connect(output, eios.input);

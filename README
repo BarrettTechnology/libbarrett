@@ -13,5 +13,7 @@ Some of these subdirectories contain Eclipse projects, but Eclipse's workspace m
 5) Choose "Select root directory" and use libbarrett/trunk as the directory
 6) At this point, the projects should be listed. Select them all and click Finish.
 
-When committing, do not add the libbarrett/trunk/.metedata directory to the repository. This directory should be ignored automatically.
+When this is completed, it sometimes looks as if nothing has changed. If this is the case, close the Welcome screen and/or choose Window -> Open Perspective -> Other -> C/C++.
+
+When committing, do not add the libbarrett/trunk/.metedata directory or any of the Release/Debug build directories to the repository. These directories should be ignored automatically.
 

@@ -23,6 +23,9 @@ public:
 	ExposedIO() :
 		operateCalled(false) {}
 
+	explicit ExposedIO(const T& initialValue) :
+		SingleIO<T, T>(initialValue), operateCalled(false) {}
+
 	const T& getInputValue() const {
 		return this->input.getValue();
 	}

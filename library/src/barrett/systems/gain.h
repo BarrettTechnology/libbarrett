@@ -16,7 +16,9 @@
 namespace Systems {
 
 
-template<typename InputType, typename GainType, typename OutputType = InputType>
+template<typename InputType,
+		 typename GainType = InputType,
+		 typename OutputType = InputType>
 class Gain : public SingleIO<InputType, OutputType> {
 protected:
 	GainType gain;
