@@ -42,7 +42,7 @@
 <option id="gnu.cpp.link.option.paths.1736382698" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug}&quot;"/>
 </option>
-<option id="gnu.cpp.link.option.flags.197516663" superClass="gnu.cpp.link.option.flags" value="-Wl,-rpath,&quot;${workspace_loc:/library/Debug}&quot;" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.197516663" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-Wl,-rpath,&quot;${workspace_loc:/library/Debug}&quot;" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1490443078" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -515,7 +515,7 @@
 <option id="gnu.cpp.link.option.paths.1914617939" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug}&quot;"/>
 </option>
-<option id="gnu.cpp.link.option.flags.1067127431" superClass="gnu.cpp.link.option.flags" value="-Wl,-rpath,&quot;${workspace_loc:/library/Debug}&quot;" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.1067127431" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-Wl,-rpath,&quot;${workspace_loc:/library/Debug}&quot;" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.2113392844" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>

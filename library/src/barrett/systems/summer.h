@@ -8,7 +8,6 @@
 #ifndef SUMMER_H_
 #define SUMMER_H_
 
-
 #include <boost/array.hpp>
 // #include <vector>
 #include <bitset>
