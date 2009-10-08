@@ -11,6 +11,15 @@
 namespace Systems {
 
 
+// the compiler requires a definition for a dtor, even if it's pure virtual
+inline System::AbstractInput::~AbstractInput() {}
+
+
+template<typename T>
+inline bool System::Input<T>::isConnected() {
+	return output == NULL;
+}
+
 template<typename T>
 inline bool System::Input<T>::valueDefined() const
 {

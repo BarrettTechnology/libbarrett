@@ -27,18 +27,23 @@ protected:
 };
 
 
+// Systems::connect
 TEST_F(SystemHelperTest, ConnectConnects) {
 	Systems::connect(eios.output, eios.input);
 	checkConnected(&eios, eios, 5.7);
 }
 
 TEST_F(SystemHelperTest, ConnectDoesntConnectTwice) {
+	Systems::ExposedIO<double> eios2;
+
 	ASSERT_NO_THROW(Systems::connect(eios.output, eios.input))
 		<< "connect() threw on first connection";
-	ASSERT_THROW(Systems::connect(eios.output, eios.input), std::invalid_argument)
+	ASSERT_THROW(Systems::connect(eios2.output, eios.input), std::invalid_argument)
 		<< "connect() didn't throw on second connection";
 }
 
+
+// Systems::reconnect
 TEST_F(SystemHelperTest, ReconnectReconnects) {
 	Systems::ExposedIO<double> eios2;
 
@@ -56,6 +61,26 @@ TEST_F(SystemHelperTest, ReconnectThrowsIfInputNotConnected) {
 		<< "reconnect() didn't throw when passed a disconnected input";
 }
 
+
+// Systems::forceConnect
+TEST_F(SystemHelperTest, ForceConnectConnects) {
+	Systems::forceConnect(eios.output, eios.input);
+	checkConnected(&eios, eios, 5.7);
+}
+
+TEST_F(SystemHelperTest, ForceConnectReconnects) {
+	Systems::ExposedIO<double> eios2;
+
+	Systems::connect(eios.output, eios.input);
+	checkConnected(&eios, eios, -8.6e4);
+
+	Systems::forceConnect(eios2.output, eios.input);
+	checkNotConnected(&eios, eios, -34.8);
+	checkConnected(&eios2, eios, 712.0);
+}
+
+
+// Systems::disconnect
 TEST_F(SystemHelperTest, DisconnectDisconnects) {
 	Systems::connect(eios.output, eios.input);
 	checkConnected(&eios, eios, 42.0);

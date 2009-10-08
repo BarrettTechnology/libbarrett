@@ -50,6 +50,20 @@ throw(std::invalid_argument)
 	// input.onValueChanged();		// FIXME: should this be here?
 }
 
+// this function could also be named connectOrReconnect
+template<typename T>
+void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
+{
+	if (input.output != NULL) {
+		// disconnect old output
+		input.output->removeInput(input);
+	}
+
+	input.output = &output;
+	output.addInput(input);
+	// input.onValueChanged();  // FIXME: should this be here?
+}
+
 template<typename T>
 void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)

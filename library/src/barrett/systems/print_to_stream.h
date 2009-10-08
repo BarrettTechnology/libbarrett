@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 #include "./abstract/system.h"
-#include "../ca_macro.h"
+#include "../detail/ca_macro.h"
 
 
 namespace Systems {
@@ -24,6 +24,12 @@ class PrintToStream : public System {
 public:	Input<T> input;
 
 
+public:
+	explicit PrintToStream(const std::string& prependedLabel,
+	                       std::ostream& ostream = std::cout) :
+		input(this), label(prependedLabel), os(ostream) {}
+	virtual ~PrintToStream() {}
+
 protected:
 	std::string label;
 	std::ostream& os;
@@ -31,12 +37,6 @@ protected:
 	virtual void operate() {
 		os << label << input.getValue() << std::endl;
 	}
-
-public:
-	explicit PrintToStream(const std::string& prependedLabel,
-	                       std::ostream& ostream = std::cout) :
-		input(this), label(prependedLabel), os(ostream) {}
-	virtual ~PrintToStream() {}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(PrintToStream);
