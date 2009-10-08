@@ -9,7 +9,7 @@
 #define EXPOSEDIOSYSTEM_H_
 
 #include <barrett/systems.h>
-#include <barrett/ca_macro.h>
+#include <barrett/detail/ca_macro.h>
 
 
 namespace Systems {

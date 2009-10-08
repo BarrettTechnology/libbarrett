@@ -10,7 +10,7 @@
 
 
 #include "./system.h"
-#include "../../ca_macro.h"
+#include "../../detail/ca_macro.h"
 
 
 namespace Systems {

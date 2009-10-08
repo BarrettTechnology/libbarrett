@@ -25,6 +25,7 @@ protected:
 	struct bt_wam_local* wam_local;
 
 	virtual void operate() {}
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(Wam);
 };

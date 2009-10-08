@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <list>
 #include <string>
-#include "../../ca_macro.h"
+#include "../../detail/ca_macro.h"
 
 
 namespace Systems {
@@ -20,12 +20,38 @@ namespace Systems {
 
 class System {
 public:
+	// An abstract class to allow collections of, and operations on
+	// generic Inputs
+	class AbstractInput {
+	protected:
+		System& parent;
+	public:
+		explicit AbstractInput(System* parentSys) :
+			parent(*parentSys) {}
+		virtual ~AbstractInput() = 0;  // make this class polymorphic
+
+		virtual bool isConnected() = 0;
+	private:
+		DISALLOW_COPY_AND_ASSIGN(AbstractInput);
+	};
+
+	// An abstract class to allow collections of, and operations on
+	// generic Outputs
+	class AbstractOutput {
+	public:
+		AbstractOutput() {}
+		virtual ~AbstractOutput() = 0;  // make this class polymorphic
+	private:
+		DISALLOW_COPY_AND_ASSIGN(AbstractOutput);
+	};
+
+
 	template<typename T> class Input;
 	template<typename T> class Output;
 
 
 	template<typename T>
-	class Input {
+	class Input : public AbstractInput {
 	public:
 		class ValueUndefinedError : public std::runtime_error {
 		public:
@@ -33,19 +59,18 @@ public:
 				std::runtime_error(msg) {}
 		};
 
-	protected:
-		System& parent;
-		Output<T>* output;
-
-	public:
 		explicit Input(System* parentSys) :
-			parent(*parentSys), output(NULL) {}
-		virtual ~Input() {}  // FIXME: do we intend for Input to be subclassed?
+			AbstractInput(parentSys), output(NULL) {}
+		virtual ~Input() {}
+
+		virtual bool isConnected();
 
 		bool valueDefined() const;
 		const T& getValue() const throw(std::logic_error, ValueUndefinedError);
 
 	protected:
+		Output<T>* output;
+
 		// FIXME: do we intend for Input to be subclassed?
 		virtual void onValueChanged() const;
 
@@ -61,6 +86,9 @@ public:
 		throw(std::invalid_argument);
 
 		template<typename T2>
+		friend void forceConnect(System::Output<T2>& output, System::Input<T2>& input);  //NOLINT: see ../helpers.h
+
+		template<typename T2>
 		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
 		throw(std::invalid_argument);
 
@@ -70,12 +98,9 @@ public:
 
 
 	template<typename T>
-	class Output {
+	class Output : AbstractOutput {
 	public:
 		class Value {
-		protected:
-			const Output<T>& parent;
-			T* value;
 		public:
 			Value(const Output<T>& parentOutput, const T& initialValue) :
 				parent(parentOutput), value(new T(initialValue)) {}
@@ -85,10 +110,17 @@ public:
 
 			void setValue(const T& newValue);
 			void setValueUndefined();
+		protected:
+			const Output<T>& parent;
+			T* value;
 		private:
 			friend class Input<T>;
 			DISALLOW_COPY_AND_ASSIGN(Value);
 		};
+
+		explicit Output(Value** valuePtr);
+		Output(const T& initialValue, Value** valuePtr);
+		virtual ~Output() {}
 
 	protected:
 		Value value;
@@ -98,10 +130,6 @@ public:
 		void removeInput(const Input<T>& input);
 
 		void notifyInputs() const;
-
-	public:
-		explicit Output(Value** valuePtr);
-		Output(const T& initialValue, Value** valuePtr);
 
 	// friends:
 		friend class Input<T>;
@@ -115,6 +143,9 @@ public:
 		throw(std::invalid_argument);
 
 		template<typename T2>
+		friend void forceConnect(System::Output<T2>& output, System::Input<T2>& input);  //NOLINT: see ../helpers.h
+
+		template<typename T2>
 		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
 		throw(std::invalid_argument);
 
@@ -122,8 +153,7 @@ public:
 		DISALLOW_COPY_AND_ASSIGN(Output);
 	};
 
-	System() {}  // needed because empty copy ctor disables automatic
-	             // generation of default ctor
+	System() {}
 	virtual ~System() {}
 
 protected:

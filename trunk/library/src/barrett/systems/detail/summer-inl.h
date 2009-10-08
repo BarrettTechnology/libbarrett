@@ -9,6 +9,7 @@
 // #include <vector>
 #include <string>
 #include <bitset>
+#include "../../detail/purge.h"
 #include "../abstract/system.h"
 
 
@@ -47,11 +48,14 @@ Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity) :
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::~Summer()
+inline Summer<T, numInputs>::~Summer()
 {
-	for (size_t i = 0; i < numInputs; ++i) {
+	purge(inputs);
+/*	for (size_t i = 0; i < numInputs; ++i) {
 		delete inputs[i];
+		inputs[i] = NULL;
 	}
+*/
 }
 
 template<typename T, size_t numInputs>

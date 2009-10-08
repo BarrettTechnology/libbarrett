@@ -11,6 +11,10 @@
 namespace Systems {
 
 
+// the compiler requires a definition for a dtor, even if it's pure virtual
+inline System::AbstractOutput::~AbstractOutput() {}
+
+
 template<typename T>
 inline void System::Output<T>::addInput(const System::Input<T>& input)
 {
