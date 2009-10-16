@@ -8,6 +8,8 @@
 #include <gtest/gtest.h>
 #include <barrett/systems.h>
 
+#include "./exposed_io_system.h"
+
 
 namespace {
 
@@ -18,6 +20,16 @@ protected:
 };
 
 
+TEST_F(ControllerTest, InitialOutputValueCtor) {
+	Systems::Controller<double> ivController(-88.1);
+	Systems::ExposedIO<double> eios;
+	Systems::connect(ivController.controlOutput, eios.input);
+
+	EXPECT_TRUE(eios.inputValueDefined()) << "initial value undefined";
+	EXPECT_EQ(-88.1, eios.getInputValue())
+		<< "wrong initial value given";
+}
+
 TEST_F(ControllerTest, GetReferenceInput) {
 	EXPECT_EQ(&controller.referenceInput, controller.getReferenceInput())
 		<< "getReferenceInput() didn't return &controller.referenceInput";
@@ -26,6 +38,15 @@ TEST_F(ControllerTest, GetReferenceInput) {
 TEST_F(ControllerTest, GetFeedbackInput) {
 	EXPECT_EQ(&controller.feedbackInput, controller.getFeedbackInput())
 		<< "getFeedbackInput() didn't return &controller.feedbackInput";
+}
+
+TEST_F(ControllerTest, GetControlOutput) {
+	EXPECT_EQ(&controller.controlOutput, controller.getControlOutput())
+		<< "getControlOutput() didn't return &controller.controlOutput";
+}
+
+TEST_F(ControllerTest, SelectAdapter) {
+	// TODO(dc): stub
 }
 
 

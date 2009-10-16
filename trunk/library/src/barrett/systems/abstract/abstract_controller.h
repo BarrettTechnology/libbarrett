@@ -9,7 +9,9 @@
 #define ABSTRACT_CONTROLLER_H_
 
 
+#include <list>
 #include "./system.h"
+#include "./joint_torque_adapter.h"
 
 
 namespace Systems {
@@ -20,8 +22,13 @@ public:
 	AbstractController() {}
 	virtual ~AbstractController() {}
 
-	virtual System::AbstractInput* getReferenceInput() = 0;
-	virtual System::AbstractInput* getFeedbackInput() = 0;
+	virtual AbstractInput* getReferenceInput() = 0;
+	virtual AbstractInput* getFeedbackInput() = 0;
+	virtual AbstractOutput* getControlOutput() = 0;
+
+	virtual void selectAdapter(
+			const std::list<JointTorqueAdapter*>& adapters) const
+	throw(std::invalid_argument) = 0;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(AbstractController);

@@ -10,14 +10,21 @@
 
 
 #include <list>
+#include <stdexcept>
+
 #include "abstract/system.h"
 #include "../detail/ca_macro.h"
+
 #include "./abstract/abstract_controller.h"
+#include "./abstract/joint_torque_adapter.h"
 
 
 namespace Systems {
 
 
+// TODO(dc): need a way to disambiguate Controllers with the same
+// Input/Output types. Boost::Units and/or methods for specifying specific
+// Controllers and JointTorqueAdapters?
 class SupervisoryController /*: System*/ {
 public:
 	SupervisoryController(
@@ -27,12 +34,29 @@ public:
 	~SupervisoryController();
 
 	template<typename T>
-	void trackReferenceSignal(System::Output<T>& referenceSignal)  //NOLINT: non-const reference for syntax
+	void trackReferenceSignal(System::Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
+	throw(std::invalid_argument);
+
+	// FIXME: should this be public?
+	template<typename T>
+	AbstractController& selectController(
+			const System::Output<T>& referenceOutput) const
+	throw(std::invalid_argument);
+
+	template<typename T>
+	JointTorqueAdapter& selectAdapter(
+			const System::Output<T>& controlOutput) const
+	throw(std::invalid_argument);
+
+	template<typename T>
+	System::Output<T>* selectFeedbackSignal(
+			const System::Input<T>& feedbackInput) const
 	throw(std::invalid_argument);
 
 protected:
-	// the SupervisoryController owns the objects pointed to by this list
+	// the SupervisoryController owns the objects pointed to by these lists
 	std::list<AbstractController*> controllers;
+	std::list<JointTorqueAdapter*> adapters;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(SupervisoryController);
