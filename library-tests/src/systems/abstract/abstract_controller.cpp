@@ -5,40 +5,56 @@
  *      Author: dc
  */
 
+#include <stdexcept>
+#include <list>
+
 #include <gtest/gtest.h>
 #include <barrett/detail/ca_macro.h>
 #include <barrett/systems.h>
 #include <barrett/systems/abstract/abstract_controller.h>
+#include <barrett/systems/abstract/joint_torque_adapter.h>
 
 
 namespace {
 
 
 class Controller : public Systems::AbstractController {
-	// IO
-	public:		System::Input<double> referenceInput;
-	public:		System::Input<double> feedbackInput;
+// IO
+public:		System::Input<double> referenceInput;
+public:		System::Input<double> feedbackInput;
+public:		Output<double> controlOutput;
+protected:	Output<double>::Value* controlOutputValue;
 
 
-	public:
-		Controller() :
-			referenceInput(this), feedbackInput(this) {}
+public:
+	Controller() :
+		referenceInput(this),
+		feedbackInput(this),
+		controlOutput(&controlOutputValue) {}
+	virtual ~Controller() {}
 
-		virtual System::Input<double>* getReferenceInput()	{ return &referenceInput; }
-		virtual System::Input<double>* getFeedbackInput()	{ return &feedbackInput; }
+	virtual System::Input<double>* getReferenceInput()	{ return &referenceInput; }
+	virtual System::Input<double>* getFeedbackInput()	{ return &feedbackInput; }
+	virtual System::Output<double>* getControlOutput()	{ return &controlOutput; }
 
-	protected:
-		virtual void operate() {}
+	virtual void selectAdapter(
+			const std::list<Systems::JointTorqueAdapter*>& adapters) const
+	throw(std::invalid_argument) {}
 
-	private:
-		DISALLOW_COPY_AND_ASSIGN(Controller);
-	};
+protected:
+	virtual void operate() {}
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(Controller);
+};
 
 // we just want this to compile
-TEST(AbstractControllerTest, InterfaceExists) {
+TEST(AbstractControllerTest, Interface) {
 	Controller c;
 	c.getReferenceInput();
 	c.getFeedbackInput();
+	c.getControlOutput();
+	c.selectAdapter(std::list<Systems::JointTorqueAdapter*>());
 }
 
 

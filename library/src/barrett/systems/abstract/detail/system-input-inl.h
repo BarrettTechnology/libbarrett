@@ -16,7 +16,7 @@ inline System::AbstractInput::~AbstractInput() {}
 
 
 template<typename T>
-inline bool System::Input<T>::isConnected() {
+inline bool System::Input<T>::isConnected() const {
 	return output == NULL;
 }
 

@@ -27,8 +27,9 @@ protected:	typename Output<OutputType>::Value* outputValue;
 public:
 	SingleIO() :
 		input(this), output(&outputValue) {}
-	explicit SingleIO(OutputType initialOutputValue) :
+	explicit SingleIO(const OutputType& initialOutputValue) :
 		input(this), output(initialOutputValue, &outputValue) {}
+	virtual ~SingleIO() {}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(SingleIO);

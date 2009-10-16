@@ -30,7 +30,7 @@ public:
 			parent(*parentSys) {}
 		virtual ~AbstractInput() = 0;  // make this class polymorphic
 
-		virtual bool isConnected() = 0;
+		virtual bool isConnected() const = 0;
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractInput);
 	};
@@ -63,7 +63,7 @@ public:
 			AbstractInput(parentSys), output(NULL) {}
 		virtual ~Input() {}
 
-		virtual bool isConnected();
+		virtual bool isConnected() const;
 
 		bool valueDefined() const;
 		const T& getValue() const throw(std::logic_error, ValueUndefinedError);
@@ -98,7 +98,7 @@ public:
 
 
 	template<typename T>
-	class Output : AbstractOutput {
+	class Output : public AbstractOutput {
 	public:
 		class Value {
 		public:
