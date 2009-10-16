@@ -13,7 +13,8 @@
 #include "./abstract/system.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename T>
@@ -79,6 +80,7 @@ throw(std::invalid_argument)
 }
 
 
+}
 }
 
 // TODO(dc): void disconnect(System::Output<T>& output)?

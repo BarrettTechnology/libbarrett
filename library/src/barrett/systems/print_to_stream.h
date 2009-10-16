@@ -11,11 +11,13 @@
 
 #include <iostream>
 #include <string>
+
 #include "./abstract/system.h"
 #include "../detail/ca_macro.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename T>
@@ -43,6 +45,7 @@ private:
 };
 
 
+}
 }
 
 

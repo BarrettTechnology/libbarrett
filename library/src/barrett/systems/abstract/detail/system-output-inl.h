@@ -8,7 +8,8 @@
 #include <list>
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 // the compiler requires a definition for a dtor, even if it's pure virtual
@@ -61,4 +62,5 @@ System::Output<T>::Output(const T& initialValue, Value** valueHandle) :
 }
 
 
+}
 }

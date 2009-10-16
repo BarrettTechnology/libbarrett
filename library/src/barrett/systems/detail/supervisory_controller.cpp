@@ -7,11 +7,13 @@
 
 
 #include <list>
+
 #include "../abstract/abstract_controller.h"
 #include "../supervisory_controller.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 SupervisoryController::SupervisoryController(
@@ -26,4 +28,5 @@ SupervisoryController::SupervisoryController(
 }
 
 
+}
 }

@@ -19,13 +19,14 @@
 #include "./abstract/joint_torque_adapter.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 // TODO(dc): need a way to disambiguate Controllers with the same
 // Input/Output types. Boost::Units and/or methods for specifying specific
 // Controllers and JointTorqueAdapters?
-class SupervisoryController /*: System*/ {
+class SupervisoryController : public System {
 public:
 	SupervisoryController(
 //			const std::list<AbstractController*>& additionalControllers =
@@ -34,23 +35,23 @@ public:
 	~SupervisoryController();
 
 	template<typename T>
-	void trackReferenceSignal(System::Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
+	void trackReferenceSignal(Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
 	throw(std::invalid_argument);
 
 	// FIXME: should this be public?
 	template<typename T>
 	AbstractController& selectController(
-			const System::Output<T>& referenceOutput) const
+			const Output<T>& referenceOutput) const
 	throw(std::invalid_argument);
 
 	template<typename T>
 	JointTorqueAdapter& selectAdapter(
-			const System::Output<T>& controlOutput) const
+			const Output<T>& controlOutput) const
 	throw(std::invalid_argument);
 
 	template<typename T>
-	System::Output<T>* selectFeedbackSignal(
-			const System::Input<T>& feedbackInput) const
+	Output<T>* selectFeedbackSignal(
+			const Input<T>& feedbackInput) const
 	throw(std::invalid_argument);
 
 protected:
@@ -58,11 +59,14 @@ protected:
 	std::list<AbstractController*> controllers;
 	std::list<JointTorqueAdapter*> adapters;
 
+	virtual void operate() {}
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(SupervisoryController);
 };
 
 
+}
 }
 
 

@@ -7,7 +7,8 @@
 
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename T>
@@ -38,4 +39,5 @@ inline void System::Output<T>::Value::setValueUndefined() {
 }
 
 
+}
 }

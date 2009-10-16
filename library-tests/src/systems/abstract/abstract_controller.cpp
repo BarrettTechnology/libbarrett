@@ -16,9 +16,10 @@
 
 
 namespace {
+using namespace barrett;
 
 
-class Controller : public Systems::AbstractController {
+class Controller : public systems::AbstractController {
 // IO
 public:		System::Input<double> referenceInput;
 public:		System::Input<double> feedbackInput;
@@ -38,7 +39,7 @@ public:
 	virtual System::Output<double>* getControlOutput()	{ return &controlOutput; }
 
 	virtual void selectAdapter(
-			const std::list<Systems::JointTorqueAdapter*>& adapters) const
+			const std::list<systems::JointTorqueAdapter*>& adapters) const
 	throw(std::invalid_argument) {}
 
 protected:
@@ -54,7 +55,7 @@ TEST(AbstractControllerTest, Interface) {
 	c.getReferenceInput();
 	c.getFeedbackInput();
 	c.getControlOutput();
-	c.selectAdapter(std::list<Systems::JointTorqueAdapter*>());
+	c.selectAdapter(std::list<systems::JointTorqueAdapter*>());
 }
 
 

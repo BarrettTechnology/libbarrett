@@ -8,23 +8,21 @@
 #ifndef EXPOSEDIOSYSTEM_H_
 #define EXPOSEDIOSYSTEM_H_
 
+
 #include <barrett/systems.h>
 #include <barrett/detail/ca_macro.h>
 
 
-namespace Systems {
-
-
 template<typename T>
-class ExposedIO : public SingleIO<T, T> {
+class ExposedIOSystem : public barrett::systems::SingleIO<T, T> {
 public:
 	mutable bool operateCalled;
 
-	ExposedIO() :
+	ExposedIOSystem() :
 		operateCalled(false) {}
 
-	explicit ExposedIO(const T& initialValue) :
-		SingleIO<T, T>(initialValue), operateCalled(false) {}
+	explicit ExposedIOSystem(const T& initialValue) :
+		barrett::systems::SingleIO<T, T>(initialValue), operateCalled(false) {}
 
 	const T& getInputValue() const {
 		return this->input.getValue();
@@ -48,13 +46,13 @@ protected:
 	}
 
 private:
-	DISALLOW_COPY_AND_ASSIGN(ExposedIO);
+	DISALLOW_COPY_AND_ASSIGN(ExposedIOSystem);
 };
 
 
 template<typename T>
-void checkConnected(Systems::ExposedIO<T>* outSys,
-					const Systems::ExposedIO<T>& inSys,
+void checkConnected(ExposedIOSystem<T>* outSys,
+					const ExposedIOSystem<T>& inSys,
 					const T& value)
 {
 	inSys.operateCalled = false;
@@ -66,8 +64,8 @@ void checkConnected(Systems::ExposedIO<T>* outSys,
 }
 
 template<typename T>
-void checkNotConnected(Systems::ExposedIO<T>* outSys,
-					   const Systems::ExposedIO<T>& inSys,
+void checkNotConnected(ExposedIOSystem<T>* outSys,
+					   const ExposedIOSystem<T>& inSys,
 					   const T& value)
 {
 	inSys.operateCalled = false;
@@ -77,15 +75,13 @@ void checkNotConnected(Systems::ExposedIO<T>* outSys,
 }
 
 template<typename T>
-void checkDisconnected(const Systems::ExposedIO<T>& inSys)
+void checkDisconnected(const ExposedIOSystem<T>& inSys)
 {
 	EXPECT_FALSE(inSys.inputValueDefined()) << "input value defined";
 	EXPECT_THROW(inSys.getInputValue(), std::logic_error)
 			<< "input thinks it has an output";
 }
 
-
-}
 
 
 #endif /* EXPOSEDIOSYSTEM_H_ */

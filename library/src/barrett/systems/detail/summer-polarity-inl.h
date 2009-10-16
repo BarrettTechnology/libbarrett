@@ -9,7 +9,8 @@
 #include <stdexcept>
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename T, size_t numInputs>
@@ -54,4 +55,5 @@ const int Summer<T, numInputs>::Polarity::operator[] (const size_t i) const
 }
 
 
+}
 }

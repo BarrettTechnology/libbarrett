@@ -15,7 +15,8 @@
 #include "./system.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 // An abstract system that represents the conversion of some InputType into
@@ -40,6 +41,7 @@ private:
 };
 
 
+}
 }
 
 

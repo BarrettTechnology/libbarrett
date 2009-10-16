@@ -13,7 +13,8 @@
 #include "../../detail/ca_macro.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename InputType, typename OutputType>
@@ -36,6 +37,7 @@ private:
 };
 
 
+}
 }
 
 

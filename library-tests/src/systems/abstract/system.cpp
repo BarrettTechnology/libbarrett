@@ -12,23 +12,19 @@
 
 
 namespace {
-
-
-using Systems::checkConnected;
-using Systems::checkNotConnected;
-using Systems::checkDisconnected;
+using namespace barrett;
 
 
 // TODO(dc): make this a type-parameterized test case so users can test their
 // own code
 class SystemTest : public ::testing::Test {
 protected:
-	Systems::ExposedIO<double> eios;
+	ExposedIOSystem<double> eios;
 };
 
 
 TEST_F(SystemTest, GeneralIO) {
-	Systems::connect(eios.output, eios.input);
+	systems::connect(eios.output, eios.input);
 	EXPECT_FALSE(eios.inputValueDefined())
 		<< "input value not initially undefined when no initial value given";
 
@@ -49,17 +45,17 @@ TEST_F(SystemTest, InputGetValueThrowsWhenNotConnected) {
 }
 
 TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
-	Systems::connect(eios.output, eios.input);
+	systems::connect(eios.output, eios.input);
 
 	EXPECT_THROW(eios.getInputValue(),
-			Systems::System::Input<double>::ValueUndefinedError)
+			systems::System::Input<double>::ValueUndefinedError)
 		<< "input.getValue() didn't throw when value undefined";
 }
 
 TEST_F(SystemTest, OutputInitialValueCtor) {
-	Systems::System::Output<double>::Value* outputValue;
-	Systems::System::Output<double> output(38.12, &outputValue);
-	Systems::connect(output, eios.input);
+	systems::System::Output<double>::Value* outputValue;
+	systems::System::Output<double> output(38.12, &outputValue);
+	systems::connect(output, eios.input);
 
 	EXPECT_TRUE(eios.inputValueDefined())
 		<< "input undefined when connected to output with initial value";
@@ -70,10 +66,10 @@ TEST_F(SystemTest, OutputInitialValueCtor) {
 TEST_F(SystemTest, OutputNotifyInputs) {
 	const size_t numInputs = 50;
 
-	std::vector<Systems::ExposedIO<double>* > systems(numInputs);
+	std::vector<ExposedIOSystem<double>*> systems(numInputs);
 	for (size_t i = 0; i < numInputs; ++i) {
-		systems[i] = new Systems::ExposedIO<double>;
-		Systems::connect(eios.output, systems[i]->input);
+		systems[i] = new ExposedIOSystem<double>;
+		systems::connect(eios.output, systems[i]->input);
 		systems[i]->operateCalled = false;
 	}
 
