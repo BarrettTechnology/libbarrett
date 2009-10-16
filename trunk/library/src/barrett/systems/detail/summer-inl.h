@@ -9,11 +9,14 @@
 //#include <vector>
 #include <string>
 #include <bitset>
+
 #include "../../detail/purge.h"
 #include "../abstract/system.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
+
 
 template<typename T, size_t numInputs>
 Summer<T, numInputs>::Summer(const Polarity& inputPolarity) :
@@ -71,4 +74,5 @@ void Summer<T, numInputs>::initInputs()
 }
 
 
+}
 }

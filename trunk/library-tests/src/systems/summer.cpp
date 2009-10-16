@@ -10,12 +10,13 @@
 
 
 namespace {
+using namespace barrett;
 
 
 // TODO(dc): actually test this
 class SummerTest : public ::testing::Test {
 protected:
-	Systems::Summer<double> summer;
+	systems::Summer<double> summer;
 };
 
 

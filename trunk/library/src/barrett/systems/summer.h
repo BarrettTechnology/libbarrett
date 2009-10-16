@@ -13,11 +13,13 @@
 #include <bitset>
 #include <string>
 #include <stdexcept>
+
 #include "./abstract/system.h"
 #include "../detail/ca_macro.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 // FIXME: it might be nice to have a Summer with the number of inputs
@@ -65,6 +67,7 @@ private:
 };
 
 
+}
 }
 
 

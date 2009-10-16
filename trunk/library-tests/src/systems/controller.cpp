@@ -12,18 +12,20 @@
 
 
 namespace {
+using namespace barrett;
+
 
 // TODO(dc): actually test this
 class ControllerTest : public ::testing::Test {
 protected:
-	Systems::Controller<double> controller;
+	systems::Controller<double> controller;
 };
 
 
 TEST_F(ControllerTest, InitialOutputValueCtor) {
-	Systems::Controller<double> ivController(-88.1);
-	Systems::ExposedIO<double> eios;
-	Systems::connect(ivController.controlOutput, eios.input);
+	systems::Controller<double> ivController(-88.1);
+	ExposedIOSystem<double> eios;
+	systems::connect(ivController.controlOutput, eios.input);
 
 	EXPECT_TRUE(eios.inputValueDefined()) << "initial value undefined";
 	EXPECT_EQ(-88.1, eios.getInputValue())

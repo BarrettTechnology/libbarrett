@@ -17,18 +17,19 @@
 
 
 namespace {
+using namespace barrett;
 
 
-class JTA : public Systems::JointTorqueAdapter {
+class JTA : public systems::JointTorqueAdapter {
 // IO
 public:		Input<std::vector<double> > controlInput;
 
 
 public:
 	JTA() :
-		Systems::JointTorqueAdapter(), controlInput(this) {}
+		systems::JointTorqueAdapter(), controlInput(this) {}
 	explicit JTA(const std::vector<double>& initialControlOutputValue) :
-		Systems::JointTorqueAdapter(initialControlOutputValue),
+		systems::JointTorqueAdapter(initialControlOutputValue),
 		controlInput(this) {}
 	virtual ~JTA() {}
 
@@ -67,10 +68,10 @@ TEST(JointTorqueAdapterTest, Interface) {
 	JTA jta;
 
 	jta.getControlInput();
-	Systems::System::Output<std::vector<double> >& jto = jta.jointTorqueOutput;
+	systems::System::Output<std::vector<double> >& jto = jta.jointTorqueOutput;
 
 	// do something with jto so we don't get an unused variable warning
-	Systems::connect(jto, jta.controlInput);
+	systems::connect(jto, jta.controlInput);
 }
 
 TEST(JointTorqueAdapterTest, InitialOutputValueCtor) {
@@ -79,8 +80,8 @@ TEST(JointTorqueAdapterTest, InitialOutputValueCtor) {
 			iv_array + sizeof(iv_array)/sizeof(iv_array[0]));
 
 	JTA jta(iv_vector);
-	Systems::ExposedIO<std::vector<double> > eios;
-	Systems::connect(jta.jointTorqueOutput, eios.input);
+	ExposedIOSystem<std::vector<double> > eios;
+	systems::connect(jta.jointTorqueOutput, eios.input);
 
 	EXPECT_TRUE(eios.inputValueDefined()) << "initial value undefined";
 	EXPECT_EQ(iv_vector, eios.getInputValue())

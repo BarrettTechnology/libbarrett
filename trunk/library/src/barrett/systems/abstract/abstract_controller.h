@@ -14,7 +14,8 @@
 #include "./joint_torque_adapter.h"
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 class AbstractController : public System {
@@ -35,6 +36,7 @@ private:
 };
 
 
+}
 }
 
 

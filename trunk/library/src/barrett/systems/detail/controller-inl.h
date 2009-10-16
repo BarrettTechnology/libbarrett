@@ -10,7 +10,8 @@
 #include <stdexcept>
 
 
-namespace Systems {
+namespace barrett {
+namespace systems {
 
 
 template<typename InputType, typename OutputType>
@@ -49,4 +50,5 @@ void Controller<InputType, OutputType>::operate()
 }
 
 
+}
 }

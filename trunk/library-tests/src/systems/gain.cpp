@@ -12,31 +12,32 @@
 
 
 namespace {
+using namespace barrett;
 
 
 TEST(GainSystemTest, OutputInitiallyUndefined) {
-	Systems::Gain<double> gainsys(12.5);
+	systems::Gain<double> gainsys(12.5);
 
 	EXPECT_FALSE(gainsys.input.valueDefined())
 		<< "value defined without input";
 }
 
 TEST(GainSystemTest, ConnectsIO) {
-	Systems::Gain<double> gainsys(1.0);
-	Systems::ExposedIO<double> eios;
+	systems::Gain<double> gainsys(1.0);
+	ExposedIOSystem<double> eios;
 
-	Systems::connect(eios.output, gainsys.input);
-	Systems::connect(gainsys.output, eios.input);
+	systems::connect(eios.output, gainsys.input);
+	systems::connect(gainsys.output, eios.input);
 
-	Systems::checkConnected(&eios, eios, 3463.2);
+	checkConnected(&eios, eios, 3463.2);
 }
 
 TEST(GainSystemTest, MultipliesInput) {
-	Systems::Gain<double> gainsys(14.2);
-	Systems::ExposedIO<double> eios;
+	systems::Gain<double> gainsys(14.2);
+	ExposedIOSystem<double> eios;
 
-	Systems::connect(eios.output, gainsys.input);
-	Systems::connect(gainsys.output, eios.input);
+	systems::connect(eios.output, gainsys.input);
+	systems::connect(gainsys.output, eios.input);
 
 	eios.setOutputValue(-38.52);
 	EXPECT_EQ(14.2 * -38.52, eios.getInputValue());
@@ -84,14 +85,14 @@ ostream& operator<<(ostream& os, C c) {
 	return os;
 }
 
-// mostly we just want this to compile
+// mostly, we just want this to compile
 TEST(GainSystemTest, IGOCanBeDifferentTypes) {
-	Systems::Gain<A, B, C> gainsys(B(-3.0));
-	Systems::ExposedIO<A> insys;
-	Systems::ExposedIO<C> outsys;
+	systems::Gain<A, B, C> gainsys(B(-3.0));
+	ExposedIOSystem<A> insys;
+	ExposedIOSystem<C> outsys;
 
-	Systems::connect(insys.output, gainsys.input);
-	Systems::connect(gainsys.output, outsys.input);
+	systems::connect(insys.output, gainsys.input);
+	systems::connect(gainsys.output, outsys.input);
 
 	insys.setOutputValue(A(9.0));
 	EXPECT_EQ(A(9.0) * B(-3.0), outsys.getInputValue())

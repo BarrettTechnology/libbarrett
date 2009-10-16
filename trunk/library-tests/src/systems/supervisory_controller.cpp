@@ -12,14 +12,15 @@
 
 
 namespace {
+using namespace barrett;
 
 
 // TODO(dc): actually test this
 TEST(SupervisoryControllerTest, DefaultCtor) {
-	Systems::ExposedIO<double> eios;
-	Systems::SupervisoryController sc;
+	ExposedIOSystem<double> eios;
+	systems::SupervisoryController sc;
 
-	// sc.trackReferenceSignal(eios.output);
+	//sc.trackReferenceSignal(eios.output);
 }
 
 

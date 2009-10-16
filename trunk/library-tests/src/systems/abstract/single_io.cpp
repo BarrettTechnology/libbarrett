@@ -12,21 +12,17 @@
 
 
 namespace {
-
-
-using Systems::checkConnected;
-using Systems::checkNotConnected;
-using Systems::checkDisconnected;
+using namespace barrett;
 
 
 TEST(SingleIOTest, DefaultCtor) {
-	Systems::ExposedIO<double> eios;
+	ExposedIOSystem<double> eios;
 	checkDisconnected(eios);
 }
 
 TEST(SingleIOTest, InitialValueCtor) {
-	Systems::ExposedIO<double> eios(-878.3);
-	Systems::connect(eios.output, eios.input);
+	ExposedIOSystem<double> eios(-878.3);
+	systems::connect(eios.output, eios.input);
 
 	EXPECT_TRUE(eios.inputValueDefined()) << "input value undefined";
 	EXPECT_EQ(-878.3, eios.getInputValue()) << "input has the wrong value";
