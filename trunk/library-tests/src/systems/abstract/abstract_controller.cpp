@@ -12,6 +12,7 @@
 #include <barrett/detail/ca_macro.h>
 #include <barrett/systems.h>
 #include <barrett/systems/abstract/abstract_controller.h>
+#include <barrett/systems/supervisory_controller.h>
 #include <barrett/systems/abstract/joint_torque_adapter.h>
 
 
@@ -38,8 +39,7 @@ public:
 	virtual System::Input<double>* getFeedbackInput()	{ return &feedbackInput; }
 	virtual System::Output<double>* getControlOutput()	{ return &controlOutput; }
 
-	virtual void selectAdapter(
-			const std::list<systems::JointTorqueAdapter*>& adapters) const
+	virtual void selectAndConnectAdapter(const systems::SupervisoryController& sc)
 	throw(std::invalid_argument) {}
 
 protected:
@@ -55,7 +55,7 @@ TEST(AbstractControllerTest, Interface) {
 	c.getReferenceInput();
 	c.getFeedbackInput();
 	c.getControlOutput();
-	c.selectAdapter(std::list<systems::JointTorqueAdapter*>());
+	c.selectAndConnectAdapter(systems::SupervisoryController());
 }
 
 

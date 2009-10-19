@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../../detail/ca_macro.h"
+#include "../../units.h"
 #include "./system.h"
 
 
@@ -23,14 +24,14 @@ namespace systems {
 // a vector of joint torques. Used by SupervisoryController.
 class JointTorqueAdapter : public System {
 // IO
-public:		Output<std::vector<double> > jointTorqueOutput;
-protected:	Output<std::vector<double> >::Value* jointTorqueOutputValue;
+public:		Output<units::JointTorques> jointTorqueOutput;
+protected:	Output<units::JointTorques>::Value* jointTorqueOutputValue;
 
 
 public:
 	JointTorqueAdapter() :
 		jointTorqueOutput(&jointTorqueOutputValue) {}
-	explicit JointTorqueAdapter(std::vector<double> initialOutputValue) :
+	explicit JointTorqueAdapter(units::JointTorques initialOutputValue) :
 		jointTorqueOutput(initialOutputValue, &jointTorqueOutputValue) {}
 	virtual ~JointTorqueAdapter() {}
 
