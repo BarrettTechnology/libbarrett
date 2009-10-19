@@ -5,6 +5,8 @@
  *      Author: dc
  */
 
+#include <stdexcept>
+
 #include <gtest/gtest.h>
 #include <barrett/systems.h>
 
@@ -20,7 +22,7 @@ TEST(SupervisoryControllerTest, DefaultCtor) {
 	ExposedIOSystem<double> eios;
 	systems::SupervisoryController sc;
 
-	//sc.trackReferenceSignal(eios.output);
+	EXPECT_THROW(sc.trackReferenceSignal(eios.output), std::invalid_argument);
 }
 
 

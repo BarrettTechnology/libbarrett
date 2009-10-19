@@ -44,17 +44,24 @@ throw(std::invalid_argument)
 	// selectController guarantees this downcast won't fail
 	referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
 			controller.getReferenceInput() );
-	forceConnect(referenceOutput, *referenceInput);
 
 	feedbackInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
 			controller.getFeedbackInput() );
 	if ( !feedbackInput->isConnected() ) {
 		// find a feedback input, connect it
 		feedbackOutput = selectFeedbackSignal(*feedbackInput);
-		forceConnect(*feedbackOutput, *feedbackInput);
 	} // else: assume that it's already been appropriately hooked up
 
-	controller.selectAdapter(adapters);
+
+	// only start connecting things once we know all connections will succeed
+
+	// double-dispatch to find and connect adapter
+	// will throw if no adapter is found
+	controller.selectAndConnectAdapter(*this);
+	forceConnect(referenceOutput, *referenceInput);
+	if (feedbackOutput != NULL) {
+		forceConnect(*feedbackOutput, *feedbackInput);
+	}
 }
 
 // doesn't actually use referenceOutput, just it's type...
@@ -65,7 +72,7 @@ throw(std::invalid_argument)
 {
 	Input<T>* input = NULL;
 
-	typename std::list<AbstractController*>::iterator controllerItr;
+	typename std::list<AbstractController*>::const_iterator controllerItr;
 	for (controllerItr = controllers.begin();
 		 controllerItr != controllers.end();
 		 ++controllerItr)
@@ -85,6 +92,7 @@ throw(std::invalid_argument)
 			"referenceOutput.");
 }
 
+// second half of double-dispatch from controller.selectAndConnectAdapter()
 // doesn't actually use controlOutput, just it's type...
 template<typename T>
 JointTorqueAdapter& SupervisoryController::selectAdapter(
@@ -93,7 +101,7 @@ throw(std::invalid_argument)
 {
 	Input<T>* input = NULL;
 
-	typename std::list<JointTorqueAdapter*>::iterator adapterItr;
+	typename std::list<JointTorqueAdapter*>::const_iterator adapterItr;
 	for (adapterItr = adapters.begin();
 		 adapterItr != adapters.end();
 		 ++adapterItr)

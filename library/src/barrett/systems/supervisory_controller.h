@@ -12,9 +12,9 @@
 #include <list>
 #include <stdexcept>
 
-#include "abstract/system.h"
 #include "../detail/ca_macro.h"
-
+#include "../units.h"
+#include "./abstract/system.h"
 #include "./abstract/abstract_controller.h"
 #include "./abstract/joint_torque_adapter.h"
 
@@ -44,11 +44,13 @@ public:
 			const Output<T>& referenceOutput) const
 	throw(std::invalid_argument);
 
+	// FIXME: should this be public?
 	template<typename T>
 	JointTorqueAdapter& selectAdapter(
 			const Output<T>& controlOutput) const
 	throw(std::invalid_argument);
 
+	// FIXME: should this be public?
 	template<typename T>
 	Output<T>* selectFeedbackSignal(
 			const Input<T>& feedbackInput) const

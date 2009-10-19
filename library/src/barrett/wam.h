@@ -12,7 +12,7 @@
 #include "./ca_macro.h"
 
 
-namespace Barrett {
+namespace barrett {
 
 
 class Wam: public Systems::System {

@@ -9,6 +9,11 @@
 #include <list>
 #include <stdexcept>
 
+#include "../abstract/system.h"
+#include "../helpers.h"
+#include "../supervisory_controller.h"
+#include "../abstract/joint_torque_adapter.h"
+
 
 namespace barrett {
 namespace systems {
@@ -36,11 +41,18 @@ Controller<InputType, OutputType>::getControlOutput()
 }
 
 template<typename InputType, typename OutputType>
-void Controller<InputType, OutputType>::selectAdapter(
-		const std::list<JointTorqueAdapter*>& adapters) const
+void Controller<InputType, OutputType>::selectAndConnectAdapter(
+		const SupervisoryController& sc)
 throw(std::invalid_argument)
 {
-	// TODO(dc): stub
+	// will throw if no adapter is found
+	JointTorqueAdapter& jta = sc.selectAdapter(controlOutput);
+
+	// selectController guarantees this downcast won't fail
+	Input<OutputType>* controlInput = NULL;
+	controlInput = dynamic_cast<Input<OutputType>*>(  //NOLINT: see RTTI note in
+			jta.getControlInput() );            // supervisory_controller-inl.h
+	forceConnect(controlOutput, *controlInput);
 }
 
 template<typename InputType, typename OutputType>

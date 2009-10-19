@@ -11,11 +11,17 @@
 
 #include <list>
 #include "./system.h"
-#include "./joint_torque_adapter.h"
+
+// removed because it causes unfortunate include dependencies.
+// forward declared instead
+//#include "../supervisory_controller.h"
 
 
 namespace barrett {
 namespace systems {
+
+
+class SupervisoryController;
 
 
 class AbstractController : public System {
@@ -27,8 +33,8 @@ public:
 	virtual AbstractInput* getFeedbackInput() = 0;
 	virtual AbstractOutput* getControlOutput() = 0;
 
-	virtual void selectAdapter(
-			const std::list<JointTorqueAdapter*>& adapters) const
+	// double-dispatch to find and connect an appropriate JointTorqueAdapter
+	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
 	throw(std::invalid_argument) = 0;
 
 private:

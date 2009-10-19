@@ -11,8 +11,9 @@
 
 #include <list>
 
-#include "abstract/system.h"
-#include "abstract/abstract_controller.h"
+#include "./abstract/system.h"
+#include "./supervisory_controller.h"
+#include "./abstract/abstract_controller.h"
 #include "../detail/ca_macro.h"
 
 
@@ -43,8 +44,7 @@ public:
 	virtual Input<InputType>* getFeedbackInput();
 	virtual Output<OutputType>* getControlOutput();
 
-	virtual void selectAdapter(
-			const std::list<JointTorqueAdapter*>& adapters) const
+	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
 	throw(std::invalid_argument);
 
 protected:

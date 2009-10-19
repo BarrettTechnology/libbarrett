@@ -17,7 +17,7 @@
 #include "./wam.h"
 
 
-namespace Barrett {
+namespace barrett {
 // int bt_wam_local_set_callback(struct bt_wam_local * wam,
 //                               int (*callback)(struct bt_wam_local * wam));
 
