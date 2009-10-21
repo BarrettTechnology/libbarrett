@@ -11,6 +11,7 @@
 #include "../../units.h"
 #include "../abstract/abstract_controller.h"
 #include "../pid_controller.h"
+#include "../joint_torque_jta.h"
 #include "../supervisory_controller.h"
 
 
@@ -20,13 +21,17 @@ namespace systems {
 
 SupervisoryController::SupervisoryController(
 //		const std::list<AbstractController*>& additionalControllers,
-		bool includeStandardControllers) :
+		bool includeStandardControllers,
+		bool includeStandardAdapters) :
 //			controllers(additionalControllers)
-			controllers()
+			controllers(), adapters()
 {
 	if (includeStandardControllers) {
-		controllers.push_back(
-				new PIDController<units::JointAngles>);
+		controllers.push_back(new PIDController<units::JointAngles>);
+	}
+
+	if (includeStandardAdapters) {
+		adapters.push_back(new JointTorqueJTA);
 	}
 }
 
