@@ -21,7 +21,7 @@ namespace systems {
 
 
 // An abstract system that represents the conversion of some InputType into
-// a vector of joint torques. Used by SupervisoryController.
+// JointTorques. Used by SupervisoryController.
 class JointTorqueAdapter : public System {
 // IO
 public:		Output<units::JointTorques> jointTorqueOutput;

@@ -31,7 +31,8 @@ public:
 	SupervisoryController(
 //			const std::list<AbstractController*>& additionalControllers =
 //					std::list<AbstractController*>(),
-			bool includeStandardControllers = true);
+			bool includeStandardControllers = true,
+			bool includeStandardAdapters = true);
 	~SupervisoryController();
 
 	template<typename T>

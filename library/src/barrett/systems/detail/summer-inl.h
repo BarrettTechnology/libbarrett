@@ -45,7 +45,6 @@ Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity) :
 template<typename T, size_t numInputs>
 inline Summer<T, numInputs>::~Summer()
 {
-//	inputs.clear();  // use this if we switch back to vector
 	purge(inputs);
 }
 

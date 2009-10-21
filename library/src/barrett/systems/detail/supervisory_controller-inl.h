@@ -8,6 +8,7 @@
 #include <list>
 #include <stdexcept>
 
+#include "../../detail/purge.h"
 #include "../abstract/system.h"
 #include "../abstract/abstract_controller.h"
 #include "../abstract/joint_torque_adapter.h"
@@ -24,8 +25,8 @@ namespace systems {
 
 
 inline SupervisoryController::~SupervisoryController() {
-	controllers.clear();
-//	purge(controllers);
+	purge(controllers);
+	purge(adapters);
 }
 
 template<typename T>
