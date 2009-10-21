@@ -11,14 +11,14 @@ namespace systems {
 
 
 // TODO(dc): make PID controller
-template<typename CoordinateSystem>
-void PIDController<CoordinateSystem>::operate()
+template<typename InputType, typename OutputType>
+void PIDController<InputType, OutputType>::operate()
 {
-	position_type error =
+	InputType error =
 			this->referenceInput.getValue() - this->feedbackInput.getValue();
 
 	// copy error to output
-	effort_type controlSignal;
+	OutputType controlSignal;
 	for (size_t i = 0; i < error.size(); ++i) {
 		controlSignal[i] = error[i];
 	}

@@ -16,13 +16,9 @@ namespace barrett {
 namespace systems {
 
 
-template<typename CoordinateSystem>
-class PIDController : public Controller<
-		typename CoordinateSystem::position,
-		typename CoordinateSystem::effort> {
-	typedef typename CoordinateSystem::position position_type;
-	typedef typename CoordinateSystem::effort effort_type;
-
+template<typename InputType,
+		 typename OutputType = typename InputType::actuator_type>
+class PIDController : public Controller<InputType, OutputType> {
 protected:
 	virtual void operate();
 };
