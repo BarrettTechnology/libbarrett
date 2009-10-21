@@ -16,7 +16,11 @@ namespace units {
 
 
 // measured in radians
-class JointAngles : public JointTorques {};  // TODO(dc): needed a quick fix...
+class JointAngles : public JointTorques {  // TODO(dc): needed a quick fix...
+public:
+	// associate with the joint space actuator type
+	typedef JointTorques actuator_type;
+};
 
 
 // TODO(dc): this makes me cry a little on the inside
