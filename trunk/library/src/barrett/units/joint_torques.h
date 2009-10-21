@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef JOINT_TORQUE_H_
-#define JOINT_TORQUE_H_
+#ifndef JOINT_TORQUES_H_
+#define JOINT_TORQUES_H_
 
 
 #include <stdexcept>
@@ -22,6 +22,7 @@ namespace units {
 extern size_t DOF;
 
 
+// measured in Newton * meters
 // NB: protected inheritance means JointTorques doesn't have a vector's
 // interface
 class JointTorques : protected std::vector<double> {
@@ -62,6 +63,9 @@ public:
 };
 
 
+const JointTorques operator- (const JointTorques& jt1, const JointTorques& jt2)
+throw(std::invalid_argument);
+
 bool operator== (const JointTorques& jt1, const JointTorques& jt2)
 throw(std::invalid_argument);
 bool operator!= (const JointTorques& jt1, const JointTorques& jt2)
@@ -74,4 +78,4 @@ std::ostream& operator<< (std::ostream& os, const JointTorques& jt);
 }
 
 
-#endif /* JOINT_TORQUE_H_ */
+#endif /* JOINT_TORQUES_H_ */

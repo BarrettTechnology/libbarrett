@@ -6,9 +6,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <barrett/systems.h>
+//#include <barrett/systems.h>
+#include <barrett/systems/abstract/controller.h>
 
-#include "./exposed_io_system.h"
+#include "./controller_impl.h"
+#include "../exposed_io_system.h"
 
 
 namespace {
@@ -17,13 +19,20 @@ using namespace barrett;
 
 // TODO(dc): actually test this
 class ControllerTest : public ::testing::Test {
+public:
+	ControllerTest() :
+		controllerImpl(), controller(controllerImpl) {}
+
 protected:
-	systems::Controller<double> controller;
+	ControllerImpl<double> controllerImpl;
+	systems::Controller<double>& controller;
 };
 
 
 TEST_F(ControllerTest, InitialOutputValueCtor) {
-	systems::Controller<double> ivController(-88.1);
+	ControllerImpl<double> ivControllerImpl(-88.1);
+	systems::Controller<double>& ivController = ivControllerImpl;
+
 	ExposedIOSystem<double> eios;
 	systems::connect(ivController.controlOutput, eios.input);
 
