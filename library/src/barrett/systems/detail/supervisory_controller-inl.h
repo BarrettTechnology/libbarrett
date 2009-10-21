@@ -41,14 +41,14 @@ throw(std::invalid_argument)
 	// will throw if no controller is found
 	AbstractController& controller = selectController(referenceOutput);
 
-	// selectController guarantees this downcast won't fail
+	// selectController guarantees these downcasts won't fail
 	referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
 			controller.getReferenceInput() );
-
 	feedbackInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
 			controller.getFeedbackInput() );
+
+	// see if we need to connect the feedbackInput
 	if ( !feedbackInput->isConnected() ) {
-		// find a feedback input, connect it
 		feedbackOutput = selectFeedbackSignal(*feedbackInput);
 	} // else: assume that it's already been appropriately hooked up
 

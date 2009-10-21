@@ -9,10 +9,10 @@
 #include <list>
 #include <stdexcept>
 
-#include "../abstract/system.h"
-#include "../helpers.h"
-#include "../supervisory_controller.h"
-#include "../abstract/joint_torque_adapter.h"
+#include "../system.h"
+#include "../../helpers.h"
+#include "../../supervisory_controller.h"
+#include "../joint_torque_adapter.h"
 
 
 namespace barrett {
@@ -48,17 +48,10 @@ throw(std::invalid_argument)
 	// will throw if no adapter is found
 	JointTorqueAdapter& jta = sc.selectAdapter(controlOutput);
 
-	// selectController guarantees this downcast won't fail
-	Input<OutputType>* controlInput = NULL;
-	controlInput = dynamic_cast<Input<OutputType>*>(  //NOLINT: see RTTI note in
+	// selectAdapter guarantees this downcast won't fail
+	Input<OutputType>* controlInput = dynamic_cast<Input<OutputType>*>(  //NOLINT: see RTTI note in
 			jta.getControlInput() );            // supervisory_controller-inl.h
 	forceConnect(controlOutput, *controlInput);
-}
-
-template<typename InputType, typename OutputType>
-void Controller<InputType, OutputType>::operate()
-{
-	// TODO(dc): stub
 }
 
 

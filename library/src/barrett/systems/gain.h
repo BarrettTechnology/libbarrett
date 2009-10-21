@@ -9,8 +9,8 @@
 #define GAIN_H_
 
 
-#include "abstract/single_io.h"
 #include "../detail/ca_macro.h"
+#include "./abstract/single_io.h"
 
 
 namespace barrett {

@@ -11,10 +11,10 @@
 
 #include <list>
 
-#include "./abstract/system.h"
-#include "./supervisory_controller.h"
-#include "./abstract/abstract_controller.h"
-#include "../detail/ca_macro.h"
+#include "./system.h"
+#include "../supervisory_controller.h"
+#include "./abstract_controller.h"
+#include "../../detail/ca_macro.h"
 
 
 namespace barrett {
@@ -46,9 +46,6 @@ public:
 
 	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
 	throw(std::invalid_argument);
-
-protected:
-	virtual void operate();
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Controller);

@@ -8,7 +8,9 @@
 
 #include <list>
 
+#include "../../coordinate_systems.h"
 #include "../abstract/abstract_controller.h"
+#include "../pid_controller.h"
 #include "../supervisory_controller.h"
 
 
@@ -23,7 +25,8 @@ SupervisoryController::SupervisoryController(
 			controllers()
 {
 	if (includeStandardControllers) {
-		// controllers.push_back
+		controllers.push_back(
+				new PIDController<coordinate_systems::joint_space>);
 	}
 }
 

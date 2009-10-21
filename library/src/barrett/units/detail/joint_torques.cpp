@@ -19,16 +19,35 @@ namespace units {
 size_t DOF = 12;  // this is deliberately some number other than 7
 
 
+void throwIfDifferentSized(const JointTorques& jt1, const JointTorques& jt2)
+throw(std::invalid_argument)
+{
+	if (jt1.size() != jt2.size()) {
+		throw std::invalid_argument("(barrett::units::JointTorques)):"
+				"JointTorques of different sizes are incomparable.");
+	}
+}
+
+
+const JointTorques operator- (const JointTorques& jt1, const JointTorques& jt2)
+throw(std::invalid_argument)
+{
+	throwIfDifferentSized(jt1, jt2);
+
+	JointTorques result;
+	for (size_t i = 0; i < jt1.size(); ++i) {
+		result[i] = jt1[i] - jt2[i];
+	}
+
+	return result;
+}
+
 bool operator== (const JointTorques& jt1, const JointTorques& jt2)
 throw(std::invalid_argument)
 {
-	size_t size = jt1.size();
-	if (size != jt2.size()) {
-		throw std::invalid_argument("(operator==(JointTorques, JointTorques)):"
-				"JointTorques of different sizes are incomparable.");
-	}
+	throwIfDifferentSized(jt1, jt2);
 
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < jt1.size(); ++i) {
 		if (jt1[i] != jt2[i]) {
 			return false;
 		}

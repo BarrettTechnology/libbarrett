@@ -9,7 +9,8 @@
 #define UNITS_H_
 
 
-#include "units/joint_torques.h"
+#include "./units/joint_angles.h"
+#include "./units/joint_torques.h"
 
 
 #endif /* UNITS_H_ */
