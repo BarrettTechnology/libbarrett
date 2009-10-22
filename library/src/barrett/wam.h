@@ -8,14 +8,14 @@
 #ifndef WAM_H_
 #define WAM_H_
 
-#include "systems/abstract/system.h"
-#include "./ca_macro.h"
+#include "./systems/abstract/system.h"
+#include "./detail/ca_macro.h"
 
 
 namespace barrett {
 
 
-class Wam: public Systems::System {
+class Wam : public systems::System {
 public:
 	Wam();
 	virtual ~Wam();
