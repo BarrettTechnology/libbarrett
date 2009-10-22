@@ -16,7 +16,8 @@ builddir=$1
 shift
 
 # copy the files over to the WAM
-rsync -av --delete --exclude=".*" --exclude="*~" \
+#--delete (removed because I like incremental builds and having dependancies around...)
+rsync -av --exclude=".*" --exclude="*~" \
 	$scriptpath/.. \
 	root@`cat $scriptpath/wam-ip.txt`:libbarrett/trunk \
 && \

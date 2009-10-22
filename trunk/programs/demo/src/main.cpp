@@ -9,6 +9,6 @@
 
 
 int main() {
-	Barrett::Wam wam;
+	barrett::Wam wam;
 	return 0;
 }

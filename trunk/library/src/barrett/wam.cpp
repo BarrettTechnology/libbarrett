@@ -32,7 +32,7 @@ Wam::Wam() :
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 
 	// open the WAM
-	bt_wam_create(&wam, "wam4");
+	bt_wam_create(&wam, "wamg");
 	if (wam == NULL) {
 		// TODO(dc): better exception, add throw declaration to function def
 		throw std::runtime_error("Couldn't make WAM");

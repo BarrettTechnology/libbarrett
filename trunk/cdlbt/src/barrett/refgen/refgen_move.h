@@ -4,7 +4,7 @@
 #include "../profile/profile.h"
 
 /* Publicize the type */
-const struct bt_refgen_type * bt_refgen_move;
+extern const struct bt_refgen_type * bt_refgen_move;
 
 struct bt_refgen_move
 {
