@@ -41,6 +41,9 @@ public:
 			bool includeStandardAdapters = true);
 	~SupervisoryController();
 
+	// TODO(dc): need sister functions single/lists of controllers, adapters
+	void addFeedbackSignal(AbstractOutput* feedbackOutput);
+
 	template<typename T>
 	void trackReferenceSignal(Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
 	throw(std::invalid_argument);
@@ -67,6 +70,9 @@ protected:
 	// the SupervisoryController owns the objects pointed to by these lists
 	std::list<AbstractController*> controllers;
 	std::list<JointTorqueAdapter*> adapters;
+
+	// the SupervisoryController does not own these objects
+	std::list<AbstractOutput*> feedbackOutputs;
 
 	// TODO(dc): ugly ugly :(
 	virtual void operate() {

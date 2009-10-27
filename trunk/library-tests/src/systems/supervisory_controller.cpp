@@ -83,9 +83,16 @@ TYPED_TEST(SupervisoryControllerTypedTest, SelectController) {
 }
 
 TYPED_TEST(SupervisoryControllerTypedTest, TrackReferenceSignal) {
+	typename systems::System::Output<TypeParam>::Value* outputValue = NULL;
+	systems::System::Output<TypeParam>* output =
+			new systems::System::Output<TypeParam>(&outputValue);
+	this->sc.addFeedbackSignal(output);
+
 	ASSERT_NO_THROW(this->sc.trackReferenceSignal(this->referenceOutput));
 
 	// TODO(dc): make sure things are actually connected
+
+	delete output;
 }
 
 

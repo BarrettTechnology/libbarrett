@@ -18,8 +18,8 @@ namespace systems {
 template<typename InputType, typename OutputType>
 void PIDController<InputType, OutputType>::operate()
 {
-	if ( ! (this->referenceInput.valueDefined()  &&
-			this->feedbackInput.valueDefined()) ) {
+	if ( !(this->referenceInput.valueDefined()  &&
+		   this->feedbackInput.valueDefined()) ) {
 		this->controlOutputValue->setValueUndefined();
 		return;
 	}

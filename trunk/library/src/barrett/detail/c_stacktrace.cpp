@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#include "stacktrace.h"
-#include "c_stacktrace.h"
+#include "./stacktrace.h"
+#include "./c_stacktrace.h"
 
 void c_print_stacktrace() {
 	print_stacktrace();
