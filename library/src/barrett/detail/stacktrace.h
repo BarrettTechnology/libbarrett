@@ -13,7 +13,8 @@
 
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
-static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames = 63)
+static inline void print_stacktrace(FILE *out = stderr,
+		unsigned int max_frames = 63)
 {
     fprintf(out, "stack trace:\n");
 
@@ -21,7 +22,7 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
     void* addrlist[max_frames+1];
 
     // retrieve current stack addresses
-    int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
+    int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(addrlist[0]));
 
     if (addrlen == 0) {
 	fprintf(out, "  <empty, possibly corrupt>\n");
@@ -34,7 +35,7 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
 
     // allocate string which will be filled with the demangled function name
     size_t funcnamesize = 256;
-    char* funcname = (char*)malloc(funcnamesize);
+    char* funcname = reinterpret_cast<char*>(malloc(funcnamesize));
 
     // iterate over the returned symbol lines. skip the first, it is the
     // address of this function.
@@ -74,16 +75,13 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
 		funcname = ret; // use possibly realloc()-ed string
 		fprintf(out, "  %s : %s+%s\n",
 			symbollist[i], funcname, begin_offset);
-	    }
-	    else {
+	    } else {
 		// demangling failed. Output function name as a C function with
 		// no arguments.
 		fprintf(out, "  %s : %s()+%s\n",
 			symbollist[i], begin_name, begin_offset);
 	    }
-	}
-	else
-	{
+	} else {
 	    // couldn't parse the line? print the whole line.
 	    fprintf(out, "  %s\n", symbollist[i]);
 	}
@@ -94,7 +92,8 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
 }
 
 /** Print a demangled stack backtrace of the caller function to syslog. */
-static inline void syslog_stacktrace(int pri = LOG_ERR, unsigned int max_frames = 63)
+static inline void syslog_stacktrace(int pri = LOG_ERR,
+		unsigned int max_frames = 63)
 {
     syslog(pri, "stack trace:\n");
 
@@ -102,7 +101,7 @@ static inline void syslog_stacktrace(int pri = LOG_ERR, unsigned int max_frames 
     void* addrlist[max_frames+1];
 
     // retrieve current stack addresses
-    int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
+    int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(addrlist[0]));
 
     if (addrlen == 0) {
     syslog(pri, "  <empty, possibly corrupt>\n");
@@ -115,7 +114,7 @@ static inline void syslog_stacktrace(int pri = LOG_ERR, unsigned int max_frames 
 
     // allocate string which will be filled with the demangled function name
     size_t funcnamesize = 256;
-    char* funcname = (char*)malloc(funcnamesize);
+    char* funcname = reinterpret_cast<char*>(malloc(funcnamesize));
 
     // iterate over the returned symbol lines. skip the first, it is the
     // address of this function.
@@ -155,16 +154,13 @@ static inline void syslog_stacktrace(int pri = LOG_ERR, unsigned int max_frames 
 		funcname = ret; // use possibly realloc()-ed string
 		syslog(pri, "  %s : %s+%s\n",
 			symbollist[i], funcname, begin_offset);
-	    }
-	    else {
+	    } else {
 		// demangling failed. Output function name as a C function with
 		// no arguments.
 		syslog(pri, "  %s : %s()+%s\n",
 			symbollist[i], begin_name, begin_offset);
 	    }
-	}
-	else
-	{
+	} else {
 	    // couldn't parse the line? print the whole line.
 	    syslog(pri, "  %s\n", symbollist[i]);
 	}

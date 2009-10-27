@@ -122,16 +122,31 @@ throw(std::invalid_argument)
 			"controlOutput.");
 }
 
-// TODO(dc): implement this method
+// doesn't actually use controlOutput, just it's type...
 template<typename T>
 System::Output<T>* SupervisoryController::selectFeedbackSignal(
 		const Input<T>& feedbackInput) const
 throw(std::invalid_argument)
 {
+	Output<T>* output = NULL;
+
+	typename std::list<AbstractOutput*>::const_iterator outputItr;
+	for (outputItr = feedbackOutputs.begin();
+			outputItr != feedbackOutputs.end();
+		 ++outputItr)
+	{
+		output = dynamic_cast<Output<T>*>(*outputItr);  //NOLINT: see RTTI note above
+
+		if (output != NULL) {  // if the downcast was successful
+			return output;
+		}
+	}
+
+	// if we couldn't find a feedbackOutput of that type...
 	throw std::invalid_argument(
 			"(Systems::SupervisoryController::selectFeedbackSignal): "
-			"A Controller's feedbackInput must be connected before you "
-			"can use it.");
+			"No feedbackOutput is registered that matches the selected "
+			"Controller's feedbackInput type");
 }
 
 

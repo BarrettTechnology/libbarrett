@@ -31,10 +31,7 @@
 <option id="gnu.cpp.compiler.so.debug.option.optimization.level.1822434750" name="Optimization Level" superClass="gnu.cpp.compiler.so.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.so.debug.option.debugging.level.659470943" name="Debug Level" superClass="gnu.cpp.compiler.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.other.other.1434668450" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
-<option id="gnu.cpp.compiler.option.include.paths.739813320" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
-<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-</option>
+<option id="gnu.cpp.compiler.option.include.paths.739813320" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.816583146" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.so.debug.950747591" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.so.debug">
@@ -47,17 +44,7 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.929081385" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.1238874447" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
-<option id="gnu.cpp.link.option.libs.2062304619" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="cdlbt"/>
-<listOptionValue builtIn="false" value="m"/>
-<listOptionValue builtIn="false" value="pthread"/>
-<listOptionValue builtIn="false" value="native"/>
-<listOptionValue builtIn="false" value="pcan"/>
-<listOptionValue builtIn="false" value="gsl"/>
-<listOptionValue builtIn="false" value="gslcblas"/>
-<listOptionValue builtIn="false" value="config"/>
-<listOptionValue builtIn="false" value="json"/>
-</option>
+<option id="gnu.cpp.link.option.libs.2062304619" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs"/>
 <option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1863663531" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -69,9 +56,10 @@
 </tool>
 </toolChain>
 </folderInfo>
+<fileInfo id="cdt.managedbuild.config.gnu.so.debug.1789923406.511757878" name="wam.h" rcbsApplicability="disable" resourcePath="src/barrett/wam.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

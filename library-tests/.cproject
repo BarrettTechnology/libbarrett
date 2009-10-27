@@ -43,11 +43,12 @@
 <listOptionValue builtIn="false" value="barrett"/>
 </option>
 <option id="gnu.cpp.link.option.paths.712846095" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-remote}&quot;"/>
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-local}&quot;"/>
 </option>
-<option id="gnu.cpp.link.option.other.925854388" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other"/>
-<option id="gnu.cpp.link.option.flags.841492215" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-Wl,-rpath,&quot;${workspace_loc:/library/Debug}&quot;" valueType="string"/>
+<option id="gnu.cpp.link.option.other.925854388" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
+<listOptionValue builtIn="false" value="-rpath &quot;${workspace_loc:/library/Debug-local}&quot;"/>
+</option>
+<option id="gnu.cpp.link.option.flags.841492215" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.776825826" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -485,7 +486,7 @@
 <externalSetting>
 <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/library"/>
 <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug"/>
-<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-remote"/>
+<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-local"/>
 </externalSetting>
 </externalSettings>
 </storageModule>

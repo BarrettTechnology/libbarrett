@@ -24,7 +24,8 @@ SupervisoryController::SupervisoryController(
 		bool includeStandardControllers,
 		bool includeStandardAdapters) :
 //			controllers(additionalControllers)
-			input(this), output(&outputValue), controllers(), adapters()
+			input(this), output(&outputValue),
+			controllers(), adapters(), feedbackOutputs()
 {
 	if (includeStandardControllers) {
 		controllers.push_back(new PIDController<units::JointAngles>);
@@ -33,6 +34,10 @@ SupervisoryController::SupervisoryController(
 	if (includeStandardAdapters) {
 		adapters.push_back(new JointTorqueJTA);
 	}
+}
+
+void SupervisoryController::addFeedbackSignal(AbstractOutput* feedbackOutput) {
+	feedbackOutputs.push_front(feedbackOutput);
 }
 
 
