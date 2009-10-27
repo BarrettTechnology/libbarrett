@@ -24,7 +24,7 @@ SupervisoryController::SupervisoryController(
 		bool includeStandardControllers,
 		bool includeStandardAdapters) :
 //			controllers(additionalControllers)
-			controllers(), adapters()
+			input(this), output(&outputValue), controllers(), adapters()
 {
 	if (includeStandardControllers) {
 		controllers.push_back(new PIDController<units::JointAngles>);

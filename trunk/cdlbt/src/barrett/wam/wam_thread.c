@@ -2,6 +2,10 @@
 #include <math.h>
 
 #include <syslog.h>
+#include <stdio.h>
+#include <signal.h>
+
+#include <barrett/detail/c_stacktrace.h>
 
 #include "wam_local.h"
 
@@ -26,6 +30,7 @@
 #undef T
 
 
+static void warn_on_switch_rt_mode(int sig __attribute__((unused)));
 static int rt_wam_create(struct bt_wam_local * wam,
                          struct bt_wam_thread_helper * helper);
 static void rt_wam_destroy(struct bt_wam_local * wam);
@@ -97,6 +102,9 @@ void bt_wam_thread(struct bt_os_thread * thread)
    /* Note - the helper will now be destroyed for us,
     * and the create() function will return. */
    
+   /* warn if we fall out of real time mode */
+   signal(SIGXCPU, warn_on_switch_rt_mode);
+
    /* OK, start the control loop ... */
    bt_os_rt_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
    /* CHECK RETURN VALUE */
@@ -107,7 +115,9 @@ void bt_wam_thread(struct bt_os_thread * thread)
       double time;
       
       /* Wait for the next control period ... */
-      bt_os_rt_set_mode_hard();
+//      bt_os_rt_set_mode_hard();
+      // XXX For testing
+      bt_os_rt_set_mode_warn();
       bt_os_rt_task_wait_period();
       
       /* Skip the loop if we're not told to go */
@@ -216,12 +226,20 @@ void bt_wam_thread(struct bt_os_thread * thread)
       bt_os_timestat_end(wam->ts);
    }
    
+//   bt_os_rt_set_mode_hard();
    rt_wam_destroy(wam);
    
    /* Remove this thread from the realtime scheduler */
    bt_os_thread_exit( thread );
    
    return;
+}
+
+static void warn_on_switch_rt_mode(int sig __attribute__((unused)))
+{
+	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
+	c_syslog_stacktrace();
+	fprintf(stderr, "WARNING: Switched out of RealTime. Stack-trace in syslog.\n");
 }
 
 /* realtime WAM initialization stuff */

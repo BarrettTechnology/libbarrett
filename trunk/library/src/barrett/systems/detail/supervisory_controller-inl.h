@@ -129,7 +129,7 @@ System::Output<T>* SupervisoryController::selectFeedbackSignal(
 throw(std::invalid_argument)
 {
 	throw std::invalid_argument(
-			"(Systems::SupervisoryController::trackReferenceSignal): "
+			"(Systems::SupervisoryController::selectFeedbackSignal): "
 			"A Controller's feedbackInput must be connected before you "
 			"can use it.");
 }

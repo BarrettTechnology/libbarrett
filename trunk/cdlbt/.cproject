@@ -16,11 +16,10 @@
 <extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 <extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="so" artifactName="cdlbt" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="Build on a WAM's PC104" id="cdt.managedbuild.config.gnu.lib.debug.353491328" name="Debug" parent="cdt.managedbuild.config.gnu.lib.debug" prebuildStep="">
+<configuration artifactExtension="a" artifactName="cdlbt" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib" cleanCommand="rm -rf" description="Build on a WAM's PC104" id="cdt.managedbuild.config.gnu.lib.debug.353491328" name="Debug" parent="cdt.managedbuild.config.gnu.lib.debug" prebuildStep="">
 <folderInfo id="cdt.managedbuild.config.gnu.lib.debug.353491328." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.lib.debug.81125240" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.lib.debug">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.1004641986" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
@@ -38,14 +37,21 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.2143205111" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.2075772260" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.lib.debug.option.debugging.level.1465388324" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.misc.other.1164687890" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -DCANTYPE_PEAKISA -DRTSYS_XENOMAI -DHAS_WAM_LOCAL" valueType="string"/>
+<option id="gnu.c.compiler.option.misc.other.1164687890" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.c.compiler.option.include.paths.867914381" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/src"/>
+</option>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.616669728" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>
+<listOptionValue builtIn="false" value="HAVE_INLINE"/>
+<listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
+<listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1491083643" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.base.390489122" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
-<option defaultValue="true" id="gnu.c.link.option.shared.518386157" name="Shared (-shared)" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+<option id="gnu.c.link.option.shared.518386157" name="Shared (-shared)" superClass="gnu.c.link.option.shared"/>
 <option id="gnu.c.link.option.libs.679182156" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="pthread"/>
 <listOptionValue builtIn="false" value="native"/>
@@ -64,10 +70,10 @@
 </inputType>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.2051925491" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
-<option defaultValue="true" id="gnu.cpp.link.option.shared.173912338" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
+<option id="gnu.cpp.link.option.shared.173912338" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.1495212570" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
-<option id="gnu.both.asm.option.include.paths.617829106" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath"/>
+<option id="gnu.both.asm.option.include.paths.617829106" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.assembler.input.1568361027" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 </tool>
 </toolChain>
@@ -361,7 +367,13 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.release.1020211565" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.release">
 <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.lib.release.option.optimization.level.1425412440" name="Optimization Level" superClass="gnu.c.compiler.lib.release.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.lib.release.option.debugging.level.9953257" name="Debug Level" superClass="gnu.c.compiler.lib.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.misc.other.1748807030" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -DCANTYPE_PEAKPCI" valueType="string"/>
+<option id="gnu.c.compiler.option.misc.other.1748807030" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.1188350593" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>
+<listOptionValue builtIn="false" value="HAVE_INLINE"/>
+<listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
+<listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.536009768" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.base.480055340" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
@@ -674,9 +686,15 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.713908047" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.1985600910" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.lib.debug.option.debugging.level.1887792340" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.misc.other.1434881804" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -DCANTYPE_PEAKPCI -DRTSYS_XENOMAI -DHAS_WAM_LOCAL" valueType="string"/>
+<option id="gnu.c.compiler.option.misc.other.1434881804" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.c.compiler.option.include.paths.1733486513" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/home/dc/svn/libbarrett/dependencies/xenomai/include"/>
+</option>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.1448126112" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>
+<listOptionValue builtIn="false" value="HAVE_INLINE"/>
+<listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
+<listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1608659450" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -988,7 +1006,13 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.release.1035338266" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.release">
 <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.lib.release.option.optimization.level.1036983237" name="Optimization Level" superClass="gnu.c.compiler.lib.release.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.lib.release.option.debugging.level.1273057703" name="Debug Level" superClass="gnu.c.compiler.lib.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.misc.other.63973226" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -DCANTYPE_PEAKPCI" valueType="string"/>
+<option id="gnu.c.compiler.option.misc.other.63973226" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.329235888" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>
+<listOptionValue builtIn="false" value="HAVE_INLINE"/>
+<listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
+<listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1833370443" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.base.1299269684" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">

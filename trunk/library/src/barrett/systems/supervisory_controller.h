@@ -27,6 +27,12 @@ namespace systems {
 // Input/Output types. Boost::Units and/or methods for specifying specific
 // Controllers and JointTorqueAdapters?
 class SupervisoryController : public System {
+// IO
+public:		Input<units::JointTorques> input;  // TODO(dc): ugly ugly! :(
+protected:	Output<units::JointTorques>::Value* outputValue;
+public:		Output<units::JointTorques> output;
+
+
 public:
 	SupervisoryController(
 //			const std::list<AbstractController*>& additionalControllers =
@@ -62,7 +68,14 @@ protected:
 	std::list<AbstractController*> controllers;
 	std::list<JointTorqueAdapter*> adapters;
 
-	virtual void operate() {}
+	// TODO(dc): ugly ugly :(
+	virtual void operate() {
+		if (input.valueDefined()) {
+			outputValue->setValue(input.getValue());
+		} else {
+			outputValue->setValueUndefined();
+		}
+	}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(SupervisoryController);

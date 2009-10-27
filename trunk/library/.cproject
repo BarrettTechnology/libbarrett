@@ -32,7 +32,8 @@
 <option id="gnu.cpp.compiler.so.debug.option.debugging.level.659470943" name="Debug Level" superClass="gnu.cpp.compiler.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.other.other.1434668450" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.739813320" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.816583146" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -47,6 +48,14 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.929081385" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.1238874447" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2062304619" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="cdlbt"/>
+<listOptionValue builtIn="false" value="m"/>
+<listOptionValue builtIn="false" value="pthread"/>
+<listOptionValue builtIn="false" value="native"/>
+<listOptionValue builtIn="false" value="pcan"/>
+<listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="gslcblas"/>
+<listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="json"/>
 </option>
 <option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
@@ -180,7 +189,8 @@
 <option id="gnu.cpp.compiler.so.release.option.optimization.level.664040811" name="Optimization Level" superClass="gnu.cpp.compiler.so.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.so.release.option.debugging.level.790907973" name="Debug Level" superClass="gnu.cpp.compiler.so.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1888384168" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1409127946" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -196,6 +206,13 @@
 <option defaultValue="true" id="gnu.cpp.link.so.release.option.shared.497046342" name="Shared (-shared)" superClass="gnu.cpp.link.so.release.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.1052377874" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="cdlbt"/>
+<listOptionValue builtIn="false" value="m"/>
+<listOptionValue builtIn="false" value="pthread"/>
+<listOptionValue builtIn="false" value="native"/>
+<listOptionValue builtIn="false" value="pcan"/>
+<listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="gslcblas"/>
+<listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="json"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1396281396" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
@@ -332,6 +349,7 @@
 <option id="gnu.cpp.compiler.option.other.other.525304823" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.1461442815" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.182865940" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -347,12 +365,20 @@
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.628866549" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2077790806" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="cdlbt"/>
+<listOptionValue builtIn="false" value="pthread"/>
+<listOptionValue builtIn="false" value="native"/>
+<listOptionValue builtIn="false" value="pcan"/>
+<listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="gslcblas"/>
+<listOptionValue builtIn="false" value="config"/>
+<listOptionValue builtIn="false" value="json"/>
 </option>
 <option id="gnu.cpp.link.option.paths.809842889" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/Debug/"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/lib"/>
 </option>
-<option id="gnu.cpp.link.option.other.1387701595" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath-link /usr/xenomai/lib"/>
+<option id="gnu.cpp.link.option.other.1387701595" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
+<listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1928536841" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
