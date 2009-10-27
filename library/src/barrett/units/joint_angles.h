@@ -20,6 +20,11 @@ class JointAngles : public JointTorques {  // TODO(dc): needed a quick fix...
 public:
 	// associate with the joint space actuator type
 	typedef JointTorques actuator_type;
+
+	JointAngles() :
+			JointTorques() {}
+	JointAngles(double ja_array[]) :  //NOLINT: ctor deliberately not marked explicit
+			JointTorques(ja_array) {}
 };
 
 

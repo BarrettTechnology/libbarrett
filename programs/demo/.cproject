@@ -44,9 +44,7 @@
 </option>
 <option id="gnu.cpp.link.option.flags.197516663" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
 <option id="gnu.cpp.link.option.other.1637089635" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath /root/libbarrett/trunk/cdlbt/Debug/"/>
 <listOptionValue builtIn="false" value="-rpath /root/libbarrett/trunk/library/Debug"/>
-<listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1490443078" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

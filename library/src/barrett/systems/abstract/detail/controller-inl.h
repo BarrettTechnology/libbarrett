@@ -9,6 +9,7 @@
 #include <list>
 #include <stdexcept>
 
+#include "../../../units/joint_torques.h"
 #include "../system.h"
 #include "../../helpers.h"
 #include "../../supervisory_controller.h"
@@ -52,6 +53,11 @@ throw(std::invalid_argument)
 	Input<OutputType>* controlInput = dynamic_cast<Input<OutputType>*>(  //NOLINT: see RTTI note in
 			jta.getControlInput() );            // supervisory_controller-inl.h
 	forceConnect(controlOutput, *controlInput);
+
+	// TODO(dc): ugly ugly! :(
+	Input<units::JointTorques>* jtInput =
+			const_cast<Input<units::JointTorques>*>(&sc.input);
+	forceConnect(jta.jointTorqueOutput, *jtInput);
 }
 
 

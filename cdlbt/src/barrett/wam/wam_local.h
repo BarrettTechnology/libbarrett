@@ -22,6 +22,9 @@
 
 #ifndef BT_WAM_LOCAL_H
 #define BT_WAM_LOCAL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Include the bt libraries */
 #include "../os/os.h"
@@ -181,4 +184,7 @@ int bt_wam_local_run(struct bt_wam_local * wam);
 int bt_wam_local_set_callback(struct bt_wam_local * wam,
                               int (*callback)(struct bt_wam_local * wam));
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* BT_WAM_LOCAL_H */

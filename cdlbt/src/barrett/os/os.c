@@ -31,6 +31,7 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <unistd.h> /* For usleep() */
 #include <syslog.h>
@@ -50,6 +51,7 @@
 #ifdef RTSYS_NONE
 #include <sys/time.h>
 #endif
+#undef _GNU_SOURCE
 
 #include "os.h"
 
