@@ -13,6 +13,9 @@
 #include <cmath>
 
 
+// TODO(dc): write tests!
+
+
 template<typename T>
 inline T symLimit(const T x, const T limit)
 {

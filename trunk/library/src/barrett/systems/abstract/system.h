@@ -171,9 +171,9 @@ private:
 
 
 // include template definitions
-#include "detail/system-input-inl.h"
-#include "detail/system-output-inl.h"
-#include "detail/system-output-value-inl.h"
+#include "./detail/system-input-inl.h"
+#include "./detail/system-output-inl.h"
+#include "./detail/system-output-value-inl.h"
 
 
 #endif /* SYSTEM_H_ */
