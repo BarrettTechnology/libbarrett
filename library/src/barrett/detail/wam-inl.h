@@ -1,5 +1,5 @@
 /*
- * wam.cpp
+ * wam-inl.h
  *
  *  Created on: Sep 25, 2009
  *      Author: dc
@@ -19,15 +19,16 @@
 
 #include "../units.h"
 #include "../systems/abstract/single_io.h"
-#include "../wam.h"
 
 
 namespace barrett {
 
 // TODO(dc): some of theses members should be inline
 
-Wam::Wam() :
-	systems::SingleIO<units::JointTorques, units::JointAngles>(),
+template<size_t DOF>
+Wam<DOF>::Wam() :
+		systems::SingleIO<jt_type, ja_type>(),
+//		systems::SingleIO<units::JointTorques<DOF>, units::JointAngles<DOF> >(),
 	operateCount(), wam(NULL), wamLocal(NULL)
 {
 	// initialize syslog
@@ -37,8 +38,8 @@ Wam::Wam() :
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 
 	// open the WAM
-	units::DOF = 7;  // TODO(dc): BAD BAD BAD! :(
 	bt_wam_create(&wam, "wamg");
+	// TODO(dc): verify that the DOF matches
 	if (wam == NULL) {
 		// TODO(dc): better exception, add throw declaration to function def
 		throw std::runtime_error(
@@ -53,7 +54,8 @@ Wam::Wam() :
 	bt_wam_local_set_callback(wamLocal, &Wam::handleCallback);
 }
 
-Wam::~Wam()
+template<size_t DOF>
+Wam<DOF>::~Wam()
 {
 	// stop receiving callbacks, then unregister the Wam
 	bt_wam_local_set_callback(wamLocal, NULL);
@@ -62,41 +64,48 @@ Wam::~Wam()
 	bt_wam_destroy(wam);
 }
 
-void Wam::gravityCompensate(bool compensate) {
+template<size_t DOF>
+void Wam<DOF>::gravityCompensate(bool compensate) {
 	bt_wam_setgcomp(wam, compensate);
 }
 
-void Wam::moveHome() {
+template<size_t DOF>
+void Wam<DOF>::moveHome() {
 	bt_wam_movehome(wam);
 }
 
-void Wam::idle() {
+template<size_t DOF>
+void Wam<DOF>::idle() {
 	bt_wam_idle(wam);
 }
 
 
-std::map<struct bt_wam_local*, Wam*> Wam::activeWams;
+template<size_t DOF>
+std::map<struct bt_wam_local*, Wam<DOF>*> Wam<DOF>::activeWams;
 
-int Wam::handleCallback(struct bt_wam_local* wamLocal) {
+template<size_t DOF>
+int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal) {
 	activeWams[wamLocal]->readSensors();
 	return 0;
 }
 
 
-void Wam::readSensors() {
-	units::JointAngles ja;
-	for (size_t i = 0; i < ja.size(); ++i) {
+template<size_t DOF>
+void Wam<DOF>::readSensors() {
+	ja_type ja;
+	for (size_t i = 0; i < DOF; ++i) {
 		ja[i] = gsl_vector_get(wamLocal->jposition, i);
 	}
 	this->outputValue->setValue(ja);
 }
 
-void Wam::operate()
+template<size_t DOF>
+void Wam<DOF>::operate()
 {
 	++operateCount;
 
-	const units::JointTorques& jt = input.getValue();
-	for (size_t i = 0; i< jt.size(); ++i) {
+	const jt_type& jt = this->input.getValue();
+	for (size_t i = 0; i< DOF; ++i) {
 		gsl_vector_set(wamLocal->jtorque, i,
 				gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
 	}

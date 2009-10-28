@@ -5,7 +5,8 @@
  *      Author: dc
  */
 
-#ifndef SUPERVISORY_CONTROLLER_H_
+//#ifndef SUPERVISORY_CONTROLLER_H_
+#if 0
 #define SUPERVISORY_CONTROLLER_H_
 
 
@@ -26,11 +27,13 @@ namespace systems {
 // TODO(dc): need a way to disambiguate Controllers with the same
 // Input/Output types. Boost::Units and/or methods for specifying specific
 // Controllers and JointTorqueAdapters?
+template<size_t N>
 class SupervisoryController : public System {
 // IO
-public:		Input<units::JointTorques> input;  // TODO(dc): ugly ugly! :(
-protected:	Output<units::JointTorques>::Value* outputValue;
-public:		Output<units::JointTorques> output;
+public:		System::Input<units::JointTorques<N> > input;  // TODO(dc): ugly! :(
+public:		System::Output<units::JointTorques<N> > output;
+protected:
+	typename System::Output<units::JointTorques<N> >::Value* outputValue;
 
 
 public:
@@ -56,7 +59,7 @@ public:
 
 	// FIXME: should this be public?
 	template<typename T>
-	JointTorqueAdapter& selectAdapter(
+	JointTorqueAdapter<N>& selectAdapter(
 			const Output<T>& controlOutput) const
 	throw(std::invalid_argument);
 
@@ -69,7 +72,7 @@ public:
 protected:
 	// the SupervisoryController owns the objects pointed to by these lists
 	std::list<AbstractController*> controllers;
-	std::list<JointTorqueAdapter*> adapters;
+	std::list<JointTorqueAdapter<N>*> adapters;
 
 	// the SupervisoryController does not own these objects
 	std::list<AbstractOutput*> feedbackOutputs;

@@ -11,6 +11,9 @@
 
 #include <map>
 
+#include <barrett/wam/wam.h>
+#include <barrett/wam/wam_local.h>
+
 #include "./detail/ca_macro.h"
 #include "./units.h"
 //#include "./systems/abstract/system.h"
@@ -20,9 +23,14 @@
 namespace barrett {
 
 
-class Wam : public systems::SingleIO<units::JointTorques,
-									 units::JointAngles> {
+template<size_t DOF>
+class Wam : public systems::SingleIO<units::JointTorques<DOF>,
+									 units::JointAngles<DOF> > {
 public:
+	typedef units::JointTorques<DOF> jt_type;
+	typedef units::JointAngles<DOF> ja_type;
+
+
 	int operateCount;
 
 	Wam();
@@ -42,7 +50,7 @@ protected:
 	virtual void operate();
 
 
-	static std::map<struct bt_wam_local*, Wam*> activeWams;
+	static std::map<struct bt_wam_local*, Wam<DOF>*> activeWams;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Wam);
@@ -50,6 +58,10 @@ private:
 
 
 }
+
+
+// include template definitions
+#include "./detail/wam-inl.h"
 
 
 #endif /* WAM_H_ */

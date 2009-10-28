@@ -44,8 +44,8 @@ public:
 	virtual Input<InputType>* getFeedbackInput();
 	virtual Output<OutputType>* getControlOutput();
 
-	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
-	throw(std::invalid_argument);
+//	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
+//	throw(std::invalid_argument);
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Controller);

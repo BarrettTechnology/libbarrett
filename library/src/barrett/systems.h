@@ -11,7 +11,6 @@
 
 // other -- these operate on Systems, but are not Systems themselves
 #include "systems/helpers.h"
-#include "systems/supervisory_controller.h"
 
 // sources
 #include "systems/constant.h"
@@ -22,6 +21,8 @@
 // operators
 #include "systems/summer.h"
 #include "systems/gain.h"
+#include "systems/pid_controller.h"
+#include "systems/supervisory_controller.h"
 
 // #include "systems/"
 

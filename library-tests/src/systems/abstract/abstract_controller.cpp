@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <barrett/systems/abstract/abstract_controller.h>
-#include <barrett/systems/supervisory_controller.h>
+//#include <barrett/systems/supervisory_controller.h>
 
 #include "./controller_impl.h"
 
@@ -29,7 +29,7 @@ TEST(AbstractControllerTest, Interface) {
 
 	// this one is allowed to throw std::invalid_argument
 	try {
-		ac.selectAndConnectAdapter(systems::SupervisoryController());
+//		ac.selectAndConnectAdapter(systems::SupervisoryController());
 	} catch (std::invalid_argument e) {
 		// do nothing
 	}
