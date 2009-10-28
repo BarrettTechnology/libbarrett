@@ -122,7 +122,7 @@ throw(std::invalid_argument)
 			"controlOutput.");
 }
 
-// doesn't actually use controlOutput, just it's type...
+// doesn't actually use feedbackInput, just it's type...
 template<typename T>
 System::Output<T>* SupervisoryController::selectFeedbackSignal(
 		const Input<T>& feedbackInput) const

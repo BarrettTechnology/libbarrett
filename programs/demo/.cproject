@@ -27,6 +27,7 @@
 <option id="gnu.cpp.compiler.option.include.paths.1781094856" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/src"/>
 </option>
+<option id="gnu.cpp.compiler.option.other.other.989754948" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wno-missing-braces" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.762415021" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1051878514" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -505,6 +506,7 @@
 <option id="gnu.cpp.compiler.option.include.paths.346963173" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/src}&quot;"/>
 </option>
+<option id="gnu.cpp.compiler.option.other.other.565256805" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wno-missing-braces" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2022727529" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.1767173324" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
