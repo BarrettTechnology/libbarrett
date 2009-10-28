@@ -22,20 +22,20 @@ using namespace barrett;
 
 // TODO(dc): actually test this
 TEST(SupervisoryControllerTest, DefaultCtor) {
-	systems::SupervisoryController sc;
+	systems::SupervisoryController<10> sc;
 
 	// verify default controllers and adapters are available
 }
 
 // TODO(dc): actually test this
 TEST(SupervisoryControllerTest, NoDefaultCACtor) {
-	systems::SupervisoryController sc(false);
+	systems::SupervisoryController<10> sc(false);
 
 	// verify default controllers and adapters are absent
 }
 
 TEST(SupervisoryControllerTest, SelectMethodsThrow) {
-	systems::SupervisoryController sc(false);
+	systems::SupervisoryController<10> sc(false);
 	ExposedIOSystem<double> eios;  // make an Input and an Output
 
 	// the default controllers/adapters/feedback signals are turned off,
@@ -54,13 +54,13 @@ public:
 		sc(), referenceOutput(&referenceOutputValue) {}
 
 protected:
-	systems::SupervisoryController sc;
+	systems::SupervisoryController<10> sc;
 	systems::System::Output<T> referenceOutput;
 	typename systems::System::Output<T>::Value* referenceOutputValue;
 };
 
 // template parameters list the types the following tests should be run over
-typedef ::testing::Types<units::JointAngles> SCTypes;
+typedef ::testing::Types<units::JointAngles<10> > SCTypes;
 TYPED_TEST_CASE(SupervisoryControllerTypedTest, SCTypes);
 
 

@@ -19,16 +19,20 @@ class ClassName : public Array<N> {  \
 public:  \
 	explicit ClassName(double d = 0.0) :  \
 			Array<N>(d) {}  \
+	ClassName(const Array<N>& a) :  \
+			Array<N>(a) {}  \
 	using Array<N>::operator=;  \
 }
 
-#define DECLARE_UNITS_WITH_ACTUATOR(ClassName, AcutatorType)  \
+#define DECLARE_UNITS_WITH_ACTUATOR(ClassName, ActuatorType)  \
 template<size_t N>  \
 class ClassName : public Array<N> {  \
 public:  \
-	typedef ActuatorType<N> actuator_type  \
+	typedef ActuatorType<N> actuator_type;  \
 	explicit ClassName(double d = 0.0) :  \
 			Array<N>(d) {}  \
+	ClassName(const Array<N>& a) :  \
+			Array<N>(a) {}  \
 	using Array<N>::operator=;  \
 }
 

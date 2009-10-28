@@ -24,6 +24,7 @@ void PIDController<InputType, OutputType>::operate()
 		return;
 	}
 
+//	InputType error;
 	InputType error =
 			this->referenceInput.getValue() - this->feedbackInput.getValue();
 

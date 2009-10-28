@@ -24,14 +24,41 @@ namespace barrett {
 namespace systems {
 
 
-inline SupervisoryController::~SupervisoryController() {
+template<size_t N>
+SupervisoryController<N>::SupervisoryController(
+//		const std::list<AbstractController*>& additionalControllers,
+		bool includeStandardControllers,
+		bool includeStandardAdapters) :
+//			controllers(additionalControllers)
+			input(this), output(&outputValue),
+			controllers(), adapters(), feedbackOutputs()
+{
+	if (includeStandardControllers) {
+		controllers.push_back(new PIDController<units::JointAngles<N> >);
+	}
+
+	if (includeStandardAdapters) {
+		adapters.push_back(new JointTorqueJTA<N>);
+	}
+}
+
+template<size_t N>
+inline SupervisoryController<N>::~SupervisoryController()
+{
 	purge(controllers);
 	purge(adapters);
 }
 
-template<typename T>
-void SupervisoryController::trackReferenceSignal(
-		Output<T>& referenceOutput)
+template<size_t N>
+inline void SupervisoryController<N>::addFeedbackSignal(
+		AbstractOutput* feedbackOutput)
+{
+	feedbackOutputs.push_front(feedbackOutput);
+}
+
+template<size_t N, typename T>
+void SupervisoryController<N>::trackReferenceSignal(
+		System::Output<T>& referenceOutput)
 throw(std::invalid_argument)
 {
 	Input<T>* referenceInput = NULL;
@@ -58,7 +85,7 @@ throw(std::invalid_argument)
 
 	// double-dispatch to find and connect adapter
 	// will throw if no adapter is found
-	controller.selectAndConnectAdapter(*this);
+//	controller.selectAndConnectAdapter(*this);
 	forceConnect(referenceOutput, *referenceInput);
 	if (feedbackOutput != NULL) {
 		forceConnect(*feedbackOutput, *feedbackInput);

@@ -15,12 +15,15 @@ namespace barrett {
 namespace systems {
 
 
-inline System::Input<units::JointTorques>* JointTorqueJTA::getControlInput()
+template<size_t N>
+inline System::Input<units::JointTorques<N> >*
+	JointTorqueJTA<N>::getControlInput()
 {
 	return &controlInput;
 }
 
-inline void JointTorqueJTA::operate()
+template<size_t N>
+inline void JointTorqueJTA<N>::operate()
 {
 	this->jointTorqueOutputValue->setValue(controlInput.getValue());
 }

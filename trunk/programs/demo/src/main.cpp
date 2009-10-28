@@ -23,24 +23,30 @@ void waitForEnter() {
 }
 
 int main() {
-	Wam wam;
-	systems::SupervisoryController sc;
+	Wam<7> wam;
+	systems::PIDController<Wam<7>::ja_type> pid;
+	systems::connect(wam.output, pid.feedbackInput);
+	systems::connect(pid.controlOutput, wam.input);
 
-	double setPointArray[] =
-		{0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0};
-	units::JointAngles setPoint = setPointArray;
-	systems::Constant<units::JointAngles> point(setPoint);
+	// tie inputs together for zero torque
+	systems::connect(wam.output, pid.referenceInput);
 
-	// TODO(dc): this should be done by the library
-	systems::System::Input<units::JointAngles>* feedbackInput =
-			dynamic_cast<systems::System::Input<units::JointAngles>*>(  //NOLINT: see RTTI note above
-			sc.selectController(wam.output).getFeedbackInput() );
-	systems::connect(wam.output, *feedbackInput);
+//	systems::SupervisoryController sc;
 
-	systems::connect(sc.output, wam.input);
-	sc.trackReferenceSignal(wam.output);
+	Wam<7>::ja_type setPoint;
+	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
+	systems::Constant<Wam<7>::ja_type> point(setPoint);
 
-//	systems::PrintToStream<units::JointAngles> pts("JA: ");
+//	// TODO(dc): this should be done by the library
+//	systems::System::Input<Wam<7>::ja_type>* feedbackInput =
+//			dynamic_cast<systems::System::Input<Wam<7>::ja_type>*>(  //NOLINT: see RTTI note above
+//			sc.selectController(wam.output).getFeedbackInput() );
+//	systems::connect(wam.output, *feedbackInput);
+//
+//	systems::connect(sc.output, wam.input);
+//	sc.trackReferenceSignal(wam.output);
+
+//	systems::PrintToStream<Wam<7>::ja_type> pts("JA: ");
 //	systems::connect(wam.output, pts.input);
 
 	std::cout << wam.operateCount << std::endl;
@@ -55,11 +61,13 @@ int main() {
 
 	std::cout << "Enter to move to set point.\n";
 	waitForEnter();
-	sc.trackReferenceSignal(point.output);
+	systems::reconnect(point.output, pid.referenceInput);
+//	sc.trackReferenceSignal(point.output);
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
-	sc.trackReferenceSignal(wam.output);
+	systems::reconnect(wam.output, pid.referenceInput);
+//	sc.trackReferenceSignal(wam.output);
 	wam.moveHome();
 
 	std::cout << "Enter to idle.\n";

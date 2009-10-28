@@ -21,7 +21,7 @@ namespace barrett {
 namespace systems {
 
 
-class SupervisoryController;
+template<size_t N> class SupervisoryController;
 
 
 class AbstractController : public System {
@@ -34,8 +34,8 @@ public:
 	virtual AbstractOutput* getControlOutput() = 0;
 
 	// double-dispatch to find and connect an appropriate JointTorqueAdapter
-	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
-	throw(std::invalid_argument) = 0;
+//	virtual void selectAndConnectAdapter(const SupervisoryController<N>& sc)
+//	throw(std::invalid_argument) = 0;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(AbstractController);

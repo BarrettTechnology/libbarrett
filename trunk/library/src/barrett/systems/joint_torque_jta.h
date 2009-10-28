@@ -19,19 +19,20 @@ namespace barrett {
 namespace systems {
 
 
-class JointTorqueJTA : public JointTorqueAdapter {
+template<size_t N>
+class JointTorqueJTA : public JointTorqueAdapter<N> {
 // IO
-public:		Input<units::JointTorques> controlInput;
+public:	System::Input<units::JointTorques<N> > controlInput;
 
 
 public:
 	JointTorqueJTA() :
-		JointTorqueAdapter(), controlInput(this) {}
-	explicit JointTorqueJTA(units::JointTorques initialOutputValue) :
-		JointTorqueAdapter(initialOutputValue), controlInput(this) {}
+		JointTorqueAdapter<N>(), controlInput(this) {}
+	explicit JointTorqueJTA(units::JointTorques<N> initialOutputValue) :
+		JointTorqueAdapter<N>(initialOutputValue), controlInput(this) {}
 	virtual ~JointTorqueJTA() {}
 
-	virtual Input<units::JointTorques>* getControlInput();
+	virtual System::Input<units::JointTorques<N> >* getControlInput();
 
 protected:
 	virtual void operate();
