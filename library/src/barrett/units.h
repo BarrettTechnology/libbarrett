@@ -13,28 +13,28 @@
 #include <boost/array.hpp>
 
 
+#define DECLARE_UNITS_IMPL_H(ClassName)  \
+	template<size_t N>  \
+	class ClassName : public Array<N> {  \
+	public:
+
+#define DECLARE_UNITS_IMPL_F(ClassName)  \
+		explicit ClassName(double d = 0.0) :  \
+				Array<N>(d) {}  \
+		ClassName(const Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
+				Array<N>(a) {}  \
+		using Array<N>::operator=;  \
+	}
+
+
 #define DECLARE_UNITS(ClassName)  \
-template<size_t N>  \
-class ClassName : public Array<N> {  \
-public:  \
-	explicit ClassName(double d = 0.0) :  \
-			Array<N>(d) {}  \
-	ClassName(const Array<N>& a) :  \
-			Array<N>(a) {}  \
-	using Array<N>::operator=;  \
-}
+	DECLARE_UNITS_IMPL_H(ClassName)  \
+	DECLARE_UNITS_IMPL_F(ClassName)
 
 #define DECLARE_UNITS_WITH_ACTUATOR(ClassName, ActuatorType)  \
-template<size_t N>  \
-class ClassName : public Array<N> {  \
-public:  \
-	typedef ActuatorType<N> actuator_type;  \
-	explicit ClassName(double d = 0.0) :  \
-			Array<N>(d) {}  \
-	ClassName(const Array<N>& a) :  \
-			Array<N>(a) {}  \
-	using Array<N>::operator=;  \
-}
+	DECLARE_UNITS_IMPL_H(ClassName)  \
+		typedef ActuatorType<N> actuator_type;  \
+	DECLARE_UNITS_IMPL_F(ClassName)
 
 
 namespace barrett {
