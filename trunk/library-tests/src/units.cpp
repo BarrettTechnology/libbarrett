@@ -62,6 +62,23 @@ TYPED_TEST(ArrayTypedTest, AssignFromTypeParam) {
 	EXPECT_EQ(this->a, a_copy);
 }
 
+TYPED_TEST(ArrayTypedTest, CopyFromArray) {
+	units::Array<5> array;
+	array << 5, 42.8, 37, -12, 1.4;
+	TypeParam array_copy = array;  // uses copy constructor
+
+	EXPECT_EQ(array, array_copy);
+}
+
+TYPED_TEST(ArrayTypedTest, AssignFromArray) {
+	units::Array<5> array;
+	array << 5, 42.8, 37, -12, 1.4;
+	TypeParam array_copy;
+	array_copy = array;  // uses assignment operator
+
+	EXPECT_EQ(array, array_copy);
+}
+
 TYPED_TEST(ArrayTypedTest, ExplicitAssignment) {
 	this->a << 5, 42.8, 37, -12, 1.4;
 
