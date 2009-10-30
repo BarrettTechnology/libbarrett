@@ -104,18 +104,25 @@ public:
 		class Value {
 		public:
 			Value(const Output<T>& parentOutput, const T& initialValue) :
-				parent(parentOutput), value(new T(initialValue)) {}
+				parent(parentOutput), delegate(NULL),
+				value(new T(initialValue)) {}
 			explicit Value(const Output<T>& parentOutput) :
-				parent(parentOutput), value(NULL) {}
+				parent(parentOutput), delegate(NULL), value(NULL) {}
 			~Value();
 
 			void setValue(const T& newValue);
 			void setValueUndefined();
+
+			void delegateTo(const Output<T>& delegate);
+			void undelegate();
 		protected:
 			const Output<T>& parent;
+			const Value* delegate;
 			T* value;
 		private:
 			friend class Input<T>;
+			friend class Output;
+
 			DISALLOW_COPY_AND_ASSIGN(Value);
 		};
 
@@ -124,13 +131,17 @@ public:
 		virtual ~Output() {}
 
 	protected:
-		Value value;
-		std::list<Input<T>* > inputs;
+		const Value* getValueObject() const;
 
 		void addInput(const Input<T>& input);
 		void removeInput(const Input<T>& input);
+		void addDelegator(const Output<T>& output) const;
+		void removeDelegator(const Output<T>& output) const;
+		void notifyListeners() const;
 
-		void notifyInputs() const;
+		Value value;
+		std::list<Input<T>* > inputs;
+		mutable std::list<Output<T>* > delegators;
 
 	// friends:
 		friend class Input<T>;
