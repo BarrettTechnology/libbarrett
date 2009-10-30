@@ -13,6 +13,7 @@
 
 #include "../../detail/ca_macro.h"
 #include "./system.h"
+#include "./conversion.h"
 
 
 namespace barrett {
@@ -20,7 +21,7 @@ namespace systems {
 
 
 template<typename InputType, typename OutputType = InputType>
-class Controller : public System {
+class Controller : public System, public Conversion<OutputType> {
 // IO
 public:		Input<InputType> referenceInput;
 public:		Input<InputType> feedbackInput;
@@ -37,6 +38,13 @@ public:
 		referenceInput(this),
 		feedbackInput(this),
 		controlOutput(initialOutputValue, &controlOutputValue) {}
+
+	virtual System::Input<InputType>* getConversionInput() {
+		return &referenceInput;
+	}
+	virtual System::Output<OutputType>& getConversionOutput() {
+		return controlOutput;
+	}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Controller);

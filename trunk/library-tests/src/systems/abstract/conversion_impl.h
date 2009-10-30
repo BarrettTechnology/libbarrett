@@ -1,36 +1,36 @@
 /*
- * supervisory_controllable_impl.h
+ * conversion_impl.h
  *
  *  Created on: Oct 29, 2009
  *      Author: dc
  */
 
-#ifndef SUPERVISORY_CONTROLLABLE_IMPL_H_
-#define SUPERVISORY_CONTROLLABLE_IMPL_H_
+#ifndef CONVERSION_IMPL_H_
+#define CONVERSION_IMPL_H_
 
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
-#include <barrett/systems/abstract/supervisory_controllable.h>
+#include <barrett/systems/abstract/conversion.h>
 
 
 template<typename InputType, typename OutputType>
-class SupervisoryControllableImpl :
+class ConversionImpl :
 		public barrett::systems::SingleIO<InputType, OutputType>,
-		public barrett::systems::SupervisoryControllable<OutputType> {
+		public barrett::systems::Conversion<OutputType> {
 public:
-	SupervisoryControllableImpl() {}
-	virtual ~SupervisoryControllableImpl() {}
+	ConversionImpl() {}
+	virtual ~ConversionImpl() {}
 
 	virtual barrett::systems::System::AbstractInput*
-	getSupervisoryControllableInput()
+	getConversionInput()
 	{
 		return &(this->input);
 	}
 
 	virtual barrett::systems::System::Output<OutputType>&
-	getSupervisoryControllableOutput()
+	getConversionOutput()
 	{
 		return this->output;
 	}
@@ -41,8 +41,8 @@ protected:
 	}
 
 private:
-	DISALLOW_COPY_AND_ASSIGN(SupervisoryControllableImpl);
+	DISALLOW_COPY_AND_ASSIGN(ConversionImpl);
 };
 
 
-#endif /* SUPERVISORY_CONTROLLABLE_IMPL_H_ */
+#endif /* CONVERSION_IMPL_H_ */

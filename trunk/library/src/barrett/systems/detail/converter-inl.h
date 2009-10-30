@@ -1,5 +1,5 @@
 /*
- * supervisory_controller-inl.h
+ * converter-inl.h
  *
  *  Created on: Oct 29, 2009
  *      Author: dc
@@ -13,8 +13,8 @@
 #include "../../detail/purge.h"
 #include "../abstract/system.h"
 #include "../helpers.h"
-#include "../abstract/supervisory_controllable.h"
-#include "../supervisory_controller.h"
+#include "../abstract/conversion.h"
+#include "../converter.h"
 
 
 // I think RTTI is useful here to keep syntax clean and support flexibility and
@@ -26,53 +26,52 @@ namespace barrett {
 namespace systems {
 
 template<typename OutputType>
-inline SupervisoryController<OutputType>::~SupervisoryController()
+inline Converter<OutputType>::~Converter()
 {
-	purge(controllables);
+	purge(conversions);
 }
 
 template<typename OutputType>
-inline void SupervisoryController<OutputType>::registerControllable(
-		SupervisoryControllable<OutputType>* controllable)
+inline void Converter<OutputType>::registerConversion(
+		Conversion<OutputType>* conversion)
 {
-	controllables.push_front(controllable);
+	conversions.push_front(conversion);
 }
 
 template<typename OutputType>
 template<typename T>
-void SupervisoryController<OutputType>::trackReferenceSignal(
+void Converter<OutputType>::connectInputTo(
 		System::Output<T>& referenceOutput)
 throw(std::invalid_argument)
 {
-	typename std::list<SupervisoryControllable<OutputType>*>::iterator i;
-	for (i = controllables.begin(); i != controllables.end(); ++i) {
-		if (trackReferenceSignal(referenceOutput, *i)) {
+	typename std::list<Conversion<OutputType>*>::iterator i;
+	for (i = conversions.begin(); i != conversions.end(); ++i) {
+		if (connectInputTo(referenceOutput, *i)) {
 			return;
 		}
 	}
 
 	throw std::invalid_argument(
-			"(systems::SupervisoryController::trackReferenceSignal): "
-			"No SupervisoryControllable is registered that matches "
+			"(systems::Converter::connectInputTo): "
+			"No Convertable is registered that matches "
 			"referenceOutput's type");
 }
 
 template<typename OutputType>
 template<typename T>
-bool SupervisoryController<OutputType>::trackReferenceSignal(
+bool Converter<OutputType>::connectInputTo(
 		System::Output<T>& referenceOutput,
-		SupervisoryControllable<OutputType>* controllable)
-//throw(std::invalid_argument)
+		Conversion<OutputType>* conversion)
 {
 	System::Input<T>* referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
-			controllable->getSupervisoryControllableInput() );
+			conversion->getConversionInput() );
 
 	if (referenceInput == NULL) {
 		return false;
 	}
 
 	forceConnect(referenceOutput, *referenceInput);
-	forceConnect(controllable->getSupervisoryControllableOutput(),
+	forceConnect(conversion->getConversionOutput(),
 			shaddowInput);
 
 	return true;
@@ -80,10 +79,9 @@ bool SupervisoryController<OutputType>::trackReferenceSignal(
 
 
 template<typename OutputType>
-void SupervisoryController<OutputType>::operate()
+void Converter<OutputType>::operate()
 {
 	outputValue->setValue(shaddowInput.getValue());
-//	this->outputValue->setValue(this->shaddowInput.getValue());
 }
 
 
