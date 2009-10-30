@@ -23,18 +23,10 @@ typedef units::JointTorques<3> jt_type;
 
 
 // we just want this to compile
-TEST(IOConversionTest, IOConstructor) {
+TEST(IOConversionTest, Ctor) {
 	ExposedIOSystem<jt_type> eios;
 	systems::Conversion<jt_type>* conversion =
 			systems::makeIOConversion(eios.input, eios.output);
-	delete conversion;
-}
-
-// we just want this to compile
-TEST(IOConversionTest, SingleIOConstructor) {
-	ExposedIOSystem<jt_type> eios;
-	systems::Conversion<jt_type>* conversion =
-			systems::makeIOConversion(eios);
 	delete conversion;
 }
 

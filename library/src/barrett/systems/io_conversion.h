@@ -11,7 +11,6 @@
 
 #include "./abstract/conversion.h"
 #include "./abstract/system.h"
-#include "./abstract/single_io.h"
 
 
 namespace barrett {
@@ -24,8 +23,6 @@ public:
 	IOConversion(System::Input<InputType>& conversionInput,  //NOLINT: non-const reference
 			System::Output<OutputType>& conversionOutput) :
 		input(conversionInput), output(conversionOutput) {}
-	explicit IOConversion(SingleIO<InputType, OutputType>& sio) :  //NOLINT: non-const reference
-		input(sio.input), output(sio.output) {}
 	virtual ~IOConversion() {}
 
 	virtual System::Input<InputType>* getConversionInput() {
@@ -49,13 +46,6 @@ IOConversion<InputType, OutputType>* makeIOConversion(
 		System::Input<InputType>& input, System::Output<OutputType>& output)
 {
 	return new IOConversion<InputType, OutputType>(input, output);
-}
-
-template<typename InputType, typename OutputType>
-IOConversion<InputType, OutputType>* makeIOConversion(
-		SingleIO<InputType, OutputType>& sio)
-{
-	return new IOConversion<InputType, OutputType>(sio);
 }
 
 
