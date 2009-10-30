@@ -24,14 +24,18 @@ void waitForEnter() {
 
 int main() {
 	Wam<7> wam;
-	systems::PIDController<Wam<7>::ja_type> pid;
-	systems::connect(wam.output, pid.feedbackInput);
-	systems::connect(pid.controlOutput, wam.input);
+
+	systems::PIDController<Wam<7>::ja_type>* pid =
+			new systems::PIDController<Wam<7>::ja_type>();
+	systems::connect(wam.output, pid->feedbackInput);
+
+	systems::Converter<Wam<7>::jt_type> supervisoryController;
+	supervisoryController.registerConversion(pid);
+	systems::connect(supervisoryController.output, wam.input);
 
 	// tie inputs together for zero torque
-	systems::connect(wam.output, pid.referenceInput);
+	supervisoryController.connectInputTo(wam.output);
 
-//	systems::SupervisoryController sc;
 
 	Wam<7>::ja_type setPoint;
 	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
@@ -44,10 +48,10 @@ int main() {
 //	systems::connect(wam.output, *feedbackInput);
 //
 //	systems::connect(sc.output, wam.input);
-//	sc.trackReferenceSignal(wam.output);
+//	sc.connectInputTo(wam.output);
 
-//	systems::PrintToStream<Wam<7>::ja_type> pts("JA: ");
-//	systems::connect(wam.output, pts.input);
+//	systems::PrintToStream<Wam<7>::jt_type> pts("JT: ");
+//	systems::connect(pid->controlOutput, pts.input);
 
 	std::cout << wam.operateCount << std::endl;
 
@@ -61,13 +65,13 @@ int main() {
 
 	std::cout << "Enter to move to set point.\n";
 	waitForEnter();
-	systems::reconnect(point.output, pid.referenceInput);
-//	sc.trackReferenceSignal(point.output);
+//	systems::reconnect(point.output, pid.referenceInput);
+	supervisoryController.connectInputTo(point.output);
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
-	systems::reconnect(wam.output, pid.referenceInput);
-//	sc.trackReferenceSignal(wam.output);
+//	systems::reconnect(wam.output, pid.referenceInput);
+	supervisoryController.connectInputTo(wam.output);
 	wam.moveHome();
 
 	std::cout << "Enter to idle.\n";

@@ -97,6 +97,7 @@ void Wam<DOF>::readSensors() {
 		ja[i] = gsl_vector_get(wamLocal->jposition, i);
 	}
 	this->outputValue->setValue(ja);
+//	std::cout << ja << std::endl;
 }
 
 template<size_t DOF>
