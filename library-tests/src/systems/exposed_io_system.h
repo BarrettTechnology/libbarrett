@@ -40,6 +40,11 @@ public:
 		this->outputValue->setValueUndefined();
 	}
 
+	void delegateOutputValueTo(
+			const barrett::systems::System::Output<T>& delegate) {
+		this->outputValue->delegateTo(delegate);
+	}
+
 protected:
 	virtual void operate() {
 		operateCalled = true;
