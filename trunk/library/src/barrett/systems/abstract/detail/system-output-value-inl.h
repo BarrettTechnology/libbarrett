@@ -6,7 +6,6 @@
  */
 
 
-
 namespace barrett {
 namespace systems {
 

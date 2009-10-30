@@ -41,17 +41,8 @@ int main() {
 	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
 	systems::Constant<Wam<7>::ja_type> point(setPoint);
 
-//	// TODO(dc): this should be done by the library
-//	systems::System::Input<Wam<7>::ja_type>* feedbackInput =
-//			dynamic_cast<systems::System::Input<Wam<7>::ja_type>*>(  //NOLINT: see RTTI note above
-//			sc.selectController(wam.output).getFeedbackInput() );
-//	systems::connect(wam.output, *feedbackInput);
-//
-//	systems::connect(sc.output, wam.input);
-//	sc.connectInputTo(wam.output);
-
 //	systems::PrintToStream<Wam<7>::jt_type> pts("JT: ");
-//	systems::connect(pid->controlOutput, pts.input);
+//	systems::connect(supervisoryController.output, pts.input);
 
 	std::cout << wam.operateCount << std::endl;
 

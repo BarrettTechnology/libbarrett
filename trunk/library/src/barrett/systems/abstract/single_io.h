@@ -9,8 +9,9 @@
 #define SINGLE_IO_H_
 
 
-#include "./system.h"
 #include "../../detail/ca_macro.h"
+#include "./system.h"
+#include "./conversion.h"
 
 
 namespace barrett {
@@ -18,7 +19,7 @@ namespace systems {
 
 
 template<typename InputType, typename OutputType>
-class SingleIO : public System {
+class SingleIO : public System, public Conversion<OutputType> {
 // IO
 public:		Input<InputType> input;
 public:		Output<OutputType> output;
@@ -31,6 +32,13 @@ public:
 	explicit SingleIO(const OutputType& initialOutputValue) :
 		input(this), output(initialOutputValue, &outputValue) {}
 	virtual ~SingleIO() {}
+
+	virtual System::Input<InputType>* getConversionInput() {
+		return &input;
+	}
+	virtual System::Output<OutputType>& getConversionOutput() {
+		return output;
+	}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(SingleIO);

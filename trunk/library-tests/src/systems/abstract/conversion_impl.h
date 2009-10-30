@@ -15,25 +15,13 @@
 #include <barrett/systems/abstract/conversion.h>
 
 
+// SingleIO<> implements Conversion
 template<typename InputType, typename OutputType>
 class ConversionImpl :
-		public barrett::systems::SingleIO<InputType, OutputType>,
-		public barrett::systems::Conversion<OutputType> {
+		public barrett::systems::SingleIO<InputType, OutputType> {
 public:
 	ConversionImpl() {}
 	virtual ~ConversionImpl() {}
-
-	virtual barrett::systems::System::AbstractInput*
-	getConversionInput()
-	{
-		return &(this->input);
-	}
-
-	virtual barrett::systems::System::Output<OutputType>&
-	getConversionOutput()
-	{
-		return this->output;
-	}
 
 protected:
 	virtual void operate() {

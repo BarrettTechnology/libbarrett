@@ -11,7 +11,6 @@
 
 #include "../../detail/ca_macro.h"
 #include "./system.h"
-#include "./single_io.h"
 
 
 namespace barrett {
