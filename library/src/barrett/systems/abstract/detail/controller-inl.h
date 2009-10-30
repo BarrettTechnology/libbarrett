@@ -12,8 +12,6 @@
 #include "../../../units.h"
 #include "../system.h"
 #include "../../helpers.h"
-#include "../../supervisory_controller.h"
-#include "../joint_torque_adapter.h"
 
 
 namespace barrett {
@@ -40,25 +38,6 @@ Controller<InputType, OutputType>::getControlOutput()
 {
 	return &controlOutput;
 }
-
-//template<typename InputType, typename OutputType>
-//void Controller<InputType, OutputType>::selectAndConnectAdapter(
-//		const SupervisoryController& sc)
-//throw(std::invalid_argument)
-//{
-//	// will throw if no adapter is found
-//	JointTorqueAdapter& jta = sc.selectAdapter(controlOutput);
-//
-//	// selectAdapter guarantees this downcast won't fail
-//	Input<OutputType>* controlInput = dynamic_cast<Input<OutputType>*>(  //NOLINT: see RTTI note in
-//			jta.getControlInput() );            // supervisory_controller-inl.h
-//	forceConnect(controlOutput, *controlInput);
-//
-//	// TODO(dc): ugly ugly! :(
-//	Input<units::JointTorques>* jtInput =
-//			const_cast<Input<units::JointTorques>*>(&sc.input);
-//	forceConnect(jta.jointTorqueOutput, *jtInput);
-//}
 
 
 }

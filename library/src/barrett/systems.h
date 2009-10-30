@@ -22,7 +22,6 @@
 #include "systems/summer.h"
 #include "systems/gain.h"
 #include "systems/pid_controller.h"
-#include "systems/supervisory_controller.h"
 
 // #include "systems/"
 

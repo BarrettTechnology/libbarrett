@@ -17,6 +17,17 @@ namespace {
 using namespace barrett;
 
 
+// we just want this to compile
+TEST(AbstractControllerTest, Interface) {
+	ControllerImpl<double> c;
+	systems::AbstractController& ac = c;
+
+	ac.getReferenceInput();
+	ac.getFeedbackInput();
+	ac.getControlOutput();
+}
+
+
 // TODO(dc): actually test this
 class ControllerTest : public ::testing::Test {
 public:

@@ -9,6 +9,7 @@
 #define CONTROLLER_IMPL_H_
 
 
+#include <barrett/detail/ca_macro.h>
 #include <barrett/systems/abstract/controller.h>
 
 
@@ -22,6 +23,9 @@ public:
 
 protected:
 	virtual void operate() {}
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(ControllerImpl);
 };
 
 

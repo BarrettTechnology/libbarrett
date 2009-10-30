@@ -26,7 +26,7 @@ throw(std::invalid_argument) :
 	polarity()
 {
 	if (polarityStr.size() != numInputs) {
-		throw std::invalid_argument("(Systems::Summer::Polarity::Polarity): "
+		throw std::invalid_argument("(systems::Summer::Polarity::Polarity): "
 		                            "polarityStr must be of the same length "
 		                            "as the number of inputs to the Summer.");
 	}
@@ -41,7 +41,7 @@ throw(std::invalid_argument) :
 			break;
 		default:
 			throw std::invalid_argument(
-					"(Systems::Summer::Polarity::Polarity): polarityStr must "
+					"(systems::Summer::Polarity::Polarity): polarityStr must "
 					"contain only '+' and '-' characters.");
 			break;
 		}
