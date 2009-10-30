@@ -19,23 +19,8 @@ namespace barrett {
 namespace systems {
 
 
-// FIXME(dc): do we need a superclass for Controller<>'s any more?
-class AbstractController {
-public:
-	AbstractController() {}
-	virtual ~AbstractController() {}
-
-	virtual System::AbstractInput* getReferenceInput() = 0;
-	virtual System::AbstractInput* getFeedbackInput() = 0;
-	virtual System::AbstractOutput* getControlOutput() = 0;
-
-private:
-	DISALLOW_COPY_AND_ASSIGN(AbstractController);
-};
-
-
 template<typename InputType, typename OutputType = InputType>
-class Controller : public System, public AbstractController {
+class Controller : public System {
 // IO
 public:		Input<InputType> referenceInput;
 public:		Input<InputType> feedbackInput;
@@ -53,10 +38,6 @@ public:
 		feedbackInput(this),
 		controlOutput(initialOutputValue, &controlOutputValue) {}
 
-	virtual Input<InputType>* getReferenceInput();
-	virtual Input<InputType>* getFeedbackInput();
-	virtual Output<OutputType>* getControlOutput();
-
 private:
 	DISALLOW_COPY_AND_ASSIGN(Controller);
 };
@@ -64,10 +45,6 @@ private:
 
 }
 }
-
-
-// include template definitions
-#include "./detail/controller-inl.h"
 
 
 #endif /* CONTROLLER_H_ */
