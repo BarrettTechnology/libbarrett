@@ -1,90 +1,58 @@
 /*
  * supervisory_controller.h
  *
- *  Created on: Oct 4, 2009
+ *  Created on: Oct 29, 2009
  *      Author: dc
  */
 
-//#ifndef SUPERVISORY_CONTROLLER_H_
-#if 0
+#ifndef SUPERVISORY_CONTROLLER_H_
 #define SUPERVISORY_CONTROLLER_H_
 
 
 #include <list>
-#include <stdexcept>
+#include <utility>
 
 #include "../detail/ca_macro.h"
-#include "../units.h"
 #include "./abstract/system.h"
-#include "./abstract/abstract_controller.h"
-#include "./abstract/joint_torque_adapter.h"
+#include "./abstract/supervisory_controllable.h"
 
 
 namespace barrett {
 namespace systems {
 
 
-// TODO(dc): need a way to disambiguate Controllers with the same
-// Input/Output types. Boost::Units and/or methods for specifying specific
-// Controllers and JointTorqueAdapters?
-template<size_t N>
+template<typename OutputType>
 class SupervisoryController : public System {
-// IO
-public:		System::Input<units::JointTorques<N> > input;  // TODO(dc): ugly! :(
-public:		System::Output<units::JointTorques<N> > output;
-protected:
-	typename System::Output<units::JointTorques<N> >::Value* outputValue;
-
+//IO
+// input protected because it is for internal connections only
+protected:	System::Input<OutputType> shaddowInput;
+public:		System::Output<OutputType> output;
+protected:	typename System::Output<OutputType>::Value* outputValue;
 
 public:
-	SupervisoryController(
-//			const std::list<AbstractController*>& additionalControllers =
-//					std::list<AbstractController*>(),
-			bool includeStandardControllers = true,
-			bool includeStandardAdapters = true);
-	~SupervisoryController();
+	SupervisoryController() :
+		shaddowInput(this), output(&outputValue), controllables() {}
+	explicit SupervisoryController(const OutputType& initialOutputValue) :
+		shaddowInput(this), output(initialOutputValue, &outputValue),
+		controllables() {}
+	virtual ~SupervisoryController();
 
-	// TODO(dc): need sister functions single/lists of controllers, adapters
-	void addFeedbackSignal(AbstractOutput* feedbackOutput);
+	void registerControllable(
+			SupervisoryControllable<OutputType>* controllable);
 
 	template<typename T>
-	void trackReferenceSignal(Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
+	void trackReferenceSignal(System::Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
 	throw(std::invalid_argument);
 
-	// FIXME: should this be public?
 	template<typename T>
-	AbstractController& selectController(
-			const Output<T>& referenceOutput) const
-	throw(std::invalid_argument);
-
-	// FIXME: should this be public?
-	template<typename T>
-	JointTorqueAdapter<N>& selectAdapter(
-			const Output<T>& controlOutput) const
-	throw(std::invalid_argument);
-
-	// FIXME: should this be public?
-	template<typename T>
-	Output<T>* selectFeedbackSignal(
-			const Input<T>& feedbackInput) const
-	throw(std::invalid_argument);
+	bool trackReferenceSignal(System::Output<T>& referenceOutput,  //NOLINT: non-const reference for syntax
+			SupervisoryControllable<OutputType>* controllable);
+//	throw(std::invalid_argument);
 
 protected:
-	// the SupervisoryController owns the objects pointed to by these lists
-	std::list<AbstractController*> controllers;
-	std::list<JointTorqueAdapter<N>*> adapters;
+	virtual void operate();
 
-	// the SupervisoryController does not own these objects
-	std::list<AbstractOutput*> feedbackOutputs;
-
-	// TODO(dc): ugly ugly :(
-	virtual void operate() {
-		if (input.valueDefined()) {
-			outputValue->setValue(input.getValue());
-		} else {
-			outputValue->setValueUndefined();
-		}
-	}
+	std::list<SupervisoryControllable<OutputType>*> controllables;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(SupervisoryController);
@@ -95,8 +63,8 @@ private:
 }
 
 
-// include inline definitions
-#include "detail/supervisory_controller-inl.h"
+// include template definitions
+#include "./detail/supervisory_controller-inl.h"
 
 
 #endif /* SUPERVISORY_CONTROLLER_H_ */

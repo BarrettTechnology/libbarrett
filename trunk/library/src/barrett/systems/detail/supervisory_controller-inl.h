@@ -1,18 +1,20 @@
 /*
  * supervisory_controller-inl.h
  *
- *  Created on: Oct 6, 2009
+ *  Created on: Oct 29, 2009
  *      Author: dc
  */
 
+
+#include <utility>
 #include <list>
 #include <stdexcept>
 
 #include "../../detail/purge.h"
 #include "../abstract/system.h"
-#include "../abstract/abstract_controller.h"
-#include "../abstract/joint_torque_adapter.h"
 #include "../helpers.h"
+#include "../abstract/supervisory_controllable.h"
+#include "../supervisory_controller.h"
 
 
 // I think RTTI is useful here to keep syntax clean and support flexibility and
@@ -23,157 +25,65 @@
 namespace barrett {
 namespace systems {
 
-
-template<size_t N>
-SupervisoryController<N>::SupervisoryController(
-//		const std::list<AbstractController*>& additionalControllers,
-		bool includeStandardControllers,
-		bool includeStandardAdapters) :
-//			controllers(additionalControllers)
-			input(this), output(&outputValue),
-			controllers(), adapters(), feedbackOutputs()
+template<typename OutputType>
+inline SupervisoryController<OutputType>::~SupervisoryController()
 {
-	if (includeStandardControllers) {
-		controllers.push_back(new PIDController<units::JointAngles<N> >);
-	}
-
-	if (includeStandardAdapters) {
-		adapters.push_back(new JointTorqueJTA<N>);
-	}
+	purge(controllables);
 }
 
-template<size_t N>
-inline SupervisoryController<N>::~SupervisoryController()
+template<typename OutputType>
+inline void SupervisoryController<OutputType>::registerControllable(
+		SupervisoryControllable<OutputType>* controllable)
 {
-	purge(controllers);
-	purge(adapters);
+	controllables.push_front(controllable);
 }
 
-template<size_t N>
-inline void SupervisoryController<N>::addFeedbackSignal(
-		AbstractOutput* feedbackOutput)
-{
-	feedbackOutputs.push_front(feedbackOutput);
-}
-
-template<size_t N, typename T>
-void SupervisoryController<N>::trackReferenceSignal(
+template<typename OutputType>
+template<typename T>
+void SupervisoryController<OutputType>::trackReferenceSignal(
 		System::Output<T>& referenceOutput)
 throw(std::invalid_argument)
 {
-	Input<T>* referenceInput = NULL;
-	Input<T>* feedbackInput = NULL;
+	typename std::list<SupervisoryControllable<OutputType>*>::iterator i;
+	for (i = controllables.begin(); i != controllables.end(); ++i) {
+		if (trackReferenceSignal(referenceOutput, *i)) {
+			return;
+		}
+	}
 
-	Output<T>* feedbackOutput = NULL;
+	throw std::invalid_argument(
+			"(systems::SupervisoryController::trackReferenceSignal): "
+			"No SupervisoryControllable is registered that matches "
+			"referenceOutput's type");
+}
 
-	// will throw if no controller is found
-	AbstractController& controller = selectController(referenceOutput);
+template<typename OutputType>
+template<typename T>
+bool SupervisoryController<OutputType>::trackReferenceSignal(
+		System::Output<T>& referenceOutput,
+		SupervisoryControllable<OutputType>* controllable)
+//throw(std::invalid_argument)
+{
+	System::Input<T>* referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
+			controllable->getSupervisoryControllableInput() );
 
-	// selectController guarantees these downcasts won't fail
-	referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
-			controller.getReferenceInput() );
-	feedbackInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
-			controller.getFeedbackInput() );
+	if (referenceInput == NULL) {
+		return false;
+	}
 
-	// see if we need to connect the feedbackInput
-	if ( !feedbackInput->isConnected() ) {
-		feedbackOutput = selectFeedbackSignal(*feedbackInput);
-	} // else: assume that it's already been appropriately hooked up
-
-
-	// only start connecting things once we know all connections will succeed
-
-	// double-dispatch to find and connect adapter
-	// will throw if no adapter is found
-//	controller.selectAndConnectAdapter(*this);
 	forceConnect(referenceOutput, *referenceInput);
-	if (feedbackOutput != NULL) {
-		forceConnect(*feedbackOutput, *feedbackInput);
-	}
+	forceConnect(controllable->getSupervisoryControllableOutput(),
+			shaddowInput);
+
+	return true;
 }
 
-// doesn't actually use referenceOutput, just it's type...
-template<typename T>
-AbstractController& SupervisoryController::selectController(
-		const Output<T>& referenceOutput) const
-throw(std::invalid_argument)
+
+template<typename OutputType>
+void SupervisoryController<OutputType>::operate()
 {
-	Input<T>* input = NULL;
-
-	typename std::list<AbstractController*>::const_iterator controllerItr;
-	for (controllerItr = controllers.begin();
-		 controllerItr != controllers.end();
-		 ++controllerItr)
-	{
-		input = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
-				(*controllerItr)->getReferenceInput() );
-
-		if (input != NULL) {  // if the downcast was successful
-			return *(*controllerItr);
-		}
-	}
-
-	// if we couldn't find a controller that accepts that type of input...
-	throw std::invalid_argument(
-			"(Systems::SupervisoryController::selectController): "
-			"No AbstractController is registered that accepts that type of "
-			"referenceOutput.");
-}
-
-// second half of double-dispatch from controller.selectAndConnectAdapter()
-// doesn't actually use controlOutput, just it's type...
-template<typename T>
-JointTorqueAdapter& SupervisoryController::selectAdapter(
-		const Output<T>& controlOutput) const
-throw(std::invalid_argument)
-{
-	Input<T>* input = NULL;
-
-	typename std::list<JointTorqueAdapter*>::const_iterator adapterItr;
-	for (adapterItr = adapters.begin();
-		 adapterItr != adapters.end();
-		 ++adapterItr)
-	{
-		input = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
-				(*adapterItr)->getControlInput() );
-
-		if (input != NULL) {  // if the downcast was successful
-			return *(*adapterItr);
-		}
-	}
-
-	// if we couldn't find an adapter that accepts that type of input...
-	throw std::invalid_argument(
-			"(Systems::SupervisoryController::selectAdapter): "
-			"No JointTorqueAdapter is registered that accepts that type of "
-			"controlOutput.");
-}
-
-// doesn't actually use feedbackInput, just it's type...
-template<typename T>
-System::Output<T>* SupervisoryController::selectFeedbackSignal(
-		const Input<T>& feedbackInput) const
-throw(std::invalid_argument)
-{
-	Output<T>* output = NULL;
-
-	typename std::list<AbstractOutput*>::const_iterator outputItr;
-	for (outputItr = feedbackOutputs.begin();
-			outputItr != feedbackOutputs.end();
-		 ++outputItr)
-	{
-		output = dynamic_cast<Output<T>*>(*outputItr);  //NOLINT: see RTTI note above
-
-		if (output != NULL) {  // if the downcast was successful
-			return output;
-		}
-	}
-
-	// if we couldn't find a feedbackOutput of that type...
-	throw std::invalid_argument(
-			"(Systems::SupervisoryController::selectFeedbackSignal): "
-			"No feedbackOutput is registered that matches the selected "
-			"Controller's feedbackInput type");
+	outputValue->setValue(shaddowInput.getValue());
+//	this->outputValue->setValue(this->shaddowInput.getValue());
 }
 
 

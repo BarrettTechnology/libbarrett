@@ -81,9 +81,12 @@
 </tool>
 </toolChain>
 </folderInfo>
+<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1808568972.1103100151" name="supervisory_controller.cpp" rcbsApplicability="disable" resourcePath="src/systems/supervisory_controller.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2118313917.344748131">
+<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2118313917.344748131" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2118313917"/>
+</fileInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="systems/abstract/joint_torque_adapter.cpp|systems/supervisory_controller.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="systems/abstract/joint_torque_adapter.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

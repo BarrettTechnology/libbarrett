@@ -85,7 +85,7 @@
 <fileInfo id="cdt.managedbuild.config.gnu.so.debug.1789923406.511757878" name="wam.h" rcbsApplicability="disable" resourcePath="src/barrett/wam.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/detail/wam-inl.h|barrett/systems/supervisory_controller.h|barrett/systems/detail/supervisory_controller-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="barrett/detail/wam-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -244,7 +244,7 @@
 <fileInfo id="cdt.managedbuild.config.gnu.so.release.227477681.627872631" name="wam-inl.h" rcbsApplicability="disable" resourcePath="src/barrett/detail/wam-inl.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/systems/supervisory_controller.h|barrett/systems/detail/supervisory_controller-inl.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -409,7 +409,7 @@
 <fileInfo id="cdt.managedbuild.config.gnu.so.debug.1789923406.1922454653.1910583106" name="wam-inl.h" rcbsApplicability="disable" resourcePath="src/barrett/detail/wam-inl.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/systems/supervisory_controller.h|barrett/systems/detail/supervisory_controller-inl.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

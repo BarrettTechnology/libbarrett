@@ -1,18 +1,20 @@
 /*
  * supervisory_controller.cpp
  *
- *  Created on: Oct 4, 2009
+ *  Created on: Oct 29, 2009
  *      Author: dc
  */
 
+
+#include <utility>
 #include <stdexcept>
 
 #include <gtest/gtest.h>
-#include <barrett/systems.h>
-#include <barrett/systems/abstract/system.h>
-#include <barrett/systems/abstract/abstract_controller.h>
 #include <barrett/units.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/supervisory_controller.h>
 
+#include "./abstract/supervisory_controllable_impl.h"
 #include "./exposed_io_system.h"
 
 
@@ -20,79 +22,40 @@ namespace {
 using namespace barrett;
 
 
-// TODO(dc): actually test this
-TEST(SupervisoryControllerTest, DefaultCtor) {
-	systems::SupervisoryController<10> sc;
-
-	// verify default controllers and adapters are available
-}
-
-// TODO(dc): actually test this
-TEST(SupervisoryControllerTest, NoDefaultCACtor) {
-	systems::SupervisoryController<10> sc(false);
-
-	// verify default controllers and adapters are absent
-}
-
-TEST(SupervisoryControllerTest, SelectMethodsThrow) {
-	systems::SupervisoryController<10> sc(false);
-	ExposedIOSystem<double> eios;  // make an Input and an Output
-
-	// the default controllers/adapters/feedback signals are turned off,
-	// so these should all fail
-	EXPECT_THROW(sc.selectController(eios.output), std::invalid_argument);
-	EXPECT_THROW(sc.selectFeedbackSignal(eios.input), std::invalid_argument);
-	EXPECT_THROW(sc.selectAdapter(eios.output), std::invalid_argument);
-	EXPECT_THROW(sc.trackReferenceSignal(eios.output), std::invalid_argument);
-}
+typedef units::JointTorques<12> jt_type;
 
 
-template<typename T>
-class SupervisoryControllerTypedTest : public ::testing::Test {
-public:
-	SupervisoryControllerTypedTest() :
-		sc(), referenceOutput(&referenceOutputValue) {}
-
+class SupervisoryControllerTest : public ::testing::Test {
 protected:
-	systems::SupervisoryController<10> sc;
-	systems::System::Output<T> referenceOutput;
-	typename systems::System::Output<T>::Value* referenceOutputValue;
+	systems::SupervisoryController<jt_type> sc;
 };
 
-// template parameters list the types the following tests should be run over
-typedef ::testing::Types<units::JointAngles<10> > SCTypes;
-TYPED_TEST_CASE(SupervisoryControllerTypedTest, SCTypes);
+// TODO(dc): actually test this
+TEST_F(SupervisoryControllerTest, DefaultCtor) {
 
-
-TYPED_TEST(SupervisoryControllerTypedTest, SelectController) {
-	// fail gracefully if this function throws
-	ASSERT_NO_THROW(this->sc.selectController(this->referenceOutput));
-	systems::AbstractController& controller =
-			this->sc.selectController(this->referenceOutput);
-
-	systems::System::Input<TypeParam>* referenceInput = NULL;
-	systems::System::Input<TypeParam>* feedbackInput = NULL;
-
-	referenceInput = dynamic_cast<systems::System::Input<TypeParam>*>(  //NOLINT: RTTI
-			controller.getReferenceInput() );
-	feedbackInput = dynamic_cast<systems::System::Input<TypeParam>*>(  //NOLINT: RTTI
-			controller.getFeedbackInput() );
-
-	EXPECT_TRUE(referenceInput != NULL);
-	EXPECT_TRUE(feedbackInput != NULL);
 }
 
-TYPED_TEST(SupervisoryControllerTypedTest, TrackReferenceSignal) {
-	typename systems::System::Output<TypeParam>::Value* outputValue = NULL;
-	systems::System::Output<TypeParam>* output =
-			new systems::System::Output<TypeParam>(&outputValue);
-	this->sc.addFeedbackSignal(output);
+// TODO(dc): actually test this
+TEST_F(SupervisoryControllerTest, RegisterControllable) {
+	sc.registerControllable(
+			new SupervisoryControllableImpl<jt_type, jt_type>());
+}
 
-	ASSERT_NO_THROW(this->sc.trackReferenceSignal(this->referenceOutput));
+// TODO(dc): actually test this
+TEST_F(SupervisoryControllerTest, TrackReferenceSignalExplicit) {
+	ExposedIOSystem<jt_type> eios;
+	sc.trackReferenceSignal(eios.output,
+			new SupervisoryControllableImpl<jt_type, jt_type>());
+}
 
-	// TODO(dc): make sure things are actually connected
+// TODO(dc): actually test this
+TEST_F(SupervisoryControllerTest, TrackReferenceSignalAutomatic) {
+	ExposedIOSystem<jt_type> eios;
 
-	delete output;
+	// this method is allowed to throw an invalid_argument
+	try {
+		sc.trackReferenceSignal(eios.output);
+	} catch (std::invalid_argument) {}
 }
 
 

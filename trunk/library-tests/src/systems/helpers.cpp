@@ -23,7 +23,7 @@ protected:
 };
 
 
-// Systems::connect
+// systems::connect
 TEST_F(SystemHelperTest, ConnectConnects) {
 	systems::connect(eios.output, eios.input);
 	checkConnected(&eios, eios, 5.7);
@@ -39,7 +39,7 @@ TEST_F(SystemHelperTest, ConnectDoesntConnectTwice) {
 }
 
 
-// Systems::reconnect
+// systems::reconnect
 TEST_F(SystemHelperTest, ReconnectReconnects) {
 	ExposedIOSystem<double> eios2;
 
@@ -58,7 +58,7 @@ TEST_F(SystemHelperTest, ReconnectThrowsIfInputNotConnected) {
 }
 
 
-// Systems::forceConnect
+// systems::forceConnect
 TEST_F(SystemHelperTest, ForceConnectConnects) {
 	systems::forceConnect(eios.output, eios.input);
 	checkConnected(&eios, eios, 5.7);
@@ -76,7 +76,7 @@ TEST_F(SystemHelperTest, ForceConnectReconnects) {
 }
 
 
-// Systems::disconnect
+// systems::disconnect
 TEST_F(SystemHelperTest, DisconnectDisconnects) {
 	systems::connect(eios.output, eios.input);
 	checkConnected(&eios, eios, 42.0);

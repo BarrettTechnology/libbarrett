@@ -36,12 +36,12 @@ inline const T& System::Input<T>::getValue() const
 throw(std::logic_error, System::Input<T>::ValueUndefinedError)
 {
 	if (output == NULL) {
-		throw std::logic_error("(Systems::System::Input::getValue): "
+		throw std::logic_error("(systems::System::Input::getValue): "
 		                       "Input is not connected to anything. "
 		                       "Cannot retrieve value.");
 	}
 	if (output->value.value == NULL) {
-		throw ValueUndefinedError("(Systems::System::Input::getValue): "
+		throw ValueUndefinedError("(systems::System::Input::getValue): "
 		                          "The value of the associated output is "
 		                          "undefined.");
 	}

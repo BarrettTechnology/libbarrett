@@ -22,9 +22,9 @@ void connect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-
 throw(std::invalid_argument)
 {
 	if (input.output != NULL) {
-		throw std::invalid_argument("(Systems::connect): "
+		throw std::invalid_argument("(systems::connect): "
 		                            "Input is already connected to something. "
-		                            "Use 'Systems::reconnect' instead.");
+		                            "Use 'systems::reconnect' instead.");
 	}
 
 	input.output = &output;
@@ -37,9 +37,9 @@ void reconnect(System::Output<T>& newOutput, System::Input<T>& input)  //NOLINT:
 throw(std::invalid_argument)
 {
 	if (input.output == NULL) {
-		throw std::invalid_argument("(Systems::reconnect): "
+		throw std::invalid_argument("(systems::reconnect): "
 		                            "Input is not connected to anything. "
-		                            "Use 'Systems::connect' instead.");
+		                            "Use 'systems::connect' instead.");
 	}
 
 	// disconnect old output
@@ -70,7 +70,7 @@ void disconnect(System::Input<T>& input)  //NOLINT: non-const reference paramete
 throw(std::invalid_argument)
 {
 	if (input.output == NULL) {
-		throw std::invalid_argument("(Systems::disconnect): "
+		throw std::invalid_argument("(systems::disconnect): "
 		                            "Input is not connected to anything. "
 		                            "Cannot disconnect.");
 	}

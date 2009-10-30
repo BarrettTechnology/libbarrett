@@ -11,18 +11,31 @@
 
 #include <list>
 
-#include "./system.h"
-#include "../supervisory_controller.h"
-#include "./abstract_controller.h"
 #include "../../detail/ca_macro.h"
+#include "./system.h"
 
 
 namespace barrett {
 namespace systems {
 
 
+// FIXME(dc): do we need a superclass for Controller<>'s any more?
+class AbstractController {
+public:
+	AbstractController() {}
+	virtual ~AbstractController() {}
+
+	virtual System::AbstractInput* getReferenceInput() = 0;
+	virtual System::AbstractInput* getFeedbackInput() = 0;
+	virtual System::AbstractOutput* getControlOutput() = 0;
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(AbstractController);
+};
+
+
 template<typename InputType, typename OutputType = InputType>
-class Controller : public AbstractController {
+class Controller : public System, public AbstractController {
 // IO
 public:		Input<InputType> referenceInput;
 public:		Input<InputType> feedbackInput;
@@ -43,9 +56,6 @@ public:
 	virtual Input<InputType>* getReferenceInput();
 	virtual Input<InputType>* getFeedbackInput();
 	virtual Output<OutputType>* getControlOutput();
-
-//	virtual void selectAndConnectAdapter(const SupervisoryController& sc)
-//	throw(std::invalid_argument);
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Controller);
