@@ -113,6 +113,7 @@ public:
 			void setValue(const T& newValue);
 			void setValueUndefined();
 
+			// TODO(dc): check for self-delegation
 			void delegateTo(const Output<T>& delegate);
 			void undelegate();
 		protected:
@@ -128,7 +129,7 @@ public:
 
 		explicit Output(Value** valuePtr);
 		Output(const T& initialValue, Value** valuePtr);
-		virtual ~Output() {}
+		virtual ~Output();
 
 	protected:
 		const Value* getValueObject() const;
