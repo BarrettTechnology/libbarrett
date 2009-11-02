@@ -30,6 +30,17 @@ System::Output<T>::Output(const T& initialValue, Value** valueHandle) :
 	(*valueHandle) = &value;
 }
 
+template<typename T>
+System::Output<T>::~Output()
+{
+	// value.undelegate() removes elements from the delegators list
+	while (delegators.size()) {
+		(*delegators.begin())->value.undelegate();
+	}
+
+	value.undelegate();
+}
+
 // FIXME(dc): are these const casts actually ok? i don't remember writing
 // those comments :(  can we use lists of const pointers instead?
 template<typename T>
