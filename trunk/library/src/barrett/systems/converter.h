@@ -22,19 +22,16 @@ namespace systems {
 
 
 template<typename OutputType>
-class Converter : public System {
+class Converter {
 //IO
-// input protected because it is for internal connections only
-protected:	System::Input<OutputType> shaddowInput;
 public:		System::Output<OutputType> output;
 protected:	typename System::Output<OutputType>::Value* outputValue;
 
 public:
 	Converter() :
-		shaddowInput(this), output(&outputValue), conversions() {}
+		output(&outputValue), conversions() {}
 	explicit Converter(const OutputType& initialOutputValue) :
-		shaddowInput(this), output(initialOutputValue, &outputValue),
-		conversions() {}
+		output(initialOutputValue, &outputValue), conversions() {}
 	virtual ~Converter();
 
 	void registerConversion(
@@ -49,8 +46,6 @@ public:
 			Conversion<OutputType>* conversion);
 
 protected:
-	virtual void operate();
-
 	std::list<Conversion<OutputType>*> conversions;
 
 private:

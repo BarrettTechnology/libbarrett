@@ -84,28 +84,22 @@ TEST_F(SystemTest, OutputNotifyInputs) {
 	}
 }
 
+// TODO(dc): the delegate system could be better tested
 TEST_F(SystemTest, OutputDelegates) {
 	ExposedIOSystem<double> d;
 	eios.delegateOutputValueTo(d.output);
 
 	systems::connect(eios.output, eios.input);
 	checkConnected(&d, eios, 34.8);
-	std::cerr << 1;
 }
 
 TEST_F(SystemTest, OutputDelegatesCanBeChained) {
-	std::cerr << 2;
 	ExposedIOSystem<double> d1, d2;
-	std::cerr << 3;
 	d2.delegateOutputValueTo(d1.output);
-	std::cerr << 4;
 	eios.delegateOutputValueTo(d2.output);
-	std::cerr << 5;
 
 	systems::connect(eios.output, eios.input);
-	std::cerr << 6;
 	checkConnected(&d1, eios, 38.234);
-	std::cerr << 7;
 }
 
 
