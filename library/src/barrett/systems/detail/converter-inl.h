@@ -63,7 +63,7 @@ bool Converter<OutputType>::connectInputTo(
 		System::Output<T>& referenceOutput,
 		Conversion<OutputType>* conversion)
 {
-	System::Input<T>* referenceInput = dynamic_cast<Input<T>*>(  //NOLINT: see RTTI note above
+	System::Input<T>* referenceInput = dynamic_cast<System::Input<T>*>(  //NOLINT: see RTTI note above
 			conversion->getConversionInput() );
 
 	if (referenceInput == NULL) {
@@ -71,17 +71,9 @@ bool Converter<OutputType>::connectInputTo(
 	}
 
 	forceConnect(referenceOutput, *referenceInput);
-	forceConnect(conversion->getConversionOutput(),
-			shaddowInput);
+	outputValue->delegateTo(conversion->getConversionOutput());
 
 	return true;
-}
-
-
-template<typename OutputType>
-void Converter<OutputType>::operate()
-{
-	outputValue->setValue(shaddowInput.getValue());
 }
 
 

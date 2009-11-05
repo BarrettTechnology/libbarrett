@@ -37,7 +37,7 @@ TEST_F(ConverterTest, DefaultCtor) {
 }
 
 // we just want this to compile
-TEST_F(ConverterTest, SegisterConversion) {
+TEST_F(ConverterTest, RegisterConversion) {
 	// register conversions of different types
 	sc.registerConversion(
 			new ConversionImpl<jt_type, jt_type>());
