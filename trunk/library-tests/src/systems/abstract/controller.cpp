@@ -6,7 +6,7 @@
  */
 
 #include <gtest/gtest.h>
-//#include <barrett/systems.h>
+#include <barrett/units.h>
 #include <barrett/systems/abstract/controller.h>
 
 #include "./controller_impl.h"
@@ -18,6 +18,7 @@ using namespace barrett;
 
 
 // TODO(dc): actually test this
+
 class ControllerTest : public ::testing::Test {
 public:
 	ControllerTest() :

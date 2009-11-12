@@ -25,6 +25,7 @@
 namespace barrett {
 namespace systems {
 
+
 template<typename OutputType>
 inline Converter<OutputType>::~Converter()
 {

@@ -21,6 +21,18 @@ inline Array<N>::Array(double d) :
 	this->assign(d);
 }
 
+template<size_t N>
+inline bool Array<N>::isZero()
+{
+	for (size_t i = 0; i < N; ++i) {
+		if (this->operator[](i) != 0.0) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 // this pair of operators enables the convenient, if somewhat magical,
 // syntax:
 //		units::Array<5> a;
@@ -78,6 +90,18 @@ inline const Array<N> operator/ (const Array<N>& lhs, const Array<N>& rhs)
 {
 	return binaryArrayTransform(lhs, rhs, std::divides<double>());
 }
+
+template<size_t N>
+inline const Array<N> operator- (const Array<N>& a)
+{
+	Array<N> result;
+	for (size_t i = 0; i< N; ++i) {
+		result[i] = -a[i];
+	}
+	return result;
+}
+
+
 
 // vector-scaler arithmetic
 template<size_t N>

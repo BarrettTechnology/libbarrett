@@ -28,7 +28,6 @@ namespace barrett {
 template<size_t DOF>
 Wam<DOF>::Wam() :
 		systems::SingleIO<jt_type, ja_type>(),
-//		systems::SingleIO<units::JointTorques<DOF>, units::JointAngles<DOF> >(),
 	operateCount(), wam(NULL), wamLocal(NULL)
 {
 	// initialize syslog
@@ -105,10 +104,12 @@ void Wam<DOF>::operate()
 {
 	++operateCount;
 
-	const jt_type& jt = this->input.getValue();
-	for (size_t i = 0; i< DOF; ++i) {
-		gsl_vector_set(wamLocal->jtorque, i,
-				gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
+	if (this->input.valueDefined()) {
+		const jt_type& jt = this->input.getValue();
+		for (size_t i = 0; i< DOF; ++i) {
+			gsl_vector_set(wamLocal->jtorque, i,
+					gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
+		}
 	}
 }
 
