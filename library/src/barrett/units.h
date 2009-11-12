@@ -51,8 +51,11 @@ template<size_t N>
 class Array : public boost::array<double, N> {
 public:
 	static const size_t SIZE = N;
+	typedef Array<N> array_type;
 
 	explicit Array(double d = 0.0);
+
+	bool isZero();
 
 	// this pair of operators enables the convenient, if somewhat magical,
 	// syntax:
@@ -75,6 +78,9 @@ template<size_t N>
 const Array<N> operator* (const Array<N>& lhs, const Array<N>& rhs);
 template<size_t N>
 const Array<N> operator/ (const Array<N>& lhs, const Array<N>& rhs);
+
+template<size_t N>
+const Array<N> operator- (const Array<N>& a);
 
 // vector-scaler arithmetic
 template<size_t N>

@@ -10,11 +10,17 @@
 
 #include <unistd.h>  // usleep
 
+#include <barrett/exception.h>
+#include <barrett/detail/debug.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/wam.h>
 
+
 using namespace barrett;
+
+
+const size_t DOF = 7;
 
 
 void waitForEnter() {
@@ -23,13 +29,28 @@ void waitForEnter() {
 }
 
 int main() {
-	Wam<7> wam;
+	installExceptionHandler();  // give us pretty stack traces when things die
 
-	systems::PIDController<Wam<7>::ja_type>* pid =
-			new systems::PIDController<Wam<7>::ja_type>();
+	units::Array<DOF> tmp;
+
+	Wam<DOF> wam;
+
+	systems::PIDController<Wam<DOF>::ja_type>* pid =
+			new systems::PIDController<Wam<DOF>::ja_type>();
+
+	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
+	pid->setKp(tmp);
+//	tmp << 100, 0, 0, 0, 0.0, 0.0, 0.0;
+//	pid->setKi(tmp);
+//	tmp << 5.0, 5.0, 5.0, 5.0, 0.0, 0.0, 0.0;
+//	pid->setIntegratorLimit(tmp);
+	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
+	pid->setControlSignalLimit(tmp);
+
+
 	systems::connect(wam.output, pid->feedbackInput);
 
-	systems::Converter<Wam<7>::jt_type> supervisoryController;
+	systems::Converter<Wam<DOF>::jt_type> supervisoryController;
 	supervisoryController.registerConversion(pid);
 	systems::connect(supervisoryController.output, wam.input);
 
@@ -37,11 +58,11 @@ int main() {
 	supervisoryController.connectInputTo(wam.output);
 
 
-	Wam<7>::ja_type setPoint;
+	Wam<DOF>::ja_type setPoint;
 	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
-	systems::Constant<Wam<7>::ja_type> point(setPoint);
+	systems::Constant<Wam<DOF>::ja_type> point(setPoint);
 
-//	systems::PrintToStream<Wam<7>::jt_type> pts("JT: ");
+//	systems::PrintToStream<Wam<DOF>::jt_type> pts("JT: ");
 //	systems::connect(supervisoryController.output, pts.input);
 
 	std::cout << wam.operateCount << std::endl;

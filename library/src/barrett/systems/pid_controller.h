@@ -10,6 +10,7 @@
 
 
 #include <iostream>
+#include "../units.h"
 #include "./abstract/controller.h"
 
 
@@ -20,8 +21,26 @@ namespace systems {
 template<typename InputType,
 		 typename OutputType = typename InputType::actuator_type>
 class PIDController : public Controller<InputType, OutputType> {
+public:
+	typedef typename InputType::array_type array_type;
+
+	PIDController& setKp(array_type proportionalGains);
+	PIDController& setKi(array_type integralGains);
+	PIDController& setKd(array_type derivitiveGains);
+	PIDController& setIntegratorState(array_type integratorState);
+	PIDController& setIntegratorLimit(array_type intSaturations);
+	PIDController& setControlSignalLimit(array_type csSaturations);
+
+	void resetIntegrator();
+
 protected:
 	virtual void operate();
+
+	InputType error, error_1;
+	array_type intError, intErrorLimit;
+	array_type kp, ki, kd;
+	OutputType controlSignal, controlSignalLimit;
+//	array_type controlSignalLimit;
 };
 
 

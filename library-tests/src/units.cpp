@@ -39,6 +39,17 @@ TYPED_TEST(ArrayTypedTest, DefaultCtor) {
 	}
 }
 
+TYPED_TEST(ArrayTypedTest, IsZero) {
+	this->a.assign(0.0);
+	EXPECT_TRUE(this->a.isZero());
+
+	this->a[0] = 1.0;
+	EXPECT_FALSE(this->a.isZero());
+
+	this->a.assign(-5.8);
+	EXPECT_FALSE(this->a.isZero());
+}
+
 TYPED_TEST(ArrayTypedTest, InitialValueCtor) {
 	TypeParam a(-487.9);
 
@@ -153,8 +164,12 @@ TYPED_TEST(ArrayTypedTest, VectorArithmetic) {
 	expected << 0.2, 0.5, 1, 2, 5;
 	EXPECT_EQ(expected, result);
 
-	result = ((a1/a2) + (a1*a2)) / a1;
-	expected << 5.2, 4.25, 10.0/3.0, 2.5, 2;
+	result = -a1;
+	expected << -1, -2, -3, -4, -5;
+	EXPECT_EQ(expected, result);
+
+	result = ((a1/a2) + (a1*a2)) / (-a1);
+	expected << -5.2, -4.25, -10.0/3.0, -2.5, -2;
 	EXPECT_EQ(expected, result);
 }
 

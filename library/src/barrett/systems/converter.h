@@ -27,6 +27,7 @@ class Converter {
 public:		System::Output<OutputType> output;
 protected:	typename System::Output<OutputType>::Value* outputValue;
 
+
 public:
 	Converter() :
 		output(&outputValue), conversions() {}
