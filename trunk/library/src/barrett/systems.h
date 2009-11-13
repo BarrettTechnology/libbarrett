@@ -16,6 +16,7 @@
 
 // sources
 #include "systems/constant.h"
+#include "systems/exposed_output.h"
 
 // sinks
 #include "systems/print_to_stream.h"
@@ -23,6 +24,7 @@
 // operators
 #include "systems/summer.h"
 #include "systems/gain.h"
+#include "systems/array_editor.h"
 #include "systems/pid_controller.h"
 
 // #include "systems/"
