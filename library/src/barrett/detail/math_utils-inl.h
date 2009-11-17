@@ -83,9 +83,27 @@ inline double max(const double& a, const double& b)
 
 
 template<typename T>
-inline T symLimit(const T x, const T limit)
+inline T saturate(const T& x, const T& limit)
 {
 	return sign(x) * min(abs(x), limit);
+}
+
+
+// TODO(dc): test!
+template<typename T>
+inline T deadband(const T& x, const T& cutoff)
+{
+	T res;
+	for (size_t i = 0; i < T::SIZE; ++i) {
+		res[i] = deadBand(x[i], cutoff[i]);
+	}
+	return res;
+}
+
+template<>
+inline double deadband(const double& x, const double& cutoff)
+{
+	return (abs(x) > cutoff) ? (x - cutoff * sign(x)) : 0.0;
 }
 
 

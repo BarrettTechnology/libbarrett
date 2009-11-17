@@ -18,7 +18,7 @@
 #include <barrett/wam/wam_local.h>
 
 #include "../units.h"
-#include "../systems/abstract/single_io.h"
+#include "../systems/abstract/system.h"
 
 
 namespace barrett {
@@ -27,7 +27,7 @@ namespace barrett {
 
 template<size_t DOF>
 Wam<DOF>::Wam() :
-		systems::SingleIO<jt_type, ja_type>(),
+	input(this), jpOutput(&jpOutputValue), jvOutput(&jvOutputValue),
 	operateCount(), wam(NULL), wamLocal(NULL)
 {
 	// initialize syslog
@@ -63,6 +63,34 @@ Wam<DOF>::~Wam()
 	bt_wam_destroy(wam);
 }
 
+
+template<size_t DOF>
+units::JointPositions<DOF> Wam<DOF>::getJointPositions()
+{
+	jp_type jp;
+
+	// TODO(dc): make conversion to/from GSL vectors
+	for (size_t i = 0; i < DOF; ++i) {
+		jp[i] = gsl_vector_get(wamLocal->jposition, i);
+	}
+
+	return jp;
+}
+
+template<size_t DOF>
+units::JointVelocities<DOF> Wam<DOF>::getJointVelocities()
+{
+	jv_type jv;
+
+	// TODO(dc): make conversion to/from GSL vectors
+	for (size_t i = 0; i < DOF; ++i) {
+		jv[i] = gsl_vector_get(wamLocal->jvelocity, i);
+	}
+
+	return jv;
+}
+
+
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate) {
 	bt_wam_setgcomp(wam, compensate);
@@ -71,6 +99,11 @@ void Wam<DOF>::gravityCompensate(bool compensate) {
 template<size_t DOF>
 void Wam<DOF>::moveHome() {
 	bt_wam_movehome(wam);
+}
+
+template<size_t DOF>
+bool Wam<DOF>::moveIsDone() {
+	return bt_wam_moveisdone(wam);
 }
 
 template<size_t DOF>
@@ -91,12 +124,18 @@ int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal) {
 
 template<size_t DOF>
 void Wam<DOF>::readSensors() {
-	ja_type ja;
+	jp_type jp;
+	jv_type jv;
+
+	// TODO(dc): make conversion to/from GSL vectors
 	for (size_t i = 0; i < DOF; ++i) {
-		ja[i] = gsl_vector_get(wamLocal->jposition, i);
+		jp[i] = gsl_vector_get(wamLocal->jposition, i);
+		jv[i] = gsl_vector_get(wamLocal->jvelocity, i);
 	}
-	this->outputValue->setValue(ja);
-//	std::cout << ja << std::endl;
+
+	this->jpOutputValue->setValue(jp);
+	this->jvOutputValue->setValue(jv);
+//	std::cout << jp << std::endl;
 }
 
 template<size_t DOF>

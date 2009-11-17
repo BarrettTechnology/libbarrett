@@ -18,8 +18,8 @@ using namespace barrett;
 
 
 // template parameters list the types the following tests should be run over
-typedef ::testing::Types<units::Array<5>, units::JointAngles<5>,
-	units::JointTorques<5> > UATypes;
+typedef ::testing::Types<units::Array<5>, units::JointPositions<5>,
+	units::JointVelocities<5>, units::JointTorques<5> > UATypes;
 
 template<typename T>
 class ArrayTypedTest : public ::testing::Test {

@@ -98,7 +98,7 @@ void PIDController<InputType, OutputType>::operate()
 
 	intError = intError + ki * T_s * error_1;  // TODO(dc): += operators
 	if ( !intErrorLimit.isZero() ) {
-		intError = symLimit(intError, intErrorLimit);
+		intError = saturate(intError, intErrorLimit);
 	}
 //std::cout << "E:" << error << "\t\tIE:" << intError << std::endl;
 
@@ -106,7 +106,7 @@ void PIDController<InputType, OutputType>::operate()
 					intError +
 					kd * (error - error_1) / T_s;
 	if ( !controlSignalLimit.isZero() ) {
-		controlSignal = symLimit(controlSignal, controlSignalLimit);
+		controlSignal = saturate(controlSignal, controlSignalLimit);
 	}
 
 	error_1 = error;

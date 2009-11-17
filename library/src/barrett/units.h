@@ -44,7 +44,8 @@ namespace units {
 template<size_t N> class Array;
 
 DECLARE_UNITS(JointTorques);
-DECLARE_UNITS_WITH_ACTUATOR(JointAngles, JointTorques);
+DECLARE_UNITS_WITH_ACTUATOR(JointPositions, JointTorques);
+DECLARE_UNITS_WITH_ACTUATOR(JointVelocities, JointTorques);
 
 
 template<size_t N>
