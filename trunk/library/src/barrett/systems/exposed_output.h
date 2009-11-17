@@ -20,8 +20,8 @@ namespace systems {
 template <typename T>
 class ExposedOutput {
 // IO
-public:		System::Output<OutputType> output;
-protected:	typename System::Output<OutputType>::Value* outputValue;
+public:		System::Output<T> output;
+protected:	typename System::Output<T>::Value* outputValue;
 
 
 public:

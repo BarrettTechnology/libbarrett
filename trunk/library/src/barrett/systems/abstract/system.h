@@ -113,7 +113,7 @@ public:
 			void setValue(const T& newValue);
 			void setValueUndefined();
 
-			// TODO(dc): check for self-delegation
+			// TODO(dc): check for self-delegation (direct and indirect)
 			void delegateTo(const Output<T>& delegate);
 			void undelegate();
 		protected:

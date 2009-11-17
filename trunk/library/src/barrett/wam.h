@@ -16,31 +16,43 @@
 
 #include "./detail/ca_macro.h"
 #include "./units.h"
-//#include "./systems/abstract/system.h"
-#include "./systems/abstract/single_io.h"
+#include "./systems/abstract/system.h"
 
 
 namespace barrett {
 
 
 template<size_t DOF>
-class Wam : public systems::SingleIO<units::JointTorques<DOF>,
-									 units::JointAngles<DOF> > {
+class Wam : public systems::System {
 public:
 	typedef units::JointTorques<DOF> jt_type;
-	typedef units::JointAngles<DOF> ja_type;
+	typedef units::JointPositions<DOF> jp_type;
+	typedef units::JointVelocities<DOF> jv_type;
 
 
-	int operateCount;
+// IO
+public:		Input<jt_type> input;
+public:		Output<jp_type> jpOutput;
+protected:	typename Output<jp_type>::Value* jpOutputValue;
+public:		Output<jv_type> jvOutput;
+protected:	typename Output<jv_type>::Value* jvOutputValue;
 
+
+public:
 	Wam();
 	virtual ~Wam();
 
+	jp_type getJointPositions();
+	jv_type getJointVelocities();
+
 	void gravityCompensate(bool compensate = true);
 	void moveHome();
+	bool moveIsDone();
 	void idle();
 
 	static int handleCallback(struct bt_wam_local* wamLocal);
+
+	int operateCount;
 
 protected:
 	struct bt_wam* wam;
