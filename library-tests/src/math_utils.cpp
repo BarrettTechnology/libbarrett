@@ -49,11 +49,11 @@ TEST_F(MathUtilsTest, MaxTest) {
 	EXPECT_EQ(e, barrett::max(a, b));  //NOLINT: irrelevant
 }
 
-TEST_F(MathUtilsTest, SymLimitTest) {
+TEST_F(MathUtilsTest, SaturateTest) {
 	a << -1, -0.5, -8, 5, 10;
 	b << 0.75, 0.75, 7, 7, 7;
 	e << -0.75, -0.5, -7, 5, 7;
-	EXPECT_EQ(e, barrett::symLimit(a, b));
+	EXPECT_EQ(e, barrett::saturate(a, b));
 }
 
 

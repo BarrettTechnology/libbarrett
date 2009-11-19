@@ -42,7 +42,7 @@ TEST_F(ConverterTest, RegisterConversion) {
 	sc.registerConversion(
 			new ConversionImpl<jt_type, jt_type>());
 	sc.registerConversion(
-		new ConversionImpl<units::JointAngles<12>, jt_type>());
+		new ConversionImpl<units::JointPositions<12>, jt_type>());
 }
 
 TEST_F(ConverterTest, ConnectInputToExplicit) {
@@ -59,7 +59,7 @@ TEST_F(ConverterTest, ConnectInputToExplicit) {
 	// can't be connected because output and conversion input are
 	// different types
 	EXPECT_FALSE(sc.connectInputTo(eios.output,
-		new ConversionImpl<units::JointAngles<12>, jt_type>()));
+		new ConversionImpl<units::JointPositions<12>, jt_type>()));
 }
 
 TEST_F(ConverterTest, ConnectInputToAutomatic) {
@@ -71,7 +71,7 @@ TEST_F(ConverterTest, ConnectInputToAutomatic) {
 
 	// wrong kind of conversion registered
 	sc.registerConversion(
-		new ConversionImpl<units::JointAngles<12>, jt_type>());
+		new ConversionImpl<units::JointPositions<12>, jt_type>());
 	EXPECT_THROW(sc.connectInputTo(eios.output), std::invalid_argument);
 
 	// compatible conversion registered

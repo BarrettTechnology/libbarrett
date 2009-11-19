@@ -35,8 +35,8 @@ int main() {
 
 	Wam<DOF> wam;
 
-	systems::PIDController<Wam<DOF>::ja_type>* pid =
-			new systems::PIDController<Wam<DOF>::ja_type>();
+	systems::PIDController<Wam<DOF>::jp_type>* pid =
+			new systems::PIDController<Wam<DOF>::jp_type>();
 
 	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
 	pid->setKp(tmp);
@@ -48,19 +48,19 @@ int main() {
 	pid->setControlSignalLimit(tmp);
 
 
-	systems::connect(wam.output, pid->feedbackInput);
+	systems::connect(wam.jpOutput, pid->feedbackInput);
 
 	systems::Converter<Wam<DOF>::jt_type> supervisoryController;
 	supervisoryController.registerConversion(pid);
 	systems::connect(supervisoryController.output, wam.input);
 
 	// tie inputs together for zero torque
-	supervisoryController.connectInputTo(wam.output);
+	supervisoryController.connectInputTo(wam.jpOutput);
 
 
-	Wam<DOF>::ja_type setPoint;
+	Wam<DOF>::jp_type setPoint;
 	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
-	systems::Constant<Wam<DOF>::ja_type> point(setPoint);
+	systems::Constant<Wam<DOF>::jp_type> point(setPoint);
 
 //	systems::PrintToStream<Wam<DOF>::jt_type> pts("JT: ");
 //	systems::connect(supervisoryController.output, pts.input);
@@ -83,7 +83,7 @@ int main() {
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
 //	systems::reconnect(wam.output, pid.referenceInput);
-	supervisoryController.connectInputTo(wam.output);
+	supervisoryController.connectInputTo(wam.jpOutput);
 	wam.moveHome();
 
 	std::cout << "Enter to idle.\n";

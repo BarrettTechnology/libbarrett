@@ -24,11 +24,17 @@
 // operators
 #include "systems/summer.h"
 #include "systems/gain.h"
-#include "systems/array_editor.h"
+
 #include "systems/pid_controller.h"
+#include "systems/first_order_filter.h"
+
 #include "systems/callback.h"
 
-// #include "systems/"
+#include "systems/array_splitter.h"
+#include "systems/array_editor.h"
+#include "systems/tuple_grouper.h"
+
+//#include "systems/"
 
 
 #endif /* SYSTEMS_H_ */

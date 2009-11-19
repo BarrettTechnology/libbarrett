@@ -1,5 +1,5 @@
 /*
- * system::output.tcc
+ * system-output-inl.h
  *
  *  Created on: Sep 11, 2009
  *      Author: dc

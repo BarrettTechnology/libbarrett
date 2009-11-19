@@ -1,23 +1,35 @@
 /*
- * system::input.tcc
+ * system-input-inl.h
  *
  *  Created on: Sep 11, 2009
  *      Author: dc
  */
 
 #include <stdexcept>
+#include <algorithm>
 
 namespace barrett {
 namespace systems {
 
 
-// the compiler requires a definition for a dtor, even if it's pure virtual
-inline System::AbstractInput::~AbstractInput() {}
+inline System::AbstractInput::AbstractInput(System* parentSys) :
+	parent(*parentSys)
+{
+	parent.inputs.push_back(this);
+}
+
+inline System::AbstractInput::~AbstractInput()
+{
+	std::replace(parent.inputs.begin(), parent.inputs.end(),
+			const_cast<AbstractInput*>(this),
+			static_cast<AbstractInput*>(NULL));
+}
 
 
 // TODO(dc): add tests for this
 template<typename T>
-inline bool System::Input<T>::isConnected() const {
+inline bool System::Input<T>::isConnected() const
+{
 	return output != NULL;
 }
 
@@ -57,7 +69,10 @@ throw(std::logic_error, System::Input<T>::ValueUndefinedError)
 template<typename T>
 inline void System::Input<T>::onValueChanged() const
 {
-	parent.operate();
+	// TODO(dc): test!
+	if (parent.inputsValid()) {
+		parent.operate();
+	}
 }
 
 

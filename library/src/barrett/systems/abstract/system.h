@@ -11,6 +11,7 @@
 
 #include <stdexcept>
 #include <list>
+#include <vector>
 #include <string>
 #include "../../detail/ca_macro.h"
 
@@ -27,11 +28,11 @@ public:
 	protected:
 		System& parent;
 	public:
-		explicit AbstractInput(System* parentSys) :
-			parent(*parentSys) {}
-		virtual ~AbstractInput() = 0;  // make this class polymorphic
+		explicit AbstractInput(System* parentSys);
+		virtual ~AbstractInput();
 
 		virtual bool isConnected() const = 0;
+		virtual bool valueDefined() const = 0;
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractInput);
 	};
@@ -65,8 +66,8 @@ public:
 		virtual ~Input() {}
 
 		virtual bool isConnected() const;
+		virtual bool valueDefined() const;
 
-		bool valueDefined() const;
 		const T& getValue() const throw(std::logic_error, ValueUndefinedError);
 
 	protected:
@@ -166,14 +167,20 @@ public:
 		DISALLOW_COPY_AND_ASSIGN(Output);
 	};
 
-	System() {}
+	System() :
+		inputs() {}
 	virtual ~System() {}
 
 protected:
 	// use inputs/state/environment to update outputs
 	virtual void operate() = 0;
 
+	// TODO(dc): update existing Systems to use inputsValid() when necessary
+	virtual bool inputsValid();
+
 private:
+	mutable std::vector<AbstractInput*> inputs;
+
 	DISALLOW_COPY_AND_ASSIGN(System);
 };
 
@@ -183,6 +190,7 @@ private:
 
 
 // include template definitions
+#include "./detail/system-inl.h"
 #include "./detail/system-input-inl.h"
 #include "./detail/system-output-inl.h"
 #include "./detail/system-output-value-inl.h"
