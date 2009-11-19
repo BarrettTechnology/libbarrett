@@ -5,9 +5,6 @@
  *      Author: dc
  */
 
-#ifndef ARRAY_EDITORINL_H_
-#define ARRAY_EDITORINL_H_
-
 
 #include "../../detail/purge.h"
 #include "../abstract/system.h"
@@ -47,10 +44,10 @@ inline System::Input<double>& ArrayEditor<T>::getElementInput(const size_t i)
 template <typename T>
 void ArrayEditor<T>::operate()
 {
-	if ( !this->input.valueDefined()) {
-		this->outputValue->setValueUndefined();
-		return;
-	}
+//	if ( !this->input.valueDefined()) {
+//		this->outputValue->setValueUndefined();
+//		return;
+//	}
 
 	T tmp = this->input.getValue();
 	for (size_t i = 0; i < T::SIZE; ++i) {
@@ -60,6 +57,12 @@ void ArrayEditor<T>::operate()
 	}
 
 	this->outputValue->setValue(tmp);
+}
+
+template <typename T>
+bool ArrayEditor<T>::inputsValid()
+{
+	return this->input.valueDefined();
 }
 
 
@@ -74,6 +77,3 @@ void ArrayEditor<T>::initInputs()
 
 }
 }
-
-
-#endif /* ARRAY_EDITORINL_H_ */

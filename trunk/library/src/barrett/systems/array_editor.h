@@ -36,8 +36,10 @@ public:
 	System::Input<double>& getElementInput(const size_t i);
 
 protected:
-	void initInputs();
 	virtual void operate();
+	virtual bool inputsValid();
+
+	void initInputs();
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ArrayEditor);
