@@ -44,11 +44,6 @@ inline System::Input<double>& ArrayEditor<T>::getElementInput(const size_t i)
 template <typename T>
 void ArrayEditor<T>::operate()
 {
-//	if ( !this->input.valueDefined()) {
-//		this->outputValue->setValueUndefined();
-//		return;
-//	}
-
 	T tmp = this->input.getValue();
 	for (size_t i = 0; i < T::SIZE; ++i) {
 		if (elementInputs[i]->valueDefined()) {

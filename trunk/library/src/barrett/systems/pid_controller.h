@@ -18,6 +18,8 @@ namespace barrett {
 namespace systems {
 
 
+// TODO(dc): rewrite as a PIDFilter + Controller<SingleIO>
+
 template<typename InputType,
 		 typename OutputType = typename InputType::actuator_type>
 class PIDController : public Controller<InputType, OutputType> {
@@ -40,7 +42,6 @@ protected:
 	array_type intError, intErrorLimit;
 	array_type kp, ki, kd;
 	OutputType controlSignal, controlSignalLimit;
-//	array_type controlSignalLimit;
 };
 
 

@@ -73,6 +73,7 @@ inline void System::Input<T>::onValueChanged() const
 	if (parent.inputsValid()) {
 		parent.operate();
 	}
+	// TODO(dc): else, outputs should be undefined?
 }
 
 
