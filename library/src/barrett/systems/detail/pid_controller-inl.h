@@ -77,20 +77,6 @@ inline void PIDController<InputType, OutputType>::resetIntegrator()
 template<typename InputType, typename OutputType>
 void PIDController<InputType, OutputType>::operate()
 {
-	// TODO(dc): ugly, ugly! needs to come from a config file, not be assigned
-	//		in operate()
-//	kp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
-//	ki << 100, 0, 0, 0, 0.0, 0.0, 0.0;
-
-//	intErrorLimit << 5.0, 5.0, 5.0, 5.0, 0.0, 0.0, 0.0;
-//	controlSignalLimit << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
-
-	if ( !(this->referenceInput.valueDefined()  &&
-		   this->feedbackInput.valueDefined()) ) {
-		this->controlOutputValue->setValueUndefined();
-		return;
-	}
-
 	// TODO(dc): ugly! ugly! should have a time input or something...
 	double T_s = 0.002;
 
@@ -100,7 +86,6 @@ void PIDController<InputType, OutputType>::operate()
 	if ( !intErrorLimit.isZero() ) {
 		intError = saturate(intError, intErrorLimit);
 	}
-//std::cout << "E:" << error << "\t\tIE:" << intError << std::endl;
 
 	controlSignal = kp * error +
 					intError +

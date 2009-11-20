@@ -44,14 +44,8 @@ inline System::Output<double>& ArraySplitter<T>::getOutput(const size_t i)
 template <typename T>
 void ArraySplitter<T>::operate()
 {
-	if (input.valueDefined()) {
-		for (size_t i = 0; i < T::SIZE; ++i) {
-			outputValues[i]->setValue(input.getValue()[i]);
-		}
-	} else {
-		for (size_t i = 0; i < T::SIZE; ++i) {
-			outputValues[i]->setValueUndefined();
-		}
+	for (size_t i = 0; i < T::SIZE; ++i) {
+		outputValues[i]->setValue(input.getValue()[i]);
 	}
 }
 

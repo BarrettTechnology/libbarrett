@@ -33,11 +33,7 @@ public:
 
 protected:
 	virtual void operate() {
-		if (this->input.valueDefined()) {
-			this->outputValue->setValue(callback(this->input.getValue()));
-		} else {
-			this->outputValue->setValueUndefined();
-		}
+		this->outputValue->setValue(callback(this->input.getValue()));
 	}
 
 	callback_type callback;

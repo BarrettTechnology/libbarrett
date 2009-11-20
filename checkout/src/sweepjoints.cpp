@@ -24,7 +24,7 @@ using systems::connect;
 using systems::reconnect;
 
 
-const size_t DOF = 7, JOINT = 0;
+const size_t DOF = 7, JOINT = 2;
 
 
 const double SWEEP_VELOCITY = 1.0;
@@ -109,7 +109,7 @@ int main() {
 //	tmp << 2, 2, 0.5, 0.8, 0.8, 0.1, 0.1;
 //	pid.setKd(tmp);
 
-	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
+	tmp << /*3e3*/0, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
 	pid.setKp(tmp);
 	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
 	pid.setControlSignalLimit(tmp);
