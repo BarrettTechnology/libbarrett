@@ -1,1 +1,0 @@
-cyclictest:posix:!/usr/xenomai/bin/cyclictest -p 99 -n;popall:control_c

@@ -1,5 +1,0 @@
-obj-m += ksatch.o
-
-ksatch-y := satch.o
-
-EXTRA_CFLAGS += -DPRODUCER -I$(TOPDIR)/include/xenomai/posix -I$(TOPDIR)/include/xenomai

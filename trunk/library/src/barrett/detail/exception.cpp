@@ -1,8 +1,13 @@
-/** Exception handling utilities.
+/** <b> Implementation file: do not include.\ </b> Exception handling
+ * utilities.
  *
  * @file exception.cpp
  * @date Nov 10, 2009
  * @author Dan Cody
+ *
+ * @warning
+ * This file is located in a \c detail directory. It is part of the
+ * implementation and should not be directly included by the user.
  * @see exception.h
  */
 

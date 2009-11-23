@@ -1,8 +1,13 @@
-/** Defines barrett::units::Array and its descendants.
+/** <b> Implementation file: do not include.\ </b> Defines
+ * barrett::units::Array and its descendants.
  *
  * @file units-inl.h
  * @date Oct 28, 2009
  * @author Dan Cody
+ *
+ * @warning
+ * This file is located in a \c detail directory. It is part of the
+ * implementation and should not be directly included by the user.
  * @see units.h
  */
 
@@ -45,7 +50,7 @@ inline Array<N>::Array(double d) :
 }
 
 template<size_t N>
-inline bool Array<N>::isZero()
+inline bool Array<N>::isZero() const
 {
 	for (size_t i = 0; i < N; ++i) {
 		if (this->operator[](i) != 0.0) {

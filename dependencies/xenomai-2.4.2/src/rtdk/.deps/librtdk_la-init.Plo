@@ -1,3 +1,0 @@
-librtdk_la-init.lo: init.c internal.h
-
-internal.h:

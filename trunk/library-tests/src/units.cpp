@@ -17,9 +17,12 @@ namespace {
 using namespace barrett;
 
 
+DECLARE_UNITS(LocalUnits);
+
+
 // template parameters list the types the following tests should be run over
 typedef ::testing::Types<units::Array<5>, units::JointPositions<5>,
-	units::JointVelocities<5>, units::JointTorques<5> > UATypes;
+	units::JointVelocities<5>, units::JointTorques<5>, LocalUnits<5> > UATypes;
 
 template<typename T>
 class ArrayTypedTest : public ::testing::Test {

@@ -1,7 +1,0 @@
-#
-# Xenomai configuration for Linux v2.4
-#
-
-source kernel/xenomai/nucleus/Config.in
-source kernel/xenomai/skins/Config.in
-source drivers/xenomai/Config.in

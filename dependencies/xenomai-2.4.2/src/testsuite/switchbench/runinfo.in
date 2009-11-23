@@ -1,1 +1,0 @@
-switchbench:native:!@exec_prefix@/bin/switchbench;popall:control_c

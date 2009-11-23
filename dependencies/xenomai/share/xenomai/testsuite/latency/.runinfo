@@ -1,1 +1,0 @@
-latency:native+rtdm+timerbench:!/usr/xenomai/bin/latency;popall:control_c
