@@ -14,7 +14,6 @@
 #include "../abstract/system.h"
 #include "../helpers.h"
 #include "../abstract/conversion.h"
-#include "../converter.h"
 
 
 // I think RTTI is useful here to keep syntax clean and support flexibility and

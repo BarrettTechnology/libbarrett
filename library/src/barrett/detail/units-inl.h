@@ -1,8 +1,31 @@
-/*
- * units-inl.h
+/** Defines barrett::units::Array and its descendants.
  *
- *  Created on: Oct 28, 2009
- *      Author: dc
+ * @file units-inl.h
+ * @date Oct 28, 2009
+ * @author Dan Cody
+ * @see units.h
+ */
+
+/* Copyright 2009 Barrett Technology <support@barrett.com> */
+
+/* This file is part of libbarrett.
+ *
+ * This version of libbarrett is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This version of libbarrett is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this version of libbarrett.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Further, non-binding information about licensing is available at:
+ * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
 
@@ -60,6 +83,8 @@ inline Array<N>& Array<N>::operator, (double d)
 }
 
 
+namespace detail {
+
 template<size_t N, typename BinaryFunction>
 inline const Array<N> binaryArrayTransform(const Array<N>& a,
 		const Array<N>& b, BinaryFunction binaryOp)
@@ -69,26 +94,29 @@ inline const Array<N> binaryArrayTransform(const Array<N>& a,
 	return result;
 }
 
+}
+
+
 // element-wise vector arithmetic
 template<size_t N>
 inline const Array<N> operator+ (const Array<N>& lhs, const Array<N>& rhs)
 {
-	return binaryArrayTransform(lhs, rhs, std::plus<double>());
+	return detail::binaryArrayTransform(lhs, rhs, std::plus<double>());
 }
 template<size_t N>
 inline const Array<N> operator- (const Array<N>& lhs, const Array<N>& rhs)
 {
-	return binaryArrayTransform(lhs, rhs, std::minus<double>());
+	return detail::binaryArrayTransform(lhs, rhs, std::minus<double>());
 }
 template<size_t N>
 inline const Array<N> operator* (const Array<N>& lhs, const Array<N>& rhs)
 {
-	return binaryArrayTransform(lhs, rhs, std::multiplies<double>());
+	return detail::binaryArrayTransform(lhs, rhs, std::multiplies<double>());
 }
 template<size_t N>
 inline const Array<N> operator/ (const Array<N>& lhs, const Array<N>& rhs)
 {
-	return binaryArrayTransform(lhs, rhs, std::divides<double>());
+	return detail::binaryArrayTransform(lhs, rhs, std::divides<double>());
 }
 
 template<size_t N>
