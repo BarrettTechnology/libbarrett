@@ -16,7 +16,7 @@ namespace barrett {
 namespace systems {
 
 
-// TODO(dc): expand to take functors
+// TODO(dc): generalize to take functors
 
 template<typename InputType, typename OutputType = InputType>
 class Callback : public SingleIO<InputType, OutputType> {
