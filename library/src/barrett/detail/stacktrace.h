@@ -12,7 +12,7 @@
 #include <cxxabi.h>
 
 
-/** Print a demangled stack backtrace of the caller function to FILE* out. */
+/* Print a demangled stack backtrace of the caller function to FILE* out. */
 static inline void print_stacktrace(FILE *out = stderr,
 		unsigned int max_frames = 63)
 {
@@ -91,7 +91,7 @@ static inline void print_stacktrace(FILE *out = stderr,
     free(symbollist);
 }
 
-/** Print a demangled stack backtrace of the caller function to syslog. */
+/* Print a demangled stack backtrace of the caller function to syslog. */
 static inline void syslog_stacktrace(int pri = LOG_ERR,
 		unsigned int max_frames = 63)
 {

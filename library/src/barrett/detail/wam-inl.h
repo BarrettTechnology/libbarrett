@@ -163,7 +163,6 @@ void Wam<DOF>::readSensors() {
 
 	this->jpOutputValue->setValue(jp);
 	this->jvOutputValue->setValue(jv);
-//	std::cout << jp << std::endl;
 }
 
 template<size_t DOF>

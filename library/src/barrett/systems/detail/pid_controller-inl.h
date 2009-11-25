@@ -73,7 +73,6 @@ inline void PIDController<InputType, OutputType>::resetIntegrator()
 }
 
 
-// TODO(dc): make PID controller
 template<typename InputType, typename OutputType>
 void PIDController<InputType, OutputType>::operate()
 {
