@@ -49,7 +49,7 @@ TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
 	systems::connect(eios.output, eios.input);
 
 	EXPECT_THROW(eios.getInputValue(),
-			systems::System::Input<double>::ValueUndefinedError)
+			std::logic_error)
 		<< "input.getValue() didn't throw when value undefined";
 }
 

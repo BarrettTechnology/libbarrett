@@ -1,6 +1,5 @@
 #include <vector>
-
-#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/system.h>  // our base class
 #include <barrett/systems.h>  // includes all non-abstract Systems
 
 using namespace std;

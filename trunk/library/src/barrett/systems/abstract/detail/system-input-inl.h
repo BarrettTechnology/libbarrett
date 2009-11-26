@@ -36,34 +36,30 @@ inline bool System::Input<T>::isConnected() const
 template<typename T>
 inline bool System::Input<T>::valueDefined() const
 {
-	if (output != NULL) {
-		const typename Output<T>::Value* valueObj = output->getValueObject();
-		if (valueObj->value != NULL) {
-			return true;
-		}
+	if (isConnected()  &&  output->getValueObject()->value != NULL) {
+		return true;
+	} else {
+		return false;
 	}
-
-	return false;
 }
 
 template<typename T>
 inline const T& System::Input<T>::getValue() const
-throw(std::logic_error, System::Input<T>::ValueUndefinedError)
+throw(std::logic_error)
 {
-	if (output == NULL) {
+	if ( !isConnected() ) {
 		throw std::logic_error("(systems::System::Input::getValue): "
 		                       "Input is not connected to anything. "
 		                       "Cannot retrieve value.");
 	}
 
-	const typename Output<T>::Value* valueObj = output->getValueObject();
-	if (valueObj->value == NULL) {
-		throw ValueUndefinedError("(systems::System::Input::getValue): "
+	if ( !valueDefined() ) {
+		throw std::logic_error("(systems::System::Input::getValue): "
 		                          "The value of the associated output is "
 		                          "undefined.");
 	}
 
-	return *(valueObj->value);
+	return *(output->getValueObject()->value);
 }
 
 template<typename T>
