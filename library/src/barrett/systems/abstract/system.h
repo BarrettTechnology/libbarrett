@@ -103,10 +103,17 @@ Result: 6
  *
  * \c PolynomialEvaluator could also be implemented as a SingleIO system which defines and initializes the \c input, \c output, and \c outputValue members for us:
 @code
+#include <vector>
+#include <barrett/systems/abstract/single_io.h>
+
+using namespace std;
+using namespace barrett;
+
+
 class PolynomialEvaluator : public systems::SingleIO<double, double> {
 public:
 	explicit PolynomialEvaluator(const vector<double>& coefficients) :
-		SingleIO<double, double>(), coeff(coefficients) {}
+		systems::SingleIO<double, double>(), coeff(coefficients) {}
 	virtual ~PolynomialEvaluator() {}
 
 protected:
@@ -127,27 +134,54 @@ protected:
  */
 class System {
 public:
-	// An abstract class to allow collections of, and operations on
-	// generic Inputs
+	/** An abstract class to allow collections of, and operations on
+	 * generic \ref Input "Input"s.
+	 *
+	 * @see Input
+	 */
 	class AbstractInput {
-	protected:
-		System& parent;
 	public:
+		/// @param parentSys A pointer to the System that should be notified
+		///        when this Input's value changes.
 		explicit AbstractInput(System* parentSys);
 		virtual ~AbstractInput();
 
+		/** Tests if this Input is connected to an Output.
+		 *
+		 * @retval true if the Input is connected
+		 * @retval false otherwise.
+		 */
 		virtual bool isConnected() const = 0;
+
+		/** Tests if this Input has a defined value.
+		 *
+		 * An Input's value may be undefined because is it not connected to an Output, or because its Output's value is undefined.
+		 *
+		 * @retval true if the Input's value is defined
+		 * @retval false otherwise.
+		 */
 		virtual bool valueDefined() const = 0;
+
+	protected:
+		/// The System that should be notified when this Input's value changes.
+		System& parent;
+
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractInput);
 	};
 
-	// An abstract class to allow collections of, and operations on
-	// generic Outputs
+	/** An abstract class to allow collections of, and operations on
+	 * generic \ref Output "Output"s.
+	 *
+	 * @see Output
+	 */
 	class AbstractOutput {
 	public:
 		AbstractOutput() {}
-		virtual ~AbstractOutput() = 0;  // make this class polymorphic
+
+		/// @details Virtual in order to make this class polymorphic.
+		virtual ~AbstractOutput() = 0;
+
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractOutput);
 	};
@@ -157,15 +191,18 @@ public:
 	template<typename T> class Output;
 
 
+	/** The means by which data flows in to a System.
+	 *
+	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be connected to many Inputs, but an Input
+	 * can only be connected to one Output.
+	 *
+	 * @tparam T The type of data conveyed.
+	 */
 	template<typename T>
 	class Input : public AbstractInput {
 	public:
-		class ValueUndefinedError : public std::runtime_error {
-		public:
-			explicit ValueUndefinedError(const std::string& msg) :
-				std::runtime_error(msg) {}
-		};
-
+		/// @param parentSys A pointer to the System that should be notified
+		///        when this Input's value changes.
 		explicit Input(System* parentSys) :
 			AbstractInput(parentSys), output(NULL) {}
 		virtual ~Input() {}
@@ -173,12 +210,17 @@ public:
 		virtual bool isConnected() const;
 		virtual bool valueDefined() const;
 
-		const T& getValue() const throw(std::logic_error, ValueUndefinedError);
+		/** Retrieves the Input's value.
+		 *
+		 * @return The value of the Input as set by the associated Output.
+		 * @throws std::logic_error if \c this->valueDefined() would have returned \c false.
+		 */
+		const T& getValue() const throw(std::logic_error);
 
 	protected:
-		Output<T>* output;
+		Output<T>* output;  ///< Pointer to the associated Output.
 
-		// FIXME: do we intend for Input to be subclassed?
+		/// %Callback from Output::notifyListeners().
 		virtual void onValueChanged() const;
 
 	// friends:
@@ -204,6 +246,10 @@ public:
 	};
 
 
+	/** The means by which data flows out of a System.
+	 *
+	 * @copydetails Input
+	 */
 	template<typename T>
 	class Output : public AbstractOutput {
 	public:
