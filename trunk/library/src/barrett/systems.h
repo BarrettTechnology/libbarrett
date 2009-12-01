@@ -29,8 +29,8 @@
  */
 
 
-#ifndef SYSTEMS_H_
-#define SYSTEMS_H_
+#ifndef BARRETT_SYSTEMS_H_
+#define BARRETT_SYSTEMS_H_
 
 
 // other -- these operate on Systems, but are not Systems themselves
@@ -61,4 +61,4 @@
 //#include "systems/"
 
 
-#endif /* SYSTEMS_H_ */
+#endif /* BARRETT_SYSTEMS_H_ */
