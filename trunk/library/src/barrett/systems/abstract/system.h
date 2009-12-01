@@ -69,7 +69,7 @@ namespace systems {
  * be called from the real-time control thread.
  *
  * And that's the entire interface for a System: an operate() function and \ref Input "Input"s and \ref Output "Output"s as necessary. A System
- * doesn't need to worry about where its input data is coming from or where its output data is going or when it should perform its operation; libbarrett and
+ * doesn't need to worry about where its input data is coming from or where its output data is going or when it should perform its operation; \c libbarrett and
  * the user work together to define that.
  *
  * To route information among a set of \ref System "System"s, the library provides a \ref helpers.h "set of functions" (such as barrett::systems::connect())
@@ -264,7 +264,7 @@ public:
 	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be
 	 * connected to many Inputs, but an Input can only be connected to one Output.
 	 *
-	 * An Output's interface is split among two objects (the Output itself, and the Output's Value object) because there are two distinct ways of interacting
+	 * An Output's interface is split between two objects (the Output itself, and the Output's Value object) because there are two distinct ways of interacting
 	 * with an Output:
 	 *   - routing the information (connecting, disconnecting, etc.)
 	 *   - and modifying the information (setting the Output's value).
@@ -274,7 +274,7 @@ public:
 	 * interface.
 	 *
 	 * When an Output is instantiated, a Value object owned by the Output is also instantiated. The Output keeps its Value object private, except that a
-	 * pointer to the Value object is returned by the Output's constructor; this is the only way to get access to the Value object. This way, a System can
+	 * pointer to the Value object is returned by the Output's constructor. This is the only way to get access to the Value object. This way, a System can
 	 * freely give out pointers and references to its Outputs while keeping its Output::Value objects private.
 	 *
 	 * @tparam T The type of data conveyed.
@@ -306,7 +306,7 @@ public:
 			void setValueUndefined();
 
 			// TODO(dc): check for self-delegation (direct and indirect)
-			/** Make this Output transparent by delegating value queries to another Output.
+			/** Make the associated Output transparent by delegating value queries to another Output.
 			 *
 			 * Once this method is called on an Output's Value object, requests for this Output's value (via connected Inputs) will return instead the value of
 			 * the \c delegate Output. This behavior will continue until undelegate(), setValue(), or setValueUndefined() are called.
@@ -353,7 +353,7 @@ public:
 		 * @details
 		 * Instantiates an Output and yields a handle to the new Output's Value object. The Output's initial value will be set to \c initialValue.
 		 *
-		 * @param[in] initialValue The Object's initial value.
+		 * @param[in] initialValue is the Object's initial value.
 		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
 		 */
 		Output(const T& initialValue, Value** valuePtr);
