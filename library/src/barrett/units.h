@@ -3,6 +3,7 @@
  * @file units.h
  * @date Oct 16, 2009
  * @author Dan Cody
+ * @see barrett::units
  */
 
 /* Copyright 2009 Barrett Technology <support@barrett.com> */
@@ -28,13 +29,32 @@
  */
 
 
-// TODO(dc) finish documenting this.
-/** @file units.h
+/** @namespace barrett::units
  *
- * \section sec_intro Introduction
+ * Contains barrett::units::Array and its unit-full descendants.
  *
- * These classes use type information to give meaning to what would otherwise be an anonymous array of \c doubles. For instance, a barrett::Wam has
+ * These classes use type information to give meaning to what would otherwise be an anonymous array of \c doubles.
+ *
+ * For instance, a barrett::Wam has two outputs: one for joint positions and one for joint velocities. Though both of these might be (depending on the
+ * particular WAM) 7-element arrays of doubles,
+ * they represent two different quantities. They are not interchangeable. They have different %units. A user might want to design a joint-space position
+ * controller and a joint-space velocity controller for the WAM. If the joint position output of the barrett::Wam were to be connected to the velocity
+ * controller's feedback input, it would almost certainly be a programmer error. If such a program were run, the robot would not behave as intended. The
+ * programmer might spend a long time chasing down the bug.
+ *
+ * Adding thin type-wrappers around our arrays (units::JointPositions, units::JointVelocities, etc.) allows us to:
+ *   - be explicit about our intents for any given input or parameter
+ *   - more closely mimic the mathematical rules that govern our engineering discipline
+ *   - help the compiler to help us catch such errors.
+ *   .
+ * This comes without a runtime performance penalty.
+ *
+ * Users can easily create their own barrett::units classes in the proper form using the \ref DECLARE_UNITS and \ref DECLARE_UNITS_WITH_ACTUATOR macros.
+ *
+ * @see DECLARE_UNITS
+ * @see DECLARE_UNITS_WITH_ACTUATOR
  */
+
 
 // TODO(dc): is there somewhere more central that this can go?
 /** @file array.hpp
@@ -43,6 +63,7 @@
  *
  * @see http://www.boost.org/doc/libs/1_41_0/doc/html/array.html
  */
+
 /** @class boost::array
  *
  * @copybrief array.hpp
@@ -50,8 +71,8 @@
  */
 
 
-#ifndef UNITS_H_
-#define UNITS_H_
+#ifndef BARRETT_UNITS_H_
+#define BARRETT_UNITS_H_
 
 
 #include <iostream>
@@ -213,7 +234,7 @@ public:
 	 *
 	 * The other half of the explicit assignment mechanism.
 	 *
-	 * @param[in] d The value of an element of the Array.
+	 * @param[in] d The value of the <tt>n</tt>th element of the Array.
 	 * @throws std::out_of_range if too many elements are given.
 	 * @see operator<<()
 	 */
@@ -274,4 +295,4 @@ std::ostream& operator<< (std::ostream& os, const Array<N>& a);
 #include "./detail/units-inl.h"
 
 
-#endif /* UNITS_H_ */
+#endif /* BARRETT_UNITS_H_ */

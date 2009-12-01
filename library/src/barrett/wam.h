@@ -28,8 +28,8 @@
  */
 
 
-#ifndef WAM_H_
-#define WAM_H_
+#ifndef BARRETT_WAM_H_
+#define BARRETT_WAM_H_
 
 
 #include <map>
@@ -164,4 +164,4 @@ private:
 #include "./detail/wam-inl.h"
 
 
-#endif /* WAM_H_ */
+#endif /* BARRETT_WAM_H_ */

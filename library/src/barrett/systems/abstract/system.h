@@ -28,8 +28,8 @@
  */
 
 
-#ifndef SYSTEM_H_
-#define SYSTEM_H_
+#ifndef BARRETT_SYSTEMS_SYSTEM_H_
+#define BARRETT_SYSTEMS_SYSTEM_H_
 
 
 #include <stdexcept>
@@ -47,7 +47,7 @@ namespace systems {
  *
  * \section  sec_metaphor Metaphor
  *
- * The System class is named in the same metaphor as the \c system from the phrase "signals and %systems", where:
+ * The System class is named in the same metaphor as the \c system from the phrase "signals and systems", where:
  *   - a \c signal represents the flow of specific information and
  *   - a \c system represents some operation on the \c signals that flow into it.
  *   .
@@ -72,8 +72,13 @@ namespace systems {
  * doesn't need to worry about where its input data is coming from or where its output data is going or when it should perform its operation; libbarrett and
  * the user work together to define that.
  *
- * To rout information among a set of \ref System "System"s, the library provides a \ref helpers.h "set of functions" (such as barrett::systems::connect())
+ * To route information among a set of \ref System "System"s, the library provides a \ref helpers.h "set of functions" (such as barrett::systems::connect())
  * that operate on \ref Input "Input"s and \ref Output "Output"s.
+ *
+ * @note
+ * In general, the types, number, and names of a System's \ref Input "Input"s and \ref Output "Output"s are integral to a user's understanding of how to
+ * interact with that System. Thus, we consider a System's \ref Input "Input"s and \ref Output "Output"s to be a part of the public interface. You will see
+ * that most of the Systems provided by the library define their \ref Input "Input"s and \ref Output "Output"s as public data members.
  *
  *
  * \section sec_goals Goals
@@ -131,6 +136,10 @@ protected:
 	vector<double> coeff;
 };
 @endcode
+ *
+ * @see Input
+ * @see Output
+ * @see Output::Value
  */
 class System {
 public:
@@ -159,6 +168,8 @@ public:
 		 *
 		 * @retval true if the Input's value is defined
 		 * @retval false otherwise.
+		 *
+		 * @see Output::Value::setValueUndefined()
 		 */
 		virtual bool valueDefined() const = 0;
 
@@ -193,10 +204,12 @@ public:
 
 	/** The means by which data flows in to a System.
 	 *
-	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be connected to many Inputs, but an Input
-	 * can only be connected to one Output.
+	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be
+	 * connected to many Inputs, but an Input can only be connected to one Output.
 	 *
 	 * @tparam T The type of data conveyed.
+	 * @see System
+	 * @see Output
 	 */
 	template<typename T>
 	class Input : public AbstractInput {
@@ -248,39 +261,103 @@ public:
 
 	/** The means by which data flows out of a System.
 	 *
-	 * @copydetails Input
+	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be
+	 * connected to many Inputs, but an Input can only be connected to one Output.
+	 *
+	 * An Output's interface is split among two objects (the Output itself, and the Output's Value object) because there are two distinct ways of interacting
+	 * with an Output:
+	 *   - routing the information (connecting, disconnecting, etc.)
+	 *   - and modifying the information (setting the Output's value).
+	 *   .
+	 * The former should be accessible to many clients distributed through out the code base. The latter should (in general) be tightly controlled: only the
+	 * creator of the Output should be allowed to change its value. The Output handles the routing interface, while the Value object handles the modification
+	 * interface.
+	 *
+	 * When an Output is instantiated, a Value object owned by the Output is also instantiated. The Output keeps its Value object private, except that a
+	 * pointer to the Value object is returned by the Output's constructor; this is the only way to get access to the Value object. This way, a System can
+	 * freely give out pointers and references to its Outputs while keeping its Output::Value objects private.
+	 *
+	 * @tparam T The type of data conveyed.
+	 * @see System
+	 * @see Input
+	 * @see Output::Value
 	 */
 	template<typename T>
 	class Output : public AbstractOutput {
 	public:
+
+		/** Provides the interface to modify an Output's value.
+		 *
+		 * An Output::Value object should generally be kept private by the creator of the Output.
+		 *
+		 * @see Output
+		 */
 		class Value {
 		public:
+			~Value();
+
+			/// Sets the value of the associated Output
+			void setValue(const T& newValue);
+
+			/** Sets the value of the associated Output to a state representing the lack of a value.
+			 *
+			 * @see Input::valueDefined()
+			 */
+			void setValueUndefined();
+
+			// TODO(dc): check for self-delegation (direct and indirect)
+			/** Make this Output transparent by delegating value queries to another Output.
+			 *
+			 * Once this method is called on an Output's Value object, requests for this Output's value (via connected Inputs) will return instead the value of
+			 * the \c delegate Output. This behavior will continue until undelegate(), setValue(), or setValueUndefined() are called.
+			 *
+			 * Delegations can be chained. Of course, cyclic delegate dependencies are disallowed.
+			 *
+			 * @param[in] delegate The Output that value queries should be delegated to.
+			 */
+			void delegateTo(const Output<T>& delegate);
+
+			/** Stop delegating to another Output and resume answering value queries with this Output's Value object.
+			 *
+			 * Calling this method on an Output that is not currently delegating has no effect.
+			 */
+			void undelegate();
+
+		protected:
+			const Output<T>& parent;
+			const Value* delegate;
+			T* value;
+
+		private:
 			Value(const Output<T>& parentOutput, const T& initialValue) :
 				parent(parentOutput), delegate(NULL),
 				value(new T(initialValue)) {}
 			explicit Value(const Output<T>& parentOutput) :
 				parent(parentOutput), delegate(NULL), value(NULL) {}
-			~Value();
 
-			void setValue(const T& newValue);
-			void setValueUndefined();
-
-			// TODO(dc): check for self-delegation (direct and indirect)
-			void delegateTo(const Output<T>& delegate);
-			void undelegate();
-		protected:
-			const Output<T>& parent;
-			const Value* delegate;
-			T* value;
-		private:
 			friend class Input<T>;
 			friend class Output;
 
 			DISALLOW_COPY_AND_ASSIGN(Value);
 		};
 
+		/**
+		 * @details
+		 * Instantiates an Output and yields a handle to the new Output's Value object. The Output's initial value will be \ref Input::valueDefined() "undefined".
+		 *
+		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
+		 */
 		explicit Output(Value** valuePtr);
+
+		/**
+		 * @details
+		 * Instantiates an Output and yields a handle to the new Output's Value object. The Output's initial value will be set to \c initialValue.
+		 *
+		 * @param[in] initialValue The Object's initial value.
+		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
+		 */
 		Output(const T& initialValue, Value** valuePtr);
+
 		virtual ~Output();
 
 	protected:
@@ -346,4 +423,4 @@ private:
 #include "./detail/system-output-value-inl.h"
 
 
-#endif /* SYSTEM_H_ */
+#endif /* BARRETT_SYSTEMS_SYSTEM_H_ */
