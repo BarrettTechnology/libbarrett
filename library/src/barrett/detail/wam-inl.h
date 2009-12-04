@@ -65,7 +65,7 @@ Wam<DOF>::Wam() :
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 
 	// open the WAM
-	bt_wam_create(&wam, "wamg");
+	bt_wam_create(&wam, "wam7");
 	// TODO(dc): verify that the DOF matches
 	if (wam == NULL) {
 		// TODO(dc): better exception, add throw declaration to function def

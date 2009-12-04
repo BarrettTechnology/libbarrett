@@ -48,6 +48,18 @@ namespace barrett {
 /** A barrett::systems::System that represents a WAM robot.
  *
  * @tparam DOF The number of degrees of freedom (number of joints) in this WAM.
+ *
+ *
+ * @section sec_example Example
+ *
+ * The code below is a simple program that uses \c libbarrett to control a WAM. The program
+ *   - instantiates a Wam
+ *   - turns on gravity compensation
+ *   - moves the WAM to a particular pose (specified by \c setPoint)
+ *   - moves the WAM back to its home position
+ *   - idles the WAM and exits.
+ *
+ * @include hold_joint_position.cpp
  */
 template<size_t DOF>
 class Wam : public systems::System {

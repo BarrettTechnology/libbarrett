@@ -65,8 +65,8 @@ namespace systems {
  *
  * All that a System must have is an operate() member function. The operate() function is where the guts go. It is where a System should use its
  * \ref Input "Input"s and state to update the values of its \ref Output "Output"s. The operate() function should expect to be called automatically when
- * its Input s have new information. (If greater control is required over when operate() is called, simply reimplement inputsValid().) It should also expect to
- * be called from the real-time control thread.
+ * its \ref Input "Input"s have new information. (If greater control is required over when operate() is called, simply reimplement inputsValid().) The method
+ * should also be real-time safe and thread-safe.
  *
  * And that's the entire interface for a System: an operate() function and \ref Input "Input"s and \ref Output "Output"s as necessary. A System
  * doesn't need to worry about where its input data is coming from or where its output data is going or when it should perform its operation; \c libbarrett and
@@ -202,10 +202,24 @@ public:
 	template<typename T> class Output;
 
 
-	/** The means by which data flows in to a System.
+	/** The pipe through which data flows into a System.
 	 *
-	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be
-	 * connected to many Inputs, but an Input can only be connected to one Output.
+	 * Inputs and Outputs transmit a particular type of data that is specified by the template parameter, \c T. An Output can be \ref systems::connect "connect"ed
+	 * to an Input that transmits the same data-type. After being \ref systems::connect "connect"ed, any data pushed into the Output by calling
+	 * Output::Value::setValue() (see the documentation on Output for more on the Output::Value class) can be accessed by the Input by calling
+	 * Input::getValue(). Generally, Output::Value::setValue() and Input::getValue() are called from the System::operate() function of the System that owns the
+	 * Input or Output.
+	 *
+	 * An Output can be connected to many Inputs, but an Input can be connected to only one Output.
+	 *
+	 *
+	 * @section sec_example Example
+	 *
+	 * The following is an example of a System that has an Input. The Input is named \c idInput, and it transmits data of type \c int. The Input constructor needs
+	 * a pointer to the System it should notify when the Input has new data available; we want it to notify this System, so we pass it the \c this pointer.
+	 *
+	 * @include butterfly_factory.h
+	 *
 	 *
 	 * @tparam T The type of data conveyed.
 	 * @see System
@@ -259,23 +273,45 @@ public:
 	};
 
 
-	/** The means by which data flows out of a System.
+	/** The pipe through which data flows out of a System.
 	 *
-	 * An Output can be \ref systems::connect "connected" to an Input, at which point the Output's value can be accessed by the Input. An Output can be
-	 * connected to many Inputs, but an Input can only be connected to one Output.
+	 * Inputs and Outputs transmit a particular type of data that is specified by the template parameter, \c T. An Output can be \ref systems::connect "connect"ed
+	 * to an Input that transmits the same data-type. After being \ref systems::connect "connect"ed, any data pushed into the Output by calling
+	 * Output::Value::setValue() (see below for more on the Output::Value class) can be accessed by the Input by calling
+	 * Input::getValue(). Generally, Output::Value::setValue() and Input::getValue() are called from the System::operate() function of the System that owns the
+	 * Input or Output.
 	 *
-	 * An Output's interface is split between two objects (the Output itself, and the Output's Value object) because there are two distinct ways of interacting
-	 * with an Output:
-	 *   - routing the information (connecting, disconnecting, etc.)
-	 *   - and modifying the information (setting the Output's value).
+	 * An Output can be connected to many Inputs, but an Input can be connected to only one Output.
+	 *
+	 *
+	 * @section sec_outputvalue The Output class vs. the Output::Value class
+	 *
+	 * In laying out the concept of an Output above, we have overlooked an important detail. A conceptual output actually has two very different interfaces:
+	 *   - the one that lets you route the information (connecting, disconnecting, etc.)
+	 *   - the one that lets you modify the information (setting the output's value).
 	 *   .
 	 * The former should be accessible to many clients distributed through out the code base. The latter should (in general) be tightly controlled: only the
-	 * creator of the Output should be allowed to change its value. The Output handles the routing interface, while the Value object handles the modification
-	 * interface.
+	 * creator of the output should be allowed to change its value.
 	 *
-	 * When an Output is instantiated, a Value object owned by the Output is also instantiated. The Output keeps its Value object private, except that a
-	 * pointer to the Value object is returned by the Output's constructor. This is the only way to get access to the Value object. This way, a System can
-	 * freely give out pointers and references to its Outputs while keeping its Output::Value objects private.
+	 * To address this, a conceptual output's interface is split over two separate classes:
+	 *   - the Output class that handles the routing interface
+	 *   - the Output::Value class that handles the modification interface.
+	 *   .
+	 * This separates in code the two distinct ways of interacting with a conceptual output.
+	 *
+	 * When an Output is instantiated, an Output::Value object owned by the Output is also instantiated. The Output keeps its Output::Value object private, except
+	 * that a pointer to the Output::Value object is returned by the Output's constructor. This is the only way to get access to the Output::Value object. The
+	 * separation between the two interfaces means that a System can freely give out pointers and references to its Outputs (for routing purposes) without giving
+	 * out permission to change the \e value of its Outputs.
+	 *
+	 *
+	 * @section sec_example Example
+	 *
+	 * The following is an example of a System that has an Output. The Output is named \c butterflyOutput, and it transmits data of type \c Butterfly. The
+	 * \c butterflyOutputValue object is \c protected and is not given out by the System.
+	 *
+	 * @include butterfly_factory.h
+	 *
 	 *
 	 * @tparam T The type of data conveyed.
 	 * @see System
@@ -288,7 +324,7 @@ public:
 
 		/** Provides the interface to modify an Output's value.
 		 *
-		 * An Output::Value object should generally be kept private by the creator of the Output.
+		 * An Output::Value object should generally be kept private by the creator of the Output. For more information, see the documentation for Output.
 		 *
 		 * @see Output
 		 */
@@ -400,9 +436,30 @@ public:
 	virtual ~System() {}
 
 protected:
-	// use inputs/state/environment to update outputs
+	/** The guts of the System.
+	 *
+	 * This is where a System should update its Outputs using information from its Inputs, state, and environment.
+	 *
+	 * This function will be called automatically. When new Input data is available, the return value of inputsValid() will be checked. If it returns \c true,
+	 * operate() will be called. If it returns \c false, the call will be skipped until new Input data is available. (Expect the details of this behavior to change
+	 * in future releases.)
+	 *
+	 * This function should be real-time safe and thread-safe.
+	 *
+	 * @see inputsValid()
+	 */
 	virtual void operate() = 0;
 
+	/** Tests if the System's Inputs are in a valid state.
+	 *
+	 * This function is used as a gate to control the execution of the operate() function. The default behavior is to return \c true only if all of a System's
+	 * Inputs have defined values (<tt>Input::valueDefined() == true</tt>). If a System desires a different behavior, this method should be reimplemented.
+	 *
+	 * @retval true if it is ok to execute the operate() function
+	 * @retval false if the operate() function should not currently be executed.
+	 *
+	 * @see operate()
+	 */
 	virtual bool inputsValid();
 
 private:

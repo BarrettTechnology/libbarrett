@@ -124,11 +124,47 @@
 
 /** @copybrief DECLARE_UNITS
  *
- * Like \ref DECLARE_UNITS, but with an additional \c public \c typedef called
- * \c actuator_type which allows other components (such as
- * barrett::systems::Controller types) to set intelligent defaults for certain
- * template parameters. If the units being described have naturally associated
+ * This macro is identical to \ref DECLARE_UNITS, except that the generated
+ * class has an additional \c public \c typedef called \c actuator_type which
+ * allows other components (such as barrett::systems::Controller types) to set
+ * intelligent defaults for certain template parameters.
+ *
+ * An \c actuator_type is a barrett::units type representing the units used to
+ * communicate with your particular set of actuators. If your actuators receive
+ * joint torque commands (as in the WAM), the appropriate \c actuator_type is
+ * probably barrett::units::JointTorques. If you have linear actuators (or can
+ * emulate them using some sort of transform, also as in the WAM), it might be
+ * Cartesian forces. If you are working with a thermal system, the
+ * \c actuator_type might represent heat flow. Look at the other barrett::units
+ * classes for examples.
+ *
+ * The concept of an actuator type is helpful because it allows (in certain
+ * cases) our syntax to more closely resemble the way we talk and think about a
+ * problem. For example, if I said "Make me a PID controller to control joint
+ * positions," I wouldn't need to tell you that the output of that controller
+ * should be joint torques. So, when describing the problem to the C++
+ * compiler, I shouldn't have to say:
+ * @code
+ * systems::PIDController<units::JointPositions, units::JointTorques> jpPID;
+ * @endcode
+ * I should be able to, instead, say:
+ * @code
+ * systems::PIDController<units::JointPositions> jpPID;
+ * @endcode
+ * The \c actuator_type \c typedef allows
+ * \ref barrett::systems::PIDController "systems::PIDController" to look inside
+ * the \ref barrett::units::JointPositions "units::JointPositions" class and
+ * discover that the proper default for its \c OutputType template parameter is
+ * \ref barrett::units::JointTorques "units::JointTorques". (Of course, if this
+ * default behavior doesn't fit your usage, specifying the second template
+ * parameter explicitly would get you a
+ * \ref barrett::systems::PIDController "systems::PIDController" with whatever
+ * \c OutputType you want.)
+ *
+ * In conclusion, if the units being described have naturally associated
  * "actuator" units, use this macro; otherwise, use \ref DECLARE_UNITS instead.
+ * If in doubt, use \ref DECLARE_UNITS; the worst that will happen is
+ * occasionally you'll have to type a little bit more.
  *
  * The generated class is of the form:
  * \code

@@ -1,13 +1,13 @@
-/** \mainpage
+/** @mainpage
 
-\section sec_intro Introduction
+@section sec_intro Introduction
 
 This is the documentation for the \c libbarrett robot control library, written
 and maintained by Barrett Technology, Inc.  For more details about the
 library, see the development page at <http://wiki.barrett.com/libbarrett>.
 For questions, send an email to <support@barrett.com>.
 
-\section sec_modules Modules
+@section sec_modules Modules
 
 The \c libbarrett library is composed of two main parts that are in the process
 of being reconciled:
@@ -15,10 +15,11 @@ of being reconciled:
     execution, kinematics, dynamics, and lots of other things
   - a C++ library that allows users to compose the main-loop of the control
     thread for their application.
-  
+
+@subsection subsec_cdlbt cdlbt Library Overview
 The \c cdlbt library is separated into several modules, that look like this:
 
-\dot
+@dot
    digraph modules {
       node [shape=box, fontname=FreeSans, fontsize=9];
       bt_wam -> bt_control -> bt_dynamics;
@@ -37,19 +38,27 @@ The \c cdlbt library is separated into several modules, that look like this:
       bt_discover;
       bt_rpc;
    }
-\enddot
+@enddot
 
-Key sections of documentation describing the C++ library are:
+
+@subsection subsec_mainloop Main-loop Library Overview
+The main-loop library allows users to construct a main-loop by describing a block-diagram; the blocks are called \ref barrett::systems::System "System"s, and the lines representing information flow are formed by \ref barrett::systems::connect() "connect"ing \ref barrett::systems::System::Output "System::Output"s to \ref barrett::systems::System::Input "System::Input"s. In other words, \ref barrett::systems::System "System"s are where the processing happens, and \ref barrett::systems::System::Input "System::Input"s and \ref barrett::systems::System::Output "System::Output"s are the pipes through which data flows into and out of a \ref barrett::systems::System "System" (respectively).
+
+Each \ref barrett::systems::System::Input "System::Input" and \ref barrett::systems::System::Output "System::Output" can transmit any one type of data. That data type is specified at compile-time with a template parameter. Only \ref barrett::systems::System::Input "System::Input"s and \ref barrett::systems::System::Output "System::Output"s that transmit the same type of data can be \ref barrett::systems::connect() "connect"ed together. A \ref barrett::systems::System "System" can have any number of \ref barrett::systems::System::Input "System::Input"s and \ref barrett::systems::System::Output "System::Output"s.
+
+Additionally, the library provides a \ref DECLARE_UNITS "mechanism" to label \ref barrett::units::Array "Array"s of doubles with "units" in order to increase code clarity. (The built-in units classes are found in the barrett::units namespace.) Such \ref barrett::units::Array "Array"s can take advantage of a collection of arithmetic operators and \ref math_utils.h "math utilities". For these reasons, classes in the barrett::units namespace are often the data-types of choice for \ref barrett::systems::System::Input "System::Input"s and \ref barrett::systems::System::Output "System::Output"s.
+
+Key sections of documentation describing the C++ main-loop library are:
   - barrett::systems::System
   - barrett::systems::System::Input
   - barrett::systems::System::Output
   - barrett::units
 
-\section sec_using Using libbarrett in Your Programs
+@section sec_using Using libbarrett in Your Programs
 
 There are several example programs in the \c examples directory.
 
-\section sec_license License Notes
+@section sec_license License Notes
 
 See <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes> for more details.
 
