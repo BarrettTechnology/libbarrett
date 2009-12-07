@@ -21,9 +21,6 @@ public:
 	ExposedIOSystem() :
 		operateCalled(false) {}
 
-	explicit ExposedIOSystem(const T& initialValue) :
-		barrett::systems::SingleIO<T, T>(initialValue), operateCalled(false) {}
-
 	const T& getInputValue() const {
 		return this->input.getValue();
 	}

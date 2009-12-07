@@ -29,8 +29,6 @@ protected:	typename Output<OutputType>::Value* outputValue;
 public:
 	SingleIO() :
 		input(this), output(&outputValue) {}
-	explicit SingleIO(const OutputType& initialOutputValue) :
-		input(this), output(initialOutputValue, &outputValue) {}
 	virtual ~SingleIO() {}
 
 	virtual System::Input<InputType>* getConversionInput() {

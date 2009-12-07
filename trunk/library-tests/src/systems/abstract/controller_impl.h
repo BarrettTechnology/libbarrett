@@ -18,8 +18,6 @@ class ControllerImpl :
 		public barrett::systems::Controller<InputType, OutputType> {
 public:
 	ControllerImpl() {}
-	explicit ControllerImpl(const OutputType& initialOutputValue) :
-		barrett::systems::Controller<InputType, OutputType>(initialOutputValue) {}
 
 protected:
 	virtual void operate() {}

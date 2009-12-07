@@ -24,13 +24,6 @@ System::Output<T>::Output(Value** valueHandle) :
 }
 
 template<typename T>
-System::Output<T>::Output(const T& initialValue, Value** valueHandle) :
-	value(*this, initialValue), inputs(), delegators()
-{
-	(*valueHandle) = &value;
-}
-
-template<typename T>
 System::Output<T>::~Output()
 {
 	// value.undelegate() removes elements from the delegators list

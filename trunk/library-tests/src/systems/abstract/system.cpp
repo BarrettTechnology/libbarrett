@@ -53,17 +53,6 @@ TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
 		<< "input.getValue() didn't throw when value undefined";
 }
 
-TEST_F(SystemTest, OutputInitialValueCtor) {
-	systems::System::Output<double>::Value* outputValue;
-	systems::System::Output<double> output(38.12, &outputValue);
-	systems::connect(output, eios.input);
-
-	EXPECT_TRUE(eios.inputValueDefined())
-		<< "input undefined when connected to output with initial value";
-	EXPECT_EQ(38.12, eios.getInputValue())
-		<< "input has wrong value when connected to output with initial value";
-}
-
 TEST_F(SystemTest, OutputNotifyInputs) {
 	const size_t numInputs = 50;
 

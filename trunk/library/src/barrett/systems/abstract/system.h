@@ -365,9 +365,6 @@ public:
 			T* value;
 
 		private:
-			Value(const Output<T>& parentOutput, const T& initialValue) :
-				parent(parentOutput), delegate(NULL),
-				value(new T(initialValue)) {}
 			explicit Value(const Output<T>& parentOutput) :
 				parent(parentOutput), delegate(NULL), value(NULL) {}
 
@@ -384,15 +381,6 @@ public:
 		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
 		 */
 		explicit Output(Value** valuePtr);
-
-		/**
-		 * @details
-		 * Instantiates an Output and yields a handle to the new Output's Value object. The Output's initial value will be set to \c initialValue.
-		 *
-		 * @param[in] initialValue is the Object's initial value.
-		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
-		 */
-		Output(const T& initialValue, Value** valuePtr);
 
 		virtual ~Output();
 

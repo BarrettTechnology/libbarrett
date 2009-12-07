@@ -30,17 +30,4 @@ protected:
 };
 
 
-TEST_F(ControllerTest, InitialOutputValueCtor) {
-	ControllerImpl<double> ivControllerImpl(-88.1);
-	systems::Controller<double>& ivController = ivControllerImpl;
-
-	ExposedIOSystem<double> eios;
-	systems::connect(ivController.controlOutput, eios.input);
-
-	EXPECT_TRUE(eios.inputValueDefined()) << "initial value undefined";
-	EXPECT_EQ(-88.1, eios.getInputValue())
-		<< "wrong initial value given";
-}
-
-
 }

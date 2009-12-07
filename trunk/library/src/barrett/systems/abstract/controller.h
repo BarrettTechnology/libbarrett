@@ -35,10 +35,7 @@ public:
 		referenceInput(this),
 		feedbackInput(this),
 		controlOutput(&controlOutputValue) {}
-	explicit Controller(const OutputType& initialOutputValue) :
-		referenceInput(this),
-		feedbackInput(this),
-		controlOutput(initialOutputValue, &controlOutputValue) {}
+	virtual ~Controller() {}
 
 	virtual System::Input<InputType>* getConversionInput() {
 		return &referenceInput;

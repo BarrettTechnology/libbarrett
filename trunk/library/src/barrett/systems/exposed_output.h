@@ -28,7 +28,10 @@ public:
 	ExposedOutput() :
 		output(&outputValue) {}
 	explicit ExposedOutput(const T& initialValue) :
-		output(initialValue, &outputValue) {}
+		output(&outputValue)
+	{
+		outputValue->setValue(initialValue);
+	}
 
 	void setValue(const T& value) {
 		outputValue->setValue(value);
