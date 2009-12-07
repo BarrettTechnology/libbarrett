@@ -6,7 +6,6 @@
  */
 
 
-//#include <iostream>
 #include "../../math_utils.h"
 
 
@@ -83,14 +82,14 @@ void PIDController<InputType, OutputType>::operate()
 
 	intError = intError + ki * T_s * error_1;  // TODO(dc): += operators
 	if ( !intErrorLimit.isZero() ) {
-		intError = saturate(intError, intErrorLimit);
+		intError = math::saturate(intError, intErrorLimit);
 	}
 
 	controlSignal = kp * error +
 					intError +
 					kd * (error - error_1) / T_s;
 	if ( !controlSignalLimit.isZero() ) {
-		controlSignal = saturate(controlSignal, controlSignalLimit);
+		controlSignal = math::saturate(controlSignal, controlSignalLimit);
 	}
 
 	error_1 = error;
