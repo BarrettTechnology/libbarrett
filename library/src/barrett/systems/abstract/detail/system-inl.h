@@ -6,6 +6,9 @@
  */
 
 
+#include <vector>
+
+
 namespace barrett {
 namespace systems {
 
@@ -17,7 +20,7 @@ inline bool System::inputsValid()
 {
 	std::vector<AbstractInput*>::const_iterator i;
 	for (i = inputs.begin(); i != inputs.end(); ++i) {
-		if ((*i) != NULL  &&  !(*i)->valueDefined() ) {
+		if ( (*i) != NULL  &&  !(*i)->valueDefined() ) {
 			return false;
 		}
 	}
