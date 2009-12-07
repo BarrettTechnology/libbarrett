@@ -83,7 +83,7 @@ template<typename T> T min(const T& a, const T& b);
  * @retval a if <tt> a > b </tt>
  * @retval b otherwise.
  */
-template<typename T> T max(const T& a, const T& b);
+template<typename T> T max(const T& a, const T& b);  //NOLINT: this is not the max() from <algorithm>
 
 /** Ensures the input does not exceed the given limits.
  *

@@ -9,6 +9,7 @@
 #define CALLBACK_H_
 
 
+#include "../detail/ca_macro.h"
 #include "./abstract/single_io.h"
 
 
@@ -23,9 +24,9 @@ class Callback : public SingleIO<InputType, OutputType> {
 public:
 	typedef OutputType (*callback_type)(const InputType&);
 
-	Callback(callback_type operateCallback) :
+	explicit Callback(callback_type operateCallback) :
 		SingleIO<InputType, OutputType>(), callback(operateCallback) {}
-	explicit Callback(callback_type operateCallback,
+	Callback(callback_type operateCallback,
 			const OutputType& initialOutputValue) :
 		SingleIO<InputType, OutputType>(initialOutputValue),
 		callback(operateCallback) {}
@@ -37,6 +38,9 @@ protected:
 	}
 
 	callback_type callback;
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(Callback);
 };
 
 

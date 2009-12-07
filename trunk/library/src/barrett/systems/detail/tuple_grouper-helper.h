@@ -30,7 +30,8 @@ template<size_t N,
 struct InputHolder :
 		public InputHolder<N-1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 
-	typedef InputHolder<N-1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> inherited_type;
+	typedef InputHolder<N-1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>
+			inherited_type;
 	typedef TupleGrouper<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> tg_type;
 	typedef typename tg_type::tuple_type tuple_type;
 
@@ -41,7 +42,7 @@ struct InputHolder :
 	System::Input<typename boost::tuples::element<Index, tuple_type>::type>&
 	getInput() {
 		BOOST_STATIC_ASSERT(Index < N);
-		return ( static_cast<InputHolder<
+		return ( static_cast<InputHolder<  //NOLINT: lint doesn't know that these are templates
 			Index+1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>*>(this) )->input;
 	}
 
@@ -76,7 +77,7 @@ struct InputHolder<1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 		input(parent), values() {}
 
 	template<size_t InputIndex>
-	System::Input<typename boost::tuples::element<InputIndex, tuple_type>::type >& getInput() {
+	System::Input<typename boost::tuples::element<InputIndex, tuple_type>::type >& getInput() {  //NOLINT: line length is for clarity
 		return input;
 	}
 
