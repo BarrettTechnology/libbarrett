@@ -39,6 +39,7 @@
 
 
 namespace barrett {
+namespace math {
 using std::abs;
 
 
@@ -143,4 +144,5 @@ inline double deadband(const double& x, const double& cutoff)
 /// @endcond
 
 
+}
 }

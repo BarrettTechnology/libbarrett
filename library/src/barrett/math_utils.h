@@ -34,7 +34,7 @@
 
 
 namespace barrett {
-// TODO(dc): namespace math {
+namespace math {
 
 
 /** Computes the sign (positive, zero, or negative) of its input.
@@ -115,6 +115,7 @@ template<typename T> T deadband(const T& x, const T& cutoff);
 //		const T& lowerCutoff, const T& upperCutoff);
 
 
+}
 }
 
 

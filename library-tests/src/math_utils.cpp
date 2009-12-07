@@ -26,34 +26,34 @@ protected:
 TEST_F(MathUtilsTest, SignTest) {
 	a << -10, -0.5, 0, 0.5, 10;
 	e <<  -1,   -1, 0,   1, 1;
-	EXPECT_EQ(e, barrett::sign(a));
+	EXPECT_EQ(e, barrett::math::sign(a));
 }
 
 TEST_F(MathUtilsTest, AbsTest) {
 	a << -10, -0.5, 0, 0.5, 10;
 	e <<  10,  0.5, 0, 0.5, 10;
-	EXPECT_EQ(e, barrett::abs(a));
+	EXPECT_EQ(e, barrett::math::abs(a));
 }
 
 TEST_F(MathUtilsTest, MinTest) {
 	a << -10, -0.5,  0,  0.5, 10;
 	b <<  -9,  0.5, -1, 0.25, 11;
 	e << -10, -0.5, -1, 0.25, 10;
-	EXPECT_EQ(e, barrett::min(a, b));
+	EXPECT_EQ(e, barrett::math::min(a, b));
 }
 
 TEST_F(MathUtilsTest, MaxTest) {
 	a << -10, -0.5,  0,  0.5, 10;
 	b <<  -9,  0.5, -1, 0.25, 11;
 	e <<  -9,  0.5,  0,  0.5, 11;
-	EXPECT_EQ(e, barrett::max(a, b));  //NOLINT: irrelevant
+	EXPECT_EQ(e, barrett::math::max(a, b));  //NOLINT: irrelevant
 }
 
 TEST_F(MathUtilsTest, SaturateTest) {
 	a << -1, -0.5, -8, 5, 10;
 	b << 0.75, 0.75, 7, 7, 7;
 	e << -0.75, -0.5, -7, 5, 7;
-	EXPECT_EQ(e, barrett::saturate(a, b));
+	EXPECT_EQ(e, barrett::math::saturate(a, b));
 }
 
 

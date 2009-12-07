@@ -40,7 +40,7 @@ double sweepJoint(const boost::tuple<double, double>& tuple) {
 	double theta = tuple.get<0>();
 	double omega = tuple.get<1>();
 
-	vSign_0 = static_cast<int>( sign(deadband(omega, 0.2)) );
+	vSign_0 = static_cast<int>( math::sign(math::deadband(omega, 0.2)) );
 
 	if (vSign_0 != 0) {
 		if (stoppedCount > 5) {
