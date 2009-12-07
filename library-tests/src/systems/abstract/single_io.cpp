@@ -20,13 +20,5 @@ TEST(SingleIOTest, DefaultCtor) {
 	checkDisconnected(eios);
 }
 
-TEST(SingleIOTest, InitialValueCtor) {
-	ExposedIOSystem<double> eios(-878.3);
-	systems::connect(eios.output, eios.input);
-
-	EXPECT_TRUE(eios.inputValueDefined()) << "input value undefined";
-	EXPECT_EQ(-878.3, eios.getInputValue()) << "input has the wrong value";
-}
-
 
 }

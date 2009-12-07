@@ -25,8 +25,11 @@ protected:	typename System::Output<T>::Value* outputValue;
 
 
 public:
-	explicit Constant(T value) :
-		output(value, &outputValue) {}
+	explicit Constant(const T& value) :
+		output(&outputValue)
+	{
+		outputValue->setValue(value);
+	}
 	virtual ~Constant() {}
 
 private:
