@@ -22,15 +22,15 @@ namespace systems {
 
 
 template<typename OutputType>
-class Converter {
+class Converter : public System {
 //IO
-public:		System::Output<OutputType> output;
-protected:	typename System::Output<OutputType>::Value* outputValue;
+public:		Output<OutputType> output;
+protected:	typename Output<OutputType>::Value* outputValue;
 
 
 public:
 	Converter() :
-		output(&outputValue), conversions() {}
+		output(this, &outputValue), conversions() {}
 	explicit Converter(const OutputType& initialOutputValue) :
 		output(initialOutputValue, &outputValue), conversions() {}
 	virtual ~Converter();
@@ -47,6 +47,8 @@ public:
 			Conversion<OutputType>* conversion);
 
 protected:
+	virtual void operate() {  /* TODO(dc): invalidate outputs */  }
+
 	std::list<Conversion<OutputType>*> conversions;
 
 private:

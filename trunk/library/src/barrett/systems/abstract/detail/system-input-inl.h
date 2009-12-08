@@ -5,8 +5,11 @@
  *      Author: dc
  */
 
+
 #include <stdexcept>
 #include <algorithm>
+#include <vector>
+
 
 namespace barrett {
 namespace systems {
@@ -20,6 +23,7 @@ inline System::AbstractInput::AbstractInput(System* parentSys) :
 
 inline System::AbstractInput::~AbstractInput()
 {
+	// TODO(dc): this needs to be handled more like delegators in ~Output()
 	std::replace(parent.inputs.begin(), parent.inputs.end(),
 			const_cast<AbstractInput*>(this),
 			static_cast<AbstractInput*>(NULL));
@@ -68,6 +72,8 @@ inline void System::Input<T>::onValueChanged() const
 	// TODO(dc): test!
 	if (parent.inputsValid()) {
 		parent.operate();
+	} else {
+		parent.invalidateOutputs();
 	}
 	// TODO(dc): else, outputs should be undefined?
 }

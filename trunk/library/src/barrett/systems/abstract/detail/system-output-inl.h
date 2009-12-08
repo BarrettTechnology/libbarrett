@@ -5,6 +5,9 @@
  *      Author: dc
  */
 
+
+#include <algorithm>
+#include <vector>
 #include <list>
 
 
@@ -13,12 +16,12 @@ namespace systems {
 
 
 // the compiler requires a definition for a dtor, even if it's pure virtual
-inline System::AbstractOutput::~AbstractOutput() {}
+inline System::AbstractOutput::~AbstractOutput() { }
 
 
 template<typename T>
-System::Output<T>::Output(Value** valueHandle) :
-	value(*this), inputs(), delegators()
+System::Output<T>::Output(System* parentSystem, Value** valueHandle) :
+	value(parentSystem, *this), inputs(), delegators()
 {
 	(*valueHandle) = &value;
 }

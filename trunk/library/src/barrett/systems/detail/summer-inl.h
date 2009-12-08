@@ -20,7 +20,7 @@ namespace systems {
 
 template<typename T, size_t numInputs>
 Summer<T, numInputs>::Summer(const Polarity& inputPolarity) :
-	output(&outputValue),
+	output(this, &outputValue),
 	polarity(inputPolarity)
 {
 	initInputs();
@@ -28,7 +28,7 @@ Summer<T, numInputs>::Summer(const Polarity& inputPolarity) :
 
 template<typename T, size_t numInputs>
 Summer<T, numInputs>::Summer(const std::string& inputPolarity) :
-	output(&outputValue),
+	output(this, &outputValue),
 	polarity(inputPolarity)
 {
 	initInputs();
@@ -36,7 +36,7 @@ Summer<T, numInputs>::Summer(const std::string& inputPolarity) :
 
 template<typename T, size_t numInputs>
 Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity) :
-	output(&outputValue),
+	output(this, &outputValue),
 	polarity(inputPolarity)
 {
 	initInputs();

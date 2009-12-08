@@ -5,13 +5,6 @@
  *      Author: dc
  */
 
-/*
- * array_editor-inl.h
- *
- *  Created on: Nov 12, 2009
- *      Author: dc
- */
-
 
 #include "../../detail/purge.h"
 #include "../abstract/system.h"
@@ -54,7 +47,7 @@ template<typename T>
 void ArraySplitter<T>::initOutputs()
 {
 	for (size_t i = 0; i < T::SIZE; ++i) {
-		outputs[i] = new System::Output<double>(&outputValues[i]);
+		outputs[i] = new System::Output<double>(this, &outputValues[i]);
 	}
 }
 

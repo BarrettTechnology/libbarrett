@@ -9,8 +9,8 @@
 #define CONSTANT_H_
 
 
-#include "abstract/system.h"
 #include "../detail/ca_macro.h"
+#include "./abstract/system.h"
 
 
 namespace barrett {
@@ -18,19 +18,22 @@ namespace systems {
 
 
 template<typename T>
-class Constant {
+class Constant : public System {
 // IO
-public:		System::Output<T> output;
-protected:	typename System::Output<T>::Value* outputValue;
+public:		Output<T> output;
+protected:	typename Output<T>::Value* outputValue;
 
 
 public:
 	explicit Constant(const T& value) :
-		output(&outputValue)
+		output(this, &outputValue)
 	{
 		outputValue->setValue(value);
 	}
 	virtual ~Constant() {}
+
+protected:
+	virtual void operate() {  /* do nothing */  }
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Constant);

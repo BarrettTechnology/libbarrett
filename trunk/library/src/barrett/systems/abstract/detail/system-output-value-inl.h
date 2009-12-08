@@ -10,6 +10,21 @@ namespace barrett {
 namespace systems {
 
 
+inline System::AbstractOutput::AbstractValue::AbstractValue(System* parent) :
+			parentSystem(*parent)
+{
+	parentSystem.outputValues.push_back(this);
+}
+
+inline System::AbstractOutput::AbstractValue::~AbstractValue()
+{
+	// TODO(dc): this needs to be handled more like delegators in ~Output()
+	std::replace(parentSystem.outputValues.begin(), parentSystem.outputValues.end(),
+			const_cast<AbstractValue*>(this),
+			static_cast<AbstractValue*>(NULL));
+}
+
+
 template<typename T>
 inline System::Output<T>::Value::~Value()
 {
@@ -25,7 +40,7 @@ inline void System::Output<T>::Value::setValue(const T& newValue) {
 	}
 
 	undelegate();
-	parent.notifyListeners();
+	parentOutput.notifyListeners();
 }
 
 template<typename T>
@@ -36,7 +51,7 @@ inline void System::Output<T>::Value::setValueUndefined() {
 	}
 
 	undelegate();
-	parent.notifyListeners();
+	parentOutput.notifyListeners();
 }
 
 template<typename T>
@@ -45,15 +60,15 @@ System::Output<T>::Value::delegateTo(const Output<T>& delegateOutput)
 {
 	undelegate();
 	delegate = &(delegateOutput.value);
-	delegate->parent.addDelegator(parent);
-	parent.notifyListeners();
+	delegate->parentOutput.addDelegator(parentOutput);
+	parentOutput.notifyListeners();
 }
 
 template<typename T>
 inline void System::Output<T>::Value::undelegate()
 {
 	if (delegate != NULL) {
-		delegate->parent.removeDelegator(parent);
+		delegate->parentOutput.removeDelegator(parentOutput);
 		delegate = NULL;
 	}
 }

@@ -188,6 +188,25 @@ public:
 	 */
 	class AbstractOutput {
 	public:
+		class AbstractValue {
+		public:
+			explicit AbstractValue(System* parent);
+			virtual ~AbstractValue();
+
+			/** Sets the value of the associated Output to a state representing the lack of a value.
+			 *
+			 * @see Input::valueDefined()
+			 */
+			virtual void setValueUndefined() = 0;
+
+		protected:
+			System& parentSystem;
+
+		protected:
+			DISALLOW_COPY_AND_ASSIGN(AbstractValue);
+		};
+
+
 		AbstractOutput() {}
 
 		/// @details Virtual in order to make this class polymorphic.
@@ -328,18 +347,14 @@ public:
 		 *
 		 * @see Output
 		 */
-		class Value {
+		class Value : public AbstractValue {
 		public:
-			~Value();
+			virtual ~Value();
 
 			/// Sets the value of the associated Output
 			void setValue(const T& newValue);
 
-			/** Sets the value of the associated Output to a state representing the lack of a value.
-			 *
-			 * @see Input::valueDefined()
-			 */
-			void setValueUndefined();
+			virtual void setValueUndefined();
 
 			// TODO(dc): check for self-delegation (direct and indirect)
 			/** Make the associated Output transparent by delegating value queries to another Output.
@@ -360,13 +375,14 @@ public:
 			void undelegate();
 
 		protected:
-			const Output<T>& parent;
+			const Output<T>& parentOutput;
 			const Value* delegate;
 			T* value;
 
 		private:
-			explicit Value(const Output<T>& parentOutput) :
-				parent(parentOutput), delegate(NULL), value(NULL) {}
+			Value(System* parentSystem, const Output<T>& parentOutput) :
+				AbstractValue(parentSystem), parentOutput(parentOutput),
+				delegate(NULL), value(NULL) {}
 
 			friend class Input<T>;
 			friend class Output;
@@ -380,7 +396,7 @@ public:
 		 *
 		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
 		 */
-		explicit Output(Value** valuePtr);
+		Output(System* parentSystem, Value** valuePtr);
 
 		virtual ~Output();
 
@@ -420,7 +436,7 @@ public:
 	};
 
 	System() :
-		inputs() {}
+		inputs(), outputValues() {}
 	virtual ~System() {}
 
 protected:
@@ -450,8 +466,11 @@ protected:
 	 */
 	virtual bool inputsValid();
 
+	virtual void invalidateOutputs();
+
 private:
 	mutable std::vector<AbstractInput*> inputs;
+	mutable std::vector<AbstractOutput::AbstractValue*> outputValues;
 
 	DISALLOW_COPY_AND_ASSIGN(System);
 };
