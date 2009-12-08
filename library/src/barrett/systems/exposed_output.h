@@ -18,7 +18,7 @@ namespace systems {
 
 
 template <typename T>
-class ExposedOutput {
+class ExposedOutput : public System {
 // IO
 public:		System::Output<T> output;
 protected:	typename System::Output<T>::Value* outputValue;
@@ -26,7 +26,7 @@ protected:	typename System::Output<T>::Value* outputValue;
 
 public:
 	ExposedOutput() :
-		output(&outputValue) {}
+		output(this, &outputValue) {}
 	explicit ExposedOutput(const T& initialValue) :
 		output(&outputValue)
 	{
@@ -42,6 +42,9 @@ public:
 	void delegateTo(const System::Output<T>& delegate) {
 		outputValue->delegateTo(delegate);
 	}
+
+protected:
+	virtual void operate() {  /* do nothing */  }
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ExposedOutput);

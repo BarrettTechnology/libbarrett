@@ -28,6 +28,17 @@ inline bool System::inputsValid()
 	return true;
 }
 
+// FIXME(dc): should this be inline?
+inline void System::invalidateOutputs()
+{
+	std::vector<AbstractOutput::AbstractValue*>::const_iterator i;
+	for (i = outputValues.begin(); i != outputValues.end(); ++i) {
+		if ((*i) != NULL) {
+			(*i)->setValueUndefined();
+		}
+	}
+}
+
 
 }
 }

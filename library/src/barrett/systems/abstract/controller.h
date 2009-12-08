@@ -34,7 +34,7 @@ public:
 	Controller() :
 		referenceInput(this),
 		feedbackInput(this),
-		controlOutput(&controlOutputValue) {}
+		controlOutput(this, &controlOutputValue) {}
 	virtual ~Controller() {}
 
 	virtual System::Input<InputType>* getConversionInput() {

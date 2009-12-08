@@ -46,9 +46,7 @@ protected:	typename Output<tuple_type>::Value* outputValue;
 
 public:
 	TupleGrouper() :
-		inputs(this), output(&outputValue) {}
-	explicit TupleGrouper(const tuple_type& initialOutputValue) :
-		inputs(this), output(initialOutputValue, &outputValue) {}
+		inputs(this), output(this, &outputValue) {}
 	virtual ~TupleGrouper() {}
 
 	template<size_t N>

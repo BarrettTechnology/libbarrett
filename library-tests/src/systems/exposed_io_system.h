@@ -47,6 +47,11 @@ protected:
 		operateCalled = true;
 	}
 
+	// This System's Outputs are not a function of its Inputs.
+	virtual void invalidateOutputs() {
+		/* do nothing */
+	}
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(ExposedIOSystem);
 };

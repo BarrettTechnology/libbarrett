@@ -55,8 +55,8 @@ namespace barrett {
 
 template<size_t DOF>
 Wam<DOF>::Wam() :
-	input(this), jpOutput(&jpOutputValue), jvOutput(&jvOutputValue),
-	operateCount(), wam(NULL), wamLocal(NULL)
+	input(this), jpOutput(this, &jpOutputValue),
+	jvOutput(this, &jvOutputValue), operateCount(), wam(NULL), wamLocal(NULL)
 {
 	// initialize syslog
 	openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
@@ -65,7 +65,7 @@ Wam<DOF>::Wam() :
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 
 	// open the WAM
-	bt_wam_create(&wam, "wam7");
+	bt_wam_create(&wam, "wamg");
 	// TODO(dc): verify that the DOF matches
 	if (wam == NULL) {
 		// TODO(dc): better exception, add throw declaration to function def
