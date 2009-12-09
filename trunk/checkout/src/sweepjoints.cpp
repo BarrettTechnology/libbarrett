@@ -24,7 +24,7 @@ using systems::connect;
 using systems::reconnect;
 
 
-const size_t DOF = 7, JOINT = 2;
+const size_t DOF = 7, JOINT = 0;
 
 
 const double SWEEP_VELOCITY = 1.0;

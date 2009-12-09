@@ -16,17 +16,18 @@ namespace systems {
 
 
 inline System::AbstractInput::AbstractInput(System* parentSys) :
-	parent(*parentSys)
+	parentSystem(parentSys)
 {
-	parent.inputs.push_back(this);
+	parentSystem->inputs.push_back(this);
 }
 
 inline System::AbstractInput::~AbstractInput()
 {
-	// TODO(dc): this needs to be handled more like delegators in ~Output()
-	std::replace(parent.inputs.begin(), parent.inputs.end(),
-			const_cast<AbstractInput*>(this),
-			static_cast<AbstractInput*>(NULL));
+	if (parentSystem != NULL) {
+		std::replace(parentSystem->inputs.begin(), parentSystem->inputs.end(),
+				const_cast<AbstractInput*>(this),
+				static_cast<AbstractInput*>(NULL));
+	}
 }
 
 
@@ -40,11 +41,15 @@ inline bool System::Input<T>::isConnected() const
 template<typename T>
 inline bool System::Input<T>::valueDefined() const
 {
-	if (isConnected()  &&  output->getValueObject()->value != NULL) {
-		return true;
-	} else {
-		return false;
+	if (isConnected()) {
+		typename Output<T>::Value& outputValue = *(output->getValueObject());
+		outputValue.refreshValue();
+		if (outputValue.value != NULL) {
+			return true;
+		}
 	}
+
+	return false;
 }
 
 template<typename T>
@@ -57,6 +62,7 @@ throw(std::logic_error)
 		                       "Cannot retrieve value.");
 	}
 
+	// valueDefined() calls Output<T>::Value::refreshValue() for us
 	if ( !valueDefined() ) {
 		throw std::logic_error("(systems::System::Input::getValue): "
 		                          "The value of the associated output is "
@@ -64,18 +70,6 @@ throw(std::logic_error)
 	}
 
 	return *(output->getValueObject()->value);
-}
-
-template<typename T>
-inline void System::Input<T>::onValueChanged() const
-{
-	// TODO(dc): test!
-	if (parent.inputsValid()) {
-		parent.operate();
-	} else {
-		parent.invalidateOutputs();
-	}
-	// TODO(dc): else, outputs should be undefined?
 }
 
 

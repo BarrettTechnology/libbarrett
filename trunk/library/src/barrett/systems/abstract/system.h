@@ -155,6 +155,10 @@ public:
 		explicit AbstractInput(System* parentSys);
 		virtual ~AbstractInput();
 
+		void disconnectFromParentSystem() {
+			parentSystem = NULL;
+		}
+
 		/** Tests if this Input is connected to an Output.
 		 *
 		 * @retval true if the Input is connected
@@ -175,7 +179,7 @@ public:
 
 	protected:
 		/// The System that should be notified when this Input's value changes.
-		System& parent;
+		System* parentSystem;
 
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractInput);
@@ -190,8 +194,12 @@ public:
 	public:
 		class AbstractValue {
 		public:
-			explicit AbstractValue(System* parent);
+			explicit AbstractValue(System* parentSys);
 			virtual ~AbstractValue();
+
+			void disconnectFromParentSystem() {
+				parentSystem = NULL;
+			}
 
 			/** Sets the value of the associated Output to a state representing the lack of a value.
 			 *
@@ -200,7 +208,7 @@ public:
 			virtual void setValueUndefined() = 0;
 
 		protected:
-			System& parentSystem;
+			System* parentSystem;
 
 		protected:
 			DISALLOW_COPY_AND_ASSIGN(AbstractValue);
@@ -266,9 +274,6 @@ public:
 	protected:
 		Output<T>* output;  ///< Pointer to the associated Output.
 
-		/// %Callback from Output::notifyListeners().
-		virtual void onValueChanged() const;
-
 	// friends:
 		friend class Output<T>;
 
@@ -286,6 +291,9 @@ public:
 		template<typename T2>
 		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
 		throw(std::invalid_argument);
+
+		template<typename T2>
+		friend void disconnect(System::Output<T2>& output);  //NOLINT: see ../helpers.h
 
 	private:
 		DISALLOW_COPY_AND_ASSIGN(Input);
@@ -366,7 +374,7 @@ public:
 			 *
 			 * @param[in] delegate The Output that value queries should be delegated to.
 			 */
-			void delegateTo(const Output<T>& delegate);
+			void delegateTo(Output<T>& delegate);
 
 			/** Stop delegating to another Output and resume answering value queries with this Output's Value object.
 			 *
@@ -375,12 +383,14 @@ public:
 			void undelegate();
 
 		protected:
-			const Output<T>& parentOutput;
-			const Value* delegate;
+			void refreshValue();
+
+			Output<T>& parentOutput;
+			Value* delegate;
 			T* value;
 
 		private:
-			Value(System* parentSystem, const Output<T>& parentOutput) :
+			Value(System* parentSystem, Output<T>& parentOutput) :
 				AbstractValue(parentSystem), parentOutput(parentOutput),
 				delegate(NULL), value(NULL) {}
 
@@ -401,13 +411,7 @@ public:
 		virtual ~Output();
 
 	protected:
-		const Value* getValueObject() const;
-
-		void addInput(const Input<T>& input);
-		void removeInput(const Input<T>& input);
-		void addDelegator(const Output<T>& output) const;
-		void removeDelegator(const Output<T>& output) const;
-		void notifyListeners() const;
+		Value* getValueObject();
 
 		Value value;
 		std::list<Input<T>* > inputs;
@@ -431,15 +435,30 @@ public:
 		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
 		throw(std::invalid_argument);
 
+		template<typename T2>
+		friend void disconnect(System::Output<T2>& output);  //NOLINT: see ../helpers.h
+
 	private:
 		DISALLOW_COPY_AND_ASSIGN(Output);
 	};
 
 	System() :
 		inputs(), outputValues() {}
-	virtual ~System() {}
+	virtual ~System();
 
 protected:
+	/** Tests if the System's Inputs are in a valid state.
+	 *
+	 * This function is used as a gate to control the execution of the operate() function. The default behavior is to return \c true only if all of a System's
+	 * Inputs have defined values (<tt>Input::valueDefined() == true</tt>). If a System desires a different behavior, this method should be reimplemented.
+	 *
+	 * @retval true if it is ok to execute the operate() function
+	 * @retval false if the operate() function should not currently be executed.
+	 *
+	 * @see operate()
+	 */
+	virtual bool inputsValid();
+
 	/** The guts of the System.
 	 *
 	 * This is where a System should update its Outputs using information from its Inputs, state, and environment.
@@ -453,18 +472,6 @@ protected:
 	 * @see inputsValid()
 	 */
 	virtual void operate() = 0;
-
-	/** Tests if the System's Inputs are in a valid state.
-	 *
-	 * This function is used as a gate to control the execution of the operate() function. The default behavior is to return \c true only if all of a System's
-	 * Inputs have defined values (<tt>Input::valueDefined() == true</tt>). If a System desires a different behavior, this method should be reimplemented.
-	 *
-	 * @retval true if it is ok to execute the operate() function
-	 * @retval false if the operate() function should not currently be executed.
-	 *
-	 * @see operate()
-	 */
-	virtual bool inputsValid();
 
 	virtual void invalidateOutputs();
 

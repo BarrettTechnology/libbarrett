@@ -37,12 +37,16 @@ public:
 		this->outputValue->setValueUndefined();
 	}
 
-	void delegateOutputValueTo(
-			const barrett::systems::System::Output<T>& delegate) {
+	void delegateOutputValueTo(barrett::systems::System::Output<T>& delegate) {
 		this->outputValue->delegateTo(delegate);
 	}
 
 protected:
+	// This System has no invalid Input state.
+	virtual bool inputsValid() {
+		return true;
+	}
+
 	virtual void operate() {
 		operateCalled = true;
 	}
@@ -62,11 +66,12 @@ void checkConnected(ExposedIOSystem<T>* outSys,
 					const ExposedIOSystem<T>& inSys,
 					const T& value)
 {
-	inSys.operateCalled = false;
+	outSys->operateCalled = false;
 	outSys->setOutputValue(value);
 
-	EXPECT_TRUE(inSys.operateCalled) << "System.operate() wasn't called";
+	// cause a Output<>::Value::refreshValue() call
 	EXPECT_TRUE(inSys.inputValueDefined()) << "input value undefined";
+	EXPECT_TRUE(outSys->operateCalled) << "System.operate() wasn't called";
 	EXPECT_EQ(value, inSys.getInputValue()) << "input has the wrong value";
 }
 
@@ -77,6 +82,7 @@ void checkNotConnected(ExposedIOSystem<T>* outSys,
 {
 	inSys.operateCalled = false;
 	outSys->setOutputValue(value);
+	inSys.inputValueDefined();  // cause a Output<>::Value::refreshValue() call
 
 	EXPECT_FALSE(inSys.operateCalled) << "System.operate() was called";
 }

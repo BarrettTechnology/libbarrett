@@ -156,7 +156,9 @@ protected:
 	struct bt_wam_local* wamLocal;
 
 	virtual void readSensors();
+	virtual bool inputsValid();
 	virtual void operate();
+	virtual void invalidateOutputs();
 
 
 	/// @cond DETAIL

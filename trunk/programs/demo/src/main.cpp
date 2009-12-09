@@ -47,7 +47,6 @@ int main() {
 	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
 	pid->setControlSignalLimit(tmp);
 
-
 	systems::connect(wam.jpOutput, pid->feedbackInput);
 
 	systems::Converter<Wam<DOF>::jt_type> supervisoryController;
