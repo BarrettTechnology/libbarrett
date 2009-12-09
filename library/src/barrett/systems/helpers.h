@@ -54,15 +54,14 @@ template<typename T>
 void connect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	if (input.output != NULL) {
+	if (input.isConnected()) {
 		throw std::invalid_argument("(systems::connect): "
 		                            "Input is already connected to something. "
 		                            "Use 'systems::reconnect' instead.");
 	}
 
 	input.output = &output;
-	output.addInput(input);
-	// input.onValueChanged();  // FIXME: should this be here?
+	output.inputs.push_back(&input);
 }
 
 /** Takes a System::Input that is connected to a System::Output and reconnects
@@ -79,19 +78,18 @@ template<typename T>
 void reconnect(System::Output<T>& newOutput, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	if (input.output == NULL) {
+	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::reconnect): "
 		                            "Input is not connected to anything. "
 		                            "Use 'systems::connect' instead.");
 	}
 
 	// disconnect old output
-	input.output->removeInput(input);
+	input.output->inputs.remove(&input);
 
 	// connect new output
 	input.output = &newOutput;
-	newOutput.addInput(input);
-	// input.onValueChanged();		// FIXME: should this be here?
+	newOutput.inputs.push_back(&input);
 }
 
 /** Connects a System::Output to a System::Input, even if the System::Input is
@@ -106,42 +104,47 @@ throw(std::invalid_argument)
 template<typename T>
 void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 {
-	if (input.output != NULL) {
+	if (input.isConnected()) {
 		// disconnect old output
-		input.output->removeInput(input);
+		input.output->inputs.remove(&input);
 	}
 
 	input.output = &output;
-	output.addInput(input);
-	// input.onValueChanged();  // FIXME: should this be here?
+	output.inputs.push_back(&input);
 }
 
 /** Disconnects a System::Input from a System::Output.
  *
  * @param[in] input The System::Input that will stop receiving data from its
- *            System::Output.
- * @throws std::invalid_argument in the case that \c input was not already
- *         connected to a System::Output.
+ *            System::Output, if any.
  */
 template<typename T>
 void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	if (input.output == NULL) {
+	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::disconnect): "
 		                            "Input is not connected to anything. "
 		                            "Cannot disconnect.");
 	}
 
-	input.output->removeInput(input);
+	input.output->inputs.remove(&input);
 	input.output = NULL;
 }
 
+template<typename T>
+void disconnect(System::Output<T>& output)  //NOLINT: non-const reference parameter chosen to keep syntax clean
+{
+	typename std::list<System::Input<T>* >::iterator i;
+	for (i = output.inputs.begin(); i != output.inputs.end(); ++i) {
+		(*i)->output = NULL;
+	}
+	output.inputs.clear();
+}
+
 
 }
 }
-
-// TODO(dc): void disconnect(System::Output<T>& output)?
 
 
 #endif /* BARRETT_SYSTEMS_HELPERS_H_ */

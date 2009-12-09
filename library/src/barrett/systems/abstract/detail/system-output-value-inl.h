@@ -10,18 +10,19 @@ namespace barrett {
 namespace systems {
 
 
-inline System::AbstractOutput::AbstractValue::AbstractValue(System* parent) :
-			parentSystem(*parent)
+inline System::AbstractOutput::AbstractValue::AbstractValue(System* parentSys) :
+			parentSystem(parentSys)
 {
-	parentSystem.outputValues.push_back(this);
+	parentSystem->outputValues.push_back(this);
 }
 
 inline System::AbstractOutput::AbstractValue::~AbstractValue()
 {
-	// TODO(dc): this needs to be handled more like delegators in ~Output()
-	std::replace(parentSystem.outputValues.begin(), parentSystem.outputValues.end(),
-			const_cast<AbstractValue*>(this),
-			static_cast<AbstractValue*>(NULL));
+	if (parentSystem != NULL) {
+		std::replace(parentSystem->outputValues.begin(), parentSystem->outputValues.end(),
+				const_cast<AbstractValue*>(this),
+				static_cast<AbstractValue*>(NULL));
+	}
 }
 
 
@@ -40,7 +41,6 @@ inline void System::Output<T>::Value::setValue(const T& newValue) {
 	}
 
 	undelegate();
-	parentOutput.notifyListeners();
 }
 
 template<typename T>
@@ -51,25 +51,37 @@ inline void System::Output<T>::Value::setValueUndefined() {
 	}
 
 	undelegate();
-	parentOutput.notifyListeners();
 }
 
 template<typename T>
 inline void
-System::Output<T>::Value::delegateTo(const Output<T>& delegateOutput)
+System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 {
 	undelegate();
 	delegate = &(delegateOutput.value);
-	delegate->parentOutput.addDelegator(parentOutput);
-	parentOutput.notifyListeners();
+	delegate->parentOutput.delegators.push_back(&parentOutput);
 }
 
 template<typename T>
 inline void System::Output<T>::Value::undelegate()
 {
 	if (delegate != NULL) {
-		delegate->parentOutput.removeDelegator(parentOutput);
+		delegate->parentOutput.delegators.remove(&parentOutput);
 		delegate = NULL;
+	}
+}
+
+
+template<typename T>
+inline void System::Output<T>::Value::refreshValue()
+{
+	// TODO(dc): test!
+	if (parentSystem != NULL) {
+		if (parentSystem->inputsValid()) {
+			parentSystem->operate();
+		} else {
+			parentSystem->invalidateOutputs();
+		}
 	}
 }
 

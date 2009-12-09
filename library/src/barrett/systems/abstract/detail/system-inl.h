@@ -15,6 +15,28 @@ namespace systems {
 
 // TODO(dc): test!
 
+
+// FIXME(dc): should this be inline?
+inline System::~System()
+{
+	for (std::vector<AbstractInput*>::const_iterator i = inputs.begin();
+		 i != inputs.end();
+		 ++i) {
+		if (*i != NULL) {
+			(*i)->disconnectFromParentSystem();
+		}
+	}
+
+	for (std::vector<AbstractOutput::AbstractValue*>::const_iterator i = outputValues.begin();
+		 i != outputValues.end();
+		 ++i) {
+		if ((*i) != NULL) {
+			(*i)->disconnectFromParentSystem();
+		}
+	}
+}
+
+
 // FIXME(dc): should this be inline?
 inline bool System::inputsValid()
 {

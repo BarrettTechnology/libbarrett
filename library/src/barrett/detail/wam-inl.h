@@ -120,22 +120,26 @@ units::JointVelocities<DOF> Wam<DOF>::getJointVelocities()
 
 
 template<size_t DOF>
-void Wam<DOF>::gravityCompensate(bool compensate) {
+void Wam<DOF>::gravityCompensate(bool compensate)
+{
 	bt_wam_setgcomp(wam, compensate);
 }
 
 template<size_t DOF>
-void Wam<DOF>::moveHome() {
+void Wam<DOF>::moveHome()
+{
 	bt_wam_movehome(wam);
 }
 
 template<size_t DOF>
-bool Wam<DOF>::moveIsDone() {
+bool Wam<DOF>::moveIsDone()
+{
 	return bt_wam_moveisdone(wam);
 }
 
 template<size_t DOF>
-void Wam<DOF>::idle() {
+void Wam<DOF>::idle()
+{
 	bt_wam_idle(wam);
 }
 
@@ -143,15 +147,21 @@ void Wam<DOF>::idle() {
 template<size_t DOF>
 std::map<struct bt_wam_local*, Wam<DOF>*> Wam<DOF>::activeWams;
 
+bool uglyFlag = false;
+
 template<size_t DOF>
-int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal) {
+int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal)
+{
 	activeWams[wamLocal]->readSensors();
+	uglyFlag = true;
+	activeWams[wamLocal]->operate();
 	return 0;
 }
 
 
 template<size_t DOF>
-void Wam<DOF>::readSensors() {
+void Wam<DOF>::readSensors()
+{
 	jp_type jp;
 	jv_type jv;
 
@@ -166,8 +176,18 @@ void Wam<DOF>::readSensors() {
 }
 
 template<size_t DOF>
+bool Wam<DOF>::inputsValid()
+{
+	return true;
+}
+
+template<size_t DOF>
 void Wam<DOF>::operate()
 {
+	if (!uglyFlag) {
+		return;
+	}
+	uglyFlag = false;
 	++operateCount;
 
 	if (this->input.valueDefined()) {
@@ -177,6 +197,12 @@ void Wam<DOF>::operate()
 					gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
 		}
 	}
+}
+
+template<size_t DOF>
+void Wam<DOF>::invalidateOutputs()
+{
+	/* do nothing */
 }
 
 
