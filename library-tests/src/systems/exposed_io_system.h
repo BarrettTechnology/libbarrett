@@ -18,7 +18,8 @@ class ExposedIOSystem : public barrett::systems::SingleIO<T, T> {
 public:
 	mutable bool operateCalled;
 
-	ExposedIOSystem() :
+	ExposedIOSystem(bool updateEveryExecutionCycle = true) :
+		barrett::systems::SingleIO<T, T>(updateEveryExecutionCycle),
 		operateCalled(false) {}
 
 	const T& getInputValue() const {

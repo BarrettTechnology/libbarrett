@@ -20,25 +20,28 @@ namespace systems {
 
 class System;
 
+// TODO(dc): prevent Systems managed by different EMs from being connected
 
 class ExecutionManager {
 public:
 	ExecutionManager() :
-		managedSystems(), updatedSystems() {}
+		managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
 	virtual ~ExecutionManager();
 
-	virtual void startManaging(System* sys);
+	virtual void startManaging(System* sys, bool alwaysUpdate = false);
 	virtual void stopManaging(System* sys);
 
 protected:
 	void resetExecutionCycle();
 
+	void update();
 	template<template<typename T, typename = std::allocator<T> > class Container>
 	void update(Container<System*> systems);
 	void update(System* sys);
 	virtual bool updateNeeded(System* sys);
 
 	std::vector<System*> managedSystems;
+	std::vector<System*> alwaysUpdatedSystems;
 	std::vector<System*> updatedSystems;
 
 private:

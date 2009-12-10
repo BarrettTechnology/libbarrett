@@ -16,18 +16,23 @@ namespace barrett {
 namespace systems {
 
 
-inline void ExecutionManager::startManaging(System* sys) {
+inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
 	if (sys->isExecutionManaged()) {
 		sys->executionManager->stopManaging(sys);
 	}
 	managedSystems.push_back(sys);
 	sys->executionManager = this;
+
+	if (alwaysUpdate) {
+		alwaysUpdatedSystems.push_back(sys);
+	}
 }
 
-// this ExecutionManager must be currently managing sys., otherwise data is corrupted :(
+// this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
 inline void ExecutionManager::stopManaging(System* sys) {
 	sys->executionManager = NULL;
 	replaceWithNull(managedSystems, sys);
+	replaceWithNull(alwaysUpdatedSystems, sys);
 }
 
 
@@ -35,17 +40,27 @@ inline void ExecutionManager::resetExecutionCycle() {
 	updatedSystems.clear();
 }
 
+
+
+inline void ExecutionManager::update() {
+	update(alwaysUpdatedSystems);
+}
+
 template<template<typename T, typename = std::allocator<T> > class Container>
 void ExecutionManager::update(Container<System*> systems) {
 	typename Container<System*>::const_iterator i;
 	for (i = systems.begin(); i != systems.end(); ++i) {
-		update(*i);
+		if (*i != NULL) {
+			update(*i);
+		}
 	}
 }
 //	void update(std::vector<System*> systems) {
 //		std::vector<System*>::const_iterator i;
 //		for (i = systems.begin(); i != systems.end(); ++i) {
-//			update(*i);
+//			if (*i != NULL) {
+//				update(*i);
+//			}
 //		}
 //	}
 

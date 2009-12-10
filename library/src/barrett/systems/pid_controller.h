@@ -10,6 +10,8 @@
 
 
 #include <iostream>
+
+#include "../detail/ca_macro.h"
 #include "../units.h"
 #include "./abstract/controller.h"
 
@@ -25,6 +27,8 @@ template<typename InputType,
 class PIDController : public Controller<InputType, OutputType> {
 public:
 	typedef typename InputType::array_type array_type;
+
+	PIDController() {}
 
 	PIDController& setKp(array_type proportionalGains);
 	PIDController& setKi(array_type integralGains);
@@ -42,6 +46,9 @@ protected:
 	array_type intError, intErrorLimit;
 	array_type kp, ki, kd;
 	OutputType controlSignal, controlSignalLimit;
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(PIDController);
 };
 
 

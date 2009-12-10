@@ -27,7 +27,8 @@ protected:	typename Output<OutputType>::Value* outputValue;
 
 
 public:
-	SingleIO() :
+	explicit SingleIO(bool updateEveryExecutionCycle = false) :
+		System(updateEveryExecutionCycle),
 		input(this), output(this, &outputValue) {}
 	virtual ~SingleIO() {}
 

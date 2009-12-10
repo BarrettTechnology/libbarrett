@@ -18,12 +18,12 @@ using namespace barrett;
 class ManualExecutionManagerTest : public ::testing::Test {
 public:
 	ManualExecutionManagerTest() :
-		me() {
-		systems::System::defaultExecutionManager = &me;
+		mem() {
+		systems::System::defaultExecutionManager = &mem;
 	}
 
 protected:
-	systems::ManualExecutionManager me;
+	systems::ManualExecutionManager mem;
 };
 
 
@@ -46,16 +46,47 @@ TEST_F(ManualExecutionManagerTest, StartManaging) {
 	ExposedIOSystem<double> eios;
 	EXPECT_FALSE(eios.isExecutionManaged());
 
-	me.startManaging(&eios);
+	mem.update();
+	EXPECT_FALSE(eios.operateCalled);
+
+	mem.startManaging(&eios, true);
 	EXPECT_TRUE(eios.isExecutionManaged());
+	EXPECT_EQ(&mem, eios.getExecutionManager());
+
+	mem.update();
+	EXPECT_TRUE(eios.operateCalled);
 }
 
 TEST_F(ManualExecutionManagerTest, StopManaging) {
 	ExposedIOSystem<double> eios;
 	EXPECT_TRUE(eios.isExecutionManaged());
 
-	me.stopManaging(&eios);
+	mem.update();
+	EXPECT_TRUE(eios.operateCalled);
+
+	mem.stopManaging(&eios);
 	EXPECT_FALSE(eios.isExecutionManaged());
+	EXPECT_EQ(NULL, eios.getExecutionManager());
+
+	eios.operateCalled = false;
+	mem.update();
+	EXPECT_FALSE(eios.operateCalled);
+}
+
+TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
+	ExposedIOSystem<double> eios;
+	EXPECT_TRUE(eios.isExecutionManaged());
+
+	mem.update();
+	EXPECT_TRUE(eios.operateCalled);
+
+	eios.operateCalled = false;
+	mem.update();
+	EXPECT_FALSE(eios.operateCalled);
+
+	mem.resetExecutionCycle();
+	mem.update();
+	EXPECT_TRUE(eios.operateCalled);
 }
 
 

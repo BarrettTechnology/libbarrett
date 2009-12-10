@@ -17,13 +17,13 @@ namespace systems {
 // TODO(dc): test!
 
 
-inline System::System() :
-	inputs(), outputValues(), executionManager(NULL)
+inline System::System(bool updateEveryExecutionCycle) :
+	inputs(), outputValues(), executionManager(NULL), alwaysUpdate(updateEveryExecutionCycle)
 {
 	setExecutionManager(System::defaultExecutionManager);
 }
 
-inline bool System::isExecutionManaged()
+inline bool System::isExecutionManaged() const
 {
 	return executionManager != NULL;
 }
@@ -35,18 +35,29 @@ inline void System::setExecutionManager(ExecutionManager* newEm) {
 			executionManager->stopManaging(this);
 		}
 	} else {
-		newEm->startManaging(this);
+		newEm->startManaging(this, updateEveryExecutionCycle());
 	}
+}
+
+inline ExecutionManager* System::getExecutionManager() const
+{
+	return executionManager;
 }
 
 
 inline void System::update()
 {
-	if (inputsValid()) {
-		operate();
-	} else {
-		invalidateOutputs();
+	if (!isExecutionManaged()  || executionManager->updateNeeded(this)) {
+		if (inputsValid()) {
+			operate();
+		} else {
+			invalidateOutputs();
+		}
 	}
+}
+
+inline bool System::updateEveryExecutionCycle() {
+	return alwaysUpdate;
 }
 
 
