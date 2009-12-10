@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include "../execution_manager.h"
 
 
 namespace barrett {
@@ -16,48 +17,35 @@ namespace systems {
 // TODO(dc): test!
 
 
-// FIXME(dc): should this be inline?
-inline System::~System()
+inline System::System() :
+	inputs(), outputValues(), executionManager(NULL)
 {
-	for (std::vector<AbstractInput*>::const_iterator i = inputs.begin();
-		 i != inputs.end();
-		 ++i) {
-		if (*i != NULL) {
-			(*i)->disconnectFromParentSystem();
-		}
-	}
+	setExecutionManager(System::defaultExecutionManager);
+}
 
-	for (std::vector<AbstractOutput::AbstractValue*>::const_iterator i = outputValues.begin();
-		 i != outputValues.end();
-		 ++i) {
-		if ((*i) != NULL) {
-			(*i)->disconnectFromParentSystem();
+inline bool System::isExecutionManaged()
+{
+	return executionManager != NULL;
+}
+
+// newEm can be NULL
+inline void System::setExecutionManager(ExecutionManager* newEm) {
+	if (newEm == NULL) {
+		if (isExecutionManaged()) {
+			executionManager->stopManaging(this);
 		}
+	} else {
+		newEm->startManaging(this);
 	}
 }
 
 
-// FIXME(dc): should this be inline?
-inline bool System::inputsValid()
+inline void System::update()
 {
-	std::vector<AbstractInput*>::const_iterator i;
-	for (i = inputs.begin(); i != inputs.end(); ++i) {
-		if ( (*i) != NULL  &&  !(*i)->valueDefined() ) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-// FIXME(dc): should this be inline?
-inline void System::invalidateOutputs()
-{
-	std::vector<AbstractOutput::AbstractValue*>::const_iterator i;
-	for (i = outputValues.begin(); i != outputValues.end(); ++i) {
-		if ((*i) != NULL) {
-			(*i)->setValueUndefined();
-		}
+	if (inputsValid()) {
+		operate();
+	} else {
+		invalidateOutputs();
 	}
 }
 

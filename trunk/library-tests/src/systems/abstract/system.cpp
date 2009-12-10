@@ -67,7 +67,7 @@ TEST_F(SystemTest, OutputNotifyInputs) {
 
 	for (size_t i = 0; i < numInputs; ++i) {
 		eios.operateCalled = false;
-		systems[i]->inputValueDefined();  // refresh the value
+		systems[i]->inputValueDefined();  // update the value
 		EXPECT_TRUE(eios.operateCalled)
 			<< "operate() didn't get called on eios for system " << i;
 

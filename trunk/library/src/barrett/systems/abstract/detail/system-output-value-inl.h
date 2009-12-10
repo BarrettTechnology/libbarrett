@@ -6,6 +6,9 @@
  */
 
 
+#include "../../../detail/stl_utils.h"
+
+
 namespace barrett {
 namespace systems {
 
@@ -19,9 +22,10 @@ inline System::AbstractOutput::AbstractValue::AbstractValue(System* parentSys) :
 inline System::AbstractOutput::AbstractValue::~AbstractValue()
 {
 	if (parentSystem != NULL) {
-		std::replace(parentSystem->outputValues.begin(), parentSystem->outputValues.end(),
-				const_cast<AbstractValue*>(this),
-				static_cast<AbstractValue*>(NULL));
+		replaceWithNull(parentSystem->outputValues, this);
+//		std::replace(parentSystem->outputValues.begin(), parentSystem->outputValues.end(),
+//				const_cast<AbstractValue*>(this),
+//				static_cast<AbstractValue*>(NULL));
 	}
 }
 
@@ -73,15 +77,11 @@ inline void System::Output<T>::Value::undelegate()
 
 
 template<typename T>
-inline void System::Output<T>::Value::refreshValue()
+inline void System::Output<T>::Value::updateValue()
 {
 	// TODO(dc): test!
 	if (parentSystem != NULL) {
-		if (parentSystem->inputsValid()) {
-			parentSystem->operate();
-		} else {
-			parentSystem->invalidateOutputs();
-		}
+		parentSystem->update();
 	}
 }
 

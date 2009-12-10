@@ -7,8 +7,9 @@
 
 
 #include <stdexcept>
-#include <algorithm>
 #include <vector>
+
+#include "../../../detail/stl_utils.h"
 
 
 namespace barrett {
@@ -24,9 +25,7 @@ inline System::AbstractInput::AbstractInput(System* parentSys) :
 inline System::AbstractInput::~AbstractInput()
 {
 	if (parentSystem != NULL) {
-		std::replace(parentSystem->inputs.begin(), parentSystem->inputs.end(),
-				const_cast<AbstractInput*>(this),
-				static_cast<AbstractInput*>(NULL));
+		replaceWithNull(parentSystem->inputs, this);
 	}
 }
 
@@ -43,7 +42,7 @@ inline bool System::Input<T>::valueDefined() const
 {
 	if (isConnected()) {
 		typename Output<T>::Value& outputValue = *(output->getValueObject());
-		outputValue.refreshValue();
+		outputValue.updateValue();
 		if (outputValue.value != NULL) {
 			return true;
 		}
@@ -62,7 +61,7 @@ throw(std::logic_error)
 		                       "Cannot retrieve value.");
 	}
 
-	// valueDefined() calls Output<T>::Value::refreshValue() for us
+	// valueDefined() calls Output<T>::Value::updateValue() for us
 	if ( !valueDefined() ) {
 		throw std::logic_error("(systems::System::Input::getValue): "
 		                          "The value of the associated output is "

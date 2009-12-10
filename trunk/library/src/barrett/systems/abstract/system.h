@@ -35,12 +35,15 @@
 #include <stdexcept>
 #include <list>
 #include <vector>
-#include <string>
+
 #include "../../detail/ca_macro.h"
 
 
 namespace barrett {
 namespace systems {
+
+
+class ExecutionManager;
 
 
 /** An abstract class that encapsulates a chunk of functionality and its various inputs and outputs.
@@ -383,7 +386,7 @@ public:
 			void undelegate();
 
 		protected:
-			void refreshValue();
+			void updateValue();
 
 			Output<T>& parentOutput;
 			Value* delegate;
@@ -442,11 +445,18 @@ public:
 		DISALLOW_COPY_AND_ASSIGN(Output);
 	};
 
-	System() :
-		inputs(), outputValues() {}
+
+	System();
 	virtual ~System();
 
+	bool isExecutionManaged();
+	void setExecutionManager(ExecutionManager* newEm);
+
+	static ExecutionManager* defaultExecutionManager;
+
 protected:
+	virtual void update();
+
 	/** Tests if the System's Inputs are in a valid state.
 	 *
 	 * This function is used as a gate to control the execution of the operate() function. The default behavior is to return \c true only if all of a System's
@@ -478,6 +488,10 @@ protected:
 private:
 	mutable std::vector<AbstractInput*> inputs;
 	mutable std::vector<AbstractOutput::AbstractValue*> outputValues;
+
+	ExecutionManager* executionManager;
+
+	friend class ExecutionManager;
 
 	DISALLOW_COPY_AND_ASSIGN(System);
 };

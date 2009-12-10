@@ -10,7 +10,7 @@
 #include <list>
 #include <stdexcept>
 
-#include "../../detail/purge.h"
+#include "../../detail/stl_utils.h"
 #include "../abstract/system.h"
 #include "../helpers.h"
 #include "../abstract/conversion.h"
