@@ -1,18 +1,32 @@
 /*
- * purge.h
+ * stl_utils.h
  *
  *  Created on: Oct 5, 2009
  *      Author: dc
  */
 
-#ifndef PURGE_H_
-#define PURGE_H_
+#ifndef STL_UTILS_H_
+#define STL_UTILS_H_
+
+
+#include <algorithm>
+
+
+namespace barrett {
+
+
+template<typename Container>
+inline void replaceWithNull(Container& container, typename Container::const_reference value)
+{
+	std::replace(container.begin(), container.end(),
+			const_cast<typename Container::value_type&>(value),
+			static_cast<typename Container::value_type>(NULL));
+}
+
 
 // Delete pointers in an STL sequence container.
 //
 // Code stolen from Thinking in C++, 2nd Ed., Vol. 2, p.534
-
-#include <algorithm>
 
 template<class Seq> void purge(Seq& c) {  //NOLINT
 	typename Seq::iterator i;
@@ -31,4 +45,8 @@ template<class InpIt> void purge(InpIt begin, InpIt end) {
 	}
 }
 
-#endif /* PURGE_H_ */
+
+}
+
+
+#endif /* STL_UTILS_H_ */

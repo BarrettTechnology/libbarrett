@@ -35,6 +35,7 @@
 
 // other -- these operate on Systems, but are not Systems themselves
 #include "systems/helpers.h"
+#include "systems/manual_execution_manager.h"
 #include "systems/converter.h"
 #include "systems/io_conversion.h"
 

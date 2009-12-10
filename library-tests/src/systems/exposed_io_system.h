@@ -69,7 +69,7 @@ void checkConnected(ExposedIOSystem<T>* outSys,
 	outSys->operateCalled = false;
 	outSys->setOutputValue(value);
 
-	// cause a Output<>::Value::refreshValue() call
+	// cause a Output<>::Value::updateValue() call
 	EXPECT_TRUE(inSys.inputValueDefined()) << "input value undefined";
 	EXPECT_TRUE(outSys->operateCalled) << "System.operate() wasn't called";
 	EXPECT_EQ(value, inSys.getInputValue()) << "input has the wrong value";
@@ -82,7 +82,7 @@ void checkNotConnected(ExposedIOSystem<T>* outSys,
 {
 	inSys.operateCalled = false;
 	outSys->setOutputValue(value);
-	inSys.inputValueDefined();  // cause a Output<>::Value::refreshValue() call
+	inSys.inputValueDefined();  // cause a Output<>::Value::updateValue() call
 
 	EXPECT_FALSE(inSys.operateCalled) << "System.operate() was called";
 }
