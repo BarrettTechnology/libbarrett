@@ -36,11 +36,15 @@ inline void ExecutionManager::stopManaging(System* sys) {
 }
 
 
-inline void ExecutionManager::resetExecutionCycle() {
-	updatedSystems.clear();
+inline void ExecutionManager::runExecutionCycle() {
+	resetExecutionCycle();
+	update();
 }
 
 
+inline void ExecutionManager::resetExecutionCycle() {
+	updatedSystems.clear();
+}
 
 inline void ExecutionManager::update() {
 	update(alwaysUpdatedSystems);
