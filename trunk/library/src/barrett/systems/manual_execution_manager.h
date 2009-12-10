@@ -23,6 +23,7 @@ public:
 		ExecutionManager() {}
 	virtual ~ManualExecutionManager() {}
 
+	using ExecutionManager::runExecutionCycle;
 	using ExecutionManager::resetExecutionCycle;
 	using ExecutionManager::update;
 

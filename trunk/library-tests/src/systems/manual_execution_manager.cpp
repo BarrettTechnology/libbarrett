@@ -46,14 +46,14 @@ TEST_F(ManualExecutionManagerTest, StartManaging) {
 	ExposedIOSystem<double> eios;
 	EXPECT_FALSE(eios.isExecutionManaged());
 
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_FALSE(eios.operateCalled);
 
 	mem.startManaging(&eios, true);
 	EXPECT_TRUE(eios.isExecutionManaged());
 	EXPECT_EQ(&mem, eios.getExecutionManager());
 
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_TRUE(eios.operateCalled);
 }
 
@@ -61,7 +61,7 @@ TEST_F(ManualExecutionManagerTest, StopManaging) {
 	ExposedIOSystem<double> eios;
 	EXPECT_TRUE(eios.isExecutionManaged());
 
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_TRUE(eios.operateCalled);
 
 	mem.stopManaging(&eios);
@@ -69,7 +69,7 @@ TEST_F(ManualExecutionManagerTest, StopManaging) {
 	EXPECT_EQ(NULL, eios.getExecutionManager());
 
 	eios.operateCalled = false;
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_FALSE(eios.operateCalled);
 }
 
@@ -77,15 +77,14 @@ TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
 	ExposedIOSystem<double> eios;
 	EXPECT_TRUE(eios.isExecutionManaged());
 
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_TRUE(eios.operateCalled);
 
 	eios.operateCalled = false;
 	mem.update();
 	EXPECT_FALSE(eios.operateCalled);
 
-	mem.resetExecutionCycle();
-	mem.update();
+	mem.runExecutionCycle();
 	EXPECT_TRUE(eios.operateCalled);
 }
 

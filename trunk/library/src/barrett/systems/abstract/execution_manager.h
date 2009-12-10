@@ -32,8 +32,9 @@ public:
 	virtual void stopManaging(System* sys);
 
 protected:
-	void resetExecutionCycle();
+	void runExecutionCycle();
 
+	void resetExecutionCycle();
 	void update();
 	template<template<typename T, typename = std::allocator<T> > class Container>
 	void update(Container<System*> systems);
