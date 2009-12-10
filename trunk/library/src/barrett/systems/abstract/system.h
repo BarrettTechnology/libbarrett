@@ -446,11 +446,12 @@ public:
 	};
 
 
-	System();
+	explicit System(bool updateEveryExecutionCycle = false);
 	virtual ~System();
 
-	bool isExecutionManaged();
+	bool isExecutionManaged() const;
 	void setExecutionManager(ExecutionManager* newEm);
+	ExecutionManager* getExecutionManager() const;
 
 	static ExecutionManager* defaultExecutionManager;
 
@@ -485,11 +486,14 @@ protected:
 
 	virtual void invalidateOutputs();
 
+	virtual bool updateEveryExecutionCycle();
+
 private:
 	mutable std::vector<AbstractInput*> inputs;
 	mutable std::vector<AbstractOutput::AbstractValue*> outputValues;
 
 	ExecutionManager* executionManager;
+	bool alwaysUpdate;
 
 	friend class ExecutionManager;
 

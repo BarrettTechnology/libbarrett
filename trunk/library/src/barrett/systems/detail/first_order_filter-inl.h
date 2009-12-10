@@ -14,8 +14,8 @@ namespace systems {
 
 
 template<typename T>
-FirstOrderFilter<T>::FirstOrderFilter() :
-	SingleIO<T, T>(),
+FirstOrderFilter<T>::FirstOrderFilter(bool updateEveryExecutionCycle) :
+	SingleIO<T, T>(updateEveryExecutionCycle),
 	a(), b(), c(), T_s(),
 	c1(), c2(), c3(),
 	y_0(), y_1(), x_0(), x_1() {}

@@ -31,7 +31,8 @@ protected:	typename Output<OutputType>::Value* controlOutputValue;
 
 
 public:
-	Controller() :
+	explicit Controller(bool updateEveryExecutionCycle = false) :
+		System(updateEveryExecutionCycle),
 		referenceInput(this),
 		feedbackInput(this),
 		controlOutput(this, &controlOutputValue) {}

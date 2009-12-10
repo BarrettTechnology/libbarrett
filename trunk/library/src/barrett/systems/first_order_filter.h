@@ -31,7 +31,7 @@ public:
 //	};
 
 
-	FirstOrderFilter();
+	FirstOrderFilter(bool updateEveryExecutionCycle = false);
 
 	void setSamplePeriod(double timeStep);
 	void setLowPass(T omega_p, T dcGain);

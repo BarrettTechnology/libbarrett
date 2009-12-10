@@ -55,6 +55,7 @@ namespace barrett {
 
 template<size_t DOF>
 Wam<DOF>::Wam() :
+	System(true),
 	input(this), jpOutput(this, &jpOutputValue),
 	jvOutput(this, &jvOutputValue), operateCount(), wam(NULL), wamLocal(NULL)
 {

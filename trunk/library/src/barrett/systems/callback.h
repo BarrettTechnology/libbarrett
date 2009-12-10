@@ -24,12 +24,8 @@ class Callback : public SingleIO<InputType, OutputType> {
 public:
 	typedef OutputType (*callback_type)(const InputType&);
 
-	explicit Callback(callback_type operateCallback) :
-		SingleIO<InputType, OutputType>(), callback(operateCallback) {}
-	Callback(callback_type operateCallback,
-			const OutputType& initialOutputValue) :
-		SingleIO<InputType, OutputType>(initialOutputValue),
-		callback(operateCallback) {}
+	explicit Callback(callback_type operateCallback, bool updateEveryExecutionCycle = false) :
+		SingleIO<InputType, OutputType>(updateEveryExecutionCycle), callback(operateCallback) {}
 	virtual ~Callback() {}
 
 protected:
