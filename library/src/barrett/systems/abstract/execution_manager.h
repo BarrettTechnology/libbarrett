@@ -22,6 +22,7 @@ class System;
 
 // TODO(dc): prevent Systems managed by different EMs from being connected
 
+// this isn't technically abstract, but it doesn't have all the elements of a useful interface either...
 class ExecutionManager {
 public:
 	ExecutionManager() :

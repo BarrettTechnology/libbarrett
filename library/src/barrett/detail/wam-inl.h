@@ -62,9 +62,6 @@ Wam<DOF>::Wam() :
 	// initialize syslog
 	openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
 
-	// lock memory
-	mlockall(MCL_CURRENT | MCL_FUTURE);
-
 	// open the WAM
 	bt_wam_create(&wam, "wamg");
 	// TODO(dc): verify that the DOF matches

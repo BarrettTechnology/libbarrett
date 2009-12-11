@@ -29,6 +29,19 @@ void waitForEnter() {
 }
 
 int main() {
+	systems::RealTimeExecutionManager rtem;
+	systems::System::defaultExecutionManager = &rtem;
+
+	systems::Constant<int> five(5);
+	systems::PrintToStream<int> pts("Five: ");
+
+	systems::connect(five.output, pts.input);
+
+	rtem.start();
+
+	usleep(3000000);
+
+#if 0
 	installExceptionHandler();  // give us pretty stack traces when things die
 
 	units::Array<DOF> tmp;
@@ -93,5 +106,6 @@ int main() {
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
 
+#endif
 	return 0;
 }
