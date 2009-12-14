@@ -29,36 +29,50 @@ void waitForEnter() {
 }
 
 int main() {
-	systems::RealTimeExecutionManager rtem;
-	systems::System::defaultExecutionManager = &rtem;
+//	systems::RealTimeExecutionManager rtem;
+//	systems::System::defaultExecutionManager = &rtem;
+//
+//	systems::Constant<int> five(5);
+//	systems::PrintToStream<int> pts("Five: ");
+//
+//	systems::connect(five.output, pts.input);
+//
+//	rtem.start();
+//
+//	usleep(3000000);
 
-	systems::Constant<int> five(5);
-	systems::PrintToStream<int> pts("Five: ");
 
-	systems::connect(five.output, pts.input);
-
-	rtem.start();
-
-	usleep(3000000);
-
-#if 0
+//#if 0
 	installExceptionHandler();  // give us pretty stack traces when things die
 
 	units::Array<DOF> tmp;
+
+	systems::RealTimeExecutionManager rtem;
+	systems::System::defaultExecutionManager = &rtem;
+
 
 	Wam<DOF> wam;
 
 	systems::PIDController<Wam<DOF>::jp_type>* pid =
 			new systems::PIDController<Wam<DOF>::jp_type>();
 
-	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
+	tmp << 900, 2500, 600, 500, 40, 20, 5;
 	pid->setKp(tmp);
+	tmp << 2.5, 5, 2.5, 0.5, 0, 0, 0;
+	pid->setKi(tmp);
+	tmp << 2, 2, 0.5, 0.8, 0.8, 0.1, 0.1;
+	pid->setKd(tmp);
+	tmp << 25.0, 20.0, 15.0, 15.0, 5, 5, 5;
+	pid->setControlSignalLimit(tmp);
+
+//	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
+//	pid->setKp(tmp);
 //	tmp << 100, 0, 0, 0, 0.0, 0.0, 0.0;
 //	pid->setKi(tmp);
 //	tmp << 5.0, 5.0, 5.0, 5.0, 0.0, 0.0, 0.0;
 //	pid->setIntegratorLimit(tmp);
-	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
-	pid->setControlSignalLimit(tmp);
+//	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
+//	pid->setControlSignalLimit(tmp);
 
 	systems::connect(wam.jpOutput, pid->feedbackInput);
 
@@ -77,6 +91,7 @@ int main() {
 //	systems::PrintToStream<Wam<DOF>::jt_type> pts("JT: ");
 //	systems::connect(supervisoryController.output, pts.input);
 
+	rtem.start();
 	std::cout << wam.operateCount << std::endl;
 
 	std::cout << "Enter to gravity compensate.\n";
@@ -106,6 +121,6 @@ int main() {
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
 
-#endif
+//#endif
 	return 0;
 }

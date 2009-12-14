@@ -17,19 +17,21 @@ namespace barrett {
 namespace systems {
 
 
+// TODO(dc): test!
 // TODO(dc): check return codes for errors!
+
 
 namespace detail {
 extern "C" {
 
-void rtemEntry(void* cookie)
+void rtemEntryPoint(void* cookie)
 {
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
-	rt_task_set_periodic(NULL, TM_NOW, 1000000000);
-	rt_task_set_mode(0, T_WARNSW, NULL);
+	rt_task_set_periodic(NULL, TM_NOW, rtem->period);
+//	rt_task_set_mode(0, T_WARNSW, NULL);
 
-	for (size_t i = 0; i < 5; ++i) {
+	while (rtem->running) {
 		rt_task_wait_period(NULL);
 		rtem->runExecutionCycle();
 	}
@@ -39,26 +41,40 @@ void rtemEntry(void* cookie)
 }
 
 
-RealTimeExecutionManager::RealTimeExecutionManager() :
-	ExecutionManager(), task(NULL)
+RealTimeExecutionManager::RealTimeExecutionManager(unsigned long period_ns) :
+	ExecutionManager(), task(NULL), period(period_ns), running(false)
 {
 	// Avoids memory swapping for this program
 	mlockall(MCL_CURRENT|MCL_FUTURE);
-
-	task = new RT_TASK;
-	rt_task_create(task, "libbarrett::RealTimeExecutionManager", 0, 90, T_JOINABLE);
 }
 
 RealTimeExecutionManager::~RealTimeExecutionManager()
 {
+	if (isRunning()) {
+		stop();
+	}
+}
+
+
+void RealTimeExecutionManager::start() {
+	task = new RT_TASK;
+	rt_task_create(task, "RTEM", 0, 90, T_JOINABLE);
+
+	running = true;
+	rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
+}
+
+bool RealTimeExecutionManager::isRunning() {
+	return running;
+}
+
+void RealTimeExecutionManager::stop() {
+	running = false;
 	rt_task_join(task);
+
 	rt_task_delete(task);
 	delete task;
 	task = NULL;
-}
-
-void RealTimeExecutionManager::start() {
-	rt_task_start(task, &detail::rtemEntry, reinterpret_cast<void*>(this));
 }
 
 

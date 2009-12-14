@@ -27,7 +27,7 @@ namespace systems {
 namespace detail {
 extern "C" {
 
-void rtemEntry(void* cookie);
+void rtemEntryPoint(void* cookie);
 
 }
 }
@@ -35,16 +35,20 @@ void rtemEntry(void* cookie);
 
 class RealTimeExecutionManager : public ExecutionManager {
 public:
-	RealTimeExecutionManager();
+	explicit RealTimeExecutionManager(unsigned long period_ns = 2000000);
 	virtual ~RealTimeExecutionManager();
 
 	void start();
+	bool isRunning();
+	void stop();
 
 protected:
 	RT_TASK* task;
+	unsigned long period;
+	bool running;
 
 private:
-	friend void detail::rtemEntry(void* cookie);
+	friend void detail::rtemEntryPoint(void* cookie);
 
 	DISALLOW_COPY_AND_ASSIGN(RealTimeExecutionManager);
 };

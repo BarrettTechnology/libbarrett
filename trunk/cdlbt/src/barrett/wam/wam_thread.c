@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include <native/task.h>
+
 #include <barrett/detail/c_stacktrace.h>
 
 #include "wam_local.h"
@@ -101,7 +103,19 @@ void bt_wam_thread(struct bt_os_thread * thread)
    
    /* Note - the helper will now be destroyed for us,
     * and the create() function will return. */
-   
+
+   syslog(LOG_ERR, "about to sleep!");
+   bt_os_rt_set_mode_hard();
+   rt_task_suspend(NULL);
+   rt_task_sleep(1000000);
+//   while (!bt_os_thread_isdone(thread))
+//   {
+//	   rt_task_sleep(1000000000ul);
+//   }
+   syslog(LOG_ERR, "awake again.");
+   bt_os_rt_set_mode_hard();
+
+#if 0
    /* warn if we fall out of real time mode */
    signal(SIGXCPU, warn_on_switch_rt_mode);
 
@@ -225,6 +239,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
       /* Calculate timing statistics */
       bt_os_timestat_end(wam->ts);
    }
+#endif
    
 //   bt_os_rt_set_mode_hard();
    rt_wam_destroy(wam);
