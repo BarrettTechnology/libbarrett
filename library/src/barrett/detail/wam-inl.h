@@ -44,7 +44,9 @@
 
 #include <barrett/wam/wam.h>
 #include <barrett/wam/wam_local.h>
+#include <barrett/wambot/wambot_phys.h>
 
+#include "../detail/debug.h"
 #include "../units.h"
 #include "../systems/abstract/system.h"
 
@@ -55,9 +57,9 @@ namespace barrett {
 
 template<size_t DOF>
 Wam<DOF>::Wam() :
-	System(true),
+	System(),
 	input(this), jpOutput(this, &jpOutputValue),
-	jvOutput(this, &jvOutputValue), operateCount(), wam(NULL), wamLocal(NULL)
+	jvOutput(this, &jvOutputValue), operateCount(), jtSink(this), wam(NULL), wamLocal(NULL)
 {
 	// initialize syslog
 	openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
@@ -160,6 +162,60 @@ int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal)
 template<size_t DOF>
 void Wam<DOF>::readSensors()
 {
+	int err;
+	double time = 1e-9 * bt_os_rt_get_time();
+
+    /* Grab the current joint positions */
+    bt_wambot_update( wamLocal->wambot );
+
+    /* Evaluate kinematics
+     * NOTE: Should this be common for all refgens/controllers?
+     *       It's definitely needed for Barrett Dynamics,
+     *       but this is encapsulated in Controllers right now ... */
+    bt_kinematics_eval(wamLocal->kin, wamLocal->wambot->jposition, wamLocal->wambot->jvelocity);
+
+    /* Get the position from the current controller */
+    bt_control_get_position(wamLocal->con_active);
+
+    /* Zero the torque
+     * (this is here in case a refgen wants to tweak it,
+     * which really isn't what we should be doing ... */
+    gsl_vector_set_zero( wamLocal->wambot->jtorque );
+
+    /* If there's an active trajectory, grab the reference into the joint controller
+     * Note: this is a while loop for the case where the refgen is done,
+     *       and we move on to the next refgen. */
+    while (wamLocal->refgen_active && !wamLocal->teaching)
+    {
+       err = bt_refgen_eval( wamLocal->refgen_active,
+                             time - wamLocal->refgen_start_time,
+                             wamLocal->con_active->reference );
+
+       if (!err) break;
+
+       if (err == 1) /* finished */
+       {
+          if ( (wamLocal->refgen_active == wamLocal->refgen_tempmove)
+              && (wamLocal->refgen_loaded) )
+          {
+             wamLocal->refgen_start_time = time;
+             bt_refgen_start(wamLocal->refgen_loaded);
+             wamLocal->refgen_active = wamLocal->refgen_loaded;
+          }
+          else
+          {
+             wamLocal->refgen_active = 0;
+          }
+       }
+    }
+
+    /* Do the active controller */
+    bt_control_eval( wamLocal->con_active, wamLocal->wambot->jtorque, time );
+
+    /* Do gravity compensation (if flagged) */
+    if (wamLocal->gcomp) bt_calgrav_eval( wamLocal->grav, wamLocal->wambot->jtorque );
+
+
 	jp_type jp;
 	jv_type jv;
 
@@ -182,19 +238,26 @@ bool Wam<DOF>::inputsValid()
 template<size_t DOF>
 void Wam<DOF>::operate()
 {
-	if (!uglyFlag) {
-		return;
-	}
-	uglyFlag = false;
-	++operateCount;
-
-	if (this->input.valueDefined()) {
-		const jt_type& jt = this->input.getValue();
-		for (size_t i = 0; i< DOF; ++i) {
-			gsl_vector_set(wamLocal->jtorque, i,
-					gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
-		}
-	}
+//	++operateCount;
+	readSensors();
+//	if (!uglyFlag) {
+//		return;
+//	}
+//	uglyFlag = false;
+//	++operateCount;
+//
+//	if (this->input.valueDefined()) {
+//		const jt_type& jt = this->input.getValue();
+//		for (size_t i = 0; i< DOF; ++i) {
+//			gsl_vector_set(wamLocal->jtorque, i,
+//					gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
+//		}
+//	}
+//
+//
+//
+//    /* Apply the current joint torques */
+//    bt_wambot_setjtor( wamLocal->wambot );
 }
 
 template<size_t DOF>

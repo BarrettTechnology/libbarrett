@@ -33,6 +33,8 @@
 
 #include <libconfig.h>
 #include <syslog.h>
+#include <sys/mman.h>
+#include <native/task.h>
 
 /*#include "wam.h"*/
 #include "wam_local.h"
@@ -189,6 +191,7 @@ int bt_wam_local_create_cfg(struct bt_wam_local ** wamptr, char * wamname,
    
    /* TODO: FIX THIS! */
    /*wam->rt_thread = bt_os_thread_create(BT_OS_RT, "CONTRL", 90, rt_wam, (void *)helper);*/
+   mlockall(MCL_CURRENT|MCL_FUTURE);
    bt_os_thread_create(&wam->thread, BT_OS_RT, wam->name, 90, bt_wam_thread, (void *)helper);
    if (!wam->thread)
    {
@@ -220,7 +223,7 @@ int bt_wam_local_create_cfg(struct bt_wam_local ** wamptr, char * wamname,
 int bt_wam_local_destroy(struct bt_wam_local * wam)
 {  
    char lockfilename[WAMLOCKDIRLEN+WAMNAMELEN+1];
-   
+
    /* Tell the non-realtime thread to exit */
    if (wam->thread_nonrt)
    {
@@ -230,8 +233,9 @@ int bt_wam_local_destroy(struct bt_wam_local * wam)
    
    if (wam->thread)
    {
-      bt_os_thread_stop(wam->thread);
-      bt_os_thread_destroy(wam->thread);
+	  rt_task_resume(wam->thread->sys);
+//      bt_os_thread_stop(wam->thread);
+//      bt_os_thread_destroy(wam->thread);
    }
    
 #if 0

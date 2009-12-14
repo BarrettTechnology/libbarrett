@@ -152,14 +152,39 @@ public:
 	/// @endcond
 
 protected:
-	struct bt_wam* wam;
-	struct bt_wam_local* wamLocal;
+	class JTSink : public systems::System {
+	public:
+		JTSink(Wam<DOF>* wamPtr) :
+			systems::System(true), wam(wamPtr) {}
+		virtual ~JTSink() {}
+
+	protected:
+		virtual void operate() {
+			++(wam->operateCount);
+			if (wam->input.valueDefined()) {
+				const jt_type& jt = wam->input.getValue();
+				for (size_t i = 0; i < DOF; ++i) {
+					gsl_vector_set(wam->wamLocal->jtorque, i,
+							gsl_vector_get(wam->wamLocal->jtorque, i) + jt[i]);
+				}
+			}
+
+		    /* Apply the current joint torques */
+		    bt_wambot_setjtor( wam->wamLocal->wambot );
+		}
+
+		Wam<DOF>* wam;
+	} jtSink;
+	friend class JTSink;
 
 	virtual void readSensors();
 	virtual bool inputsValid();
 	virtual void operate();
 	virtual void invalidateOutputs();
 
+
+	struct bt_wam* wam;
+	struct bt_wam_local* wamLocal;
 
 	/// @cond DETAIL
 	// TODO(dc): can we make this private?
