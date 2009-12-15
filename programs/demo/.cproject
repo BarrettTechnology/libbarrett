@@ -26,6 +26,7 @@
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.293033227" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1781094856" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include/"/>
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.989754948" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
@@ -509,6 +510,7 @@
 <option id="gnu.cpp.compiler.exe.release.option.debugging.level.1906987264" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.346963173" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include/"/>
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.565256805" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>

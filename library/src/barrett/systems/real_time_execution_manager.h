@@ -12,6 +12,7 @@
 //#include <native/task.h>
 
 #include "../detail/ca_macro.h"
+#include "../threading/real_time_mutex.h"
 #include "./abstract/execution_manager.h"
 
 
@@ -45,7 +46,9 @@ public:
 protected:
 	RT_TASK* task;
 	unsigned long period;
-	bool running;
+	bool running, stopRunning;
+
+	threading::RealTimeMutex mutex;
 
 private:
 	friend void detail::rtemEntryPoint(void* cookie);

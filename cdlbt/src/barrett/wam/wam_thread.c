@@ -7,7 +7,7 @@
 
 #include <native/task.h>
 
-#include <barrett/detail/c_stacktrace.h>
+//#include <barrett/detail/c_stacktrace.h>
 
 #include "wam_local.h"
 
@@ -117,7 +117,7 @@ void bt_wam_thread(struct bt_os_thread * thread)
 
 #if 0
    /* warn if we fall out of real time mode */
-   signal(SIGXCPU, warn_on_switch_rt_mode);
+//   signal(SIGXCPU, warn_on_switch_rt_mode);
 
    /* OK, start the control loop ... */
    bt_os_rt_make_periodic(0.002,"CONTRL"); /* Note - only call this once */
@@ -250,12 +250,12 @@ void bt_wam_thread(struct bt_os_thread * thread)
    return;
 }
 
-static void warn_on_switch_rt_mode(int sig __attribute__((unused)))
-{
-	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
-	c_syslog_stacktrace();
-	fprintf(stderr, "WARNING: Switched out of RealTime. Stack-trace in syslog.\n");
-}
+//static void warn_on_switch_rt_mode(int sig __attribute__((unused)))
+//{
+//	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
+//	c_syslog_stacktrace();
+//	fprintf(stderr, "WARNING: Switched out of RealTime. Stack-trace in syslog.\n");
+//}
 
 /* realtime WAM initialization stuff */
 static int rt_wam_create(struct bt_wam_local * wam,
