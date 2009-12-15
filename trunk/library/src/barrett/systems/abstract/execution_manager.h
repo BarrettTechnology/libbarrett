@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../../detail/ca_macro.h"
+#include "../../threading/abstract/mutex.h"
 
 
 namespace barrett {
@@ -22,7 +23,7 @@ class System;
 
 // TODO(dc): prevent Systems managed by different EMs from being connected
 
-// this isn't technically abstract, but it doesn't have all the elements of a useful interface either...
+// this is only sort of abstract (the mutex mechanism), but it doesn't have all the elements of a useful interface either...
 class ExecutionManager {
 public:
 	ExecutionManager() :
@@ -31,6 +32,8 @@ public:
 
 	virtual void startManaging(System* sys, bool alwaysUpdate = false);
 	virtual void stopManaging(System* sys);
+
+//	virtual theading::Mutex& getMutex() = 0;
 
 protected:
 	void runExecutionCycle();

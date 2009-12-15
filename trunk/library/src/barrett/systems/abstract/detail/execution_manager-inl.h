@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../../../detail/stl_utils.h"
+#include "../../../threading/abstract/mutex.h"
 #include "../system.h"
 
 
@@ -17,6 +18,8 @@ namespace systems {
 
 
 inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
+//	boost::lock_guard<threading::Mutex> lg(getMutex());
+
 	if (sys->isExecutionManaged()) {
 		sys->executionManager->stopManaging(sys);
 	}
