@@ -17,8 +17,13 @@ namespace barrett {
 namespace systems {
 
 
+inline threading::Mutex& ExecutionManager::getMutex()
+{
+	return *mutex;
+}
+
 inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
-//	boost::lock_guard<threading::Mutex> lg(getMutex());
+	SCOPED_LOCK(getMutex());
 
 	if (sys->isExecutionManaged()) {
 		sys->executionManager->stopManaging(sys);
@@ -33,13 +38,18 @@ inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
 
 // this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
 inline void ExecutionManager::stopManaging(System* sys) {
+	SCOPED_LOCK(getMutex());
+
 	sys->executionManager = NULL;
+
 	replaceWithNull(managedSystems, sys);
 	replaceWithNull(alwaysUpdatedSystems, sys);
 }
 
 
 inline void ExecutionManager::runExecutionCycle() {
+	SCOPED_LOCK(getMutex());
+
 	resetExecutionCycle();
 	update();
 }
@@ -62,15 +72,6 @@ void ExecutionManager::update(Container<System*> systems) {
 		}
 	}
 }
-//	void update(std::vector<System*> systems) {
-//		std::vector<System*>::const_iterator i;
-//		for (i = systems.begin(); i != systems.end(); ++i) {
-//			if (*i != NULL) {
-//				update(*i);
-//			}
-//		}
-//	}
-
 
 inline void ExecutionManager::update(System* sys) {
 	sys->update();

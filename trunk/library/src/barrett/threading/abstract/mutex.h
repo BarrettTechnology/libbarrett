@@ -14,7 +14,7 @@
 
 
 #define SCOPED_LOCK(mutex)  \
-	boost::lock_guard<threading::Mutex> _barrett_lock_scope_lg(mutex)
+	::boost::lock_guard< ::barrett::threading::Mutex> _barrett_scoped_lock_lg(mutex)
 
 
 namespace barrett {

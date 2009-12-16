@@ -7,6 +7,7 @@
 
 
 #include "../../../detail/stl_utils.h"
+#include "../../../threading/abstract/mutex.h"
 
 
 namespace barrett {
@@ -14,7 +15,7 @@ namespace systems {
 
 
 inline System::AbstractOutput::AbstractValue::AbstractValue(System* parentSys) :
-			parentSystem(parentSys)
+	parentSystem(parentSys)
 {
 	parentSystem->outputValues.push_back(this);
 }
@@ -23,9 +24,6 @@ inline System::AbstractOutput::AbstractValue::~AbstractValue()
 {
 	if (parentSystem != NULL) {
 		replaceWithNull(parentSystem->outputValues, this);
-//		std::replace(parentSystem->outputValues.begin(), parentSystem->outputValues.end(),
-//				const_cast<AbstractValue*>(this),
-//				static_cast<AbstractValue*>(NULL));
 	}
 }
 

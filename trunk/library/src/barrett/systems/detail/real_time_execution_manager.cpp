@@ -14,6 +14,7 @@
 #include <native/task.h>
 
 #include "../../detail/stacktrace.h"
+#include "../../threading/real_time_mutex.h"
 #include "../abstract/execution_manager.h"
 #include "../real_time_execution_manager.h"
 
@@ -56,16 +57,19 @@ void warnOnSwitchToSecondaryMode(int)
 }
 
 
-RealTimeExecutionManager::RealTimeExecutionManager(unsigned long period_ns) :
+RealTimeExecutionManager::RealTimeExecutionManager(RTIME period_ns, int rt_priority) :
 	ExecutionManager(),
-	task(NULL), period(period_ns), running(false), stopRunning(false),
-	mutex()
+	task(NULL), period(period_ns), priority(rt_priority), running(false), stopRunning(false)
 {
 	// Avoids memory swapping for this program
 	mlockall(MCL_CURRENT|MCL_FUTURE);
 
 	// handler for warnings about falling out of real time mode
 	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
+
+	// install a more appropriate mutex
+	delete mutex;
+	mutex = new threading::RealTimeMutex;  // ~ExecutionManager() will delete this
 }
 
 RealTimeExecutionManager::~RealTimeExecutionManager()
@@ -77,9 +81,19 @@ RealTimeExecutionManager::~RealTimeExecutionManager()
 
 
 void RealTimeExecutionManager::start() {
-	task = new RT_TASK;
-	rt_task_create(task, "RTEM", 0, 90, T_JOINABLE);
-	rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
+	SCOPED_LOCK(getMutex());
+
+	if ( !isRunning() ) {
+		task = new RT_TASK;
+		rt_task_create(task, "RTEM", 0, priority, T_JOINABLE);
+		rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
+
+		// block until the thread starts reporting its new state
+		while ( !isRunning() ) {
+			rt_task_sleep(period/10);
+		}
+	}
+	// TODO(dc): else, throw an exception?
 }
 
 bool RealTimeExecutionManager::isRunning() {

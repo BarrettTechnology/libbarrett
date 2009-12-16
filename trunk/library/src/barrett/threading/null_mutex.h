@@ -17,6 +17,7 @@ namespace barrett {
 namespace threading {
 
 
+// provides no synchronization or mutual exclusion
 class NullMutex : public Mutex {
 public:
 	NullMutex() {}
