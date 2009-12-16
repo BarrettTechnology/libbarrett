@@ -13,6 +13,7 @@
 
 #include "../../detail/ca_macro.h"
 #include "../../threading/abstract/mutex.h"
+#include "../../threading/null_mutex.h"
 
 
 namespace barrett {
@@ -23,17 +24,17 @@ class System;
 
 // TODO(dc): prevent Systems managed by different EMs from being connected
 
-// this is only sort of abstract (the mutex mechanism), but it doesn't have all the elements of a useful interface either...
+// this isn't technically abstract, but neither does it have all the elements of a useful interface...
 class ExecutionManager {
 public:
 	ExecutionManager() :
-		managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
+		mutex(new threading::NullMutex), managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
 	virtual ~ExecutionManager();
 
 	virtual void startManaging(System* sys, bool alwaysUpdate = false);
 	virtual void stopManaging(System* sys);
 
-//	virtual theading::Mutex& getMutex() = 0;
+	virtual threading::Mutex& getMutex();
 
 protected:
 	void runExecutionCycle();
@@ -41,9 +42,11 @@ protected:
 	void resetExecutionCycle();
 	void update();
 	template<template<typename T, typename = std::allocator<T> > class Container>
-	void update(Container<System*> systems);
+		void update(Container<System*> systems);
 	void update(System* sys);
 	virtual bool updateNeeded(System* sys);
+
+	threading::Mutex* mutex;
 
 	std::vector<System*> managedSystems;
 	std::vector<System*> alwaysUpdatedSystems;

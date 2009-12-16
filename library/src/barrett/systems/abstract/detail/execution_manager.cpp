@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "../../../threading/abstract/mutex.h"
 #include "../system.h"
 #include "../execution_manager.h"
 
@@ -28,6 +29,8 @@ ExecutionManager::~ExecutionManager() {
 			(*i)->setExecutionManager(NULL);
 		}
 	}
+
+	delete mutex;
 }
 
 

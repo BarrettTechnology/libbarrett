@@ -15,7 +15,7 @@ namespace barrett {
 namespace systems {
 
 
-// the compiler requires a definition for a dtor, even if it's pure virtual
+// the compiler requires a definition for a dtor, even if it's "pure" virtual
 inline System::AbstractOutput::~AbstractOutput() { }
 
 

@@ -20,17 +20,17 @@
 using namespace barrett;
 
 
-//#include <native/task.h>
-//#include <barrett/threading/real_time_mutex.h>
-//
-//threading::RealTimeMutex rtm;
-//
-//
-//int blah(const int& ns) {
-//	SCOPED_LOCK(rtm);
-//	rt_task_sleep(ns);
-//	return ns;
-//}
+#include <native/task.h>
+#include <barrett/threading/real_time_mutex.h>
+
+threading::RealTimeMutex rtm;
+
+
+int blah(const int& ns) {
+	SCOPED_LOCK(rtm);
+	rt_task_sleep(ns);
+	return ns;
+}
 
 
 const size_t DOF = 7;
@@ -42,30 +42,30 @@ void waitForEnter() {
 }
 
 int main() {
-//	systems::RealTimeExecutionManager rtem(1000000000);
-//	systems::System::defaultExecutionManager = &rtem;
-//
-//	systems::Constant<int> five(500000000);
-//	systems::Callback<int, int> blahSys(&blah);
-//	systems::PrintToStream<int> pts("Five: ");
-//
-//	systems::connect(five.output, blahSys.input);
-//	systems::connect(blahSys.output, pts.input);
-//
-//	rtem.start();
-//
-//	for (int i = 0; i < 25; ++i) {
-//		usleep(200000);
-//		rtm.lock();
-//		std::cerr << "locked\n";
-//		rtm.unlock();
-//	}
-//	rtem.stop();
-//	std::cerr << "stopped\n";
-//	usleep(2000000);
+	systems::RealTimeExecutionManager rtem(1000000000);
+	systems::System::defaultExecutionManager = &rtem;
+
+	systems::Constant<int> five(500000000);
+	systems::Callback<int, int> blahSys(&blah);
+	systems::PrintToStream<int> pts("Five: ");
+
+	systems::connect(five.output, blahSys.input);
+	systems::connect(blahSys.output, pts.input);
+
+	rtem.start();
+
+	for (int i = 0; i < 25; ++i) {
+		usleep(200000);
+		rtm.lock();
+		std::cerr << "locked\n";
+		rtm.unlock();
+	}
+	rtem.stop();
+	std::cerr << "stopped\n";
+	usleep(2000000);
 
 
-//#if 0
+#if 0
 	installExceptionHandler();  // give us pretty stack traces when things die
 
 	units::Array<DOF> tmp;
@@ -144,6 +144,6 @@ int main() {
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
 
-//#endif
+#endif
 	return 0;
 }

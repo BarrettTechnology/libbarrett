@@ -28,13 +28,13 @@ protected:
 
 
 TEST_F(ManualExecutionManagerTest, Dtor) {
-	systems::ManualExecutionManager* localMe = new systems::ManualExecutionManager();
-	systems::System::defaultExecutionManager = localMe;
+	systems::ManualExecutionManager* localMem = new systems::ManualExecutionManager();
+	systems::System::defaultExecutionManager = localMem;
 
 	ExposedIOSystem<double> eios;
 	EXPECT_TRUE(eios.isExecutionManaged());
 
-	delete localMe;
+	delete localMem;
 
 	EXPECT_EQ(NULL, systems::System::defaultExecutionManager);
 	EXPECT_FALSE(eios.isExecutionManaged());

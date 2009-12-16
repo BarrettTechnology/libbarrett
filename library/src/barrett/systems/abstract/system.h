@@ -93,6 +93,8 @@ class ExecutionManager;
  *   - make it easier for users to "enter the main-loop" rather than interacting solely with a limited asynchronous interface.
  *
  * The aim of this library is not to be a full-featured block diagraming solution. As such, things like internal cyclic dependencies are not supported.
+ *	SCOPED_LOCK(parentSystem->getMutex());
+
  *
  *
  * \section sec_examples Examples

@@ -20,6 +20,8 @@
 struct rt_task_placeholder;
 typedef struct rt_task_placeholder RT_TASK;
 
+typedef long long unsigned int RTIME;
+
 
 namespace barrett {
 namespace systems {
@@ -36,7 +38,7 @@ void rtemEntryPoint(void* cookie);
 
 class RealTimeExecutionManager : public ExecutionManager {
 public:
-	explicit RealTimeExecutionManager(unsigned long period_ns = 2000000);
+	explicit RealTimeExecutionManager(RTIME period_ns = 2000000, int rt_priority = 50);
 	virtual ~RealTimeExecutionManager();
 
 	void start();
@@ -45,10 +47,9 @@ public:
 
 protected:
 	RT_TASK* task;
-	unsigned long period;
+	RTIME period;
+	int priority;
 	bool running, stopRunning;
-
-	threading::RealTimeMutex mutex;
 
 private:
 	friend void detail::rtemEntryPoint(void* cookie);

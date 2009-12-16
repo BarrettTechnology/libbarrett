@@ -7,6 +7,7 @@
 
 
 #include <vector>
+
 #include "../execution_manager.h"
 
 
@@ -18,7 +19,8 @@ namespace systems {
 
 
 inline System::System(bool updateEveryExecutionCycle) :
-	inputs(), outputValues(), executionManager(NULL), alwaysUpdate(updateEveryExecutionCycle)
+	inputs(), outputValues(),
+	executionManager(NULL), alwaysUpdate(updateEveryExecutionCycle)
 {
 	setExecutionManager(System::defaultExecutionManager);
 }
@@ -47,7 +49,7 @@ inline ExecutionManager* System::getExecutionManager() const
 
 inline void System::update()
 {
-	if (!isExecutionManaged()  || executionManager->updateNeeded(this)) {
+	if (!isExecutionManaged()  ||  executionManager->updateNeeded(this)) {
 		if (inputsValid()) {
 			operate();
 		} else {
