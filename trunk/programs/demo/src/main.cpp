@@ -23,11 +23,8 @@ using namespace barrett;
 #include <native/task.h>
 #include <barrett/threading/real_time_mutex.h>
 
-threading::RealTimeMutex rtm;
-
 
 int blah(const int& ns) {
-	SCOPED_LOCK(rtm);
 	rt_task_sleep(ns);
 	return ns;
 }
@@ -56,9 +53,11 @@ int main() {
 
 	for (int i = 0; i < 25; ++i) {
 		usleep(200000);
-		rtm.lock();
+//		rtem.getMutex().lock();
+		systems::Constant<int> stuff(8);
+//		systems::forceConnect(five.output, blahSys.input);
 		std::cerr << "locked\n";
-		rtm.unlock();
+//		rtem.getMutex().unlock();
 	}
 	rtem.stop();
 	std::cerr << "stopped\n";

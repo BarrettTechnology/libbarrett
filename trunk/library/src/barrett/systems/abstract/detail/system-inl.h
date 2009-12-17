@@ -46,6 +46,20 @@ inline ExecutionManager* System::getExecutionManager() const
 	return executionManager;
 }
 
+inline void System::lockExecutionManager()
+{
+	if (isExecutionManaged()) {
+		executionManager->getMutex().lock();
+	}
+}
+
+inline void System::unlockExecutionManager()
+{
+	if (isExecutionManaged()) {
+		executionManager->getMutex().unlock();
+	}
+}
+
 
 inline void System::update()
 {

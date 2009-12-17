@@ -182,6 +182,9 @@ public:
 		 */
 		virtual bool valueDefined() const = 0;
 
+		void lockExecutionManager();
+		void unlockExecutionManager();
+
 	protected:
 		/// The System that should be notified when this Input's value changes.
 		System* parentSystem;
@@ -211,6 +214,9 @@ public:
 			 * @see Input::valueDefined()
 			 */
 			virtual void setValueUndefined() = 0;
+
+			void lockExecutionManager();
+			void unlockExecutionManager();
 
 		protected:
 			System* parentSystem;
@@ -454,6 +460,9 @@ public:
 	bool isExecutionManaged() const;
 	void setExecutionManager(ExecutionManager* newEm);
 	ExecutionManager* getExecutionManager() const;
+
+	void lockExecutionManager();
+	void unlockExecutionManager();
 
 	static ExecutionManager* defaultExecutionManager;
 
