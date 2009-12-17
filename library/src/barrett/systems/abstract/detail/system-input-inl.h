@@ -19,13 +19,35 @@ namespace systems {
 inline System::AbstractInput::AbstractInput(System* parentSys) :
 	parentSystem(parentSys)
 {
+	lockExecutionManager();
+
 	parentSystem->inputs.push_back(this);
+
+	unlockExecutionManager();
 }
 
 inline System::AbstractInput::~AbstractInput()
 {
+	lockExecutionManager();
+
 	if (parentSystem != NULL) {
 		replaceWithNull(parentSystem->inputs, this);
+	}
+
+	unlockExecutionManager();
+}
+
+inline void System::AbstractInput::lockExecutionManager()
+{
+	if (parentSystem != NULL) {
+		parentSystem->lockExecutionManager();
+	}
+}
+
+inline void System::AbstractInput::unlockExecutionManager()
+{
+	if (parentSystem != NULL) {
+		parentSystem->unlockExecutionManager();
 	}
 }
 

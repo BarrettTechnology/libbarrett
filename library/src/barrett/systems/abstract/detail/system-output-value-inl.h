@@ -17,13 +17,35 @@ namespace systems {
 inline System::AbstractOutput::AbstractValue::AbstractValue(System* parentSys) :
 	parentSystem(parentSys)
 {
+	lockExecutionManager();
+
 	parentSystem->outputValues.push_back(this);
+
+	unlockExecutionManager();
 }
 
 inline System::AbstractOutput::AbstractValue::~AbstractValue()
 {
+	lockExecutionManager();
+
 	if (parentSystem != NULL) {
 		replaceWithNull(parentSystem->outputValues, this);
+	}
+
+	unlockExecutionManager();
+}
+
+inline void System::AbstractOutput::AbstractValue::lockExecutionManager()
+{
+	if (parentSystem != NULL) {
+		parentSystem->lockExecutionManager();
+	}
+}
+
+inline void System::AbstractOutput::AbstractValue::unlockExecutionManager()
+{
+	if (parentSystem != NULL) {
+		parentSystem->unlockExecutionManager();
 	}
 }
 

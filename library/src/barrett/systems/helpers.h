@@ -54,6 +54,8 @@ template<typename T>
 void connect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
+	input.lockExecutionManager();
+
 	if (input.isConnected()) {
 		throw std::invalid_argument("(systems::connect): "
 		                            "Input is already connected to something. "
@@ -62,6 +64,8 @@ throw(std::invalid_argument)
 
 	input.output = &output;
 	output.inputs.push_back(&input);
+
+	input.unlockExecutionManager();
 }
 
 /** Takes a System::Input that is connected to a System::Output and reconnects
@@ -78,6 +82,8 @@ template<typename T>
 void reconnect(System::Output<T>& newOutput, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
+	input.lockExecutionManager();
+
 	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::reconnect): "
 		                            "Input is not connected to anything. "
@@ -90,6 +96,8 @@ throw(std::invalid_argument)
 	// connect new output
 	input.output = &newOutput;
 	newOutput.inputs.push_back(&input);
+
+	input.unlockExecutionManager();
 }
 
 /** Connects a System::Output to a System::Input, even if the System::Input is
@@ -104,6 +112,8 @@ throw(std::invalid_argument)
 template<typename T>
 void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 {
+	input.lockExecutionManager();
+
 	if (input.isConnected()) {
 		// disconnect old output
 		input.output->inputs.remove(&input);
@@ -111,6 +121,8 @@ void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT:
 
 	input.output = &output;
 	output.inputs.push_back(&input);
+
+	input.unlockExecutionManager();
 }
 
 /** Disconnects a System::Input from a System::Output.
@@ -122,6 +134,8 @@ template<typename T>
 void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
+	input.lockExecutionManager();
+
 	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::disconnect): "
 		                            "Input is not connected to anything. "
@@ -130,16 +144,22 @@ throw(std::invalid_argument)
 
 	input.output->inputs.remove(&input);
 	input.output = NULL;
+
+	input.unlockExecutionManager();
 }
 
 template<typename T>
 void disconnect(System::Output<T>& output)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 {
+	output.getValueObject()->lockExecutionManager();
+
 	typename std::list<System::Input<T>* >::iterator i;
 	for (i = output.inputs.begin(); i != output.inputs.end(); ++i) {
 		(*i)->output = NULL;
 	}
 	output.inputs.clear();
+
+	output.getValueObject()->unlockExecutionManager();
 }
 
 
