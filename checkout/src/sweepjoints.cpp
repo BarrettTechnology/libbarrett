@@ -15,7 +15,7 @@
 #include <barrett/detail/debug.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/math_utils.h>
+#include <barrett/math/utils.h>
 #include <barrett/wam.h>
 
 

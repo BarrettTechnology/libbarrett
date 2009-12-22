@@ -1,7 +1,7 @@
 /** Math utilities and operators for \c double and descendants of
  * barrett::units::Array.
  *
- * @file math_utils.h
+ * @file math/utils.h
  * @date Oct 26, 2009
  * @author Dan Cody
  */
@@ -120,7 +120,7 @@ template<typename T> T deadband(const T& x, const T& cutoff);
 
 
 // include template definitions
-#include "./detail/math_utils-inl.h"
+#include "./detail/utils-inl.h"
 
 
 #endif /* BARRETT_MATH_UTILS_H_ */

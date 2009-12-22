@@ -1,5 +1,5 @@
 /*
- * math_utils.cpp
+ * utils.cpp
  *
  *  Created on: Nov 10, 2009
  *      Author: dc
@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 #include <barrett/units.h>
-#include <barrett/math_utils.h>
+#include <barrett/math/utils.h>
 
 
 namespace {
