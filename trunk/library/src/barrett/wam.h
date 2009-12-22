@@ -33,6 +33,7 @@
 
 
 #include <map>
+#include <gsl/gsl_vector.h>
 
 #include <barrett/wam/wam.h>
 #include <barrett/wam/wam_local.h>
@@ -163,10 +164,7 @@ protected:
 			++(wam->operateCount);
 			if (wam->input.valueDefined()) {
 				const jt_type& jt = wam->input.getValue();
-				for (size_t i = 0; i < DOF; ++i) {
-					gsl_vector_set(wam->wamLocal->jtorque, i,
-							gsl_vector_get(wam->wamLocal->jtorque, i) + jt[i]);
-				}
+				gsl_vector_add(wam->wamLocal->jtorque, jt.asGslVector());
 			}
 
 		    /* Apply the current joint torques */

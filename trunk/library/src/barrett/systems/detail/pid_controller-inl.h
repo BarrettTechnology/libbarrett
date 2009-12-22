@@ -6,7 +6,7 @@
  */
 
 
-#include "../../math_utils.h"
+#include "../../math/utils.h"
 
 
 namespace barrett {

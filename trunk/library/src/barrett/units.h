@@ -76,7 +76,10 @@
 
 
 #include <iostream>
+#include <stdexcept>
+
 #include <boost/array.hpp>
+#include <gsl/gsl_vector.h>
 
 
 /// @cond DETAIL
@@ -87,9 +90,11 @@
 
 #define DECLARE_UNITS_IMPL_F(ClassName)  \
 		explicit ClassName(double d = 0.0) :  \
-				::barrett::units::Array<N>(d) {}  \
+			::barrett::units::Array<N>(d) {}  \
+		explicit ClassName(const gsl_vector* vec) :  \
+			::barrett::units::Array<N>(vec) {}  \
 		ClassName(const ::barrett::units::Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
-				::barrett::units::Array<N>(a) {}  \
+			::barrett::units::Array<N>(a) {}  \
 		using ::barrett::units::Array<N>::operator=;  \
 	}
 /// @endcond
@@ -100,7 +105,7 @@
  * The new type is a class that descends from barrett::units::Array. It has a
  * template parameter \c size_t \c N indicating how many \c doubles it holds.
  * It can be used as an argument to any of the arithmetic operators in units.h
- * and any of the applicable math utilities in math_utils.h.
+ * and any of the applicable math utilities in math/utils.h.
  *
  * The generated class is of the form:
  * \code
@@ -108,9 +113,11 @@
  * class ClassName : public ::barrett::units::Array<N> {
  * public:
  * 	explicit ClassName(double d = 0.0) :
- * 			::barrett::units::Array<N>(d) {}
+ * 		::barrett::units::Array<N>(d) {}
+ * 	explicit ClassName(const gsl_vector* vec) :
+ * 		::barrett::units::Array<N>(vec) {}
  * 	ClassName(const ::barrett::units::Array<N>& a) :
- * 			::barrett::units::Array<N>(a) {}
+ * 		::barrett::units::Array<N>(a) {}
  * 	using ::barrett::units::Array<N>::operator=;
  * };
  * \endcode
@@ -174,9 +181,11 @@
  * 	typedef ActuatorType<N> actuator_type;
  *
  * 	explicit ClassName(double d = 0.0) :
- * 			::barrett::units::Array<N>(d) {}
+ * 		::barrett::units::Array<N>(d) {}
+ * 	explicit ClassName(const gsl_vector* vec) :
+ * 		::barrett::units::Array<N>(vec) {}
  * 	ClassName(const ::barrett::units::Array<N>& a) :
- * 			::barrett::units::Array<N>(a) {}
+ * 		::barrett::units::Array<N>(a) {}
  * 	using ::barrett::units::Array<N>::operator=;
  * };
  * \endcode
@@ -235,6 +244,15 @@ public:
 	 * @param[in] d The initial value of the Array's elements.
 	 */
 	explicit Array(double d = 0.0);
+	explicit Array(const gsl_vector* vec);
+	~Array();
+
+
+	void copyTo(gsl_vector* vec) const throw(std::logic_error);
+	void copyFrom(const gsl_vector* vec) throw(std::logic_error);
+
+	gsl_vector* asGslVector();
+	const gsl_vector* asGslVector() const;
 
 
 	/** Tests for equality with the zero vector.
@@ -277,6 +295,10 @@ public:
 	Array& operator, (double d);
 
 	//@}
+
+protected:
+	void initGslVector();
+	gsl_vector gslVector;
 
 private:
 	mutable size_t explicitAssignmentIndex;

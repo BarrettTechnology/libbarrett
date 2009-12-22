@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <gsl/gsl_vector.h>
 
 #include <gtest/gtest.h>
 #include <barrett/units.h>
@@ -42,6 +43,66 @@ TYPED_TEST(ArrayTypedTest, DefaultCtor) {
 	}
 }
 
+TYPED_TEST(ArrayTypedTest, InitialValueCtor) {
+	TypeParam a(-487.9);
+
+	for (size_t i = 0; i < a.size(); ++i) {
+		EXPECT_EQ(-487.9, a[i]);
+	}
+}
+
+TYPED_TEST(ArrayTypedTest, GslVectorCtor) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE);
+	for (size_t i = 0; i < TypeParam::SIZE; ++i) {
+		gsl_vector_set(vec, i, i*0.1);
+	}
+
+	TypeParam a(vec);
+
+	for (size_t i = 0; i < a.size(); ++i) {
+		EXPECT_EQ(i*0.1, a[i]);
+	}
+}
+
+TYPED_TEST(ArrayTypedTest, CopyToGslVector) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE);
+	this->a << 5, 42.8, 37, -12, 1.4;
+
+	this->a.copyTo(vec);
+
+	for (size_t i = 0; i < this->a.size(); ++i) {
+		EXPECT_EQ(this->a[i], gsl_vector_get(vec, i));
+	}
+}
+
+TYPED_TEST(ArrayTypedTest, CopyFromGslVector) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE);
+	for (size_t i = 0; i < TypeParam::SIZE; ++i) {
+		gsl_vector_set(vec, i, i*0.1);
+	}
+
+	this->a.copyFrom(vec);
+
+	for (size_t i = 0; i < this->a.size(); ++i) {
+		EXPECT_EQ(i*0.1, this->a[i]);
+	}
+}
+
+TYPED_TEST(ArrayTypedTest, AsGslVector) {
+	gsl_vector* vec = this->a.asGslVector();
+
+	this->a << 5, 42.8, 37, -12, 1.4;
+	for (size_t i = 0; i < this->a.size(); ++i) {
+		EXPECT_EQ(this->a[i], gsl_vector_get(vec, i));
+	}
+
+	gsl_vector_set(vec, 2, 8.9);
+	EXPECT_EQ(8.9, this->a[2]);
+
+	this->a[4] = -3.2;
+	EXPECT_EQ(-3.2, gsl_vector_get(vec, 4));
+}
+
 TYPED_TEST(ArrayTypedTest, IsZero) {
 	this->a.assign(0.0);
 	EXPECT_TRUE(this->a.isZero());
@@ -51,14 +112,6 @@ TYPED_TEST(ArrayTypedTest, IsZero) {
 
 	this->a.assign(-5.8);
 	EXPECT_FALSE(this->a.isZero());
-}
-
-TYPED_TEST(ArrayTypedTest, InitialValueCtor) {
-	TypeParam a(-487.9);
-
-	for (size_t i = 0; i < a.size(); ++i) {
-		EXPECT_EQ(-487.9, a[i]);
-	}
 }
 
 TYPED_TEST(ArrayTypedTest, CopyFromTypeParam) {

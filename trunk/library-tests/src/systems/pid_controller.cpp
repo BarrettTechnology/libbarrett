@@ -87,7 +87,7 @@ TEST_F(PIDControllerTest, SetKd) {
 	size_t i = 0;
 	a.assign(i);
 	eios.setOutputValue(a);
-	EXPECT_EQ(i_type(0), eios.getInputValue());
+	EXPECT_EQ(i_type(0.0), eios.getInputValue());
 	for (i = 1; i < 10; ++i) {
 		a.assign(i);
 		eios.setOutputValue(a);

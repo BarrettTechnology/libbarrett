@@ -34,8 +34,12 @@
  */
 
 
+#include <stdexcept>
 #include <algorithm>
 #include <functional>
+#include <sstream>
+
+#include <gsl/gsl_vector.h>
 
 
 namespace barrett {
@@ -44,9 +48,70 @@ namespace units {
 
 template<size_t N>
 inline Array<N>::Array(double d) :
-	explicitAssignmentIndex()
+	gslVector(), explicitAssignmentIndex()
 {
+	initGslVector();
 	this->assign(d);
+}
+
+template<size_t N>
+inline Array<N>::Array(const gsl_vector* vec) :
+	gslVector(), explicitAssignmentIndex()
+{
+	initGslVector();
+	copyFrom(vec);
+}
+
+template<size_t N>
+inline Array<N>::~Array()
+{
+}
+
+
+template<size_t N>
+inline void Array<N>::copyTo(gsl_vector* vec) const
+throw(std::logic_error)
+{
+	if (vec->size != N) {
+		std::stringstream ss;
+		ss << "(units::Array<>::copyTo(gsl_vector*)): The size of the "
+				"gsl_vector must match the size of the Array. Expected size "
+				<< N << ", got size " << vec->size;
+		throw std::logic_error(ss.str());
+	}
+
+	for (size_t i = 0; i < N; ++i) {
+		gsl_vector_set(vec, i, this->operator[](i));
+	}
+}
+
+template<size_t N>
+inline void Array<N>::copyFrom(const gsl_vector* vec)
+throw(std::logic_error)
+{
+	if (vec->size != N) {
+		std::stringstream ss;
+		ss << "(units::Array<>::copyTo(gsl_vector*)): The size of the "
+				"gsl_vector must match the size of the Array. Expected size "
+				<< N << ", got size " << vec->size;
+		throw std::logic_error(ss.str());
+	}
+
+	for (size_t i = 0; i < N; ++i) {
+		this->operator[](i) = gsl_vector_get(vec, i);
+	}
+}
+
+template<size_t N>
+inline gsl_vector* Array<N>::asGslVector()
+{
+	return &(this->gslVector);
+}
+
+template<size_t N>
+inline const gsl_vector* Array<N>::asGslVector() const
+{
+	return &(this->gslVector);
 }
 
 template<size_t N>
@@ -86,6 +151,18 @@ inline Array<N>& Array<N>::operator, (double d)
 	this->at(++explicitAssignmentIndex) = d;
 	return *this;
 }
+
+// init the gsl_vector representation of the Array
+template<size_t N>
+inline void Array<N>::initGslVector()
+{
+	gslVector.size = N;
+	gslVector.stride = 1;
+	gslVector.data = this->c_array();
+	gslVector.block = 0;
+	gslVector.owner = 0;
+}
+
 
 
 namespace detail {

@@ -95,27 +95,13 @@ Wam<DOF>::~Wam()
 template<size_t DOF>
 units::JointPositions<DOF> Wam<DOF>::getJointPositions()
 {
-	jp_type jp;
-
-	// TODO(dc): make conversion to/from GSL vectors
-	for (size_t i = 0; i < DOF; ++i) {
-		jp[i] = gsl_vector_get(wamLocal->jposition, i);
-	}
-
-	return jp;
+	return jp_type(wamLocal->jposition);
 }
 
 template<size_t DOF>
 units::JointVelocities<DOF> Wam<DOF>::getJointVelocities()
 {
-	jv_type jv;
-
-	// TODO(dc): make conversion to/from GSL vectors
-	for (size_t i = 0; i < DOF; ++i) {
-		jv[i] = gsl_vector_get(wamLocal->jvelocity, i);
-	}
-
-	return jv;
+	return jv_type(wamLocal->jvelocity);
 }
 
 
@@ -215,18 +201,8 @@ void Wam<DOF>::readSensors()
     /* Do gravity compensation (if flagged) */
     if (wamLocal->gcomp) bt_calgrav_eval( wamLocal->grav, wamLocal->wambot->jtorque );
 
-
-	jp_type jp;
-	jv_type jv;
-
-	// TODO(dc): make conversion to/from GSL vectors
-	for (size_t i = 0; i < DOF; ++i) {
-		jp[i] = gsl_vector_get(wamLocal->jposition, i);
-		jv[i] = gsl_vector_get(wamLocal->jvelocity, i);
-	}
-
-	this->jpOutputValue->setValue(jp);
-	this->jvOutputValue->setValue(jv);
+	this->jpOutputValue->setValue(jp_type(wamLocal->jposition));
+	this->jvOutputValue->setValue(jv_type(wamLocal->jvelocity));
 }
 
 template<size_t DOF>
