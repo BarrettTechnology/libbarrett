@@ -64,6 +64,11 @@ TYPED_TEST(ArrayTypedTest, GslVectorCtor) {
 	}
 }
 
+TYPED_TEST(ArrayTypedTest, GslVectorCtorThrows) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
+	EXPECT_THROW(TypeParam a(vec), std::logic_error);
+}
+
 TYPED_TEST(ArrayTypedTest, CopyToGslVector) {
 	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE);
 	this->a << 5, 42.8, 37, -12, 1.4;
@@ -73,6 +78,11 @@ TYPED_TEST(ArrayTypedTest, CopyToGslVector) {
 	for (size_t i = 0; i < this->a.size(); ++i) {
 		EXPECT_EQ(this->a[i], gsl_vector_get(vec, i));
 	}
+}
+
+TYPED_TEST(ArrayTypedTest, CopyToGslVectorThrows) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
+	EXPECT_THROW(this->a.copyTo(vec), std::logic_error);
 }
 
 TYPED_TEST(ArrayTypedTest, CopyFromGslVector) {
@@ -86,6 +96,11 @@ TYPED_TEST(ArrayTypedTest, CopyFromGslVector) {
 	for (size_t i = 0; i < this->a.size(); ++i) {
 		EXPECT_EQ(i*0.1, this->a[i]);
 	}
+}
+
+TYPED_TEST(ArrayTypedTest, CopyFromGslVectorThrows) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
+	EXPECT_THROW(this->a.copyFrom(vec), std::logic_error);
 }
 
 TYPED_TEST(ArrayTypedTest, AsGslVector) {
