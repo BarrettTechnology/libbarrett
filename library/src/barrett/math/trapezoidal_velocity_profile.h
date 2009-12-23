@@ -30,6 +30,11 @@ public:
 
 	double eval(double t) const;
 
+	typedef double result_type;  ///< For use with boost::bind().
+	double operator () (double t) const {
+		return eval(t);
+	}
+
 protected:
 	double v, a, v_0, l;
 	struct bt_profile* impl;
