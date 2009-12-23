@@ -245,6 +245,7 @@ public:
 	 */
 	explicit Array(double d = 0.0);
 	explicit Array(const gsl_vector* vec);
+	Array(const Array& a);
 	~Array();
 
 

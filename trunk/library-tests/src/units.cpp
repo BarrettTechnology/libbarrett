@@ -64,6 +64,18 @@ TYPED_TEST(ArrayTypedTest, GslVectorCtor) {
 	}
 }
 
+TYPED_TEST(ArrayTypedTest, CopyCtor) {
+	TypeParam a(-487.9);
+	TypeParam b(a);
+
+	a.assign(2.0);
+
+	for (size_t i = 0; i < a.size(); ++i) {
+		EXPECT_EQ(2.0, a[i]);
+		EXPECT_EQ(-487.9, b[i]);
+	}
+}
+
 TYPED_TEST(ArrayTypedTest, GslVectorCtorThrows) {
 	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
 	EXPECT_THROW(TypeParam a(vec), std::logic_error);

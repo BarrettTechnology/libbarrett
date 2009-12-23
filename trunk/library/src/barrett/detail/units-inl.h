@@ -63,6 +63,15 @@ inline Array<N>::Array(const gsl_vector* vec) :
 }
 
 template<size_t N>
+inline Array<N>::Array(const Array& a) :
+	boost::array<double, N>(a), gslVector(a.gslVector),
+	explicitAssignmentIndex(a.explicitAssignmentIndex)
+{
+	initGslVector();
+}
+
+
+template<size_t N>
 inline Array<N>::~Array()
 {
 }

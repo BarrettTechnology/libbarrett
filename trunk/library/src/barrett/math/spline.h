@@ -10,18 +10,13 @@
 #define SPLINE_H_
 
 
+#include <vector>
 #include "../detail/ca_macro.h"
-//#include <barrett/spline/spline.h>
+#include <barrett/spline/spline.h>
 
 
 // forward declarations from <barrett/spline/spline.h>
 struct bt_spline;
-enum bt_spline_mode
-{
-   BT_SPLINE_MODE_ARCLEN, /* The spline uses computed arc-length */
-   BT_SPLINE_MODE_EXTERNAL /* The spline uses an external parameter */
-};
-
 
 
 namespace barrett {
@@ -31,11 +26,27 @@ namespace math {
 template<typename T>
 class Spline {
 public:
-	Spline() {}
+	struct Sample {
+		double x;
+		T point;
+	};
 
+	template<template<typename U, typename = std::allocator<U> > class Container>
+	Spline(const Container<Sample>& samples);
+	template<template<typename U, typename = std::allocator<U> > class Container>
+	Spline(const Container<T>& points);
+
+	~Spline();
+
+	double initialX();
+	double finalX();
+	double changeInX();
+
+	T eval(double x);
 
 protected:
 	struct bt_spline* impl;
+	double x_0;
 
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
@@ -45,6 +56,10 @@ private:
 
 }
 }
+
+
+// include template definitions
+#include "./detail/spline-inl.h"
 
 
 #endif /* SPLINE_H_ */
