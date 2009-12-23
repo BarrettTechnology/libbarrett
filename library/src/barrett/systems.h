@@ -56,6 +56,7 @@
 
 #include "systems/callback.h"
 #include "systems/spline_evaluator.h"
+#include "systems/trapezoidal_velocity_profile_evaluator.h"
 
 #include "systems/array_splitter.h"
 #include "systems/array_editor.h"

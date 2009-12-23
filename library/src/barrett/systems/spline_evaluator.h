@@ -23,6 +23,7 @@ class SplineEvaluator : public SingleIO<double, OutputType> {
 public:
 	explicit SplineEvaluator(const math::Spline<OutputType>& spline) :
 		SingleIO<double, OutputType>(), s(spline) {}
+	virtual ~SplineEvaluator() {}
 
 protected:
 	virtual void operate() {
