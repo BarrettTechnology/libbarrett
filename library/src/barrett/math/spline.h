@@ -38,11 +38,11 @@ public:
 
 	~Spline();
 
-	double initialX();
-	double finalX();
-	double changeInX();
+	double initialX() const;
+	double finalX() const;
+	double changeInX() const;
 
-	T eval(double x);
+	T eval(double x) const;
 
 protected:
 	struct bt_spline* impl;

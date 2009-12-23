@@ -23,7 +23,7 @@ Spline<T>::Spline(const Container<Spline<T>::Sample>& samples) :
 
 	bt_spline_create(&impl, samples[0].point.asGslVector(), BT_SPLINE_MODE_EXTERNAL);
 
-	typename Container<Spline<T>::Sample>::const_iterator i;
+	typename Container<typename Spline<T>::Sample>::const_iterator i;
 	for (i = ++(samples.begin()); i != samples.end(); ++i) {
 		bt_spline_add(impl, (*i).point.asGslVector(), (*i).x - x_0);
 	}
@@ -69,26 +69,26 @@ Spline<T>::~Spline()
 
 
 template<typename T>
-inline double Spline<T>::initialX()
+inline double Spline<T>::initialX() const
 {
 	return x_0;
 }
 
 template<typename T>
-inline double Spline<T>::finalX()
+inline double Spline<T>::finalX() const
 {
 	return x_0 + impl->length;
 }
 
 template<typename T>
-inline double Spline<T>::changeInX()
+inline double Spline<T>::changeInX() const
 {
 	return impl->length;
 }
 
 
 template<typename T>
-inline T Spline<T>::eval(double x)
+inline T Spline<T>::eval(double x) const
 {
 	T result;
 	bt_spline_get(impl, result.asGslVector(), x - x_0);

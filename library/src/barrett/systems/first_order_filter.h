@@ -22,16 +22,7 @@ namespace systems {
 template<typename T>
 class FirstOrderFilter : public SingleIO<T, T> {
 public:
-//	class LowPass : public FirstOrderFilter {
-//	public:
-//		LowPass(T cornerFreq, T dcGain, double samplePeriod) :
-//			FirstOrderFilter(T(), cornerFreq*dcGain, cornerFreq, samplePeriod) {}
-//	private:
-//		DISALLOW_COPY_AND_ASSIGN(LowPass);
-//	};
-
-
-	FirstOrderFilter(bool updateEveryExecutionCycle = false);
+	explicit FirstOrderFilter(bool updateEveryExecutionCycle = false);
 
 	void setSamplePeriod(double timeStep);
 	void setLowPass(T omega_p, T dcGain);

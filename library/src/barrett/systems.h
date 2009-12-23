@@ -55,6 +55,7 @@
 #include "systems/first_order_filter.h"
 
 #include "systems/callback.h"
+#include "systems/spline_evaluator.h"
 
 #include "systems/array_splitter.h"
 #include "systems/array_editor.h"
