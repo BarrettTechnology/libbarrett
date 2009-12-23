@@ -43,6 +43,8 @@ void rtemEntryPoint(void* cookie)
 		rtem->runExecutionCycle();
 	}
 	rtem->running = false;
+
+	rt_task_set_mode(T_WARNSW, 0, NULL);
 }
 
 void warnOnSwitchToSecondaryMode(int)

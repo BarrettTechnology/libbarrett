@@ -14,7 +14,7 @@
 #include <barrett/math/spline.h>
 
 
-// TODO(dc): actually test this
+// TODO(dc): these tests could be more thorough
 
 
 namespace {

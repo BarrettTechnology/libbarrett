@@ -31,6 +31,7 @@ using namespace barrett;
 
 
 const size_t DOF = 7;
+const double T_s = 0.002;
 
 
 void waitForEnter() {
@@ -80,21 +81,12 @@ int main() {
 
 	tmp << 900, 2500, 600, 500, 40, 20, 5;
 	pid->setKp(tmp);
-	tmp << 2.5, 5, 2.5, 0.5, 0, 0, 0;
-	pid->setKi(tmp);
+//	tmp << 2.5, 5, 2.5, 0.5, 0, 0, 0;
+//	pid->setKi(tmp);
 	tmp << 2, 2, 0.5, 0.8, 0.8, 0.1, 0.1;
 	pid->setKd(tmp);
 	tmp << 25.0, 20.0, 15.0, 15.0, 5, 5, 5;
 	pid->setControlSignalLimit(tmp);
-
-//	tmp << 3e3, 1e3, 1e2, 1e2, 0.0, 0.0, 0.0;
-//	pid->setKp(tmp);
-//	tmp << 100, 0, 0, 0, 0.0, 0.0, 0.0;
-//	pid->setKi(tmp);
-//	tmp << 5.0, 5.0, 5.0, 5.0, 0.0, 0.0, 0.0;
-//	pid->setIntegratorLimit(tmp);
-//	tmp << 25.0, 20.0, 15.0, 15.0, 0.0, 0.0, 0.0;
-//	pid->setControlSignalLimit(tmp);
 
 	systems::connect(wam.jpOutput, pid->feedbackInput);
 
@@ -108,10 +100,6 @@ int main() {
 
 	Wam<DOF>::jp_type setPoint;
 	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
-	systems::Constant<Wam<DOF>::jp_type> point(setPoint);
-
-//	systems::PrintToStream<Wam<DOF>::jt_type> pts("JT: ");
-//	systems::connect(supervisoryController.output, pts.input);
 
 	rtem.start();
 	std::cout << wam.operateCount << std::endl;
@@ -126,22 +114,37 @@ int main() {
 
 	std::cout << "Enter to move to set point.\n";
 	waitForEnter();
-//	systems::reconnect(point.output, pid.referenceInput);
-	supervisoryController.connectInputTo(point.output);
+
+	// build spline to setPoint
+	std::vector<Wam<DOF>::jp_type> vec;
+	vec.push_back(wam.getJointPositions());
+	vec.push_back(setPoint);
+	math::Spline<Wam<DOF>::jp_type> spline(vec);
+	systems::SplineEvaluator<Wam<DOF>::jp_type> seSys(spline);
+
+	systems::Constant<double> velocity(0.25);
+	systems::FirstOrderFilter<double> integral(true);
+	integral.setSamplePeriod(T_s);
+	integral.setIntegrator(1.0);
+
+	systems::connect(velocity.output, integral.input);
+	systems::connect(integral.output, seSys.input);
+	supervisoryController.connectInputTo(seSys.output);
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
-//	systems::reconnect(wam.output, pid.referenceInput);
 	supervisoryController.connectInputTo(wam.jpOutput);
 	wam.moveHome();
+	while ( !wam.moveIsDone() ) {
+		usleep(static_cast<int>(1e5));
+	}
 
-	std::cout << "Enter to idle.\n";
-	waitForEnter();
 	wam.gravityCompensate(false);
 	wam.idle();
 
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
+	rtem.stop();
 
 //#endif
 	return 0;
