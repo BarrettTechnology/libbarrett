@@ -44,6 +44,11 @@ public:
 
 	T eval(double x) const;
 
+	typedef T result_type;  ///< For use with boost::bind().
+	T operator () (double x) const {
+		return eval(x);
+	}
+
 protected:
 	struct bt_spline* impl;
 	double x_0;

@@ -10,14 +10,20 @@
 
 #include <unistd.h>  // usleep
 
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
+
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
+#include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/wam.h>
 
 
 using namespace barrett;
+using boost::bind;
+using boost::ref;
 
 
 //#include <native/task.h>
@@ -124,17 +130,15 @@ int main() {
 
 	systems::Constant<double> one(1.0);
 	systems::FirstOrderFilter<double> integral(true);
-	systems::TrapezoidalVelocityProfileEvaluator peSys(profile);
-	systems::SplineEvaluator<Wam<DOF>::jp_type> seSys(spline);
+	systems::Callback<double, Wam<DOF>::jp_type> trajectory(bind(ref(spline), bind(ref(profile), _1)));
 
 	integral.setSamplePeriod(T_s);
 	integral.setIntegrator(1.0);
 
 	systems::connect(one.output, integral.input);
 	systems::System::Output<double>& time = integral.output;
-	systems::connect(time, peSys.input);
-	systems::connect(peSys.output, seSys.input);
-	supervisoryController.connectInputTo(seSys.output);
+	systems::connect(time, trajectory.input);
+	supervisoryController.connectInputTo(trajectory.output);
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
