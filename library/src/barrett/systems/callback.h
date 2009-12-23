@@ -9,6 +9,7 @@
 #define CALLBACK_H_
 
 
+#include <boost/function.hpp>
 #include "../detail/ca_macro.h"
 #include "./abstract/single_io.h"
 
@@ -17,12 +18,10 @@ namespace barrett {
 namespace systems {
 
 
-// TODO(dc): generalize to take functors
-
 template<typename InputType, typename OutputType = InputType>
 class Callback : public SingleIO<InputType, OutputType> {
 public:
-	typedef OutputType (*callback_type)(const InputType&);
+	typedef boost::function<OutputType (const InputType&)> callback_type;
 
 	explicit Callback(callback_type operateCallback, bool updateEveryExecutionCycle = false) :
 		SingleIO<InputType, OutputType>(updateEveryExecutionCycle), callback(operateCallback) {}
