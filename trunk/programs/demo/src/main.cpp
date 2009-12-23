@@ -120,15 +120,20 @@ int main() {
 	vec.push_back(wam.getJointPositions());
 	vec.push_back(setPoint);
 	math::Spline<Wam<DOF>::jp_type> spline(vec);
+	math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
+
+	systems::Constant<double> one(1.0);
+	systems::FirstOrderFilter<double> integral(true);
+	systems::TrapezoidalVelocityProfileEvaluator peSys(profile);
 	systems::SplineEvaluator<Wam<DOF>::jp_type> seSys(spline);
 
-	systems::Constant<double> velocity(0.25);
-	systems::FirstOrderFilter<double> integral(true);
 	integral.setSamplePeriod(T_s);
 	integral.setIntegrator(1.0);
 
-	systems::connect(velocity.output, integral.input);
-	systems::connect(integral.output, seSys.input);
+	systems::connect(one.output, integral.input);
+	systems::System::Output<double>& time = integral.output;
+	systems::connect(time, peSys.input);
+	systems::connect(peSys.output, seSys.input);
 	supervisoryController.connectInputTo(seSys.output);
 
 	std::cout << "Enter to move home.\n";

@@ -15,7 +15,7 @@
 #include <barrett/spline/spline.h>
 
 
-// forward declarations from <barrett/spline/spline.h>
+// forward declaration from <barrett/spline/spline.h>
 struct bt_spline;
 
 
