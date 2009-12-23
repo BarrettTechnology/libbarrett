@@ -37,7 +37,7 @@
 #include "../interp/interp.h"
 
 
-int bt_spline_create(struct bt_spline ** splineptr, gsl_vector * start,
+int bt_spline_create(struct bt_spline ** splineptr, const gsl_vector * start,
                      enum bt_spline_mode mode)
 {
    int i;
@@ -76,7 +76,7 @@ int bt_spline_create(struct bt_spline ** splineptr, gsl_vector * start,
 }
 
 
-int bt_spline_add(struct bt_spline * spline, gsl_vector * vec, double s)
+int bt_spline_add(struct bt_spline * spline, const gsl_vector * vec, double s)
 {
    int i;
    

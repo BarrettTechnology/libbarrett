@@ -664,15 +664,14 @@
 <extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 <extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="so" artifactName="cdlbt" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="Build on this machine" id="cdt.managedbuild.config.gnu.lib.debug.353491328.672010982" name="Debug_local" parent="cdt.managedbuild.config.gnu.lib.debug" prebuildStep="">
+<configuration artifactExtension="a" artifactName="cdlbt" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib" cleanCommand="rm -rf" description="Build on this machine" id="cdt.managedbuild.config.gnu.lib.debug.353491328.672010982" name="Debug_local" parent="cdt.managedbuild.config.gnu.lib.debug" prebuildStep="">
 <folderInfo id="cdt.managedbuild.config.gnu.lib.debug.353491328.672010982." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.lib.debug.1094214209" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.lib.debug">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.1566798237" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
-<builder arguments="${ProjName}/${ConfigName}" autoBuildTarget="all" buildPath="${workspace_loc:/cdlbt/Debug}" cleanBuildTarget="clean" command="${workspace_loc:}/common/wam-make" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.lib.debug.1848906580" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelizationNumber="1" superClass="cdt.managedbuild.target.gnu.builder.lib.debug">
+<builder arguments="" autoBuildTarget="all" buildPath="${workspace_loc:/cdlbt/Debug}" cleanBuildTarget="clean" command="make" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.lib.debug.1848906580" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelizationNumber="1" superClass="cdt.managedbuild.target.gnu.builder.lib.debug">
 <outputEntries>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release"/>
@@ -699,14 +698,14 @@
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1608659450" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.base.1427750786" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
-<option defaultValue="true" id="gnu.c.link.option.shared.1888736105" name="Shared (-shared)" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+<option id="gnu.c.link.option.shared.1888736105" name="Shared (-shared)" superClass="gnu.c.link.option.shared"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1860071504" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
 </inputType>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.165199870" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
-<option defaultValue="true" id="gnu.cpp.link.option.shared.1966142784" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
+<option id="gnu.cpp.link.option.shared.1966142784" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.1957919149" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
 <option id="gnu.both.asm.option.include.paths.1490395729" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
