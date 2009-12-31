@@ -248,6 +248,9 @@ public:
 	Array(const Array& a);
 	~Array();
 
+	static size_t serializedLength();
+	void serialize(char* dest) const;
+	static Array<N> unserialize(char* source);
 
 	void copyTo(gsl_vector* vec) const throw(std::logic_error);
 	void copyFrom(const gsl_vector* vec) throw(std::logic_error);

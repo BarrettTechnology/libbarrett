@@ -21,7 +21,7 @@ typedef long long unsigned int RTIME;
 
 
 namespace barrett {
-namespace threading {
+namespace thread {
 
 
 class RealTimeMutex : public Mutex {

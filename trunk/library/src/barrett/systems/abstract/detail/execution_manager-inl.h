@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "../../../detail/stl_utils.h"
-#include "../../../threading/abstract/mutex.h"
+#include "../../../thread/abstract/mutex.h"
 #include "../system.h"
 
 
@@ -17,7 +17,7 @@ namespace barrett {
 namespace systems {
 
 
-inline threading::Mutex& ExecutionManager::getMutex()
+inline thread::Mutex& ExecutionManager::getMutex()
 {
 	return *mutex;
 }

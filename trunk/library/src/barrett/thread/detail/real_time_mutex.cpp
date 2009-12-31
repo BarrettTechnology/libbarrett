@@ -13,7 +13,7 @@
 
 
 namespace barrett {
-namespace threading {
+namespace thread {
 
 
 // TODO(dc): check return codes for errors!

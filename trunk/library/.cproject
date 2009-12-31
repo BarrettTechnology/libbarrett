@@ -48,6 +48,7 @@
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.1238874447" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2062304619" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="boost_thread"/>
 <listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
 </option>
@@ -93,7 +94,7 @@
 <fileInfo id="cdt.managedbuild.config.gnu.so.debug.1789923406.511757878" name="wam.h" rcbsApplicability="disable" resourcePath="src/barrett/wam.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/systems/real_time_execution_manager.h|barrett/systems/detail/real_time_execution_manager.cpp|barrett/threading/real_time_mutex.h|barrett/threading/detail/real_time_mutex.cpp|barrett/detail/wam-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="barrett/thread/real_time_mutex.h|barrett/thread/detail/real_time_mutex.cpp|barrett/systems/real_time_execution_manager.h|barrett/systems/detail/real_time_execution_manager.cpp|barrett/threading/real_time_mutex.h|barrett/threading/detail/real_time_mutex.cpp|barrett/detail/wam-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -229,14 +230,10 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.release.50884208" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.release">
 <option defaultValue="true" id="gnu.cpp.link.so.release.option.shared.497046342" name="Shared (-shared)" superClass="gnu.cpp.link.so.release.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.1052377874" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="cdlbt"/>
-<listOptionValue builtIn="false" value="pthread"/>
-<listOptionValue builtIn="false" value="native"/>
-<listOptionValue builtIn="false" value="pcan"/>
 <listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="boost_thread"/>
+<listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
-<listOptionValue builtIn="false" value="config"/>
-<listOptionValue builtIn="false" value="json"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1396281396" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1893698496" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -389,14 +386,10 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.1453305526" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.628866549" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2077790806" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="cdlbt"/>
-<listOptionValue builtIn="false" value="pthread"/>
-<listOptionValue builtIn="false" value="native"/>
-<listOptionValue builtIn="false" value="pcan"/>
 <listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="boost_thread"/>
+<listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
-<listOptionValue builtIn="false" value="config"/>
-<listOptionValue builtIn="false" value="json"/>
 </option>
 <option id="gnu.cpp.link.option.paths.809842889" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/Debug/"/>

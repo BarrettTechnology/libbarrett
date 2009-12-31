@@ -14,7 +14,7 @@
 
 
 namespace barrett {
-namespace threading {
+namespace thread {
 
 
 // provides no synchronization or mutual exclusion
