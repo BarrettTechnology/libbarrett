@@ -14,7 +14,7 @@
 #include <native/task.h>
 
 #include "../../detail/stacktrace.h"
-#include "../../threading/real_time_mutex.h"
+#include "../../thread/real_time_mutex.h"
 #include "../abstract/execution_manager.h"
 #include "../real_time_execution_manager.h"
 
@@ -71,7 +71,7 @@ RealTimeExecutionManager::RealTimeExecutionManager(RTIME period_ns, int rt_prior
 
 	// install a more appropriate mutex
 	delete mutex;
-	mutex = new threading::RealTimeMutex;  // ~ExecutionManager() will delete this
+	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
 }
 
 RealTimeExecutionManager::~RealTimeExecutionManager()

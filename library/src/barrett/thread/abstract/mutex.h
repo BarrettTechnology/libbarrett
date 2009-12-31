@@ -14,11 +14,11 @@
 
 
 #define SCOPED_LOCK(mutex)  \
-	::boost::lock_guard< ::barrett::threading::Mutex> _barrett_scoped_lock_lg(mutex)
+	::boost::lock_guard< ::barrett::thread::Mutex> _barrett_scoped_lock_lg(mutex)
 
 
 namespace barrett {
-namespace threading {
+namespace thread {
 
 
 // An abstract, recursive mutex object. Is a model of the boost::thread::Lockable concept.

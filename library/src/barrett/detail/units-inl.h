@@ -35,6 +35,7 @@
 
 
 #include <stdexcept>
+#include <cstring>
 #include <algorithm>
 #include <functional>
 #include <sstream>
@@ -74,6 +75,27 @@ inline Array<N>::Array(const Array& a) :
 template<size_t N>
 inline Array<N>::~Array()
 {
+}
+
+
+template<size_t N>
+inline size_t Array<N>::serializedLength()
+{
+	return sizeof(double) * N;
+}
+
+template<size_t N>
+inline void Array<N>::serialize(char* dest) const
+{
+	std::memcpy(dest, this->data(), serializedLength());
+}
+
+template<size_t N>
+inline Array<N> Array<N>::unserialize(char* source)
+{
+	Array<N> a;
+	std::memcpy(a.data(), source, serializedLength());
+	return a;
 }
 
 

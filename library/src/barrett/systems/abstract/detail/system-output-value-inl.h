@@ -7,7 +7,7 @@
 
 
 #include "../../../detail/stl_utils.h"
-#include "../../../threading/abstract/mutex.h"
+#include "../../../thread/abstract/mutex.h"
 
 
 namespace barrett {
