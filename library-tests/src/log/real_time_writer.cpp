@@ -66,7 +66,7 @@ TEST(RealTimeLogWriterTest, RecordRateCtorThrows) {
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
 
 	EXPECT_THROW(big_log_t lw1(tmpFile, 500.0), std::logic_error);  // too big
-	EXPECT_THROW(log::RealTimeWriter<double> lw2(tmpFile, 275000.0), std::logic_error);  // too fast
+	EXPECT_THROW(log::RealTimeWriter<double> lw2(tmpFile, 3.6e-6), std::logic_error);  // too fast
 
 	std::remove(tmpFile);
 }

@@ -27,7 +27,7 @@ public:
 	typedef typename Writer<T, Traits>::parameter_type parameter_type;
 	typedef typename Writer<T, Traits>::pointer_type pointer_type;
 
-	RealTimeWriter(const char* fileName, double recordRate_Hz);
+	RealTimeWriter(const char* fileName, double recordPeriod_s);
 	RealTimeWriter(const char* fileName, size_t approxPeriod_us, size_t recordsInSingleBuffer);
 	~RealTimeWriter();
 
