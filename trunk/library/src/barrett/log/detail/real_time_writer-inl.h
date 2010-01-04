@@ -21,7 +21,7 @@ namespace log {
 
 
 template<typename T, typename Traits>
-RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordRate_Hz) :
+RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPeriod_s) :
 	Writer<T, Traits>(fileName), period(0), singleBufferSize(0),
 	inBuff(NULL), outBuff(NULL), endInBuff(NULL), endOutBuff(NULL), currentPos(NULL), writeToDisk(false),
 	stopRunning(false), thread()
@@ -34,7 +34,7 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordRat
 	size_t recordsInSingleBuffer = 16384 / this->recordLength;
 
 	// with a factor of safety of 5, how many microseconds to fill a single buffer?
-	period = static_cast<size_t>( (1e6 * recordsInSingleBuffer) / (5.0 * recordRate_Hz));
+	period = static_cast<size_t>( (1e6 * recordsInSingleBuffer * recordPeriod_s) / 5.0 );
 	if (period < 3000) {
 		throw(std::logic_error("(log::RealTimeWriter::RealTimeWriter()): This constructor was not designed for data rates this high."));
 	}

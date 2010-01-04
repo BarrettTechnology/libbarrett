@@ -387,6 +387,10 @@
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.628866549" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2077790806" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gsl"/>
+<listOptionValue builtIn="false" value="json"/>
+<listOptionValue builtIn="false" value="pcan"/>
+<listOptionValue builtIn="false" value="native"/>
+<listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="boost_thread"/>
 <listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>

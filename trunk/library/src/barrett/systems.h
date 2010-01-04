@@ -46,6 +46,7 @@
 
 // sinks
 #include "systems/print_to_stream.h"
+#include "systems/data_logger.h"
 
 // operators
 #include "systems/summer.h"

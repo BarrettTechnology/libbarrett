@@ -29,7 +29,12 @@ public:
 	DataLogger(LogWriterType* logWriter, size_t periodMultiplier = 10) :
 		System(true), dataInput(this), triggerInput(this),
 		lw(logWriter), logging(true), ecCount(0), ecCountRollover(periodMultiplier) {}
-	virtual ~DataLogger() {}
+
+	virtual ~DataLogger() {
+		if (isLogging()) {
+			closeLog();
+		}
+	}
 
 	bool isLogging() {
 		return logging;
@@ -43,6 +48,7 @@ public:
 
 			// lw::close() is probably not real-time safe, so keep it out of the critical section.
 			lw->close();
+			delete lw;
 			lw = NULL;
 		}
 	}
@@ -55,12 +61,16 @@ protected:
 		 * once every ecCountRollover execution cycles. We always need to update triggerInput's value, but we only sometimes need to update dataInput's value,
 		 * so we check dataInput second in case we can short-circuit.
 		 */
-		return	logging  &&  (
-					(
-						!triggerInput.valueDefined()  &&
-						ecCount == 0
-					)  ||  triggerInput.getValue() == true
-				)  &&  dataInput.valueDefined();
+
+		// FIXME(dc): the periodic vs. triggered thing may be sticking too many features into one object
+		if (logging) {
+			if (triggerInput.valueDefined()) {
+				return triggerInput.getValue() == true  &&  dataInput.valueDefined();
+			} else {
+				return ecCount == 0  &&  dataInput.valueDefined();
+			}
+		}
+		return false;
 	}
 
 	virtual void operate() {
