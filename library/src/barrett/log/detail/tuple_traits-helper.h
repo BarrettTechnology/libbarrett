@@ -23,42 +23,35 @@ template<typename T> struct Traits;
 namespace detail {
 
 
-template<
-	typename T0, typename T1, typename T2, typename T3, typename T4,
-	typename T5, typename T6, typename T7, typename T8, typename T9,
-	size_t N, typename TraitsType>
+template<size_t N, typename TraitsType>
 struct TupleTraitsHelper {
 
 	typedef typename TraitsType::tuple_type tuple_type;
 	typedef typename TraitsType::parameter_type parameter_type;
 
 	static const size_t INDEX = TraitsType::NUM_INPUTS - N;
-
-	typedef TupleTraitsHelper<T1, T2, T3, T4, T5, T6, T7, T8, T9, boost::tuples::null_type,
-							  (N - 1), TraitsType> next_helper_type;
+	typedef Traits<typename boost::tuples::element<INDEX, tuple_type>::type> element_traits;
+	typedef TupleTraitsHelper<(N - 1), TraitsType> next_helper;
 
 
 	static size_t serializedLength() {
-		return Traits<T0>::serializedLength() + next_helper_type::serializedLength();
+		return element_traits::serializedLength() + next_helper::serializedLength();
 	}
 
 	static void serialize(parameter_type source, char* dest) {
-		Traits<T0>::serialize(source.template get<INDEX>(), dest);
-		next_helper_type::serialize(source, dest + Traits<T0>::serializedLength());
+		element_traits::serialize(boost::get<INDEX>(source), dest);
+		next_helper::serialize(source, dest + element_traits::serializedLength());
 	}
 
 	static void unserialize(char* source, tuple_type* t) {
-		t->template get<INDEX>() = Traits<T0>::unserialize(source);
-		next_helper_type::unserialize(source + Traits<T0>::serializedLength(), t);
+		boost::get<INDEX>(*t) = element_traits::unserialize(source);
+		next_helper::unserialize(source + element_traits::serializedLength(), t);
 	}
 };
 
 // base-case specialization (N == 0)
-template<
-	typename T0, typename T1, typename T2, typename T3, typename T4,
-	typename T5, typename T6, typename T7, typename T8, typename T9,
-	typename TraitsType>
-struct TupleTraitsHelper<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, 0, TraitsType> {
+template<typename TraitsType>
+struct TupleTraitsHelper<0, TraitsType> {
 
 	typedef typename TraitsType::tuple_type tuple_type;
 	typedef typename TraitsType::parameter_type parameter_type;

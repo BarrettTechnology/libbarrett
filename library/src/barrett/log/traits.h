@@ -59,22 +59,21 @@ struct Traits<boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> > {
 	typedef boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> tuple_type;
 	static const size_t NUM_INPUTS = boost::tuples::length<tuple_type>::value;
 
-	typedef detail::TupleTraitsHelper<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
-									  NUM_INPUTS, Traits<tuple_type> > helper_type;
+	typedef detail::TupleTraitsHelper<NUM_INPUTS, Traits<tuple_type> > tuple_traits_helper;
 
 	typedef const tuple_type& parameter_type;
 
 	static size_t serializedLength() {
-		return helper_type::serializedLength();
+		return tuple_traits_helper::serializedLength();
 	}
 
 	static void serialize(parameter_type source, char* dest) {
-		helper_type::serialize(source, dest);
+		tuple_traits_helper::serialize(source, dest);
 	}
 
 	static tuple_type unserialize(char* source) {
 		tuple_type t;
-		helper_type::unserialize(source, &t);
+		tuple_traits_helper::unserialize(source, &t);
 		return t;
 	}
 };
