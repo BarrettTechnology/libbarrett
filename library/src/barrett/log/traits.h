@@ -10,6 +10,7 @@
 
 
 #include <boost/tuple/tuple.hpp>
+#include "detail/tuple_traits-helper.h"
 
 
 namespace barrett {
@@ -50,12 +51,37 @@ template<> struct Traits<double> {
 	}
 };
 
+template<
+	typename T0, typename T1, typename T2, typename T3, typename T4,
+	typename T5, typename T6, typename T7, typename T8, typename T9>
+struct Traits<boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> > {
+
+	typedef boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> tuple_type;
+	static const size_t NUM_INPUTS = boost::tuples::length<tuple_type>::value;
+
+	typedef detail::TupleTraitsHelper<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
+									  NUM_INPUTS, Traits<tuple_type> > helper_type;
+
+	typedef const tuple_type& parameter_type;
+
+	static size_t serializedLength() {
+		return helper_type::serializedLength();
+	}
+
+	static void serialize(parameter_type source, char* dest) {
+		helper_type::serialize(source, dest);
+	}
+
+	static tuple_type unserialize(char* source) {
+		tuple_type t;
+		helper_type::unserialize(source, &t);
+		return t;
+	}
+};
+
 
 }
 }
-
-
-#include "detail/tuple_traits.h"
 
 
 #endif /* TRAITS_H_ */
