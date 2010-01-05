@@ -12,7 +12,7 @@
 #include <boost/thread.hpp>
 
 #include "../detail/ca_macro.h"
-#include "./detail/traits.h"
+#include "./traits.h"
 #include "./writer.h"
 
 
@@ -21,11 +21,10 @@ namespace log {
 
 
 // A log writer that is real-time safe. The data is double-buffered and is written to disk in a separate thread.
-template<typename T, typename Traits = detail::Traits<T> >
+template<typename T, typename Traits = Traits<T> >
 class RealTimeWriter : public Writer<T, Traits> {
 public:
 	typedef typename Writer<T, Traits>::parameter_type parameter_type;
-	typedef typename Writer<T, Traits>::pointer_type pointer_type;
 
 	RealTimeWriter(const char* fileName, double recordPeriod_s);
 	RealTimeWriter(const char* fileName, size_t approxPeriod_us, size_t recordsInSingleBuffer);

@@ -22,7 +22,16 @@
 #include <barrett/wam.h>
 
 
-using namespace barrett;
+//namespace log = barrett::log;
+namespace math = barrett::math;
+namespace systems = barrett::systems;
+namespace units = barrett::units;
+using barrett::Wam;
+using systems::connect;
+using systems::reconnect;
+using systems::disconnect;
+
+
 using boost::bind;
 using boost::ref;
 
@@ -37,7 +46,7 @@ void waitForEnter() {
 }
 
 int main() {
-	installExceptionHandler();  // give us pretty stack traces when things die
+	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	units::Array<DOF> tmp;
 
@@ -57,11 +66,11 @@ int main() {
 	tmp << 25.0, 20.0, 15.0, 15.0, 5, 5, 5;
 	pid->setControlSignalLimit(tmp);
 
-	systems::connect(wam.jpOutput, pid->feedbackInput);
+	connect(wam.jpOutput, pid->feedbackInput);
 
 	systems::Converter<Wam<DOF>::jt_type> supervisoryController;
 	supervisoryController.registerConversion(pid);
-	systems::connect(supervisoryController.output, wam.input);
+	connect(supervisoryController.output, wam.input);
 
 	// tie inputs together for zero torque
 	supervisoryController.connectInputTo(wam.jpOutput);
@@ -83,14 +92,14 @@ int main() {
 	systems::DataLogger<Wam<DOF>::jp_type> jpLogger(
 			new barrett::log::RealTimeWriter<Wam<DOF>::jp_type>("/tmp/test.bin", T_s),
 			500);
-	systems::connect(wam.jpOutput, jpLogger.dataInput);
+	connect(wam.jpOutput, jpLogger.dataInput);
 
 
 	std::cout << "Enter to stop teaching.\n";
 	waitForEnter();
 
 	jpLogger.closeLog();
-	systems::disconnect(jpLogger.dataInput);
+	disconnect(jpLogger.dataInput);
 
 	// build spline between recorded points
 	barrett::log::Reader<Wam<DOF>::jp_type> lr("/tmp/test.bin");
@@ -113,9 +122,9 @@ int main() {
 	integral.setSamplePeriod(T_s);
 	integral.setIntegrator(1.0);
 
-	systems::connect(one.output, integral.input);
+	connect(one.output, integral.input);
 	systems::System::Output<double>& time = integral.output;
-	systems::connect(time, trajectory.input);
+	connect(time, trajectory.input);
 	supervisoryController.connectInputTo(trajectory.output);
 
 

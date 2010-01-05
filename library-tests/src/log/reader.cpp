@@ -11,6 +11,10 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
+#include <boost/tuple/tuple_io.hpp>
+
 #include <barrett/units.h>
 #include <barrett/log/reader.h>
 #include <barrett/log/writer.h>
@@ -19,6 +23,10 @@
 namespace {
 using namespace barrett;
 
+
+TEST(LogReaderTest, CtorThrows) {
+	// TODO(dc): test this!
+}
 
 TEST(LogReaderTest, Double) {
 	char tmpFile[L_tmpnam];
@@ -31,6 +39,27 @@ TEST(LogReaderTest, Double) {
 	lw.close();
 
 	log::Reader<double> lr(tmpFile);
+	EXPECT_EQ(1, lr.numRecords());
+	EXPECT_EQ(d, lr.getRecord());
+	EXPECT_THROW(lr.getRecord(), std::underflow_error);
+	lr.close();
+
+	std::remove(tmpFile);
+}
+
+TEST(LogReaderTest, Tuple) {
+	typedef boost::tuple<double, double> tuple_type;
+
+	char tmpFile[L_tmpnam];
+	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+
+	tuple_type d(7.2, 803.0);
+
+	log::Writer<tuple_type> lw(tmpFile);
+	lw.putRecord(d);
+	lw.close();
+
+	log::Reader<tuple_type> lr(tmpFile);
 	EXPECT_EQ(1, lr.numRecords());
 	EXPECT_EQ(d, lr.getRecord());
 	EXPECT_THROW(lr.getRecord(), std::underflow_error);

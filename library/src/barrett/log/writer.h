@@ -12,19 +12,17 @@
 #include <fstream>
 
 #include "../detail/ca_macro.h"
-#include "./detail/traits.h"
+#include "./traits.h"
 
 
 namespace barrett {
 namespace log {
 
 
-template<typename T, typename Traits = detail::Traits<T> >
+template<typename T, typename Traits = Traits<T> >
 class Writer {
 public:
 	typedef typename Traits::parameter_type parameter_type;
-	typedef typename Traits::pointer_type pointer_type;
-
 
 	explicit Writer(const char* fileName);
 	~Writer();
