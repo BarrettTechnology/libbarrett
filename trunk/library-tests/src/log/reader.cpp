@@ -47,13 +47,41 @@ TEST(LogReaderTest, Double) {
 	std::remove(tmpFile);
 }
 
-TEST(LogReaderTest, Tuple) {
+TEST(LogReaderTest, TupleA) {
 	typedef boost::tuple<double, double> tuple_type;
 
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
 
 	tuple_type d(7.2, 803.0);
+
+	log::Writer<tuple_type> lw(tmpFile);
+	lw.putRecord(d);
+	lw.close();
+
+	log::Reader<tuple_type> lr(tmpFile);
+	EXPECT_EQ(1, lr.numRecords());
+	EXPECT_EQ(d, lr.getRecord());
+	EXPECT_THROW(lr.getRecord(), std::underflow_error);
+	lr.close();
+
+	std::remove(tmpFile);
+}
+
+TEST(LogReaderTest, TupleB) {
+	typedef boost::tuple<units::Array<15>, double, double, units::JointTorques<3> > tuple_type;
+
+	char tmpFile[L_tmpnam];
+	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+
+	tuple_type d;
+	d.get<0>() <<	23,	54,		34,		4,		25,
+					23,	6,		46,		23,		-6,
+					11,	868,	12312,	-44.2,	1;
+	d.get<1>() = 2323823e-12;
+	d.get<2>() = -0.5;
+	d.get<3>() << 2.23, 867, -34.78e6;
+
 
 	log::Writer<tuple_type> lw(tmpFile);
 	lw.putRecord(d);
