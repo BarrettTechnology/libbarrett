@@ -18,6 +18,10 @@ namespace {
 using namespace barrett;
 
 
+TEST(LogWriterTest, CtorThrows) {
+	// TODO(dc): test this!
+}
+
 TEST(LogWriterTest, Double) {
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
@@ -29,6 +33,22 @@ TEST(LogWriterTest, Double) {
 	lw.close();
 
 	verifyFileContents(tmpFile, reinterpret_cast<char*>(&d), sizeof(double));
+	std::remove(tmpFile);
+}
+
+TEST(LogWriterTest, Tuple) {
+	typedef boost::tuple<double, double> tuple_type;
+
+	char tmpFile[L_tmpnam];
+	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+
+	tuple_type d(-287.2, 8e3);
+
+	log::Writer<tuple_type> lw(tmpFile);
+	lw.putRecord(d);
+	lw.close();
+
+	verifyFileContents(tmpFile, reinterpret_cast<char*>(&d), 2 * sizeof(double));
 	std::remove(tmpFile);
 }
 

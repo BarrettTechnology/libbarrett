@@ -17,6 +17,11 @@ template<typename T, typename Traits>
 Writer<T, Traits>::Writer(const char* fileName) :
 	file(fileName, std::ios_base::binary), recordLength(Traits::serializedLength())
 {
+	if (recordLength == 0) {
+		throw(std::logic_error("(log::Writer::Writer): The record length "
+				"(Traits::serializedLength()) cannot be zero."));
+	}
+
 	buffer = new char[recordLength];
 }
 
@@ -34,7 +39,7 @@ Writer<T, Traits>::~Writer()
 template<typename T, typename Traits>
 inline void Writer<T, Traits>::putRecord(parameter_type data)
 {
-	Traits::serialize(data, reinterpret_cast<pointer_type>(buffer));
+	Traits::serialize(data, buffer);
 	file.write(buffer, recordLength);
 }
 

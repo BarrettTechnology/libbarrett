@@ -81,7 +81,7 @@ RealTimeWriter<T, Traits>::~RealTimeWriter()
 template<typename T, typename Traits>
 void RealTimeWriter<T, Traits>::putRecord(parameter_type data)
 {
-	Traits::serialize(data, reinterpret_cast<pointer_type>(currentPos));
+	Traits::serialize(data, currentPos);
 	currentPos += this->recordLength;
 
 	if (currentPos >= endInBuff) {

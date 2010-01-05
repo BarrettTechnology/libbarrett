@@ -19,6 +19,11 @@ template<typename T, typename Traits>
 Reader<T, Traits>::Reader(const char* fileName) :
 	file(fileName, std::ios_base::binary), recordLength(Traits::serializedLength()), recordCount(0)
 {
+	if (recordLength == 0) {
+		throw(std::logic_error("(log::Reader::Reader): The record length "
+				"(Traits::serializedLength()) cannot be zero."));
+	}
+
 	file.seekg(0, std::ifstream::end);
 	long size = file.tellg();
 
@@ -62,7 +67,7 @@ inline T Reader<T, Traits>::getRecord()
 		throw(std::underflow_error("(log::Reader::getRecord()): The end of the file was reached. There are no more records to read."));
 	}
 
-	return Traits::unserialize(reinterpret_cast<pointer_type>(buffer));
+	return Traits::unserialize(buffer);
 }
 
 template<typename T, typename Traits>

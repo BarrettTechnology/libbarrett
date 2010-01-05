@@ -9,28 +9,26 @@
 #define TRAITS_H_
 
 
-#include "../../units.h"
+#include <boost/tuple/tuple.hpp>
 
 
 namespace barrett {
 namespace log {
-namespace detail {
 
 
 // default traits delegate to the type in question
 template<typename T> struct Traits {
 	typedef const T& parameter_type;
-	typedef char* pointer_type;
 
 	static size_t serializedLength() {
 		return T::serializedLength();
 	}
 
-	static void serialize(parameter_type source, pointer_type dest) {
+	static void serialize(parameter_type source, char* dest) {
 		source.serialize(dest);
 	}
 
-	static T unserialize(pointer_type source) {
+	static T unserialize(char* source) {
 		return T::unserialize(source);
 	}
 };
@@ -38,25 +36,26 @@ template<typename T> struct Traits {
 
 template<> struct Traits<double> {
 	typedef double parameter_type;
-	typedef double* pointer_type;
 
 	static size_t serializedLength() {
 		return sizeof(double);
 	}
 
-	static void serialize(parameter_type source, pointer_type dest) {
-		*dest = source;
+	static void serialize(parameter_type source, char* dest) {
+		*reinterpret_cast<double*>(dest) = source;
 	}
 
-	static double unserialize(pointer_type source) {
-		return *source;
+	static double unserialize(char* source) {
+		return *reinterpret_cast<double*>(source);
 	}
 };
 
 
 }
 }
-}
+
+
+#include "detail/tuple_traits.h"
 
 
 #endif /* TRAITS_H_ */
