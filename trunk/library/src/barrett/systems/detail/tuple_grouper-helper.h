@@ -1,5 +1,5 @@
 /*
- * tuple_grouper-inl.h
+ * tuple_grouper-helper.h
  *
  *  Created on: Nov 16, 2009
  *      Author: dc
