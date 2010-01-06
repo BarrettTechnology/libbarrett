@@ -90,7 +90,7 @@ int main() {
 
 	systems::Ramp unitRamp;
 	systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
-	systems::DataLogger<jp_sample_type> jpLogger(
+	systems::PeriodicDataLogger<jp_sample_type> jpLogger(
 			new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
 			10);
 
@@ -99,7 +99,7 @@ int main() {
 
 	connect(time, jpLogTg.getInput<0>());
 	connect(wam.jpOutput, jpLogTg.getInput<1>());
-	connect(jpLogTg.output, jpLogger.dataInput);
+	connect(jpLogTg.output, jpLogger.input);
 
 	unitRamp.start();
 
@@ -108,7 +108,7 @@ int main() {
 	waitForEnter();
 
 	jpLogger.closeLog();
-	disconnect(jpLogger.dataInput);
+	disconnect(jpLogger.input);
 
 	// build spline between recorded points
 	barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");

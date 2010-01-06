@@ -48,7 +48,8 @@
 
 // sinks
 #include "systems/print_to_stream.h"
-#include "systems/data_logger.h"
+#include "systems/periodic_data_logger.h"
+#include "systems/triggered_data_logger.h"
 
 // operators
 #include "systems/summer.h"
