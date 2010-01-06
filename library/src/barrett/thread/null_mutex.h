@@ -20,6 +20,9 @@ namespace thread {
 // provides no synchronization or mutual exclusion
 class NullMutex : public Mutex {
 public:
+	// since all NullMutex's are the same, feel free to give out references to this object if you just need to return a NullMutex...
+	static NullMutex aNullMutex;
+
 	NullMutex() {}
 	virtual ~NullMutex() {}
 

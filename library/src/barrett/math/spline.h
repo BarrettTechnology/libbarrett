@@ -11,8 +11,10 @@
 
 
 #include <vector>
-#include "../detail/ca_macro.h"
+#include <boost/tuple/tuple.hpp>
+
 #include <barrett/spline/spline.h>
+#include "../detail/ca_macro.h"
 
 
 // forward declaration from <barrett/spline/spline.h>
@@ -26,13 +28,10 @@ namespace math {
 template<typename T>
 class Spline {
 public:
-	struct Sample {
-		double x;
-		T point;
-	};
+	typedef boost::tuple<double, T> tuple_type;
 
 	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<Sample>& samples);
+	Spline(const Container<tuple_type>& samples);
 	template<template<typename U, typename = std::allocator<U> > class Container>
 	Spline(const Container<T>& points);
 

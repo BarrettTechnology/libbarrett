@@ -10,6 +10,7 @@
 
 
 #include "../detail/ca_macro.h"
+#include "../thread/abstract/mutex.h"
 #include "./abstract/system.h"
 #include "../log/real_time_writer.h"
 
@@ -42,9 +43,10 @@ public:
 
 	void closeLog() {
 		if (isLogging()) {
-			lockExecutionManager();
+			thread::Mutex& emMutex = getEmMutex();
+			emMutex.lock();
 			logging = false;
-			unlockExecutionManager();
+			emMutex.unlock();
 
 			// lw::close() is probably not real-time safe, so keep it out of the critical section.
 			lw->close();

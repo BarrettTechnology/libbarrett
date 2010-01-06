@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "../../../detail/stl_utils.h"
+#include "../../../thread/abstract/mutex.h"
 
 
 namespace barrett {
@@ -19,35 +20,26 @@ namespace systems {
 inline System::AbstractInput::AbstractInput(System* parentSys) :
 	parentSystem(parentSys)
 {
-	lockExecutionManager();
+	SCOPED_LOCK(getEmMutex());
 
 	parentSystem->inputs.push_back(this);
-
-	unlockExecutionManager();
 }
 
 inline System::AbstractInput::~AbstractInput()
 {
-	lockExecutionManager();
+	SCOPED_LOCK(getEmMutex());
 
 	if (parentSystem != NULL) {
 		replaceWithNull(parentSystem->inputs, this);
 	}
-
-	unlockExecutionManager();
 }
 
-inline void System::AbstractInput::lockExecutionManager()
+inline thread::Mutex& System::AbstractInput::getEmMutex()
 {
 	if (parentSystem != NULL) {
-		parentSystem->lockExecutionManager();
-	}
-}
-
-inline void System::AbstractInput::unlockExecutionManager()
-{
-	if (parentSystem != NULL) {
-		parentSystem->unlockExecutionManager();
+		return parentSystem->getEmMutex();
+	} else {
+		return thread::NullMutex::aNullMutex;
 	}
 }
 

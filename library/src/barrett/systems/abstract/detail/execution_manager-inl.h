@@ -64,7 +64,7 @@ inline void ExecutionManager::update() {
 }
 
 template<template<typename T, typename = std::allocator<T> > class Container>
-void ExecutionManager::update(Container<System*> systems) {
+void ExecutionManager::update(const Container<System*>& systems) {
 	typename Container<System*>::const_iterator i;
 	for (i = systems.begin(); i != systems.end(); ++i) {
 		if (*i != NULL) {
