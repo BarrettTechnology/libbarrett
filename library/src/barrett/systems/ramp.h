@@ -24,7 +24,7 @@ namespace systems {
 class Ramp : public System {
 // IO
 public:		Output<double> output;
-protected:	typename Output<double>::Value* outputValue;
+protected:	Output<double>::Value* outputValue;
 
 
 public:
@@ -36,12 +36,15 @@ public:
 	}
 
 	void setSamplePeriod(double timeStep) {  T_s = timeStep;  }
+	void setSlope(double slope) {  gain = slope;  }
 
 	void start() {  running = true;  }
 	void stop() {  running = false;  }
-	void reset() {
+	void reset() {  setOutput(0.0);  }
+	void setOutput(double newOutput) {
+		// y is written and read in operate(), so it needs to be locked.
 		SCOPED_LOCK(getEmMutex());
-		y = 0.0;
+		y = newOutput;
 	}
 
 protected:
