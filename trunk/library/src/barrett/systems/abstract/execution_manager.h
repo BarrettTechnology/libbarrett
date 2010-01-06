@@ -42,7 +42,7 @@ protected:
 	void resetExecutionCycle();
 	void update();
 	template<template<typename T, typename = std::allocator<T> > class Container>
-		void update(Container<System*> systems);
+		void update(const Container<System*>& systems);
 	void update(System* sys);
 	virtual bool updateNeeded(System* sys);
 

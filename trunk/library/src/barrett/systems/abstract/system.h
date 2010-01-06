@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "../../detail/ca_macro.h"
+#include "../../thread/abstract/mutex.h"
 
 
 namespace barrett {
@@ -180,8 +181,7 @@ public:
 		 */
 		virtual bool valueDefined() const = 0;
 
-		void lockExecutionManager();
-		void unlockExecutionManager();
+		thread::Mutex& getEmMutex();
 
 	protected:
 		/// The System that should be notified when this Input's value changes.
@@ -213,8 +213,7 @@ public:
 			 */
 			virtual void setValueUndefined() = 0;
 
-			void lockExecutionManager();
-			void unlockExecutionManager();
+			thread::Mutex& getEmMutex();
 
 		protected:
 			System* parentSystem;
@@ -458,9 +457,7 @@ public:
 	bool isExecutionManaged() const;
 	void setExecutionManager(ExecutionManager* newEm);
 	ExecutionManager* getExecutionManager() const;
-
-	void lockExecutionManager();
-	void unlockExecutionManager();
+	thread::Mutex& getEmMutex();
 
 	static ExecutionManager* defaultExecutionManager;
 

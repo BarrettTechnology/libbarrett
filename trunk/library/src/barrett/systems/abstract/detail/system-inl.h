@@ -8,6 +8,7 @@
 
 #include <vector>
 
+#include "../../../thread/null_mutex.h"
 #include "../execution_manager.h"
 
 
@@ -46,17 +47,12 @@ inline ExecutionManager* System::getExecutionManager() const
 	return executionManager;
 }
 
-inline void System::lockExecutionManager()
+inline thread::Mutex& System::getEmMutex()
 {
 	if (isExecutionManaged()) {
-		executionManager->getMutex().lock();
-	}
-}
-
-inline void System::unlockExecutionManager()
-{
-	if (isExecutionManaged()) {
-		executionManager->getMutex().unlock();
+		return executionManager->getMutex();
+	} else {
+		return thread::NullMutex::aNullMutex;
 	}
 }
 

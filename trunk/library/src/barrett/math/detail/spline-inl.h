@@ -16,16 +16,16 @@ namespace math {
 
 template<typename T>
 template<template<typename U, typename = std::allocator<U> > class Container>
-Spline<T>::Spline(const Container<Spline<T>::Sample>& samples) :
+Spline<T>::Spline(const Container<tuple_type>& samples) :
 	impl(NULL), x_0(0.0)
 {
-	x_0 = samples[0].x;
+	x_0 = boost::get<0>(samples[0]);
 
-	bt_spline_create(&impl, samples[0].point.asGslVector(), BT_SPLINE_MODE_EXTERNAL);
+	bt_spline_create(&impl, boost::get<1>(samples[0]).asGslVector(), BT_SPLINE_MODE_EXTERNAL);
 
-	typename Container<typename Spline<T>::Sample>::const_iterator i;
+	typename Container<tuple_type>::const_iterator i;
 	for (i = ++(samples.begin()); i != samples.end(); ++i) {
-		bt_spline_add(impl, (*i).point.asGslVector(), (*i).x - x_0);
+		bt_spline_add(impl, boost::get<1>(*i).asGslVector(), boost::get<0>(*i) - x_0);
 	}
 
 	bt_spline_init(impl, NULL, NULL);

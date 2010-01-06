@@ -44,6 +44,8 @@
 #include "systems/constant.h"
 #include "systems/exposed_output.h"
 
+#include "systems/ramp.h"
+
 // sinks
 #include "systems/print_to_stream.h"
 #include "systems/data_logger.h"
@@ -60,8 +62,6 @@
 #include "systems/array_splitter.h"
 #include "systems/array_editor.h"
 #include "systems/tuple_grouper.h"
-
-//#include "systems/"
 
 
 #endif /* BARRETT_SYSTEMS_H_ */

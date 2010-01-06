@@ -12,6 +12,7 @@
 
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
@@ -76,10 +77,6 @@ int main() {
 	supervisoryController.connectInputTo(wam.jpOutput);
 
 
-	Wam<DOF>::jp_type setPoint;
-	setPoint << 0.000, -1.57, 0.0, 1.57, 0.0, 1.605, 0.0;
-
-
 	rtem.start();
 
 	std::cout << "Enter to gravity compensate.\n";
@@ -89,21 +86,36 @@ int main() {
 	std::cout << "Enter to start teaching.\n";
 	waitForEnter();
 
-	systems::DataLogger<Wam<DOF>::jp_type> jpLogger(
-			new barrett::log::RealTimeWriter<Wam<DOF>::jp_type>("/tmp/test.bin", T_s),
-			500);
-	connect(wam.jpOutput, jpLogger.dataInput);
+	typedef boost::tuple<double, Wam<DOF>::jp_type> jp_sample_type;
+
+	{
+		systems::Constant<double> one(1.0);
+		systems::FirstOrderFilter<double> integral(true);
+		systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
+		systems::DataLogger<jp_sample_type> jpLogger(
+				new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
+				10);
+
+		integral.setSamplePeriod(T_s);
+		integral.setIntegrator(1.0);
+
+		connect(one.output, integral.input);
+		systems::System::Output<double>& time = integral.output;
+		connect(time, jpLogTg.getInput<0>());
+		connect(wam.jpOutput, jpLogTg.getInput<1>());
+		connect(jpLogTg.output, jpLogger.dataInput);
 
 
-	std::cout << "Enter to stop teaching.\n";
-	waitForEnter();
+		std::cout << "Enter to stop teaching.\n";
+		waitForEnter();
 
-	jpLogger.closeLog();
-	disconnect(jpLogger.dataInput);
+		jpLogger.closeLog();
+		disconnect(jpLogger.dataInput);
+	}
 
 	// build spline between recorded points
-	barrett::log::Reader<Wam<DOF>::jp_type> lr("/tmp/test.bin");
-	std::vector<Wam<DOF>::jp_type> vec;
+	barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");
+	std::vector<jp_sample_type> vec;
 	for (size_t i = 0; i < lr.numRecords(); ++i) {
 		vec.push_back(lr.getRecord());
 	}

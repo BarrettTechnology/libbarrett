@@ -8,6 +8,8 @@
 
 #include <iostream>
 #include <vector>
+#include <boost/tuple/tuple.hpp>
+
 #include <gtest/gtest.h>
 
 #include <barrett/units.h>
@@ -43,15 +45,16 @@ TEST(SplineTest, ImplicitParameter) {
 }
 
 TEST(SplineTest, ExplicitParameter) {
-	math::Spline<units::JointPositions<DOF> >::Sample sample;
-	std::vector<math::Spline<units::JointPositions<DOF> >::Sample > samples;
+	typedef math::Spline<units::JointPositions<DOF> >::tuple_type tuple_type;
+	tuple_type sample;
+	std::vector<tuple_type> samples;
 
-	sample.x = -2.0;
-	sample.point.assign(-12.8);
+	sample.get<0>() = -2.0;
+	sample.get<1>().assign(-12.8);
 	samples.push_back(sample);
 
-	sample.x = 5.0;
-	sample.point.assign(2.0);
+	sample.get<0>() = 5.0;
+	sample.get<1>().assign(2.0);
 	samples.push_back(sample);
 
 	math::Spline<units::JointPositions<DOF> > spline(samples);
