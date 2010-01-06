@@ -88,30 +88,27 @@ int main() {
 
 	typedef boost::tuple<double, Wam<DOF>::jp_type> jp_sample_type;
 
-	{
-		systems::Constant<double> one(1.0);
-		systems::FirstOrderFilter<double> integral(true);
-		systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
-		systems::DataLogger<jp_sample_type> jpLogger(
-				new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
-				10);
+	systems::Ramp unitRamp;
+	systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
+	systems::DataLogger<jp_sample_type> jpLogger(
+			new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
+			10);
 
-		integral.setSamplePeriod(T_s);
-		integral.setIntegrator(1.0);
+	unitRamp.setSamplePeriod(T_s);
+	systems::System::Output<double>& time = unitRamp.output;
 
-		connect(one.output, integral.input);
-		systems::System::Output<double>& time = integral.output;
-		connect(time, jpLogTg.getInput<0>());
-		connect(wam.jpOutput, jpLogTg.getInput<1>());
-		connect(jpLogTg.output, jpLogger.dataInput);
+	connect(time, jpLogTg.getInput<0>());
+	connect(wam.jpOutput, jpLogTg.getInput<1>());
+	connect(jpLogTg.output, jpLogger.dataInput);
+
+	unitRamp.start();
 
 
-		std::cout << "Enter to stop teaching.\n";
-		waitForEnter();
+	std::cout << "Enter to stop teaching.\n";
+	waitForEnter();
 
-		jpLogger.closeLog();
-		disconnect(jpLogger.dataInput);
-	}
+	jpLogger.closeLog();
+	disconnect(jpLogger.dataInput);
 
 	// build spline between recorded points
 	barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");
@@ -121,23 +118,18 @@ int main() {
 	}
 
 	math::Spline<Wam<DOF>::jp_type> spline(vec);
-	math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
-
 
 	std::cout << "Enter to play back.\n";
 	waitForEnter();
 
-	systems::Constant<double> one(1.0);
-	systems::FirstOrderFilter<double> integral(true);
-	systems::Callback<double, Wam<DOF>::jp_type> trajectory(bind(ref(spline), bind(ref(profile), _1)));
+	unitRamp.stop();
+	unitRamp.setOutput(spline.initialX());
 
-	integral.setSamplePeriod(T_s);
-	integral.setIntegrator(1.0);
+	systems::Callback<double, Wam<DOF>::jp_type> trajectory(bind(ref(spline), bind(math::saturate<double>, _1, spline.finalX())));
 
-	connect(one.output, integral.input);
-	systems::System::Output<double>& time = integral.output;
 	connect(time, trajectory.input);
 	supervisoryController.connectInputTo(trajectory.output);
+	unitRamp.start();
 
 
 	std::cout << "Enter to move home.\n";
