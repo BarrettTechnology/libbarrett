@@ -13,7 +13,6 @@
 #include <vector>
 #include <boost/tuple/tuple.hpp>
 
-#include <barrett/spline/spline.h>
 #include "../detail/ca_macro.h"
 
 
@@ -25,6 +24,7 @@ namespace barrett {
 namespace math {
 
 
+// TODO(dc): add an option to saturate x if it is outside the range of [initialX, finalX].
 template<typename T>
 class Spline {
 public:

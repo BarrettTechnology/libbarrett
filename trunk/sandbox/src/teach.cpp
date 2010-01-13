@@ -77,6 +77,7 @@ int main() {
 	supervisoryController.connectInputTo(wam.jpOutput);
 
 
+	// start the main loop!
 	rtem.start();
 
 	std::cout << "Enter to gravity compensate.\n";
@@ -90,6 +91,8 @@ int main() {
 
 	systems::Ramp unitRamp;
 	systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
+
+	// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
 	systems::PeriodicDataLogger<jp_sample_type> jpLogger(
 			new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
 			10);
