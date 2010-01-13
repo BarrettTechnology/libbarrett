@@ -9,7 +9,7 @@
 #include <cstdio>
 
 #include <gtest/gtest.h>
-#include <barrett/units.h>
+#include <barrett/math/array.h>
 #include <barrett/log/writer.h>
 #include "./verify_file_contents.h"
 
@@ -56,16 +56,16 @@ TEST(LogWriterTest, Array) {
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
 
-	units::Array<15> d;
+	math::Array<15> d;
 	d <<	23,	54,		34,		4,		25,
 			23,	6,		46,		23,		-6,
 			11,	868,	12312,	-44.2,	1;
 
-	log::Writer<units::Array<15> > lw(tmpFile);
+	log::Writer<math::Array<15> > lw(tmpFile);
 	lw.putRecord(d);
 	lw.close();
 
-	verifyFileContents(tmpFile, reinterpret_cast<char*>(d.c_array()), sizeof(double) * units::Array<15>::SIZE);
+	verifyFileContents(tmpFile, reinterpret_cast<char*>(d.c_array()), sizeof(double) * math::Array<15>::SIZE);
 	std::remove(tmpFile);
 }
 

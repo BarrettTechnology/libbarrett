@@ -13,9 +13,9 @@
 
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
+#include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/math/utils.h>
 #include <barrett/wam.h>
 
 
@@ -100,7 +100,7 @@ int main() {
 	systems::ArrayEditor<Wam<DOF>::jt_type> jtEditor;
 
 
-	units::Array<DOF> tmp;
+	math::Array<DOF> tmp;
 
 //	tmp << 900, 2500, 600, 500, 40, 20, 5;
 //	pid.setKp(tmp);

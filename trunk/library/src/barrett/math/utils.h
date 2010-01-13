@@ -1,5 +1,5 @@
 /** Math utilities and operators for \c double and descendants of
- * barrett::units::Array.
+ * barrett::math::Array.
  *
  * @file math/utils.h
  * @date Oct 26, 2009
@@ -40,9 +40,9 @@ namespace math {
 /** Computes the sign (positive, zero, or negative) of its input.
  *
  * Sometimes referred to as the \c signum function. The function operates
- * element-wise for barrett::units::Array inputs.
+ * element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x
  * @retval 1 if <tt> x > 0 </tt>
  * @retval 0 if <tt> x == 0 </tt>
@@ -52,9 +52,9 @@ template<typename T> T sign(const T& x);
 
 /** Computes the absolute value of its input.
  *
- * The function operates element-wise for barrett::units::Array inputs.
+ * The function operates element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x
  * @retval x if <tt> x >= 0 </tt>
  * @retval -x if <tt> x < 0 </tt>
@@ -63,9 +63,9 @@ template<typename T> T abs(const T& x);
 
 /** Returns the minimum of its two inputs.
  *
- * The function operates element-wise for barrett::units::Array inputs.
+ * The function operates element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] a
  * @param[in] b
  * @retval a if <tt> a < b </tt>
@@ -75,9 +75,9 @@ template<typename T> T min(const T& a, const T& b);
 
 /** Returns the maximum of its two inputs.
  *
- * The function operates element-wise for barrett::units::Array inputs.
+ * The function operates element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] a
  * @param[in] b
  * @retval a if <tt> a > b </tt>
@@ -87,9 +87,9 @@ template<typename T> T max(const T& a, const T& b);  //NOLINT: this is not the m
 
 /** Ensures the input does not exceed the given limits.
  *
- * The function operates element-wise for barrett::units::Array inputs.
+ * The function operates element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x Input value.
  * @param[in] limit The maximum absolute value of the return value.
  * @retval x if <tt> abs(x) < limit </tt>
@@ -101,9 +101,9 @@ template<typename T> T saturate(const T& x, const T& limit);
 
 /** Maps input values smaller than the given cutoff to zero.
  *
- * The function operates element-wise for barrett::units::Array inputs.
+ * The function operates element-wise for barrett::math::Array inputs.
  *
- * @tparam Designed to operate on a \c double or barrett::units::Array.
+ * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x Input value.
  * @param[in] cutoff The smallest input value that produces a non-zero return
  *            value.

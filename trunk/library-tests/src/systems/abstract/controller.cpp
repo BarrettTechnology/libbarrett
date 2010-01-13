@@ -6,7 +6,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <barrett/units.h>
 #include <barrett/systems/abstract/controller.h>
 
 #include "./controller_impl.h"

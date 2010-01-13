@@ -8,7 +8,7 @@
  * @warning
  * This file is located in a \c detail directory. It is part of the
  * implementation and should not be directly included by the user.
- * @see units.h
+ * @see array.h
  */
 
 /* Copyright 2009 Barrett Technology <support@barrett.com> */
@@ -33,6 +33,8 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
+// TODO(dc): this documentation needs updating
+
 
 #include <stdexcept>
 #include <cstring>
@@ -44,7 +46,7 @@
 
 
 namespace barrett {
-namespace units {
+namespace math {
 
 
 template<size_t N>
@@ -105,7 +107,7 @@ throw(std::logic_error)
 {
 	if (vec->size != N) {
 		std::stringstream ss;
-		ss << "(units::Array<>::copyTo(gsl_vector*)): The size of the "
+		ss << "(math::Array<>::copyTo(gsl_vector*)): The size of the "
 				"gsl_vector must match the size of the Array. Expected size "
 				<< N << ", got size " << vec->size;
 		throw std::logic_error(ss.str());
@@ -122,7 +124,7 @@ throw(std::logic_error)
 {
 	if (vec->size != N) {
 		std::stringstream ss;
-		ss << "(units::Array<>::copyTo(gsl_vector*)): The size of the "
+		ss << "(math::Array<>::copyTo(gsl_vector*)): The size of the "
 				"gsl_vector must match the size of the Array. Expected size "
 				<< N << ", got size " << vec->size;
 		throw std::logic_error(ss.str());
@@ -159,7 +161,7 @@ inline bool Array<N>::isZero() const
 
 // this pair of operators enables the convenient, if somewhat magical,
 // syntax:
-//		units::Array<5> a;
+//		math::Array<5> a;
 //		a << 5, 42.8, 37, -12, 1.4;
 template<size_t N>
 inline Array<N>& Array<N>::operator<< (double d)

@@ -11,6 +11,7 @@
 #include <gsl/gsl_vector.h>
 
 #include <gtest/gtest.h>
+#include <barrett/math/array.h>
 #include <barrett/units.h>
 
 
@@ -22,7 +23,7 @@ DECLARE_UNITS(LocalUnits);
 
 
 // template parameters list the types the following tests should be run over
-typedef ::testing::Types<units::Array<5>, units::JointPositions<5>,
+typedef ::testing::Types<math::Array<5>, units::JointPositions<5>,
 	units::JointVelocities<5>, units::JointTorques<5>, LocalUnits<5> > UATypes;
 
 template<typename T>
@@ -157,7 +158,7 @@ TYPED_TEST(ArrayTypedTest, AssignFromTypeParam) {
 }
 
 TYPED_TEST(ArrayTypedTest, CopyFromArray) {
-	units::Array<5> array;
+	math::Array<5> array;
 	array << 5, 42.8, 37, -12, 1.4;
 	TypeParam array_copy = array;  // uses copy constructor
 
@@ -165,7 +166,7 @@ TYPED_TEST(ArrayTypedTest, CopyFromArray) {
 }
 
 TYPED_TEST(ArrayTypedTest, AssignFromArray) {
-	units::Array<5> array;
+	math::Array<5> array;
 	array << 5, 42.8, 37, -12, 1.4;
 	TypeParam array_copy;
 	array_copy = array;  // uses assignment operator

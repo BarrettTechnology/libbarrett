@@ -1,5 +1,5 @@
 /** <b> Implementation file: do not include.\ </b> Math utilities and operators
- * for \c double and descendants of barrett::units::Array.
+ * for \c double and descendants of barrett::math::Array.
  *
  * @file math/utils-inl.h
  * @date Nov 11, 2009

@@ -7,7 +7,7 @@
 
 
 #include <gtest/gtest.h>
-#include <barrett/units.h>
+#include <barrett/math/array.h>
 #include <barrett/math/utils.h>
 
 
@@ -19,7 +19,7 @@ const size_t N = 5;
 
 class MathUtilsTest : public ::testing::Test {
 protected:
-	barrett::units::Array<N> a, b, e;
+	barrett::math::Array<N> a, b, e;
 };
 
 
