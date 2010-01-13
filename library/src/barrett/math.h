@@ -9,6 +9,7 @@
 #define MATH_H_
 
 
+#include "math/array.h"
 #include "math/utils.h"
 
 #include "math/spline.h"

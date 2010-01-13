@@ -74,7 +74,7 @@ int main() {
 //#if 0
 	installExceptionHandler();  // give us pretty stack traces when things die
 
-	units::Array<DOF> tmp;
+	math::Array<DOF> tmp;
 
 	systems::RealTimeExecutionManager rtem;
 	systems::System::defaultExecutionManager = &rtem;

@@ -9,7 +9,7 @@
 #include <cmath>
 #include <gtest/gtest.h>
 
-#include <barrett/units.h>
+#include <barrett/math/array.h>
 #include <barrett/systems/helpers.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/constant.h>
@@ -21,7 +21,7 @@
 namespace {
 using namespace barrett;
 
-typedef units::Array<5> i_type;
+typedef math::Array<5> i_type;
 
 
 class PIDControllerTest : public ::testing::Test {

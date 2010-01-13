@@ -1,4 +1,4 @@
-/** Defines barrett::units::Array and its descendants.
+/** Defines barrett::math::Array and its descendants.
  *
  * @file units.h
  * @date Oct 16, 2009
@@ -29,9 +29,10 @@
  */
 
 
+// TODO(dc): this documentation needs updating
 /** @namespace barrett::units
  *
- * Contains barrett::units::Array and its unit-full descendants.
+ * Contains barrett::math::Array and its unit-full descendants.
  *
  * These classes use type information to give meaning to what would otherwise be an anonymous array of \c doubles.
  *
@@ -56,69 +57,59 @@
  */
 
 
-// TODO(dc): is there somewhere more central that this can go?
-/** @file array.hpp
- *
- * Included from the Boost C++ library (http://www.boost.org) for completeness.
- *
- * @see http://www.boost.org/doc/libs/1_41_0/doc/html/array.html
- */
-
-/** @class boost::array
- *
- * @copybrief array.hpp
- * @copydetails array.hpp
- */
-
-
 #ifndef BARRETT_UNITS_H_
 #define BARRETT_UNITS_H_
 
 
-#include <iostream>
-#include <stdexcept>
-
-#include <boost/array.hpp>
-#include <gsl/gsl_vector.h>
+#include "./math/array.h"
 
 
 /// @cond DETAIL
-#define DECLARE_UNITS_IMPL_H(ClassName)  \
-	template<size_t N>  \
-	class ClassName : public ::barrett::units::Array<N> {  \
+#define DECLARE_UNITS_IMPL_H(ClassName, N)  \
+	class ClassName : public ::barrett::math::Array<N> {  \
 	public:
 
-#define DECLARE_UNITS_IMPL_F(ClassName)  \
+#define DECLARE_UNITS_IMPL_F(ClassName, N)  \
 		explicit ClassName(double d = 0.0) :  \
-			::barrett::units::Array<N>(d) {}  \
+			::barrett::math::Array<N>(d) {}  \
 		explicit ClassName(const gsl_vector* vec) :  \
-			::barrett::units::Array<N>(vec) {}  \
-		ClassName(const ::barrett::units::Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
-			::barrett::units::Array<N>(a) {}  \
-		using ::barrett::units::Array<N>::operator=;  \
+			::barrett::math::Array<N>(vec) {}  \
+		ClassName(const ::barrett::math::Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
+			::barrett::math::Array<N>(a) {}  \
+		using ::barrett::math::Array<N>::operator=;  \
 	}
 /// @endcond
 
 
+#define DECLARE_FIXED_SIZE_UNITS(ClassName, N)  \
+	DECLARE_UNITS_IMPL_H(ClassName, N)  \
+	DECLARE_UNITS_IMPL_F(ClassName, N)
+
+#define DECLARE_FIXED_SIZE_UNITS_WITH_ACTUATOR(ClassName, ActuatorType, N)  \
+	DECLARE_UNITS_IMPL_H(ClassName, N)  \
+		typedef ActuatorType actuator_type;  \
+	DECLARE_UNITS_IMPL_F(ClassName, N)
+
+
 /** Declares and defines a new barrett::units type.
  *
- * The new type is a class that descends from barrett::units::Array. It has a
+ * The new type is a class that descends from barrett::math::Array. It has a
  * template parameter \c size_t \c N indicating how many \c doubles it holds.
- * It can be used as an argument to any of the arithmetic operators in units.h
+ * It can be used as an argument to any of the arithmetic operators in array.h
  * and any of the applicable math utilities in math/utils.h.
  *
  * The generated class is of the form:
  * \code
  * template<size_t N>
- * class ClassName : public ::barrett::units::Array<N> {
+ * class ClassName : public ::barrett::math::Array<N> {
  * public:
  * 	explicit ClassName(double d = 0.0) :
- * 		::barrett::units::Array<N>(d) {}
+ * 		::barrett::math::Array<N>(d) {}
  * 	explicit ClassName(const gsl_vector* vec) :
- * 		::barrett::units::Array<N>(vec) {}
- * 	ClassName(const ::barrett::units::Array<N>& a) :
- * 		::barrett::units::Array<N>(a) {}
- * 	using ::barrett::units::Array<N>::operator=;
+ * 		::barrett::math::Array<N>(vec) {}
+ * 	ClassName(const ::barrett::math::Array<N>& a) :
+ * 		::barrett::math::Array<N>(a) {}
+ * 	using ::barrett::math::Array<N>::operator=;
  * };
  * \endcode
  *
@@ -126,8 +117,8 @@
  * @see DECLARE_UNITS_WITH_ACTUATOR
  */
 #define DECLARE_UNITS(ClassName)  \
-	DECLARE_UNITS_IMPL_H(ClassName)  \
-	DECLARE_UNITS_IMPL_F(ClassName)
+	template<size_t N>  \
+	DECLARE_FIXED_SIZE_UNITS(ClassName, N)
 
 /** @copybrief DECLARE_UNITS
  *
@@ -176,17 +167,17 @@
  * The generated class is of the form:
  * \code
  * template<size_t N>
- * class ClassName : public ::barrett::units::Array<N> {
+ * class ClassName : public ::barrett::math::Array<N> {
  * public:
  * 	typedef ActuatorType<N> actuator_type;
  *
  * 	explicit ClassName(double d = 0.0) :
- * 		::barrett::units::Array<N>(d) {}
+ * 		::barrett::math::Array<N>(d) {}
  * 	explicit ClassName(const gsl_vector* vec) :
- * 		::barrett::units::Array<N>(vec) {}
- * 	ClassName(const ::barrett::units::Array<N>& a) :
- * 		::barrett::units::Array<N>(a) {}
- * 	using ::barrett::units::Array<N>::operator=;
+ * 		::barrett::math::Array<N>(vec) {}
+ * 	ClassName(const ::barrett::math::Array<N>& a) :
+ * 		::barrett::math::Array<N>(a) {}
+ * 	using ::barrett::math::Array<N>::operator=;
  * };
  * \endcode
  *
@@ -196,165 +187,24 @@
  * @see DECLARE_UNITS
  */
 #define DECLARE_UNITS_WITH_ACTUATOR(ClassName, ActuatorType)  \
-	DECLARE_UNITS_IMPL_H(ClassName)  \
-		typedef ActuatorType<N> actuator_type;  \
-	DECLARE_UNITS_IMPL_F(ClassName)
+	template<size_t N>  \
+	DECLARE_FIXED_SIZE_UNITS_WITH_ACTUATOR(ClassName, ActuatorType<N>, N)
 
 
 namespace barrett {
 namespace units {
 
 
-template<size_t N> class Array;
-
 DECLARE_UNITS(JointTorques);
 DECLARE_UNITS_WITH_ACTUATOR(JointPositions, JointTorques);
 DECLARE_UNITS_WITH_ACTUATOR(JointVelocities, JointTorques);
 
-
-/** A fixed-size array of \c doubles.\ Parent of all barrett::units.
- *
- * This class supports explicit assignment and element-wise arithmetic using
- * overloaded operators. It inherits from boost::array.
- *
- * Having a compile-time constant length encoded in the type allows the
- * compiler's type checking system to better ensure code correctness.
- *
- * @tparam N Length of the array.
- * @see barrett::units
- */
-template<size_t N>
-class Array : public boost::array<double, N> {
-public:
-	static const size_t SIZE = N;  ///< Length of the array.
-
-	/** Used by clients of child classes to loose type info when necessary.
-	 *
-	 * Sometimes it is useful to cast a specific barrett::units into a generic
-	 * Array of the appropriate size. \c array_type gives easy access to the
-	 * the correct type.
-	 */
-	typedef Array<N> array_type;
-
-
-	/** Default and initial value ctor.
-	 *
-	 * Initializes all elements of the Array to a given value.
-	 *
-	 * @param[in] d The initial value of the Array's elements.
-	 */
-	explicit Array(double d = 0.0);
-	explicit Array(const gsl_vector* vec);
-	Array(const Array& a);
-	~Array();
-
-	static size_t serializedLength();
-	void serialize(char* dest) const;
-	static Array<N> unserialize(char* source);
-
-	void copyTo(gsl_vector* vec) const throw(std::logic_error);
-	void copyFrom(const gsl_vector* vec) throw(std::logic_error);
-
-	gsl_vector* asGslVector();
-	const gsl_vector* asGslVector() const;
-
-
-	/** Tests for equality with the zero vector.
-	 *
-	 * @retval true if all Array elements are equal to 0.0
-	 * @retval false otherwise.
-	 */
-	bool isZero() const;
-
-
-	/// @name Explicit assignment
-	//@{
-
-	/** Enables explicit assignment to the Array.
-	 *
-	 * The operator<<() and operator,() pair allow the convenient (if somewhat
-	 * magical) syntax:
-	 * \code
-	 * barrett::units::Array<5> a;
-	 * a << 5, 42.8, 37, -12, 1.4;
-	 * \endcode
-	 *
-	 * If fewer elements are given than the Array can hold, the remaining
-	 * elements are assigned a value of 0.
-	 *
-	 * @param[in] d The value of the first element of the Array.
-	 * @throws std::out_of_range if too many elements are given.
-	 * @see operator,()
-	 */
-	Array& operator<< (double d);
-
-	/** @copybrief operator<<()
-	 *
-	 * The other half of the explicit assignment mechanism.
-	 *
-	 * @param[in] d The value of the <tt>n</tt>th element of the Array.
-	 * @throws std::out_of_range if too many elements are given.
-	 * @see operator<<()
-	 */
-	Array& operator, (double d);
-
-	//@}
-
-protected:
-	void initGslVector();
-	gsl_vector gslVector;
-
-private:
-	mutable size_t explicitAssignmentIndex;
-};
-
-
-/// @name Element-wise vector arithmetic
-//@{
-template<size_t N>
-const Array<N> operator+ (const Array<N>& lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator- (const Array<N>& lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator* (const Array<N>& lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator/ (const Array<N>& lhs, const Array<N>& rhs);
-
-template<size_t N>
-const Array<N> operator- (const Array<N>& a);
-//@}
-
-
-/// @name Vector-scaler arithmetic
-//@{
-template<size_t N>
-const Array<N> operator+ (double lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator+ (const Array<N>& lhs, double rhs);
-template<size_t N>
-const Array<N> operator- (double lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator- (const Array<N>& lhs, double rhs);
-template<size_t N>
-const Array<N> operator* (double lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator* (const Array<N>& lhs, double rhs);
-template<size_t N>
-const Array<N> operator/ (double lhs, const Array<N>& rhs);
-template<size_t N>
-const Array<N> operator/ (const Array<N>& lhs, double rhs);
-//@}
-
-template<size_t N>
-std::ostream& operator<< (std::ostream& os, const Array<N>& a);
+DECLARE_FIXED_SIZE_UNITS(CartesianForce, 3);
+DECLARE_FIXED_SIZE_UNITS_WITH_ACTUATOR(CartesianPosition, CartesianForce, 3);
 
 
 }
 }
-
-
-// include template definitions
-#include "./detail/units-inl.h"
 
 
 #endif /* BARRETT_UNITS_H_ */
