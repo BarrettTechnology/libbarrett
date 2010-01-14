@@ -38,19 +38,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: sandbox
+all: libfake.deletethis.so
 
 # Tool invocations
-sandbox: $(OBJS) $(USER_OBJS)
+libfake.deletethis.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/root/libbarrett/trunk/library/Debug -L/root/libbarrett/trunk/cdlbt/Debug -Xlinker -rpath /root/libbarrett/trunk/library/Debug -Xlinker -rpath /usr/xenomai/lib -o"sandbox" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/root/libbarrett/trunk/library/Debug -L/root/libbarrett/trunk/cdlbt/Debug -c -Xlinker -rpath /root/libbarrett/trunk/library/Debug -Xlinker -rpath /usr/xenomai/lib -shared -o"libfake.deletethis.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) sandbox
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(LIBRARIES)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) libfake.deletethis.so
 	-@echo ' '
 
 .PHONY: all clean dependents

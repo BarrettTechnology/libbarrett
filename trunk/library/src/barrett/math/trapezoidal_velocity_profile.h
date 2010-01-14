@@ -31,7 +31,7 @@ public:
 	double eval(double t) const;
 
 	typedef double result_type;  ///< For use with boost::bind().
-	double operator () (double t) const {
+	result_type operator() (double t) const {
 		return eval(t);
 	}
 
