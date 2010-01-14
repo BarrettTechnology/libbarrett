@@ -124,7 +124,7 @@ throw(std::logic_error)
 {
 	if (vec->size != N) {
 		std::stringstream ss;
-		ss << "(math::Array<>::copyTo(gsl_vector*)): The size of the "
+		ss << "(math::Array<>::copyFrom(gsl_vector*)): The size of the "
 				"gsl_vector must match the size of the Array. Expected size "
 				<< N << ", got size " << vec->size;
 		throw std::logic_error(ss.str());

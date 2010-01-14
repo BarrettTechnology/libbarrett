@@ -479,7 +479,7 @@ int bt_kinematics_destroy( struct bt_kinematics * kin )
 }
 
 
-int bt_kinematics_eval( struct bt_kinematics * kin, gsl_vector * jposition, gsl_vector * jvelocity )
+int bt_kinematics_eval( struct bt_kinematics * kin, const gsl_vector * jposition, const gsl_vector * jvelocity )
 {
    int j;
    

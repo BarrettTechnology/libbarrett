@@ -221,8 +221,8 @@ int bt_kinematics_destroy(struct bt_kinematics * kin);
  * \paran[in] jvelocity Joint velocity vector
  * \retval 0 Success
  */
-int bt_kinematics_eval(struct bt_kinematics * kin, gsl_vector * jposition,
-                       gsl_vector * jvelocity);
+int bt_kinematics_eval(struct bt_kinematics * kin, const gsl_vector * jposition,
+                       const gsl_vector * jvelocity);
 
 
 /** Evalulate the Jacobian matrix at a paticular point on a particular link.

@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/cartesian_hold.cpp \
 ../src/teach.cpp 
 
 OBJS += \
+./src/cartesian_hold.o \
 ./src/teach.o 
 
 CPP_DEPS += \
+./src/cartesian_hold.d \
 ./src/teach.d 
 
 
