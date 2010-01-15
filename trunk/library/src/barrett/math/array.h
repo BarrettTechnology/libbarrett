@@ -71,6 +71,7 @@ public:
 	explicit Array(double d = 0.0);
 	explicit Array(const gsl_vector* vec);
 	Array(const Array& a);
+	Array<N>& operator= (const Array<N>& a);
 	~Array();
 
 	static size_t serializedLength();

@@ -74,6 +74,7 @@ TYPED_TEST(ArrayTypedTest, CopyCtor) {
 	for (size_t i = 0; i < a.size(); ++i) {
 		EXPECT_EQ(2.0, a[i]);
 		EXPECT_EQ(-487.9, b[i]);
+		EXPECT_EQ(b[i], gsl_vector_get(b.asGslVector(), i));
 	}
 }
 
@@ -147,6 +148,11 @@ TYPED_TEST(ArrayTypedTest, CopyFromTypeParam) {
 	TypeParam a_copy = this->a;  // uses copy constructor
 
 	EXPECT_EQ(this->a, a_copy);
+
+	this->a.assign(20.2);
+	for (size_t i = 0; i < a_copy.size(); ++i) {
+		EXPECT_EQ(a_copy[i], gsl_vector_get(a_copy.asGslVector(), i));
+	}
 }
 
 TYPED_TEST(ArrayTypedTest, AssignFromTypeParam) {
@@ -155,6 +161,11 @@ TYPED_TEST(ArrayTypedTest, AssignFromTypeParam) {
 	a_copy = this->a;  // uses assignment operator
 
 	EXPECT_EQ(this->a, a_copy);
+
+	this->a.assign(20.2);
+	for (size_t i = 0; i < a_copy.size(); ++i) {
+		EXPECT_EQ(a_copy[i], gsl_vector_get(a_copy.asGslVector(), i));
+	}
 }
 
 TYPED_TEST(ArrayTypedTest, CopyFromArray) {
@@ -163,6 +174,11 @@ TYPED_TEST(ArrayTypedTest, CopyFromArray) {
 	TypeParam array_copy = array;  // uses copy constructor
 
 	EXPECT_EQ(array, array_copy);
+
+	array.assign(20.2);
+	for (size_t i = 0; i < array_copy.size(); ++i) {
+		EXPECT_EQ(array_copy[i], gsl_vector_get(array_copy.asGslVector(), i));
+	}
 }
 
 TYPED_TEST(ArrayTypedTest, AssignFromArray) {
@@ -172,6 +188,11 @@ TYPED_TEST(ArrayTypedTest, AssignFromArray) {
 	array_copy = array;  // uses assignment operator
 
 	EXPECT_EQ(array, array_copy);
+
+	array.assign(20.2);
+	for (size_t i = 0; i < array_copy.size(); ++i) {
+		EXPECT_EQ(array_copy[i], gsl_vector_get(array_copy.asGslVector(), i));
+	}
 }
 
 TYPED_TEST(ArrayTypedTest, ExplicitAssignment) {
