@@ -30,7 +30,7 @@ public:
 	typedef units::JointPositions<DOF> jp_type;
 	typedef units::JointVelocities<DOF> jv_type;
 
-	Kinematics(config_setting_t * config);
+	explicit Kinematics(config_setting_t * config);
 	~Kinematics();
 
 	void eval(const jp_type& jp, const jv_type& jv);
@@ -38,7 +38,7 @@ public:
 	typedef units::CartesianPosition result_type;  ///< For use with boost::bind().
 	result_type operator() (const boost::tuple<jp_type, jv_type>& jointState);
 
-protected:
+//protected:
 	struct bt_kinematics* impl;
 
 private:

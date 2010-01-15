@@ -13,9 +13,12 @@
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_io.hpp>
+#include <libconfig.h>
 
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
+#include <barrett/thread/abstract/mutex.h>
 #include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/log.h>
@@ -51,13 +54,35 @@ int main() {
 
 	math::Array<DOF> tmp;
 
+
+	struct config_t config;
+	char filename[] = "/etc/wam/wamg.config";
+	config_init(&config);
+	syslog(LOG_ERR,"Open '%s' ...",filename);
+	int err = config_read_file(&config,filename);
+	if (err != CONFIG_TRUE) {
+		syslog(LOG_ERR,"libconfig error: %s, line %d\n",
+		config_error_text(&config), config_error_line(&config));
+		config_destroy(&config);
+		/* Failure */
+		return -1;
+	}
+	config_setting_t* wamconfig = config_lookup(&config, "wam");
+	math::Kinematics<DOF> kin(config_setting_get_member(wamconfig, "kinematics"));
+	config_destroy(&config);
+
+
 	systems::RealTimeExecutionManager rtem;
 	systems::System::defaultExecutionManager = &rtem;
 
 
 	Wam<DOF> wam;
-
 	systems::PIDController<Wam<DOF>::jp_type> pid;
+
+	systems::TupleGrouper<Wam<DOF>::jp_type, Wam<DOF>::jv_type> kinTg;
+	systems::Callback<boost::tuple<Wam<DOF>::jp_type, Wam<DOF>::jv_type>, units::CartesianPosition> kinSys(ref(kin), true);
+//	systems::PrintToStream<boost::tuple<Wam<DOF>::jp_type, Wam<DOF>::jv_type> > printTuple;
+//	systems::PrintToStream<units::CartesianPosition> printCpos;
 
 	tmp << 900, 2500, 600, 500, 40, 20, 5;
 	pid.setKp(tmp);
@@ -67,11 +92,16 @@ int main() {
 	pid.setControlSignalLimit(tmp);
 
 	connect(wam.jpOutput, pid.feedbackInput);
-
 	connect(pid.controlOutput, wam.input);
 
 	// tie inputs together for zero torque
 	systems::forceConnect(wam.jpOutput, pid.referenceInput);
+
+	connect(wam.jpOutput, kinTg.getInput<0>());
+	connect(wam.jvOutput, kinTg.getInput<1>());
+	connect(kinTg.output, kinSys.input);
+//	connect(kinTg.output, printTuple.input);
+//	connect(kinSys.output, printCpos.input);
 
 
 	// start the main loop!
@@ -81,8 +111,17 @@ int main() {
 	waitForEnter();
 	wam.gravityCompensate();
 
+	{
+		SCOPED_LOCK(rtem.getMutex());
+		std::cout << units::CartesianPosition(kin.impl->tool->origin_pos);
+	}
+
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
+	{
+		SCOPED_LOCK(rtem.getMutex());
+		std::cout << units::CartesianPosition(kin.impl->tool->origin_pos);
+	}
 	wam.moveHome();
 	while ( !wam.moveIsDone() ) {
 		usleep(static_cast<int>(1e5));
