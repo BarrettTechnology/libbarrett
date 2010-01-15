@@ -73,6 +73,14 @@ inline Array<N>::Array(const Array& a) :
 	initGslVector();
 }
 
+template<size_t N>
+Array<N>& Array<N>::operator= (const Array<N>& a)
+{
+	if (this != &a) {
+		boost::array<double, N>::operator= (a);
+	}
+	return *this;
+}
 
 template<size_t N>
 inline Array<N>::~Array()
