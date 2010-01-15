@@ -27,7 +27,7 @@ public:	Input<T> input;
 
 
 public:
-	explicit PrintToStream(const std::string& prependedLabel,
+	explicit PrintToStream(const std::string& prependedLabel = std::string(),
 	                       std::ostream& ostream = std::cout) :
 		System(true), input(this), label(prependedLabel), os(ostream) {}
 	virtual ~PrintToStream() {}

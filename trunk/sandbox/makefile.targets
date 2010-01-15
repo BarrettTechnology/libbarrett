@@ -6,4 +6,5 @@
 	@echo ' '
 
 	
-all: teach cartesian_hold
+#all: teach cartesian_hold
+all: cartesian_hold
