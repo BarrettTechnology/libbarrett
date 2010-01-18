@@ -10,6 +10,7 @@
 
 
 #include "../detail/ca_macro.h"
+#include "../thread/abstract/mutex.h"
 #include "./abstract/system.h"
 
 
@@ -34,12 +35,15 @@ public:
 	}
 
 	void setValue(const T& value) {
+		SCOPED_LOCK(getEmMutex());
 		outputValue->setValue(value);
 	}
 	void setValueUndefined() {
+		SCOPED_LOCK(getEmMutex());
 		outputValue->setValueUndefined();
 	}
 	void delegateTo(const System::Output<T>& delegate) {
+		SCOPED_LOCK(getEmMutex());
 		outputValue->delegateTo(delegate);
 	}
 

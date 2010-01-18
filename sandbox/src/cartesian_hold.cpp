@@ -52,8 +52,6 @@ void waitForEnter() {
 int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
-	math::Array<DOF> tmp;
-
 
 	struct config_t config;
 	char filename[] = "/etc/wam/wamg.config";
@@ -68,7 +66,7 @@ int main() {
 		return -1;
 	}
 	config_setting_t* wamconfig = config_lookup(&config, "wam");
-	math::Kinematics<DOF> kin(config_setting_get_member(wamconfig, "kinematics"));
+	systems::KinematicsBase<DOF> kin(config_setting_get_member(wamconfig, "kinematics"));
 	config_destroy(&config);
 
 
@@ -77,31 +75,32 @@ int main() {
 
 
 	Wam<DOF> wam;
-	systems::PIDController<Wam<DOF>::jp_type> pid;
+	systems::ToolPosition<DOF> toolPos;
+	systems::ToolForceToJointTorques<DOF> tf2jt;
+	systems::PIDController<units::CartesianPosition> pid;
 
-	systems::TupleGrouper<Wam<DOF>::jp_type, Wam<DOF>::jv_type> kinTg;
-	systems::Callback<boost::tuple<Wam<DOF>::jp_type, Wam<DOF>::jv_type>, units::CartesianPosition> kinSys(ref(kin), true);
-//	systems::PrintToStream<boost::tuple<Wam<DOF>::jp_type, Wam<DOF>::jv_type> > printTuple;
-//	systems::PrintToStream<units::CartesianPosition> printCpos;
 
-	tmp << 900, 2500, 600, 500, 40, 20, 5;
+	math::Array<3> tmp;
+	tmp.assign(2e3);
 	pid.setKp(tmp);
-	tmp << 2, 2, 0.5, 0.8, 0.8, 0.1, 0.1;
+	tmp.assign(2e1);
 	pid.setKd(tmp);
-	tmp << 25.0, 20.0, 15.0, 15.0, 5, 5, 5;
+	tmp.assign(1e2);
 	pid.setControlSignalLimit(tmp);
 
-	connect(wam.jpOutput, pid.feedbackInput);
-	connect(pid.controlOutput, wam.input);
+
+	connect(wam.jpOutput, kin.jpInput);
+	connect(wam.jvOutput, kin.jvInput);
+	connect(kin.output, toolPos.input);
+	connect(kin.output, tf2jt.kinInput);
+
+	connect(toolPos.output, pid.feedbackInput);
+	connect(pid.controlOutput, tf2jt.input);
+	connect(tf2jt.output, wam.input);
 
 	// tie inputs together for zero torque
-	systems::forceConnect(wam.jpOutput, pid.referenceInput);
+	connect(toolPos.output, pid.referenceInput);
 
-	connect(wam.jpOutput, kinTg.getInput<0>());
-	connect(wam.jvOutput, kinTg.getInput<1>());
-	connect(kinTg.output, kinSys.input);
-//	connect(kinTg.output, printTuple.input);
-//	connect(kinSys.output, printCpos.input);
 
 
 	// start the main loop!
@@ -111,17 +110,19 @@ int main() {
 	waitForEnter();
 	wam.gravityCompensate();
 
+	std::cout << "Enter to hold Cartesian position.\n";
+	waitForEnter();
+	systems::ExposedOutput<units::CartesianPosition> setPoint;
 	{
 		SCOPED_LOCK(rtem.getMutex());
-		std::cout << units::CartesianPosition(kin.impl->tool->origin_pos);
+		setPoint.setValue(pid.feedbackInput.getValue());
 	}
+	reconnect(setPoint.output, pid.referenceInput);
+
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
-	{
-		SCOPED_LOCK(rtem.getMutex());
-		std::cout << units::CartesianPosition(kin.impl->tool->origin_pos);
-	}
+	reconnect(toolPos.output, pid.referenceInput);  // zero torque
 	wam.moveHome();
 	while ( !wam.moveIsDone() ) {
 		usleep(static_cast<int>(1e5));
