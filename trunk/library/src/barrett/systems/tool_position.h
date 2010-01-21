@@ -11,7 +11,9 @@
 
 #include "../detail/ca_macro.h"
 #include "../units.h"
+#include "./abstract/system.h"
 #include "./abstract/single_io.h"
+#include "./kinematics_base.h"
 
 
 namespace barrett {
@@ -19,16 +21,19 @@ namespace systems {
 
 
 template<size_t DOF>
-class ToolPosition : public SingleIO<const math::Kinematics<DOF>*, units::CartesianPosition> {
+class ToolPosition : public System, public KinematicsInput<DOF>,
+					 public SingleOutput<units::CartesianPosition> {
 public:
-	ToolPosition() {}
+	ToolPosition() :
+		KinematicsInput<DOF>(this),
+		SingleOutput<units::CartesianPosition>(this) {}
 	virtual ~ToolPosition() {}
 
 protected:
 	virtual void operate() {
 		this->outputValue->setValue(
 				units::CartesianPosition(
-						this->input.getValue()->impl->tool->origin_pos));
+						this->kinInput.getValue()->impl->tool->origin_pos));
 	}
 
 private:

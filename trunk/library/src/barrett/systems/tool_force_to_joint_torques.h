@@ -15,6 +15,7 @@
 #include "../units.h"
 #include "../math/kinematics.h"
 #include "./abstract/single_io.h"
+#include "./kinematics_base.h"
 
 
 namespace barrett {
@@ -22,14 +23,10 @@ namespace systems {
 
 
 template<size_t DOF>
-class ToolForceToJointTorques : public SingleIO<units::CartesianForce, units::JointTorques<DOF> > {
-// IO
-public:	System::Input<const math::Kinematics<DOF>*> kinInput;
-
-
+class ToolForceToJointTorques : public SingleIO<units::CartesianForce, units::JointTorques<DOF> >, public KinematicsInput<DOF> {
 public:
 	ToolForceToJointTorques() :
-		SingleIO<units::CartesianForce, units::JointTorques<DOF> >(), kinInput(this) {}
+		SingleIO<units::CartesianForce, units::JointTorques<DOF> >(), KinematicsInput<DOF>(this) {}
 	virtual ~ToolForceToJointTorques() {}
 
 protected:
@@ -37,7 +34,7 @@ protected:
 		units::JointTorques<DOF> jt;
 
 		// Multiply by the Jacobian-transpose at the tool
-		gsl_blas_dgemv(CblasTrans, 1.0, kinInput.getValue()->impl->tool_jacobian_linear,
+		gsl_blas_dgemv(CblasTrans, 1.0, this->kinInput.getValue()->impl->tool_jacobian_linear,
 					this->input.getValue().asGslVector(), 1.0, jt.asGslVector());
 
 		this->outputValue->setValue(jt);

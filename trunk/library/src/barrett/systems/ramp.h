@@ -12,6 +12,7 @@
 #include "../detail/ca_macro.h"
 #include "../thread/abstract/mutex.h"
 #include "./abstract/system.h"
+#include "./abstract/single_io.h"
 
 
 namespace barrett {
@@ -21,15 +22,10 @@ namespace systems {
 // TODO(dc): test this!
 
 
-class Ramp : public System {
-// IO
-public:		Output<double> output;
-protected:	Output<double>::Value* outputValue;
-
-
+class Ramp : public System, public SingleOutput<double> {
 public:
 	explicit Ramp(double slope = 1.0, bool updateEveryExecutionCycle = true) :
-		System(updateEveryExecutionCycle), output(this, &outputValue),
+		System(updateEveryExecutionCycle), SingleOutput<double>(this),
 		T_s(0.0), gain(slope), y(0.0), running(false)
 	{
 		outputValue->setValue(y);

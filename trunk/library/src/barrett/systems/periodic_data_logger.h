@@ -11,6 +11,7 @@
 
 #include "../detail/ca_macro.h"
 #include "./abstract/system.h"
+#include "./abstract/single_io.h"
 #include "../log/real_time_writer.h"
 
 
@@ -19,15 +20,11 @@ namespace systems {
 
 
 template<typename T, typename LogWriterType = log::RealTimeWriter<T> >
-class PeriodicDataLogger : public System {
-// IO
-public:	Input<T> input;
-
-
+class PeriodicDataLogger : public System, public SingleInput<T> {
 public:
 	PeriodicDataLogger(LogWriterType* logWriter, size_t periodMultiplier = 10);
-
 	virtual ~PeriodicDataLogger();
+
 	bool isLogging();
 	void closeLog();
 

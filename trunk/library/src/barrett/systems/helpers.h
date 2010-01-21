@@ -150,6 +150,7 @@ void disconnect(System::Output<T>& output)  //NOLINT: non-const reference parame
 	for (i = output.inputs.begin(); i != output.inputs.end(); ++i) {
 		(*i)->output = NULL;
 	}
+
 	output.inputs.clear();
 }
 

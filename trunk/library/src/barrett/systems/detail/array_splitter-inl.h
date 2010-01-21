@@ -16,7 +16,7 @@ namespace systems {
 
 template <typename T>
 ArraySplitter<T>::ArraySplitter() :
-	input(this)
+	SingleInput<T>(this)
 {
 	initOutputs();
 }
@@ -38,7 +38,7 @@ template <typename T>
 void ArraySplitter<T>::operate()
 {
 	for (size_t i = 0; i < T::SIZE; ++i) {
-		outputValues[i]->setValue(input.getValue()[i]);
+		outputValues[i]->setValue(this->input.getValue()[i]);
 	}
 }
 
