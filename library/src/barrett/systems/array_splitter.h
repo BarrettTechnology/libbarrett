@@ -22,10 +22,9 @@ namespace systems {
 // TODO(dc): test!
 
 template <typename T>
-class ArraySplitter : public System {
+class ArraySplitter : public System, public SingleInput<T> {
 // IO
 // protected because of variable number of outputs
-public:		Input<T> input;
 protected:	boost::array<Output<double>*, T::SIZE> outputs;
 protected:	boost::array<Output<double>::Value*, T::SIZE> outputValues;
 

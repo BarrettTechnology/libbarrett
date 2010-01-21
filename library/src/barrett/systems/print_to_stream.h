@@ -12,8 +12,9 @@
 #include <iostream>
 #include <string>
 
-#include "./abstract/system.h"
 #include "../detail/ca_macro.h"
+#include "./abstract/system.h"
+#include "./abstract/single_io.h"
 
 
 namespace barrett {
@@ -21,15 +22,11 @@ namespace systems {
 
 
 template<typename T>
-class PrintToStream : public System {
-// IO
-public:	Input<T> input;
-
-
+class PrintToStream : public System, public SingleInput<T> {
 public:
 	explicit PrintToStream(const std::string& prependedLabel = std::string(),
 	                       std::ostream& ostream = std::cout) :
-		System(true), input(this), label(prependedLabel), os(ostream) {}
+		System(true), SingleInput<T>(this), label(prependedLabel), os(ostream) {}
 	virtual ~PrintToStream() {}
 
 protected:
@@ -37,7 +34,7 @@ protected:
 	std::ostream& os;
 
 	virtual void operate() {
-		os << label << input.getValue() << std::endl;
+		os << label << this->input.getValue() << std::endl;
 	}
 
 private:

@@ -14,6 +14,7 @@
 
 #include "../detail/ca_macro.h"
 #include "./abstract/system.h"
+#include "./abstract/single_io.h"
 #include "./abstract/conversion.h"
 
 
@@ -22,17 +23,10 @@ namespace systems {
 
 
 template<typename OutputType>
-class Converter : public System {
-//IO
-public:		Output<OutputType> output;
-protected:	typename Output<OutputType>::Value* outputValue;
-
-
+class Converter : public System, public SingleOutput<OutputType> {
 public:
 	Converter() :
-		output(this, &outputValue), conversions() {}
-	explicit Converter(const OutputType& initialOutputValue) :
-		output(initialOutputValue, &outputValue), conversions() {}
+		SingleOutput<OutputType>(this), conversions() {}
 	virtual ~Converter();
 
 	void registerConversion(

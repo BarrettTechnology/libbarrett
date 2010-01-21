@@ -9,13 +9,12 @@
 #define SUMMER_H_
 
 #include <boost/array.hpp>
-//#include <vector>
 #include <bitset>
 #include <string>
 #include <stdexcept>
 
-#include "./abstract/system.h"
 #include "../detail/ca_macro.h"
+#include "./abstract/system.h"
 
 
 namespace barrett {
@@ -25,12 +24,10 @@ namespace systems {
 // FIXME: it might be nice to have a Summer with the number of inputs
 //        determined at runtime
 template<typename T, size_t numInputs = 2>
-class Summer : public System {
+class Summer : public System, public SingleOutput<T> {
 // IO
 // protected because of variable number of inputs
 protected:	boost::array<Input<T>*, numInputs> inputs;
-public:		Output<T> output;
-protected:	typename Output<T>::Value* outputValue;
 
 
 public:

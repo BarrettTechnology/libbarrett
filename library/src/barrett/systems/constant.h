@@ -11,6 +11,7 @@
 
 #include "../detail/ca_macro.h"
 #include "./abstract/system.h"
+#include "./abstract/single_io.h"
 
 
 namespace barrett {
@@ -18,17 +19,12 @@ namespace systems {
 
 
 template<typename T>
-class Constant : public System {
-// IO
-public:		Output<T> output;
-protected:	typename Output<T>::Value* outputValue;
-
-
+class Constant : public System, public SingleOutput<T> {
 public:
 	explicit Constant(const T& value) :
-		output(this, &outputValue)
+		SingleOutput<T>(this)
 	{
-		outputValue->setValue(value);
+		this->outputValue->setValue(value);
 	}
 	virtual ~Constant() {}
 

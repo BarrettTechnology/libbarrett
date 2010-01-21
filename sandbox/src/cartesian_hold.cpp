@@ -91,7 +91,7 @@ int main() {
 
 	connect(wam.jpOutput, kin.jpInput);
 	connect(wam.jvOutput, kin.jvInput);
-	connect(kin.output, toolPos.input);
+	connect(kin.output, toolPos.kinInput);
 	connect(kin.output, tf2jt.kinInput);
 
 	connect(toolPos.output, pid.feedbackInput);

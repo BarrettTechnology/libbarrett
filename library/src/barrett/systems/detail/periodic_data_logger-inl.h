@@ -15,7 +15,7 @@ namespace systems {
 
 template<typename T, typename LogWriterType>
 PeriodicDataLogger<T, LogWriterType>::PeriodicDataLogger(LogWriterType* logWriter, size_t periodMultiplier) :
-	System(true), input(this),
+	System(true), SingleInput<T>(this),
 	lw(logWriter), logging(true),
 	ecCount(0), ecCountRollover(periodMultiplier) {}
 
@@ -49,12 +49,12 @@ void PeriodicDataLogger<T, LogWriterType>::closeLog() {
 template<typename T, typename LogWriterType>
 inline bool PeriodicDataLogger<T, LogWriterType>::inputsValid() {
 	ecCount = (ecCount + 1) % ecCountRollover;
-	return logging  &&  ecCount == 0  &&  input.valueDefined();
+	return logging  &&  ecCount == 0  &&  this->input.valueDefined();
 }
 
 template<typename T, typename LogWriterType>
 inline void PeriodicDataLogger<T, LogWriterType>::operate() {
-	lw->putRecord(input.getValue());
+	lw->putRecord(this->input.getValue());
 }
 
 

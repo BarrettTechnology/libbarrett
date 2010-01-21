@@ -71,7 +71,7 @@ bool Converter<OutputType>::connectInputTo(
 	}
 
 	forceConnect(referenceOutput, *referenceInput);
-	outputValue->delegateTo(conversion->getConversionOutput());
+	this->outputValue->delegateTo(conversion->getConversionOutput());
 
 	return true;
 }
