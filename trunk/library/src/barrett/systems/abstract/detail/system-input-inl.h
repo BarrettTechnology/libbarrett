@@ -44,6 +44,16 @@ inline thread::Mutex& System::AbstractInput::getEmMutex()
 }
 
 
+template<typename T>
+inline System::Input<T>::~Input()
+{
+	SCOPED_LOCK(getEmMutex());
+
+	if (isConnected()) {
+		disconnect(*this);
+	}
+}
+
 // TODO(dc): add tests for this
 template<typename T>
 inline bool System::Input<T>::isConnected() const

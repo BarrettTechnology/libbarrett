@@ -267,7 +267,7 @@ public:
 		///        when this Input's value changes.
 		explicit Input(System* parentSys) :
 			AbstractInput(parentSys), output(NULL) {}
-		virtual ~Input() {}
+		virtual ~Input();
 
 		virtual bool isConnected() const;
 		virtual bool valueDefined() const;
