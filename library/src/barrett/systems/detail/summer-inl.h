@@ -58,7 +58,7 @@ void Summer<T, numInputs>::operate()
 {
 	T sum;
 	for (size_t i = 0; i < numInputs; ++i) {
-		sum += polarity[i] * inputs[i]->getValue();
+		sum = sum + polarity[i] * inputs[i]->getValue();
 	}
 
 	this->outputValue->setValue(sum);

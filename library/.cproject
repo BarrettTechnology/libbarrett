@@ -33,6 +33,7 @@
 <option id="gnu.cpp.compiler.option.other.other.1434668450" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.739813320" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
+<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.816583146" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -372,6 +373,7 @@
 <option id="gnu.cpp.compiler.option.other.other.525304823" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.1461442815" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.182865940" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
