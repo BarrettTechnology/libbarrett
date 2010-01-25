@@ -15,6 +15,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_io.hpp>
 #include <libconfig.h>
+#include <Eigen/Geometry>
 
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
@@ -75,9 +76,15 @@ int main() {
 
 
 	Wam<DOF> wam;
+
 	systems::ToolPosition<DOF> toolPos;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 	systems::PIDController<units::CartesianPosition> pid;
+
+	systems::ToolOrientation<DOF> toolOrient;
+	systems::ToolOrientationController<DOF> toolOrientController;
+
+	systems::Summer<Wam<DOF>::jt_type, 2> jtSum;
 
 
 	math::Array<3> tmp;
@@ -91,15 +98,24 @@ int main() {
 
 	connect(wam.jpOutput, kin.jpInput);
 	connect(wam.jvOutput, kin.jvInput);
-	connect(kin.output, toolPos.kinInput);
-	connect(kin.output, tf2jt.kinInput);
+	connect(kin.kinOutput, toolPos.kinInput);
+	connect(kin.kinOutput, tf2jt.kinInput);
+	connect(kin.kinOutput, toolOrient.kinInput);
+	connect(kin.kinOutput, toolOrientController.kinInput);
 
 	connect(toolPos.output, pid.feedbackInput);
 	connect(pid.controlOutput, tf2jt.input);
-	connect(tf2jt.output, wam.input);
+	connect(tf2jt.output, jtSum.getInput(0));
+
+	connect(toolOrient.output, toolOrientController.feedbackInput);
+	connect(toolOrientController.controlOutput, jtSum.getInput(1));
+
+	connect(jtSum.output, wam.input);
+
 
 	// tie inputs together for zero torque
 	connect(toolPos.output, pid.referenceInput);
+	connect(toolOrient.output, toolOrientController.referenceInput);
 
 
 
@@ -112,17 +128,22 @@ int main() {
 
 	std::cout << "Enter to hold Cartesian position.\n";
 	waitForEnter();
-	systems::ExposedOutput<units::CartesianPosition> setPoint;
+	systems::ExposedOutput<units::CartesianPosition> setPointLoc;
+	systems::ExposedOutput<Eigen::Quaterniond> setPointOrient;
 	{
 		SCOPED_LOCK(rtem.getMutex());
-		setPoint.setValue(pid.feedbackInput.getValue());
+		setPointLoc.setValue(pid.feedbackInput.getValue());
+		setPointOrient.setValue(toolOrientController.feedbackInput.getValue());
 	}
-	reconnect(setPoint.output, pid.referenceInput);
+	reconnect(setPointLoc.output, pid.referenceInput);
+	reconnect(setPointOrient.output, toolOrientController.referenceInput);
 
 
 	std::cout << "Enter to move home.\n";
 	waitForEnter();
 	reconnect(toolPos.output, pid.referenceInput);  // zero torque
+	reconnect(toolOrient.output, toolOrientController.referenceInput);
+
 	wam.moveHome();
 	while ( !wam.moveIsDone() ) {
 		usleep(static_cast<int>(1e5));

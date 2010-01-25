@@ -26,6 +26,7 @@
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.948535016" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.946116199" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/src}&quot;"/>
+<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.16080351" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
@@ -45,7 +46,7 @@
 <listOptionValue builtIn="false" value="barrett"/>
 </option>
 <option id="gnu.cpp.link.option.paths.712846095" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-local}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-remote}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/Debug_local}&quot;"/>
 </option>
 <option id="gnu.cpp.link.option.other.925854388" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
@@ -95,7 +96,7 @@
 <externalSetting>
 <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/library"/>
 <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug"/>
-<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-local"/>
+<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-remote"/>
 </externalSetting>
 </externalSettings>
 </storageModule>
@@ -707,6 +708,8 @@
 <option id="gnu.cpp.compiler.exe.release.option.debugging.level.629948304" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1652879706" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/src}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
+<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.2147053124" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1531665170" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
