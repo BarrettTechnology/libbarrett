@@ -50,6 +50,12 @@ void waitForEnter() {
 	std::getline(std::cin, line);
 }
 
+std::ostream& operator<< (std::ostream& os, const Eigen::Quaterniond& q) {
+	os << "[" << q.w() << ", (" << q.x() << ", " << q.y() << ", " << q.z() << ")]";
+	return os;
+}
+
+
 int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
@@ -71,7 +77,7 @@ int main() {
 	config_destroy(&config);
 
 
-	systems::RealTimeExecutionManager rtem;
+	systems::RealTimeExecutionManager rtem(10000000);
 	systems::System::defaultExecutionManager = &rtem;
 
 
@@ -84,7 +90,7 @@ int main() {
 	systems::ToolOrientation<DOF> toolOrient;
 	systems::ToolOrientationController<DOF> toolOrientController;
 
-	systems::Summer<Wam<DOF>::jt_type, 2> jtSum;
+//	systems::Summer<Wam<DOF>::jt_type, 2> jtSum;
 
 
 	math::Array<3> tmp;
@@ -105,12 +111,17 @@ int main() {
 
 	connect(toolPos.output, pid.feedbackInput);
 	connect(pid.controlOutput, tf2jt.input);
-	connect(tf2jt.output, jtSum.getInput(0));
+//	connect(tf2jt.output, jtSum.getInput(0));
 
+	systems::PrintToStream<Wam<DOF>::jt_type> jtPrint;
 	connect(toolOrient.output, toolOrientController.feedbackInput);
-	connect(toolOrientController.controlOutput, jtSum.getInput(1));
+	connect(toolOrientController.controlOutput, wam.input);
+//	connect(toolOrientController.controlOutput, jtSum.getInput(1));
 
-	connect(jtSum.output, wam.input);
+//	systems::Constant<Wam<DOF>::jt_type> zero(Wam<DOF>::jt_type(0.0));
+//	connect(zero.output, jtSum.getInput(0));
+
+//	connect(jtSum.output, wam.input);
 
 
 	// tie inputs together for zero torque
@@ -126,23 +137,53 @@ int main() {
 	waitForEnter();
 	wam.gravityCompensate();
 
-	std::cout << "Enter to hold Cartesian position.\n";
-	waitForEnter();
-	systems::ExposedOutput<units::CartesianPosition> setPointLoc;
+//	systems::ExposedOutput<units::CartesianPosition> setPointLoc;
 	systems::ExposedOutput<Eigen::Quaterniond> setPointOrient;
-	{
-		SCOPED_LOCK(rtem.getMutex());
-		setPointLoc.setValue(pid.feedbackInput.getValue());
-		setPointOrient.setValue(toolOrientController.feedbackInput.getValue());
+	std::string line;
+	bool going = true, holding = false, gravComp = true;
+	Eigen::Quaterniond q;
+	Wam<DOF>::jp_type jp;
+	while (going) {
+		std::cout << ">>> ";
+		std::getline(std::cin, line);
+
+		switch (line[0]) {
+		case 'h':
+			holding = !holding;
+			if (holding) {
+				SCOPED_LOCK(rtem.getMutex());
+//				setPointLoc.setValue(pid.feedbackInput.getValue());
+				setPointOrient.setValue(toolOrientController.feedbackInput.getValue());
+//				reconnect(setPointLoc.output, pid.referenceInput);
+				reconnect(setPointOrient.output, toolOrientController.referenceInput);
+			} else {
+//				reconnect(toolPos.output, pid.referenceInput);  // zero torque
+				reconnect(toolOrient.output, toolOrientController.referenceInput);
+			}
+			break;
+
+		case 'g':
+			gravComp = !gravComp;
+			wam.gravityCompensate(gravComp);
+			break;
+
+		case 'q':
+		case 'x':
+			going = false;
+			break;
+
+		default:
+			{
+				SCOPED_LOCK(rtem.getMutex());
+				q = toolOrientController.feedbackInput.getValue();
+				jp = kin.jpInput.getValue();
+			}
+			std::cout << q << " " << jp << std::endl;
+
+			break;
+		}
 	}
-	reconnect(setPointLoc.output, pid.referenceInput);
-	reconnect(setPointOrient.output, toolOrientController.referenceInput);
 
-
-	std::cout << "Enter to move home.\n";
-	waitForEnter();
-	reconnect(toolPos.output, pid.referenceInput);  // zero torque
-	reconnect(toolOrient.output, toolOrientController.referenceInput);
 
 	wam.moveHome();
 	while ( !wam.moveIsDone() ) {

@@ -23,6 +23,7 @@
  *
  * ======================================================================== */
 
+#include <stdio.h> /* For printf() */
 #include <math.h> /* For sqrt() */
 #include <gsl/gsl_math.h> /* For M_PI */
 
@@ -369,6 +370,8 @@ static int get_position(struct bt_control * base)
 /* RT - Evaluate */
 static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
 {
+    char buf[256];
+
    struct bt_control_cartesian_xyz_q * c = (struct bt_control_cartesian_xyz_q *) base;
    double len;
    
@@ -420,19 +423,29 @@ static int eval(struct bt_control * base, gsl_vector * jtorque, double time)
        * then back to world (position) */
       q_mult_conj( c->temp4vec, c->pos_quat, c->ref_quat );
       
+      bt_gsl_vector_sprintf(buf, c->temp4vec);
+      printf("%s\n", buf);
+
+
       /* Convert to angle * axis (3-vec)
        * Note that this is AT THE TOOL */
       q_to_angle_axis( c->temp4vec, c->temp1 );
       gsl_blas_dscal( c->rot_p, c->temp1 ); /* P TERM */
       
+      bt_gsl_vector_sprintf(buf, c->temp1);
+      printf("%s\n", buf);
+
       /* Next, multiply it by the to_world transform
        * to get it in the world frame */
       gsl_blas_dgemv( CblasNoTrans, 1.0, c->kin->tool->rot_to_world,
                       c->temp1,
                       0.0, c->torque );
       
-      /* Also, add in the angular velocity (D term) */
-      gsl_blas_daxpy( - c->rot_d, c->kin->tool_velocity_angular, c->torque ); /* D TERM */
+      bt_gsl_vector_sprintf(buf, c->torque);
+      printf("%s\n", buf);
+
+      //      /* Also, add in the angular velocity (D term) */
+//      gsl_blas_daxpy( - c->rot_d, c->kin->tool_velocity_angular, c->torque ); /* D TERM */
       
       /* Multiply by the Jacobian-transpose at the tool (torque) */
       gsl_blas_dgemv( CblasTrans, 1.0, c->kin->tool_jacobian_angular,
