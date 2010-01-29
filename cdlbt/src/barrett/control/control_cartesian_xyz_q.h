@@ -23,6 +23,12 @@
  *
  * ======================================================================== */
 
+#ifndef BT_CONTROL_CARTESIAN_XYZ_Q_H
+#define BT_CONTROL_CARTESIAN_XYZ_Q_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "control.h"
 
 #include "../dynamics/dynamics.h"
@@ -82,3 +88,10 @@ int bt_control_cartesian_xyz_q_create(
                           struct bt_kinematics * kin,
                           struct bt_dynamics * dyn);
 void bt_control_cartesian_xyz_q_destroy(struct bt_control_cartesian_xyz_q * c);
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* BT_CONTROL_CARTESIAN_XYZ_Q_H */
+
