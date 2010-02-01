@@ -6,12 +6,45 @@
  */
 
 
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
+
 #include "../../math/utils.h"
+#include "../../thread/abstract/mutex.h"
 
 
 namespace barrett {
 namespace systems {
 
+
+template<typename InputType, typename OutputType>
+PIDController<InputType, OutputType>::PIDController(const libconfig::Setting& setting)
+{
+	setFromConfig(setting);
+}
+
+template<typename InputType, typename OutputType>
+PIDController<InputType, OutputType>&
+PIDController<InputType, OutputType>::setFromConfig(const libconfig::Setting& setting)
+{
+	if (setting.exists("kp")) {
+		setKp(array_type(setting["kp"]));
+	}
+	if (setting.exists("ki")) {
+		setKi(array_type(setting["ki"]));
+	}
+	if (setting.exists("kd")) {
+		setKd(array_type(setting["kd"]));
+	}
+	if (setting.exists("integrator_limit")) {
+		setIntegratorLimit(array_type(setting["integrator_limit"]));
+	}
+	if (setting.exists("control_signal_limit")) {
+		setControlSignalLimit(array_type(setting["control_signal_limit"]));
+	}
+
+	return *this;
+}
 
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
@@ -42,6 +75,8 @@ PIDController<InputType, OutputType>&
 PIDController<InputType, OutputType>::setIntegratorState(
 		array_type integratorState)
 {
+	// intError is written and read in operate(), so it needs to be locked.
+	SCOPED_LOCK(this->getEmMutex());
 	intError = integratorState;
 	return *this;
 }

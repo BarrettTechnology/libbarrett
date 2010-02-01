@@ -42,6 +42,7 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.137932569" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 <option id="gnu.cpp.link.option.libs.1668146861" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gtest_main"/>
+<listOptionValue builtIn="false" value="config++"/>
 <listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="barrett"/>
 </option>

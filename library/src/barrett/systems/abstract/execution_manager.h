@@ -10,8 +10,11 @@
 
 
 #include <vector>
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
 
 #include "../../detail/ca_macro.h"
+#include "../../detail/libconfig_utils.h"
 #include "../../thread/abstract/mutex.h"
 #include "../../thread/null_mutex.h"
 
@@ -27,14 +30,22 @@ class System;
 // this isn't technically abstract, but neither does it have all the elements of a useful interface...
 class ExecutionManager {
 public:
-	ExecutionManager() :
-		mutex(new thread::NullMutex), managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
+	explicit ExecutionManager(double period_s) :
+		mutex(new thread::NullMutex), period(period_s),
+		managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
+	explicit ExecutionManager(const libconfig::Setting& setting) :
+		mutex(new thread::NullMutex), period(),
+		managedSystems(), alwaysUpdatedSystems(), updatedSystems()
+	{
+		period = detail::numericToDouble(setting["control_loop_period"]);
+	}
 	virtual ~ExecutionManager();
 
 	virtual void startManaging(System* sys, bool alwaysUpdate = false);
 	virtual void stopManaging(System* sys);
 
 	virtual thread::Mutex& getMutex();
+	virtual double getPeriod() const {  return period;  }
 
 protected:
 	void runExecutionCycle();
@@ -47,6 +58,8 @@ protected:
 	virtual bool updateNeeded(System* sys);
 
 	thread::Mutex* mutex;
+
+	double period;
 
 	std::vector<System*> managedSystems;
 	std::vector<System*> alwaysUpdatedSystems;

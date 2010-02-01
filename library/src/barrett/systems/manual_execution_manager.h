@@ -9,6 +9,9 @@
 #define MANUAL_EXECUTION_MANAGER_H_
 
 
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
+
 #include "../detail/ca_macro.h"
 #include "./abstract/execution_manager.h"
 
@@ -19,8 +22,11 @@ namespace systems {
 
 class ManualExecutionManager : public ExecutionManager {
 public:
-	ManualExecutionManager() :
-		ExecutionManager() {}
+	explicit ManualExecutionManager(double period_s) :
+		ExecutionManager(period_s) {}
+	explicit ManualExecutionManager(const libconfig::Setting& setting) :
+		ExecutionManager(setting) {}
+
 	virtual ~ManualExecutionManager() {}
 
 	using ExecutionManager::runExecutionCycle;

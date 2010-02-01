@@ -11,6 +11,7 @@
 
 #include "../../../detail/stl_utils.h"
 #include "../../../thread/abstract/mutex.h"
+#include "../../helpers.h"
 
 
 namespace barrett {

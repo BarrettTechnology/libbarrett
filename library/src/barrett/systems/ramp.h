@@ -20,6 +20,7 @@ namespace systems {
 
 
 // TODO(dc): test this!
+// TODO(dc): add a configuration file interface
 
 
 class Ramp : public System, public SingleOutput<double> {

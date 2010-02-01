@@ -28,13 +28,20 @@ namespace systems {
 
 
 namespace detail {
+
+
+inline RTIME secondsToRTIME(double s) {
+	return static_cast<RTIME>(s * 1e9);
+}
+
+
 extern "C" {
 
 void rtemEntryPoint(void* cookie)
 {
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
-	rt_task_set_periodic(NULL, TM_NOW, rtem->period);
+	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 	rt_task_set_mode(0, T_WARNSW, NULL);
 
 	rtem->running = true;
@@ -59,20 +66,21 @@ void warnOnSwitchToSecondaryMode(int)
 }
 
 
-RealTimeExecutionManager::RealTimeExecutionManager(RTIME period_ns, int rt_priority) :
-	ExecutionManager(),
-	task(NULL), period(period_ns), priority(rt_priority), running(false), stopRunning(false)
+RealTimeExecutionManager::RealTimeExecutionManager(double period_s, int rt_priority) :
+	ExecutionManager(period_s),
+	task(NULL), priority(rt_priority), running(false), stopRunning(false)
 {
-	// Avoids memory swapping for this program
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-
-	// handler for warnings about falling out of real time mode
-	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
-
-	// install a more appropriate mutex
-	delete mutex;
-	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
+	init();
 }
+
+RealTimeExecutionManager::RealTimeExecutionManager(const libconfig::Setting& setting) :
+	ExecutionManager(setting),
+	task(NULL), priority(), running(false), stopRunning(false)
+{
+	priority = setting["thread_priority"];
+	init();
+}
+
 
 RealTimeExecutionManager::~RealTimeExecutionManager()
 {
@@ -92,7 +100,7 @@ void RealTimeExecutionManager::start() {
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
-			rt_task_sleep(period/10);
+			rt_task_sleep(detail::secondsToRTIME(period / 10.0));
 		}
 	}
 	// TODO(dc): else, throw an exception?
@@ -110,6 +118,22 @@ void RealTimeExecutionManager::stop() {
 	delete task;
 	task = NULL;
 }
+
+
+void RealTimeExecutionManager::init()
+{
+	// Avoids memory swapping for this program
+	mlockall(MCL_CURRENT|MCL_FUTURE);
+
+	// handler for warnings about falling out of real time mode
+	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
+
+	// install a more appropriate mutex
+	delete mutex;
+	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
+}
+
+
 
 
 }

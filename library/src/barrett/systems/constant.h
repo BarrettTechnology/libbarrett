@@ -17,6 +17,7 @@
 namespace barrett {
 namespace systems {
 
+// TODO(dc): add a configuration file interface
 
 template<typename T>
 class Constant : public System, public SingleOutput<T> {

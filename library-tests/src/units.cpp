@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <gsl/gsl_vector.h>
+#include <libconfig.h++>
 
 #include <gtest/gtest.h>
 #include <barrett/math/array.h>
@@ -23,8 +24,11 @@ DECLARE_UNITS(LocalUnits);
 
 
 // template parameters list the types the following tests should be run over
-typedef ::testing::Types<math::Array<5>, units::JointPositions<5>,
-	units::JointVelocities<5>, units::JointTorques<5>, LocalUnits<5> > UATypes;
+typedef ::testing::Types<
+		math::Array<5>,
+		units::JointTorques<5>,
+		units::JointPositions<5>,
+		LocalUnits<5> > UATypes;
 
 template<typename T>
 class ArrayTypedTest : public ::testing::Test {
@@ -65,6 +69,29 @@ TYPED_TEST(ArrayTypedTest, GslVectorCtor) {
 	}
 }
 
+TYPED_TEST(ArrayTypedTest, GslVectorCtorThrows) {
+	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
+	EXPECT_THROW(TypeParam a(vec), std::logic_error);
+}
+
+TYPED_TEST(ArrayTypedTest, ConfigCtor) {
+	this->a << -20, -.5, 0, 38.2, 2.3e4;
+
+	libconfig::Config config;
+	config.readFile("test.config");
+	TypeParam b(config.lookup("array_test.five"));
+
+	EXPECT_EQ(this->a, b);
+}
+
+TYPED_TEST(ArrayTypedTest, ConfigCtorThrows) {
+	libconfig::Config config;
+	config.readFile("test.config");
+
+	EXPECT_THROW(TypeParam(config.lookup("array_test.four")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("array_test.six")), std::runtime_error);
+}
+
 TYPED_TEST(ArrayTypedTest, CopyCtor) {
 	TypeParam a(-487.9);
 	TypeParam b(a);
@@ -76,11 +103,6 @@ TYPED_TEST(ArrayTypedTest, CopyCtor) {
 		EXPECT_EQ(-487.9, b[i]);
 		EXPECT_EQ(b[i], gsl_vector_get(b.asGslVector(), i));
 	}
-}
-
-TYPED_TEST(ArrayTypedTest, GslVectorCtorThrows) {
-	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
-	EXPECT_THROW(TypeParam a(vec), std::logic_error);
 }
 
 TYPED_TEST(ArrayTypedTest, CopyToGslVector) {
@@ -115,6 +137,25 @@ TYPED_TEST(ArrayTypedTest, CopyFromGslVector) {
 TYPED_TEST(ArrayTypedTest, CopyFromGslVectorThrows) {
 	gsl_vector* vec = gsl_vector_calloc(TypeParam::SIZE+1);
 	EXPECT_THROW(this->a.copyFrom(vec), std::logic_error);
+}
+
+TYPED_TEST(ArrayTypedTest, CopyFromConfig) {
+	this->a << -20, -.5, 0, 38.2, 2.3e4;
+
+	libconfig::Config config;
+	config.readFile("test.config");
+	TypeParam b;
+	b.copyFrom(config.lookup("array_test.five"));
+
+	EXPECT_EQ(this->a, b);
+}
+
+TYPED_TEST(ArrayTypedTest, CopyFromConfigThrows) {
+	libconfig::Config config;
+	config.readFile("test.config");
+
+	EXPECT_THROW(this->a.copyFrom(config.lookup("array_test.four")), std::runtime_error);
+	EXPECT_THROW(this->a.copyFrom(config.lookup("array_test.six")), std::runtime_error);
 }
 
 TYPED_TEST(ArrayTypedTest, AsGslVector) {

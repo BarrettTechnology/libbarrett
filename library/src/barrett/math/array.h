@@ -29,6 +29,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
 #include <boost/array.hpp>
 #include <gsl/gsl_vector.h>
 
@@ -70,6 +72,7 @@ public:
 	 */
 	explicit Array(double d = 0.0);
 	explicit Array(const gsl_vector* vec);
+	explicit Array(const libconfig::Setting& setting);
 	Array(const Array& a);
 	Array<N>& operator= (const Array<N>& a);
 	~Array();
@@ -80,6 +83,8 @@ public:
 
 	void copyTo(gsl_vector* vec) const throw(std::logic_error);
 	void copyFrom(const gsl_vector* vec) throw(std::logic_error);
+
+	void copyFrom(const libconfig::Setting& setting);
 
 	gsl_vector* asGslVector();
 	const gsl_vector* asGslVector() const;

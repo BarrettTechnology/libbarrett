@@ -9,7 +9,8 @@
 #define PID_CONTROLLER_H_
 
 
-#include <iostream>
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
 
 #include "../detail/ca_macro.h"
 #include "./abstract/controller.h"
@@ -28,7 +29,9 @@ public:
 	typedef typename InputType::array_type array_type;
 
 	PIDController() {}
+	explicit PIDController(const libconfig::Setting& setting);
 
+	PIDController& setFromConfig(const libconfig::Setting& setting);
 	PIDController& setKp(array_type proportionalGains);
 	PIDController& setKi(array_type integralGains);
 	PIDController& setKd(array_type derivitiveGains);
@@ -37,6 +40,13 @@ public:
 	PIDController& setControlSignalLimit(array_type csSaturations);
 
 	void resetIntegrator();
+
+	array_type getKp() const {  return kp;  }
+	array_type getKi() const {  return ki;  }
+	array_type getKd() const {  return kd;  }
+	array_type getIntegratorState() const {  return intError;  }
+	array_type getIntegratorLimit() const {  return intErrorLimit;  }
+	array_type getControlSignalLimit() const {  return controlSignalLimit;  }
 
 protected:
 	virtual void operate();

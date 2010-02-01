@@ -77,7 +77,7 @@ int main() {
 	config_destroy(&config);
 
 
-	systems::RealTimeExecutionManager rtem(10000000);
+	systems::RealTimeExecutionManager rtem(0.010);
 	systems::System::defaultExecutionManager = &rtem;
 
 
