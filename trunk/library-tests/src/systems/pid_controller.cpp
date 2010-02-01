@@ -7,6 +7,7 @@
 
 
 #include <cmath>
+#include <libconfig.h++>
 #include <gtest/gtest.h>
 
 #include <barrett/math/array.h>
@@ -57,6 +58,48 @@ TEST_F(PIDControllerTest, GainsZeroInitilized) {
 	a.assign(1e3);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(), eios.getInputValue());
+}
+
+TEST_F(PIDControllerTest, ConfigCtor) {
+	libconfig::Config config;
+	config.readFile("test.config");
+	systems::PIDController<i_type, i_type> pid2(config.lookup("pid_controller_test"));
+
+	a.assign(1);
+	EXPECT_EQ(a, pid2.getKp());
+
+	a.assign(2);
+	EXPECT_EQ(a, pid2.getKi());
+
+	a.assign(3);
+	EXPECT_EQ(a, pid2.getKd());
+
+	a.assign(4);
+	EXPECT_EQ(a, pid2.getIntegratorLimit());
+
+	a.assign(5);
+	EXPECT_EQ(a, pid2.getControlSignalLimit());
+}
+
+TEST_F(PIDControllerTest, SetFromConfig) {
+	libconfig::Config config;
+	config.readFile("test.config");
+	pid.setFromConfig(config.lookup("pid_controller_test"));
+
+	a.assign(1);
+	EXPECT_EQ(a, pid.getKp());
+
+	a.assign(2);
+	EXPECT_EQ(a, pid.getKi());
+
+	a.assign(3);
+	EXPECT_EQ(a, pid.getKd());
+
+	a.assign(4);
+	EXPECT_EQ(a, pid.getIntegratorLimit());
+
+	a.assign(5);
+	EXPECT_EQ(a, pid.getControlSignalLimit());
 }
 
 TEST_F(PIDControllerTest, SetKp) {

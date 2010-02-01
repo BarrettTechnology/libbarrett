@@ -11,6 +11,8 @@
 
 #include <gtest/gtest.h>
 
+#include <barrett/systems/helpers.h>
+#include <barrett/systems/constant.h>
 #include <barrett/systems/kinematics_base.h>
 #include <barrett/systems/tool_orientation.h>
 #include <barrett/systems/tool_orientation_controller.h>

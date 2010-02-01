@@ -394,6 +394,7 @@
 <listOptionValue builtIn="false" value="pcan"/>
 <listOptionValue builtIn="false" value="native"/>
 <listOptionValue builtIn="false" value="config"/>
+<listOptionValue builtIn="false" value="config++"/>
 <listOptionValue builtIn="false" value="boost_thread"/>
 <listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>

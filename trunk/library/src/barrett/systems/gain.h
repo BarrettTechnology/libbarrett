@@ -16,6 +16,7 @@
 namespace barrett {
 namespace systems {
 
+// TODO(dc): add a configuration file interface
 
 template<typename InputType,
 		 typename GainType = InputType,

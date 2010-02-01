@@ -19,6 +19,8 @@ namespace barrett {
 namespace systems {
 
 
+// TODO(dc): add a configuration file interface
+
 template<typename T, typename LogWriterType = log::RealTimeWriter<T> >
 class PeriodicDataLogger : public System, public SingleInput<T> {
 public:

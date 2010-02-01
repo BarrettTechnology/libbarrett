@@ -9,7 +9,8 @@
 #define REAL_TIME_EXECUTION_MANAGER_H_
 
 
-//#include <native/task.h>
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
 
 #include "../detail/ca_macro.h"
 #include "./abstract/execution_manager.h"
@@ -19,7 +20,7 @@
 struct rt_task_placeholder;
 typedef struct rt_task_placeholder RT_TASK;
 
-typedef long long unsigned int RTIME;
+//typedef long long unsigned int RTIME;
 
 
 namespace barrett {
@@ -35,9 +36,12 @@ void rtemEntryPoint(void* cookie);
 }
 
 
+// TODO(dc): add a configuration file interface
+
 class RealTimeExecutionManager : public ExecutionManager {
 public:
-	explicit RealTimeExecutionManager(RTIME period_ns = 2000000, int rt_priority = 50);
+	explicit RealTimeExecutionManager(double period_s, int rt_priority = 50);
+	explicit RealTimeExecutionManager(const libconfig::Setting& setting);  //TODO(dc): test!
 	virtual ~RealTimeExecutionManager();
 
 	void start();
@@ -46,11 +50,12 @@ public:
 
 protected:
 	RT_TASK* task;
-	RTIME period;
 	int priority;
 	bool running, stopRunning;
 
 private:
+	void init();
+
 	friend void detail::rtemEntryPoint(void* cookie);
 
 	DISALLOW_COPY_AND_ASSIGN(RealTimeExecutionManager);

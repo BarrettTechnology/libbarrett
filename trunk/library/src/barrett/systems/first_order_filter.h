@@ -18,6 +18,7 @@ namespace systems {
 
 
 // TODO(dc): test!
+// TODO(dc): add a configuration file interface
 
 template<typename T>
 class FirstOrderFilter : public SingleIO<T, T> {

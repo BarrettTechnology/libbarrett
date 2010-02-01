@@ -61,6 +61,8 @@
 #define BARRETT_UNITS_H_
 
 
+#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
+#include <libconfig.h++>
 #include "./math/array.h"
 
 
@@ -74,6 +76,8 @@
 			::barrett::math::Array<N>(d) {}  \
 		explicit ClassName(const gsl_vector* vec) :  \
 			::barrett::math::Array<N>(vec) {}  \
+		explicit ClassName(const ::libconfig::Setting& setting) :  \
+			::barrett::math::Array<N>(setting) {}  \
 		ClassName(const ::barrett::math::Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
 			::barrett::math::Array<N>(a) {}  \
 		using ::barrett::math::Array<N>::operator=;  \

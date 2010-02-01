@@ -9,8 +9,8 @@
 #define EXPOSEDIOSYSTEM_H_
 
 
-#include <barrett/systems.h>
 #include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 template<typename T>

@@ -14,11 +14,12 @@
 namespace {
 using namespace barrett;
 
+const double T_s = 0.002;
 
 class ManualExecutionManagerTest : public ::testing::Test {
 public:
 	ManualExecutionManagerTest() :
-		mem() {
+		mem(T_s) {
 		systems::System::defaultExecutionManager = &mem;
 	}
 
@@ -27,8 +28,19 @@ protected:
 };
 
 
+TEST_F(ManualExecutionManagerTest, PeriodCtor) {
+	EXPECT_EQ(T_s, mem.getPeriod());
+}
+
+TEST_F(ManualExecutionManagerTest, ConfigCtor) {
+	libconfig::Config config;
+	config.readFile("test.config");
+	systems::ManualExecutionManager mem2(config.lookup("manual_execution_manager_test"));
+	EXPECT_EQ(0.5386, mem2.getPeriod());
+}
+
 TEST_F(ManualExecutionManagerTest, Dtor) {
-	systems::ManualExecutionManager* localMem = new systems::ManualExecutionManager();
+	systems::ManualExecutionManager* localMem = new systems::ManualExecutionManager(T_s);
 	systems::System::defaultExecutionManager = localMem;
 
 	ExposedIOSystem<double> eios;

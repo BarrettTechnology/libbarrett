@@ -42,7 +42,10 @@
 #include <functional>
 #include <sstream>
 
+#include <libconfig.h++>
 #include <gsl/gsl_vector.h>
+
+#include "../../detail/libconfig_utils.h"
 
 
 namespace barrett {
@@ -64,6 +67,16 @@ inline Array<N>::Array(const gsl_vector* vec) :
 	initGslVector();
 	copyFrom(vec);
 }
+
+template<size_t N>
+inline Array<N>::Array(const libconfig::Setting& setting) :
+	gslVector(), explicitAssignmentIndex()
+{
+	initGslVector();
+	copyFrom(setting);
+}
+
+
 
 template<size_t N>
 inline Array<N>::Array(const Array& a) :
@@ -140,6 +153,24 @@ throw(std::logic_error)
 
 	for (size_t i = 0; i < N; ++i) {
 		this->operator[](i) = gsl_vector_get(vec, i);
+	}
+}
+
+template<size_t N>
+inline void Array<N>::copyFrom(const libconfig::Setting& setting)
+{
+	if (setting.getLength() != N) {
+		std::stringstream ss;
+		ss << "(math::Array<>::Array(libconfig::Setting)): The size of the "
+				"configuration list must match the size of the Array. "
+				"Expected size " << N << ", got size " << setting.getLength() <<
+				". Path: \"" << setting.getPath() << "\", Line: " <<
+				setting.getSourceLine();
+		throw std::runtime_error(ss.str());
+	}
+
+	for (size_t i = 0; i < N; ++i) {
+		this->operator[](i) = detail::numericToDouble(setting[i]);
 	}
 }
 
