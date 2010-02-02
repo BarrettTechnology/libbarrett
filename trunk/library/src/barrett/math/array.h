@@ -29,7 +29,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
 #include <libconfig.h++>
 #include <boost/array.hpp>
 #include <gsl/gsl_vector.h>
