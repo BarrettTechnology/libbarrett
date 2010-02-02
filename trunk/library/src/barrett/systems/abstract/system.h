@@ -455,7 +455,7 @@ public:
 	virtual ~System();
 
 	bool isExecutionManaged() const;
-	void setExecutionManager(ExecutionManager* newEm);
+	virtual void setExecutionManager(ExecutionManager* newEm);
 	ExecutionManager* getExecutionManager() const;
 	thread::Mutex& getEmMutex();
 

@@ -12,6 +12,7 @@
 
 #include <barrett/math/array.h>
 #include <barrett/systems/helpers.h>
+#include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/constant.h>
 #include <barrett/systems/pid_controller.h>
@@ -22,7 +23,9 @@
 namespace {
 using namespace barrett;
 
+
 typedef math::Array<5> i_type;
+const double T_s = 0.002;
 
 
 class PIDControllerTest : public ::testing::Test {
@@ -30,6 +33,7 @@ public:
 	PIDControllerTest() :
 		pid(), feedbackSignal(i_type()), eios(), a()
 	{
+		pid.setSamplePeriod(T_s);
 		systems::connect(feedbackSignal.output, pid.feedbackInput);
 		systems::connect(eios.output, pid.referenceInput);
 		systems::connect(pid.controlOutput, eios.input);
@@ -42,6 +46,29 @@ protected:
 	i_type a;
 };
 
+TEST_F(PIDControllerTest, SamplePeriodZeroInitilized) {
+	systems::PIDController<i_type, i_type> pid;
+	EXPECT_EQ(0.0, pid.getSamplePeriod());
+}
+
+TEST_F(PIDControllerTest, SamplePeriodMatchesDefaultExecutionManager) {
+	systems::ManualExecutionManager mem(5.8);
+	systems::System::defaultExecutionManager = &mem;
+	systems::PIDController<i_type, i_type> pid2;
+	EXPECT_EQ(5.8, pid2.getSamplePeriod());
+}
+
+TEST_F(PIDControllerTest, SamplePeriodChangesWithExecutionManager) {
+	systems::PIDController<i_type, i_type> pid2;
+	EXPECT_EQ(0.0, pid2.getSamplePeriod());
+
+	systems::ManualExecutionManager mem(5.8);
+	pid2.setExecutionManager(&mem);
+	EXPECT_EQ(5.8, pid2.getSamplePeriod());
+
+	pid2.setExecutionManager(NULL);
+	EXPECT_EQ(0.0, pid2.getSamplePeriod());
+}
 
 TEST_F(PIDControllerTest, GainsZeroInitilized) {
 	// kp
@@ -124,7 +151,7 @@ TEST_F(PIDControllerTest, SetKi) {
 }
 
 TEST_F(PIDControllerTest, SetKd) {
-	a.assign(10*0.002);
+	a.assign(10*T_s);
 	pid.setKd(a);
 
 	size_t i = 0;

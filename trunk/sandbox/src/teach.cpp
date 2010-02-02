@@ -51,7 +51,7 @@ int main() {
 
 	math::Array<DOF> tmp;
 
-	systems::RealTimeExecutionManager rtem(0.002);
+	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
 

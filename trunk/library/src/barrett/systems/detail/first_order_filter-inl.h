@@ -18,7 +18,10 @@ FirstOrderFilter<T>::FirstOrderFilter(bool updateEveryExecutionCycle) :
 	SingleIO<T, T>(updateEveryExecutionCycle),
 	a(), b(), c(), T_s(),
 	c1(), c2(), c3(),
-	y_0(), y_1(), x_0(), x_1() {}
+	y_0(), y_1(), x_0(), x_1()
+{
+	getSamplePeriodFromEM();
+}
 
 template<typename T>
 void FirstOrderFilter<T>::setSamplePeriod(double timeStep)
@@ -77,7 +80,13 @@ void FirstOrderFilter<T>::setParameters(T a_, T b_, T c_)
 	updateCoefficients();
 }
 
-
+// TODO(dc): anyway to remove the code duplication with PIDController?
+template<typename T>
+void FirstOrderFilter<T>::setExecutionManager(ExecutionManager* newEm)
+{
+	SingleIO<T, T>::setExecutionManager(newEm);  // call super
+	getSamplePeriodFromEM();
+}
 
 
 // filter parameters:
@@ -110,6 +119,18 @@ void FirstOrderFilter<T>::operate()
 	x_1 = x_0;
 
 	this->outputValue->setValue(y_0);
+}
+
+
+// TODO(dc): anyway to remove the code duplication with PIDController?
+template<typename T>
+inline void FirstOrderFilter<T>::getSamplePeriodFromEM()
+{
+	if (this->isExecutionManaged()) {
+		T_s = this->getExecutionManager()->getPeriod();
+	} else {
+		T_s = 0.0;
+	}
 }
 
 

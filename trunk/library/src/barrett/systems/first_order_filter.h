@@ -32,6 +32,8 @@ public:
 	void setIntegrator(T gain);
 	void setParameters(T a, T b, T c);
 
+	virtual void setExecutionManager(ExecutionManager* newEm);
+
 protected:
 	void updateCoefficients();
 	virtual void operate();
@@ -43,6 +45,8 @@ protected:
 	T y_0, y_1, x_0, x_1;
 
 private:
+	void getSamplePeriodFromEM();
+
 	DISALLOW_COPY_AND_ASSIGN(FirstOrderFilter);
 };
 

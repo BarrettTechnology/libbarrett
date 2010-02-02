@@ -18,8 +18,15 @@ namespace systems {
 
 
 template<typename InputType, typename OutputType>
+PIDController<InputType, OutputType>::PIDController()
+{
+	getSamplePeriodFromEM();
+}
+
+template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>::PIDController(const libconfig::Setting& setting)
 {
+	getSamplePeriodFromEM();
 	setFromConfig(setting);
 }
 
@@ -43,6 +50,14 @@ PIDController<InputType, OutputType>::setFromConfig(const libconfig::Setting& se
 		setControlSignalLimit(array_type(setting["control_signal_limit"]));
 	}
 
+	return *this;
+}
+
+template<typename InputType, typename OutputType>
+PIDController<InputType, OutputType>&
+PIDController<InputType, OutputType>::setSamplePeriod(double timeStep)
+{
+	T_s = timeStep;
 	return *this;
 }
 
@@ -106,12 +121,19 @@ inline void PIDController<InputType, OutputType>::resetIntegrator()
 	setIntegratorState(array_type(0.0));
 }
 
+template<typename InputType, typename OutputType>
+void PIDController<InputType, OutputType>::setExecutionManager(ExecutionManager* newEm)
+{
+	Controller<InputType, OutputType>::setExecutionManager(newEm);  // call super
+	getSamplePeriodFromEM();
+}
+
 
 template<typename InputType, typename OutputType>
 void PIDController<InputType, OutputType>::operate()
 {
 	// TODO(dc): ugly! ugly! should have a time input or something...
-	double T_s = 0.002;
+//	double T_s = 0.002;
 
 	error = this->referenceInput.getValue() - this->feedbackInput.getValue();
 
@@ -130,6 +152,17 @@ void PIDController<InputType, OutputType>::operate()
 	error_1 = error;
 
 	this->controlOutputValue->setValue(controlSignal);
+}
+
+
+template<typename InputType, typename OutputType>
+inline void PIDController<InputType, OutputType>::getSamplePeriodFromEM()
+{
+	if (this->isExecutionManaged()) {
+		T_s = this->getExecutionManager()->getPeriod();
+	} else {
+		T_s = 0.0;
+	}
 }
 
 
