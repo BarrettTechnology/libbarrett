@@ -42,7 +42,7 @@ using boost::ref;
 
 
 const size_t DOF = 7;
-const double T_s = 0.002;
+const double T_s = 0.010;
 
 
 void waitForEnter() {
@@ -77,7 +77,7 @@ int main() {
 	config_destroy(&config);
 
 
-	systems::RealTimeExecutionManager rtem(0.010);
+	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
 

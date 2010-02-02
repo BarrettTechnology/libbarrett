@@ -9,7 +9,6 @@
 #define REAL_TIME_EXECUTION_MANAGER_H_
 
 
-#include <libconfig.h>  // TODO(dc): remove this once everything uses the C++ version
 #include <libconfig.h++>
 
 #include "../detail/ca_macro.h"
