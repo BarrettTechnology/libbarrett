@@ -13,6 +13,7 @@
 #include <libconfig.h++>
 
 #include "../detail/ca_macro.h"
+#include "./abstract/execution_manager.h"
 #include "./abstract/controller.h"
 
 
@@ -28,9 +29,10 @@ class PIDController : public Controller<InputType, OutputType> {
 public:
 	typedef typename InputType::array_type array_type;
 
-	PIDController() {}
+	PIDController();
 	explicit PIDController(const libconfig::Setting& setting);
 
+	PIDController& setSamplePeriod(double timeStep);
 	PIDController& setFromConfig(const libconfig::Setting& setting);
 	PIDController& setKp(array_type proportionalGains);
 	PIDController& setKi(array_type integralGains);
@@ -41,6 +43,7 @@ public:
 
 	void resetIntegrator();
 
+	double getSamplePeriod() const {  return T_s;  }
 	array_type getKp() const {  return kp;  }
 	array_type getKi() const {  return ki;  }
 	array_type getKd() const {  return kd;  }
@@ -48,15 +51,20 @@ public:
 	array_type getIntegratorLimit() const {  return intErrorLimit;  }
 	array_type getControlSignalLimit() const {  return controlSignalLimit;  }
 
+	virtual void setExecutionManager(ExecutionManager* newEm);
+
 protected:
 	virtual void operate();
 
+	double T_s;
 	InputType error, error_1;
 	array_type intError, intErrorLimit;
 	array_type kp, ki, kd;
 	OutputType controlSignal, controlSignalLimit;
 
 private:
+	void getSamplePeriodFromEM();
+
 	DISALLOW_COPY_AND_ASSIGN(PIDController);
 };
 
