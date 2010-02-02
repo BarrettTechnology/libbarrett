@@ -24,7 +24,7 @@ namespace systems {
 
 
 template<size_t DOF>
-LowLevelWam<DOF>::LowLevelWam(libconfig::Setting& setting) :
+LowLevelWam<DOF>::LowLevelWam(const libconfig::Setting& setting) :
 	input(sink.input),
 	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
 	sink(this), source(this), wambot(NULL) //, wam(NULL), wamLocal(NULL)

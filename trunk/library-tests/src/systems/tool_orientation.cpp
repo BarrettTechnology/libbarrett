@@ -9,6 +9,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <libconfig.h++>
 #include <gtest/gtest.h>
 
 #include <barrett/systems/helpers.h>
@@ -33,14 +34,8 @@ typedef units::JointTorques<DOF> jt_type;
 
 // TODO(dc): actually test this!
 TEST(ToolOrientationTest, Blah) {
-	struct config_t config;
-	char filename[] = "test.config";  // in project directory
-	config_init(&config);
-	int err = config_read_file(&config,filename);
-	ASSERT_EQ(CONFIG_TRUE, err);
-
-	config_setting_t* wamconfig = config_lookup(&config, "wam");
-
+	libconfig::Config config;
+	config.readFile("test.config");
 
 	jp_type jp;
 	jv_type jv;
@@ -54,13 +49,10 @@ TEST(ToolOrientationTest, Blah) {
 //	systems::Constant<Eigen::Quaterniond> qSys(Eigen::Quaterniond(cos(M_PI_4), 0.0, 0.6*sin(M_PI_4), 0.8*sin(M_PI_4)));
 	systems::Constant<Eigen::Quaterniond> qSys(Eigen::Quaterniond(0.517266, 0.453975, -0.528556, -0.496962));
 
-	systems::KinematicsBase<DOF> kinSys(config_setting_get_member(wamconfig, "kinematics"));
+	systems::KinematicsBase<DOF> kinSys(config.lookup("wam.kinematics"));
 	systems::ToolOrientation<DOF> toSys;
 	systems::ToolOrientationController<DOF> tocSys;
 	ExposedIOSystem<jt_type> eios;
-
-
-	config_destroy(&config);
 
 
 	systems::connect(jpSys.output, kinSys.jpInput);
@@ -77,20 +69,14 @@ TEST(ToolOrientationTest, Blah) {
 }
 
 TEST(ToolOrientationTest, Blah2) {
-	struct config_t config;
-	char filename[] = "test.config";  // in project directory
-	config_init(&config);
-	int err = config_read_file(&config,filename);
-	ASSERT_EQ(CONFIG_TRUE, err);
+	libconfig::Config config;
+	config.readFile("test.config");
 
-	config_setting_t* wamconfig = config_lookup(&config, "wam");
-
-	math::Kinematics<DOF> kin(config_setting_get_member(wamconfig, "kinematics"));
+	math::Kinematics<DOF> kin(config.lookup("wam.kinematics"));
 
 	struct bt_control_cartesian_xyz_q * con = NULL;
 	bt_control_cartesian_xyz_q_create(&con,
-			config_setting_get_member(wamconfig,
-					"control_cartesian_xyz_q"),
+			config.lookup("wam.control_cartesian_xyz_q").getCSetting(),
 			kin.impl, NULL);
 	ASSERT_TRUE(con != NULL);
 
@@ -120,7 +106,6 @@ TEST(ToolOrientationTest, Blah2) {
 
 
 	bt_control_cartesian_xyz_q_destroy(con);
-	config_destroy(&config);
 
 	std::cout << jt;
 }

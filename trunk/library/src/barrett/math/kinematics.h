@@ -9,7 +9,7 @@
 #define KINEMATICS_H_
 
 
-#include <libconfig.h>
+#include <libconfig.h++>
 #include <boost/tuple/tuple.hpp>
 
 #include "../detail/ca_macro.h"
@@ -30,7 +30,7 @@ public:
 	typedef units::JointPositions<DOF> jp_type;
 	typedef units::JointVelocities<DOF> jv_type;
 
-	explicit Kinematics(config_setting_t * config);
+	explicit Kinematics(const libconfig::Setting& setting);
 	~Kinematics();
 
 	void eval(const jp_type& jp, const jv_type& jv);
