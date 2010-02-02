@@ -9,7 +9,7 @@
 #define KINEMATICS_BASE_H_
 
 
-#include <libconfig.h>
+#include <libconfig.h++>
 
 #include "../detail/ca_macro.h"
 #include "../units.h"
@@ -48,8 +48,9 @@ protected:	typename Output<const math::Kinematics<DOF>*>::Value* kinOutputValue;
 
 
 public:
-	explicit KinematicsBase(config_setting_t * config) :
-		jpInput(this), jvInput(this), kinOutput(this, &kinOutputValue), kin(config) {}
+	explicit KinematicsBase(const libconfig::Setting& setting) :
+		jpInput(this), jvInput(this),
+		kinOutput(this, &kinOutputValue), kin(setting) {}
 	virtual ~KinematicsBase() {}
 
 protected:

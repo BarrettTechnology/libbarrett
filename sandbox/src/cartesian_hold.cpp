@@ -14,7 +14,7 @@
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_io.hpp>
-#include <libconfig.h>
+#include <libconfig.h++>
 #include <Eigen/Geometry>
 
 #include <barrett/exception.h>
@@ -60,21 +60,9 @@ int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 
-	struct config_t config;
-	char filename[] = "/etc/wam/wamg.config";
-	config_init(&config);
-	syslog(LOG_ERR,"Open '%s' ...",filename);
-	int err = config_read_file(&config,filename);
-	if (err != CONFIG_TRUE) {
-		syslog(LOG_ERR,"libconfig error: %s, line %d\n",
-		config_error_text(&config), config_error_line(&config));
-		config_destroy(&config);
-		/* Failure */
-		return -1;
-	}
-	config_setting_t* wamconfig = config_lookup(&config, "wam");
-	systems::KinematicsBase<DOF> kin(config_setting_get_member(wamconfig, "kinematics"));
-	config_destroy(&config);
+	libconfig::Config config;
+	config.readFile("/etc/wam/wamg.config");
+	systems::KinematicsBase<DOF> kin(config.lookup("wam.kinematics"));
 
 
 	systems::RealTimeExecutionManager rtem(T_s);

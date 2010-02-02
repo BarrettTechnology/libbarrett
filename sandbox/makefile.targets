@@ -7,4 +7,4 @@
 
 	
 #all: teach cartesian_hold low_level_wam
-all: low_level_wam
+all: cartesian_hold

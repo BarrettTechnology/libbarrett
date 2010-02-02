@@ -5,7 +5,7 @@
  *      Author: dc
  */
 
-#include <libconfig.h>
+#include <libconfig.h++>
 
 #include <boost/tuple/tuple.hpp>
 #include <gtest/gtest.h>
@@ -33,19 +33,9 @@ public:
 	KimematicsTest() :
 		kin(NULL)
 	{
-		struct config_t config;
-		char filename[] = "test.config";  // in project directory
-		config_init(&config);
-		int err = config_read_file(&config,filename);
-		if (err != CONFIG_TRUE) {
-			config_destroy(&config);
-			throw(std::runtime_error("Couldn't load test.config for the Kinematics test."));
-		}
-
-		config_setting_t* wamconfig = config_lookup(&config, "wam");
-		kin = new math::Kinematics<DOF>(config_setting_get_member(wamconfig, "kinematics"));
-
-		config_destroy(&config);
+		libconfig::Config config;
+		config.readFile("test.config");
+		kin = new math::Kinematics<DOF>(config.lookup("wam.kinematics"));
 	}
 
 	~KimematicsTest() {

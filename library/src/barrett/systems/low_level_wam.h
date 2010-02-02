@@ -39,8 +39,7 @@ public:		System::Output<jv_type>& jvOutput;
 
 
 public:
-	// TODO(dc): Change parameter to const libconfig::Setting& once we get past the libconfig::Setting::getCSetting() hack.
-	explicit LowLevelWam(libconfig::Setting& setting);
+	explicit LowLevelWam(const libconfig::Setting& setting);
 	~LowLevelWam();
 
 protected:

@@ -9,7 +9,7 @@
 #define KINEMATICSINL_H_
 
 
-#include <libconfig.h>
+#include <libconfig.h++>
 
 #include <barrett/kinematics/kinematics.h>
 #include "../../units.h"
@@ -20,9 +20,9 @@ namespace math {
 
 
 template<size_t DOF>
-Kinematics<DOF>::Kinematics(config_setting_t * config)
+Kinematics<DOF>::Kinematics(const libconfig::Setting& setting)
 {
-	if (bt_kinematics_create(&impl, config, DOF)) {
+	if (bt_kinematics_create(&impl, setting.getCSetting(), DOF)) {
 		throw(std::runtime_error("(math::Kinematics::Kinematics): Couldn't initialize Kinematics struct."));
 	}
 }
