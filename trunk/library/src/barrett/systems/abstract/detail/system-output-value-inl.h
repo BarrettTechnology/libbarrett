@@ -72,6 +72,8 @@ template<typename T>
 inline void
 System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 {
+	SCOPED_LOCK(getEmMutex());
+
 	undelegate();
 	delegate = &(delegateOutput.value);
 	delegate->parentOutput.delegators.push_back(&parentOutput);
@@ -80,6 +82,8 @@ System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 template<typename T>
 inline void System::Output<T>::Value::undelegate()
 {
+	SCOPED_LOCK(getEmMutex());
+
 	if (delegate != NULL) {
 		delegate->parentOutput.delegators.remove(&parentOutput);
 		delegate = NULL;
