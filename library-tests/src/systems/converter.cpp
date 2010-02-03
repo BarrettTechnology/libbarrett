@@ -84,5 +84,18 @@ TEST_F(ConverterTest, ConnectInputToAutomatic) {
 	checkConnected(&eios, eios, jt);
 }
 
+TEST_F(ConverterTest, DisconnectInput) {
+	ExposedIOSystem<jt_type> eios;
+	systems::connect(sc.output, eios.input);
+
+	// compatible conversion registered
+	sc.registerConversion(
+			new ConversionImpl<jt_type, jt_type>());
+	EXPECT_NO_THROW(sc.connectInputTo(eios.output));
+
+	sc.disconnectInput();
+	checkDisconnected(eios);
+}
+
 
 }
