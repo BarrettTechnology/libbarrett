@@ -71,7 +71,7 @@ public:
 	 */
 	explicit Array(double d = 0.0);
 	explicit Array(const gsl_vector* vec);
-	explicit Array(const libconfig::Setting& setting);
+	Array(const libconfig::Setting& setting);  // deliberately non-explicit
 	Array(const Array& a);
 	Array<N>& operator= (const Array<N>& a);
 	~Array();
