@@ -48,16 +48,22 @@ public:
 
 	Polarity polarity;
 
-	explicit Summer(const Polarity& inputPolarity = Polarity());
-	explicit Summer(const std::string& inputPolarity);
-	explicit Summer(const std::bitset<numInputs>& inputPolarity);
+	explicit Summer(const Polarity& inputPolarity = Polarity(), bool undefinedIsZero = false);
+	explicit Summer(const std::string& inputPolarity, bool undefinedIsZero = false);
+	explicit Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero = false);
+	explicit Summer(bool undefinedIsZero);
 	virtual ~Summer();
 
 	Input<T>& getInput(const size_t i);
 
 protected:
+	virtual bool inputsValid() {  return true;  };
 	virtual void operate();
+	virtual void invalidateOutputs() {}
+
 	void initInputs();
+
+	bool strict;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Summer);

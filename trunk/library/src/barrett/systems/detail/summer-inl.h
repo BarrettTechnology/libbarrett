@@ -6,7 +6,6 @@
  */
 
 #include <boost/array.hpp>
-//#include <vector>
 #include <string>
 #include <bitset>
 
@@ -19,25 +18,29 @@ namespace systems {
 
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const Polarity& inputPolarity) :
-	SingleOutput<T>(this),
-	polarity(inputPolarity)
+Summer<T, numInputs>::Summer(const Polarity& inputPolarity, bool undefinedIsZero) :
+	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::string& inputPolarity) :
-	SingleOutput<T>(this),
-	polarity(inputPolarity)
+Summer<T, numInputs>::Summer(const std::string& inputPolarity, bool undefinedIsZero) :
+	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity) :
-	SingleOutput<T>(this),
-	polarity(inputPolarity)
+Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero) :
+	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+{
+	initInputs();
+}
+
+template<typename T, size_t numInputs>
+Summer<T, numInputs>::Summer(bool undefinedIsZero) :
+	SingleOutput<T>(this), polarity(), strict(!undefinedIsZero)
 {
 	initInputs();
 }
@@ -58,7 +61,12 @@ void Summer<T, numInputs>::operate()
 {
 	T sum;
 	for (size_t i = 0; i < numInputs; ++i) {
-		sum = sum + polarity[i] * inputs[i]->getValue();
+		if (inputs[i]->valueDefined()) {
+			sum = sum + polarity[i] * inputs[i]->getValue();
+		} else if (strict) {
+			this->outputValue->setValueUndefined();
+			return;
+		}
 	}
 
 	this->outputValue->setValue(sum);
