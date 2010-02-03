@@ -75,7 +75,7 @@
 			::barrett::math::Array<N>(d) {}  \
 		explicit ClassName(const gsl_vector* vec) :  \
 			::barrett::math::Array<N>(vec) {}  \
-		explicit ClassName(const ::libconfig::Setting& setting) :  \
+		ClassName(const ::libconfig::Setting& setting) :  /* deliberately non-explicit */  \
 			::barrett::math::Array<N>(setting) {}  \
 		ClassName(const ::barrett::math::Array<N>& a) :  /* NOLINT: ctor deliberately non explicit */  \
 			::barrett::math::Array<N>(a) {}  \
