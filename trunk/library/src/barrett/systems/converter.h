@@ -33,12 +33,14 @@ public:
 			Conversion<OutputType>* conversion);
 
 	template<typename T>
-	void connectInputTo(System::Output<T>& referenceOutput)  //NOLINT: non-const reference for syntax
+	void connectInputTo(System::Output<T>& output)  //NOLINT: non-const reference for syntax
 	throw(std::invalid_argument);
 
 	template<typename T>
-	bool connectInputTo(System::Output<T>& referenceOutput,  //NOLINT: non-const reference for syntax
+	bool connectInputTo(System::Output<T>& output,  //NOLINT: non-const reference for syntax
 			Conversion<OutputType>* conversion);
+
+	void disconnectInput();
 
 protected:
 	virtual void operate() {  /* TODO(dc): invalidate outputs */  }

@@ -41,39 +41,44 @@ inline void Converter<OutputType>::registerConversion(
 template<typename OutputType>
 template<typename T>
 void Converter<OutputType>::connectInputTo(
-		System::Output<T>& referenceOutput)
+		System::Output<T>& output)
 throw(std::invalid_argument)
 {
 	typename std::list<Conversion<OutputType>*>::iterator i;
 	for (i = conversions.begin(); i != conversions.end(); ++i) {
-		if (connectInputTo(referenceOutput, *i)) {
+		if (connectInputTo(output, *i)) {
 			return;
 		}
 	}
 
 	throw std::invalid_argument(
-			"(systems::Converter::connectInputTo): "
-			"No Convertable is registered that matches "
-			"referenceOutput's type");
+			"(systems::Converter::connectInputTo): No systems::Conversion is "
+			"registered that matches the output's type.");
 }
 
 template<typename OutputType>
 template<typename T>
 bool Converter<OutputType>::connectInputTo(
-		System::Output<T>& referenceOutput,
+		System::Output<T>& output,
 		Conversion<OutputType>* conversion)
 {
-	System::Input<T>* referenceInput = dynamic_cast<System::Input<T>*>(  //NOLINT: see RTTI note above
+	System::Input<T>* input = dynamic_cast<System::Input<T>*>(  //NOLINT: see RTTI note above
 			conversion->getConversionInput() );
 
-	if (referenceInput == NULL) {
+	if (input == NULL) {
 		return false;
 	}
 
-	forceConnect(referenceOutput, *referenceInput);
+	forceConnect(output, *input);
 	this->outputValue->delegateTo(conversion->getConversionOutput());
 
 	return true;
+}
+
+template<typename OutputType>
+void Converter<OutputType>::disconnectInput()
+{
+	this->outputValue->undelegate();
 }
 
 
