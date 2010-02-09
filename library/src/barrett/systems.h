@@ -53,6 +53,7 @@
 
 // operators
 #include "systems/kinematics_base.h"
+#include "systems/gravity_compensator.h"
 #include "systems/tool_position.h"
 #include "systems/tool_orientation.h"
 #include "systems/tool_force_to_joint_torques.h"

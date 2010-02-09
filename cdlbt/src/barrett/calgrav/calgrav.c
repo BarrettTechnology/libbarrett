@@ -41,8 +41,7 @@
 
 
 int bt_calgrav_create(struct bt_calgrav ** gravptr,
-                      config_setting_t * gravconfig,
-                      struct bt_kinematics * kin)
+                  config_setting_t * gravconfig, size_t dof)
 {
    int j;
    config_setting_t * mus;
@@ -61,7 +60,8 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    }
    
    /* Initialize */
-   grav->kin = kin;
+   /*grav->kin = kin;*/
+   grav->dof = dof;
    grav->world_g = 0;
    grav->g = 0;
    grav->mu = 0;
@@ -79,54 +79,54 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    gsl_vector_set( grav->world_g, 2, -9.805 );
    
    /* Initialize vectors for each moving link (dof) */
-   grav->g  = (gsl_vector **) malloc((kin->dof)*sizeof(gsl_vector *));
+   grav->g  = (gsl_vector **) malloc(dof*sizeof(gsl_vector *));
    if (!grav->g)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
       return -1;
    }
-   for (j=0; j<kin->dof; j++) grav->g[j] = 0;
+   for (j=0; j<dof; j++) grav->g[j] = 0;
    
-   grav->mu = (gsl_vector **) malloc((kin->dof)*sizeof(gsl_vector *));
+   grav->mu = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->mu)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
       return -1;
    }
-   for (j=0; j<kin->dof; j++) grav->mu[j] = 0;
+   for (j=0; j<dof; j++) grav->mu[j] = 0;
    
-   grav->t  = (gsl_vector **) malloc((kin->dof)*sizeof(gsl_vector *));
+   grav->t  = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->t)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
       return -1;
    }
-   for (j=0; j<kin->dof; j++) grav->t[j] = 0;
+   for (j=0; j<dof; j++) grav->t[j] = 0;
    
-   grav->pt = (gsl_vector **) malloc((kin->dof)*sizeof(gsl_vector *));
+   grav->pt = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->pt)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
       bt_calgrav_destroy(grav);
       return -1;
    }
-   for (j=0; j<kin->dof; j++) grav->pt[j] = 0;
+   for (j=0; j<dof; j++) grav->pt[j] = 0;
    
    /* Make sure we have an appropriate configuration for moving links */
    if (   !(mus = config_setting_get_member(gravconfig,"mus"))
        ||  (config_setting_type(mus) != CONFIG_TYPE_LIST)
-       ||  (config_setting_length(mus) != kin->dof)
+       ||  (config_setting_length(mus) != dof)
    ) {
-      syslog(LOG_ERR,"%s: grav:mus not a list with %d elements.",__func__,kin->dof);
+      syslog(LOG_ERR,"%s: grav:mus not a list with %d elements.",__func__,dof);
       bt_calgrav_destroy(grav);
       return -1;
    }
    
    /* Create each vector */
-   for (j=0; j<kin->dof; j++)
+   for (j=0; j<dof; j++)
    {
       int i;
       config_setting_t * mu;
@@ -185,7 +185,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
 int bt_calgrav_destroy( struct bt_calgrav * grav )
 {
    int j;
-   for (j=0; j<grav->kin->dof; j++)
+   for (j=0; j<grav->dof; j++)
    {
       if (grav->g && grav->g[j])
          gsl_vector_free(grav->g[j] );
@@ -209,14 +209,15 @@ int bt_calgrav_destroy( struct bt_calgrav * grav )
 }
 
 
-int bt_calgrav_eval(struct bt_calgrav * grav, gsl_vector * jtorque)
+int bt_calgrav_eval(struct bt_calgrav * grav,
+        struct bt_kinematics * kin, gsl_vector * jtorque)
 {
    int j;
    /* For each moving link, backwards ... */
-   for (j=grav->kin->dof-1; j>=0; j--)
+   for (j=grav->dof-1; j>=0; j--)
    {
       struct bt_kinematics_link * link;
-      link = grav->kin->link[j];
+      link = kin->link[j];
       /* Fill each link's gravity vector */
       gsl_blas_dgemv(CblasTrans, 1.0, link->rot_to_world,
                      grav->world_g, 0.0, grav->g[j]);
@@ -224,7 +225,7 @@ int bt_calgrav_eval(struct bt_calgrav * grav, gsl_vector * jtorque)
       gsl_vector_set_zero(grav->t[j]);
       bt_gsl_cross( grav->g[j], grav->mu[j], grav->t[j] );
       /* If it's not the last moving link, add in the next link's t */
-      if (j < grav->kin->dof-1)
+      if (j < grav->dof-1)
          gsl_blas_dgemv(CblasNoTrans, 1.0, link->next->rot_to_prev,
                         grav->t[j+1], 1.0, grav->t[j]);
       /* Move torque vector to the previous frame */

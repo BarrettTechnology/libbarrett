@@ -43,6 +43,7 @@
 #include "./systems/summer.h"
 
 #include "./systems/kinematics_base.h"
+#include "./systems/gravity_compensator.h"
 #include "./systems/tool_position.h"
 #include "./systems/tool_orientation.h"
 
@@ -65,6 +66,7 @@ public:
 	// these need to be before the IO references
 	systems::LowLevelWam<DOF> wam;
 	systems::KinematicsBase<DOF> kinematicsBase;
+	systems::GravityCompensator<DOF> gravity;
 	systems::ToolPosition<DOF> toolPosition;
 	systems::ToolOrientation<DOF> toolOrientation;
 
@@ -74,7 +76,8 @@ public:
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 	systems::ToolOrientationController<DOF> toController;
 
-	systems::Summer<jt_type, 2> jtSum;
+	systems::Summer<jt_type, 3> jtSum;
+	enum {JT_INPUT = 0, GRAVITY_INPUT, SC_INPUT};
 
 
 // IO
