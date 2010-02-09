@@ -1,5 +1,5 @@
 /*
- * low_level_wam.cpp
+ * high_level_wam.cpp
  *
  *  Created on: Feb 2, 2010
  *      Author: dc
@@ -15,6 +15,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_io.hpp>
 #include <libconfig.h++>
+#include <Eigen/Geometry>
 
 #include <barrett/exception.h>
 #include <barrett/detail/debug.h>
@@ -23,14 +24,14 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/systems/low_level_wam.h>
+#include <barrett/wam.h>
 
 
 //namespace log = barrett::log;
 namespace math = barrett::math;
 namespace systems = barrett::systems;
 namespace units = barrett::units;
-using barrett::systems::LowLevelWam;
+using barrett::Wam;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -42,6 +43,10 @@ using boost::ref;
 
 const size_t DOF = 7;
 const double T_s = 0.002;
+
+typedef Wam<DOF>::jt_type jt_type;
+typedef Wam<DOF>::jp_type jp_type;
+typedef Wam<DOF>::jv_type jv_type;
 
 
 void waitForEnter() {
@@ -61,31 +66,43 @@ int main() {
 
 
     // instantiate Systems
-	LowLevelWam<DOF> llw(config.lookup("wam.low_level"));
-	systems::PIDController<LowLevelWam<DOF>::jp_type> jpController(
-			config.lookup("wam.joint_position_controller"));
-	systems::Constant<LowLevelWam<DOF>::jp_type> point(
-			config.lookup("wam.low_level.home"));
+	Wam<DOF> wam(config.lookup("wam"));
 
+	systems::Constant<jp_type> jpPoint(config.lookup("wam.low_level.home"));
 
-	// make connections between Systems
-	connect(llw.jpOutput, jpController.feedbackInput);
-	connect(jpController.controlOutput, llw.input);
+	math::Kinematics<DOF> kin(config.lookup("wam.kinematics"));
+	kin.eval(config.lookup("wam.low_level.home"), jv_type());
+	systems::Constant<units::CartesianPosition> tpPoint(
+			units::CartesianPosition(kin.impl->tool->origin_pos));
 
-	// initially, tie inputs together for zero torque
-	connect(llw.jpOutput, jpController.referenceInput);
+	Eigen::Matrix3d rot;
+	for (size_t r = 0; r < 3; ++r) {
+		for (size_t c = 0; c < 3; ++c) {
+			rot(c,r) = gsl_matrix_get(kin.impl->tool->rot_to_world, r,c);  // transpose to get tool to world transform
+		}
+	}
+	Eigen::Quaterniond q(rot);
+	systems::Constant<Eigen::Quaterniond> toPoint(q);
 
 
 	// start the main loop!
 	rtem.start();
 
-	std::cout << "Press [Enter] to move to home position.\n";
+	std::cout << "Press [Enter] to move to joint-space home position.\n";
 	waitForEnter();
-	reconnect(point.output, jpController.referenceInput);
+	wam.trackReferenceSignal(jpPoint.output);
+
+	std::cout << "Press [Enter] to move to Cartesian home position.\n";
+	waitForEnter();
+	wam.trackReferenceSignal(tpPoint.output);
+
+	std::cout << "Press [Enter] to move to Cartesian home orientation.\n";
+	waitForEnter();
+	wam.trackReferenceSignal(toPoint.output);
 
 	std::cout << "Press [Enter] to idle.\n";
 	waitForEnter();
-	reconnect(llw.jpOutput, jpController.referenceInput);
+	wam.idle();
 
 	std::cout << "Shift-idle, then press [Enter].\n";
 	waitForEnter();

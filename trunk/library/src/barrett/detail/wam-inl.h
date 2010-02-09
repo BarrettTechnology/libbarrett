@@ -33,22 +33,11 @@
  */
 
 
-#include <iostream>
-#include <stdexcept>
-#include <map>
+#include <libconfig.h>
 
-#include <sys/mman.h>
-#include <syslog.h>
-
-#include <gsl/gsl_vector.h>
-
-#include <barrett/wam/wam.h>
-#include <barrett/wam/wam_local.h>
-#include <barrett/wambot/wambot_phys.h>
-
-#include "../detail/debug.h"
 #include "../units.h"
 #include "../systems/abstract/system.h"
+#include "../systems/io_conversion.h"
 
 
 namespace barrett {
@@ -56,190 +45,97 @@ namespace barrett {
 // TODO(dc): some of these members should be inline
 
 template<size_t DOF>
-Wam<DOF>::Wam() :
-	System(),
-	input(this), jpOutput(this, &jpOutputValue),
-	jvOutput(this, &jvOutputValue), operateCount(), jtSink(this), wam(NULL), wamLocal(NULL)
+Wam<DOF>::Wam(const libconfig::Setting& setting) :
+	wam(setting["low_level"]),
+	kinematicsBase(setting["kinematics"]),
+	toolPosition(),
+	toolOrientation(),
+
+	supervisoryController(),
+	jpController(setting["joint_position_controller"]),
+	tpController(setting["tool_position_controller"]),
+	tf2jt(),
+	toController(),
+
+	jtSum(true),
+
+	input(jtSum.getInput(0)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput)
 {
-	// initialize syslog
-	openlog("WAM", LOG_CONS | LOG_NDELAY, LOG_USER);
+	using systems::connect;
+	using systems::makeIOConversion;
 
-	// open the WAM
-	bt_wam_create(&wam, "wamg");
-	// TODO(dc): verify that the DOF matches
-	if (wam == NULL) {
-		// TODO(dc): better exception, add throw declaration to function def
-		throw std::runtime_error(
-				"(Wam::Wam()): Couldn't make WAM. "
-				"Check /var/log/syslog for more info.");
-	}
+	connect(wam.jpOutput, kinematicsBase.jpInput);
+	connect(wam.jvOutput, kinematicsBase.jvInput);
+	connect(kinematicsBase.kinOutput, toolPosition.kinInput);
+	connect(kinematicsBase.kinOutput, toolOrientation.kinInput);
+	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
+	connect(kinematicsBase.kinOutput, toController.kinInput);
 
-	wamLocal = bt_wam_get_local(wam);
+	connect(wam.jpOutput, jpController.feedbackInput);
+	supervisoryController.registerConversion(makeIOConversion(
+			jpController.referenceInput, jpController.controlOutput));
 
-	// register the Wam, then register the callback
-	activeWams[wamLocal] = this;
-	bt_wam_local_set_callback(wamLocal, &Wam::handleCallback);
+	connect(toolPosition.output, tpController.feedbackInput);
+	connect(tpController.controlOutput, tf2jt.input);
+	supervisoryController.registerConversion(makeIOConversion(
+			tpController.referenceInput, tf2jt.output));
+
+	connect(toolOrientation.output, toController.feedbackInput);
+	supervisoryController.registerConversion(makeIOConversion(
+			toController.referenceInput, toController.controlOutput));
+
+	connect(supervisoryController.output, jtSum.getInput(1));
+	connect(jtSum.output, wam.input);
 }
 
 template<size_t DOF>
 Wam<DOF>::~Wam()
 {
-	// stop receiving callbacks, then unregister the Wam
-	bt_wam_local_set_callback(wamLocal, NULL);
-	activeWams.erase(wamLocal);
-
-	bt_wam_destroy(wam);
 }
 
+template<size_t DOF>
+template<typename T>
+void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
+{
+	supervisoryController.connectInputTo(referenceSignal);
+}
 
 template<size_t DOF>
 units::JointPositions<DOF> Wam<DOF>::getJointPositions()
 {
-	return jp_type(wamLocal->jposition);
+	// TODO(dc): stub
+	return jp_type();
 }
 
 template<size_t DOF>
 units::JointVelocities<DOF> Wam<DOF>::getJointVelocities()
 {
-	return jv_type(wamLocal->jvelocity);
+	// TODO(dc): stub
+	return jv_type();
 }
 
 
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
 {
-	bt_wam_setgcomp(wam, compensate);
 }
 
 template<size_t DOF>
 void Wam<DOF>::moveHome()
 {
-	bt_wam_movehome(wam);
 }
 
 template<size_t DOF>
 bool Wam<DOF>::moveIsDone()
 {
-	return bt_wam_moveisdone(wam);
+	// TODO(dc): stub
+	return false;
 }
 
 template<size_t DOF>
 void Wam<DOF>::idle()
 {
-	bt_wam_idle(wam);
-}
-
-
-template<size_t DOF>
-std::map<struct bt_wam_local*, Wam<DOF>*> Wam<DOF>::activeWams;
-
-bool uglyFlag = false;
-
-template<size_t DOF>
-int Wam<DOF>::handleCallback(struct bt_wam_local* wamLocal)
-{
-	activeWams[wamLocal]->readSensors();
-	uglyFlag = true;
-	activeWams[wamLocal]->operate();
-	return 0;
-}
-
-
-template<size_t DOF>
-void Wam<DOF>::readSensors()
-{
-	int err;
-	double time = 1e-9 * bt_os_rt_get_time();
-
-    /* Grab the current joint positions */
-    bt_wambot_update( wamLocal->wambot );
-
-    /* Evaluate kinematics
-     * NOTE: Should this be common for all refgens/controllers?
-     *       It's definitely needed for Barrett Dynamics,
-     *       but this is encapsulated in Controllers right now ... */
-    bt_kinematics_eval(wamLocal->kin, wamLocal->wambot->jposition, wamLocal->wambot->jvelocity);
-
-    /* Get the position from the current controller */
-    bt_control_get_position(wamLocal->con_active);
-
-    /* Zero the torque
-     * (this is here in case a refgen wants to tweak it,
-     * which really isn't what we should be doing ... */
-    gsl_vector_set_zero( wamLocal->wambot->jtorque );
-
-    /* If there's an active trajectory, grab the reference into the joint controller
-     * Note: this is a while loop for the case where the refgen is done,
-     *       and we move on to the next refgen. */
-    while (wamLocal->refgen_active && !wamLocal->teaching)
-    {
-       err = bt_refgen_eval( wamLocal->refgen_active,
-                             time - wamLocal->refgen_start_time,
-                             wamLocal->con_active->reference );
-
-       if (!err) break;
-
-       if (err == 1) /* finished */
-       {
-          if ( (wamLocal->refgen_active == wamLocal->refgen_tempmove)
-              && (wamLocal->refgen_loaded) )
-          {
-             wamLocal->refgen_start_time = time;
-             bt_refgen_start(wamLocal->refgen_loaded);
-             wamLocal->refgen_active = wamLocal->refgen_loaded;
-          }
-          else
-          {
-             wamLocal->refgen_active = 0;
-          }
-       }
-    }
-
-    /* Do the active controller */
-    bt_control_eval( wamLocal->con_active, wamLocal->wambot->jtorque, time );
-
-    /* Do gravity compensation (if flagged) */
-    if (wamLocal->gcomp) bt_calgrav_eval( wamLocal->grav, wamLocal->wambot->jtorque );
-
-	this->jpOutputValue->setValue(jp_type(wamLocal->jposition));
-	this->jvOutputValue->setValue(jv_type(wamLocal->jvelocity));
-}
-
-template<size_t DOF>
-bool Wam<DOF>::inputsValid()
-{
-	return true;
-}
-
-template<size_t DOF>
-void Wam<DOF>::operate()
-{
-//	++operateCount;
-	readSensors();
-//	if (!uglyFlag) {
-//		return;
-//	}
-//	uglyFlag = false;
-//	++operateCount;
-//
-//	if (this->input.valueDefined()) {
-//		const jt_type& jt = this->input.getValue();
-//		for (size_t i = 0; i< DOF; ++i) {
-//			gsl_vector_set(wamLocal->jtorque, i,
-//					gsl_vector_get(wamLocal->jtorque, i) + jt[i]);
-//		}
-//	}
-//
-//
-//
-//    /* Apply the current joint torques */
-//    bt_wambot_setjtor( wamLocal->wambot );
-}
-
-template<size_t DOF>
-void Wam<DOF>::invalidateOutputs()
-{
-	/* do nothing */
+	supervisoryController.disconnectInput();
 }
 
 

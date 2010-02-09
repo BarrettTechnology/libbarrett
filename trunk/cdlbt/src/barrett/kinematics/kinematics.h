@@ -86,8 +86,8 @@ kinematics:
       # Note: alpha_pi = alpha / pi
       { alpha_pi = -0.5; a =      0; d =      0; }, # Base Yaw
       { alpha_pi =  0.5; a =      0; d =      0; }, # Base Pitch
-      { alpha_pi = -0.5; a = -0.045; d = 0.5500; }, # Twist
-      { alpha_pi =  0.5; a =  0.045; d =      0; }, # Elbow
+      { alpha_pi = -0.5; a =  0.045; d = 0.5500; }, # Twist
+      { alpha_pi =  0.5; a = -0.045; d =      0; }, # Elbow
       { alpha_pi = -0.5; a =      0; d = 0.3000; }, # Wrist Yaw
       { alpha_pi =  0.5; a =      0; d =      0; }, # Wrist Pitch
       { alpha_pi = -0.5; a =      0; d = 0.0609; }  # Wrist Twist
