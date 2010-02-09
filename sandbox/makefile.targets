@@ -6,5 +6,5 @@
 	@echo ' '
 
 	
-#all: teach cartesian_hold low_level_wam
-all: cartesian_hold
+#all: teach cartesian_hold low_level_wam high_level_wam
+all: high_level_wam

@@ -32,162 +32,71 @@
 #define BARRETT_WAM_H_
 
 
-#include <map>
-#include <gsl/gsl_vector.h>
-
-#include <barrett/wam/wam.h>
-#include <barrett/wam/wam_local.h>
+#include <libconfig.h++>
 
 #include "./detail/ca_macro.h"
 #include "./units.h"
 #include "./systems/abstract/system.h"
 
+#include "./systems/low_level_wam.h"
+#include "./systems/converter.h"
+#include "./systems/summer.h"
+
+#include "./systems/kinematics_base.h"
+#include "./systems/tool_position.h"
+#include "./systems/tool_orientation.h"
+
+#include "./systems/pid_controller.h"
+#include "./systems/tool_orientation_controller.h"
+#include "./systems/tool_force_to_joint_torques.h"
+
 
 namespace barrett {
 
 
-/** A barrett::systems::System that represents a WAM robot.
- *
- * @tparam DOF The number of degrees of freedom (number of joints) in this WAM.
- *
- *
- * @section sec_example Example
- *
- * The code below is a simple program that uses \c libbarrett to control a WAM. The program
- *   - instantiates a Wam
- *   - turns on gravity compensation
- *   - moves the WAM to a particular pose (specified by \c setPoint)
- *   - moves the WAM back to its home position
- *   - idles the WAM and exits.
- *
- * @include hold_joint_position.cpp
- */
 template<size_t DOF>
-class Wam : public systems::System {
+class Wam {
 public:
-	/// The appropriately sized barrett::units::JointTorques type.
 	typedef units::JointTorques<DOF> jt_type;
-
-	/// The appropriately sized barrett::units::JointPositions type.
 	typedef units::JointPositions<DOF> jp_type;
-
-	/// The appropriately sized barrett::units::JointVelocities type.
 	typedef units::JointVelocities<DOF> jv_type;
 
 
-/// @name Inputs and Outputs
-//@{
-public:		Input<jt_type> input;
-public:		Output<jp_type> jpOutput;
-public:		Output<jv_type> jvOutput;
-//@}
+	// these need to be before the IO references
+	systems::LowLevelWam<DOF> wam;
+	systems::KinematicsBase<DOF> kinematicsBase;
+	systems::ToolPosition<DOF> toolPosition;
+	systems::ToolOrientation<DOF> toolOrientation;
 
-/// @name Output handles
-//@{
-protected:	typename Output<jp_type>::Value* jpOutputValue;
-protected:	typename Output<jv_type>::Value* jvOutputValue;
-//@}
+	systems::Converter<jt_type> supervisoryController;
+	systems::PIDController<jp_type> jpController;
+	systems::PIDController<units::CartesianPosition> tpController;
+	systems::ToolForceToJointTorques<DOF> tf2jt;
+	systems::ToolOrientationController<DOF> toController;
+
+	systems::Summer<jt_type, 2> jtSum;
+
+
+// IO
+public:		systems::System::Input<jt_type>& input;
+public:		systems::System::Output<jp_type>& jpOutput;
+public:		systems::System::Output<jv_type>& jvOutput;
 
 
 public:
-	/** Starts the real-time thread that reads joint positions and commands
-	 * joint torques.
-	 *
-	 * - Locks this process' memory (to prevent paging in a real-time thread)
-	 * - Initializes the CAN bus
-	 * - Creates a real-time thread (500 Hz update rate) to control the WAM
-	 *
-	 * The robot should be homed and Shift-Idled before instantiating a Wam.
-	 */
-	Wam();
+	Wam(const libconfig::Setting& setting);
+	virtual ~Wam();
 
-	virtual ~Wam();  ///< Stops the real-time thread, closes the CAN bus.
+	template<typename T>
+	void trackReferenceSignal(systems::System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
 
-
-	/// @name Asynchronous sensor accessors
-	//@{
 	jp_type getJointPositions();
 	jv_type getJointVelocities();
-	//@}
 
-
-	/// @name Asynchronous interface
-	//@{
-
-	/** Exerts torques to compensate for gravity.
-	 *
-	 * @warning
-	 * Turning off gravity compensation will, if no other torques are
-	 * being commanded, cause the WAM to go limp. If it is not in a resting
-	 * pose at that moment, the WAM will "drop" itself onto its join stops.
-	 * This could damage the robot.
-	 *
-	 * @param[in] compensate \c true to turn gravity compensation on, \c false
-	 *            to turn it off.
-	 */
 	void gravityCompensate(bool compensate = true);
-
-	/** Moves the WAM to is home position (as defined in the configuration
-	 * file) and then holds position.
-	 */
 	void moveHome();
-
-	/** Tests if is the WAM is done moving.
-	 *
-	 * @retval true if the WAM has reached is destination.
-	 * @retval false if the WAM is still in-route.
-	 */
 	bool moveIsDone();
-
-	/// Cancels any active moves and releases any position constraints.
 	void idle();
-
-	//@}
-
-
-	/// @cond DETAIL
-	// TODO(dc): can we make this private?
-	static int handleCallback(struct bt_wam_local* wamLocal);
-
-	int operateCount;  ///< For debugging.
-	/// @endcond
-
-protected:
-	class JTSink : public systems::System {
-	public:
-		JTSink(Wam<DOF>* wamPtr) :
-			systems::System(true), wam(wamPtr) {}
-		virtual ~JTSink() {}
-
-	protected:
-		virtual void operate() {
-			++(wam->operateCount);
-			if (wam->input.valueDefined()) {
-				const jt_type& jt = wam->input.getValue();
-				gsl_vector_add(wam->wamLocal->jtorque, jt.asGslVector());
-			}
-
-		    /* Apply the current joint torques */
-		    bt_wambot_setjtor( wam->wamLocal->wambot );
-		}
-
-		Wam<DOF>* wam;
-	} jtSink;
-	friend class JTSink;
-
-	virtual void readSensors();
-	virtual bool inputsValid();
-	virtual void operate();
-	virtual void invalidateOutputs();
-
-
-	struct bt_wam* wam;
-	struct bt_wam_local* wamLocal;
-
-	/// @cond DETAIL
-	// TODO(dc): can we make this private?
-	static std::map<struct bt_wam_local*, Wam<DOF>*> activeWams;
-	/// @endcond
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Wam);

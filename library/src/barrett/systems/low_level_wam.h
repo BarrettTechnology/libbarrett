@@ -11,8 +11,6 @@
 
 #include <libconfig.h++>
 
-//#include <barrett/wam/wam.h>
-//#include <barrett/wam/wam_local.h>
 #include <barrett/wambot/wambot_phys.h>
 
 #include "../detail/ca_macro.h"
@@ -46,7 +44,8 @@ protected:
 	class Sink : public System, public SingleInput<jt_type> {
 	public:
 		Sink(LowLevelWam* parent) :
-			System(true), SingleInput<jt_type>(this),
+			System(true),  // Update every execution cycle because this is a sink.
+			SingleInput<jt_type>(this),
 			parent(parent) {}
 		virtual ~Sink() {}
 
@@ -70,7 +69,12 @@ protected:
 
 	public:
 		Source(LowLevelWam* parent) :
-			System(),
+			System(true),  // Update every execution cycle to prevent heartbeat
+						   // faults. Depending on connections, this System
+						   // might not be called for a period of time. In this
+						   // situation, the pucks would stop reporting
+						   // positions and the safety system would assume they
+						   // had died.
 			jpOutput(this, &jpOutputValue), jvOutput(this, &jvOutputValue),
 			parent(parent) {}
 		virtual ~Source() {}
@@ -89,8 +93,6 @@ protected:
 	Source source;
 
 private:
-//	struct bt_wam* wam;
-//	struct bt_wam_local* wamLocal;
 	struct bt_wambot_phys* wambot;
 
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
