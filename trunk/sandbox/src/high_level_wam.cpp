@@ -88,6 +88,10 @@ int main() {
 	// start the main loop!
 	rtem.start();
 
+	std::cout << "Press [Enter] to compensate for gravity.\n";
+	waitForEnter();
+	wam.gravityCompensate();
+
 	std::cout << "Press [Enter] to move to joint-space home position.\n";
 	waitForEnter();
 	wam.trackReferenceSignal(jpPoint.output);
@@ -103,6 +107,7 @@ int main() {
 	std::cout << "Press [Enter] to idle.\n";
 	waitForEnter();
 	wam.idle();
+	wam.gravityCompensate(false);
 
 	std::cout << "Shift-idle, then press [Enter].\n";
 	waitForEnter();

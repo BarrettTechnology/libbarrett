@@ -76,7 +76,8 @@ extern "C" {
 struct bt_calgrav
 {
    /** We need to know about each link's kinematics */
-   struct bt_kinematics * kin;
+   /*struct bt_kinematics * kin;*/
+	size_t dof;
 
    /** Gravity vector in the world frame. This is initialized to 
     *  < 0, 0, -9.805 > in bt_calgrav_create(). */
@@ -101,8 +102,7 @@ struct bt_calgrav
  * \retval 0 Success 
  */
 int bt_calgrav_create(struct bt_calgrav ** gravptr,
-                      config_setting_t * gravconfig,
-                      struct bt_kinematics * kin);
+                      config_setting_t * gravconfig, size_t dof);
 
 
 /** Destroy a bt_calgrav object.
@@ -131,7 +131,8 @@ int bt_calgrav_destroy(struct bt_calgrav * grav);
  * \paran[out] jtorque Computed joint torque vector
  * \retval 0 Success
  */
-int bt_calgrav_eval(struct bt_calgrav * grav, gsl_vector * jtorque);
+int bt_calgrav_eval(struct bt_calgrav * grav,
+        struct bt_kinematics * kin, gsl_vector * jtorque);
 
 
 #ifdef __cplusplus

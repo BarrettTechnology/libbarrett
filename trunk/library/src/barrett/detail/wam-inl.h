@@ -48,24 +48,29 @@ template<size_t DOF>
 Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	wam(setting["low_level"]),
 	kinematicsBase(setting["kinematics"]),
+	gravity(setting["gravity_compensation"]),
 	toolPosition(),
 	toolOrientation(),
 
 	supervisoryController(),
-	jpController(setting["joint_position_controller"]),
-	tpController(setting["tool_position_controller"]),
+	jpController(setting["joint_position_control"]),
+	tpController(setting["tool_position_control"]),
 	tf2jt(),
 	toController(),
 
 	jtSum(true),
 
-	input(jtSum.getInput(0)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput)
+	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput)
 {
 	using systems::connect;
 	using systems::makeIOConversion;
 
 	connect(wam.jpOutput, kinematicsBase.jpInput);
 	connect(wam.jvOutput, kinematicsBase.jvInput);
+
+	connect(kinematicsBase.kinOutput, gravity.kinInput);
+	// Don't connect gravity.output here. Gravity compensation is off by default.
+
 	connect(kinematicsBase.kinOutput, toolPosition.kinInput);
 	connect(kinematicsBase.kinOutput, toolOrientation.kinInput);
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
@@ -84,7 +89,7 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	supervisoryController.registerConversion(makeIOConversion(
 			toController.referenceInput, toController.controlOutput));
 
-	connect(supervisoryController.output, jtSum.getInput(1));
+	connect(supervisoryController.output, jtSum.getInput(SC_INPUT));
 	connect(jtSum.output, wam.input);
 }
 
@@ -118,6 +123,11 @@ units::JointVelocities<DOF> Wam<DOF>::getJointVelocities()
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
 {
+	if (compensate) {
+		systems::forceConnect(gravity.output, jtSum.getInput(GRAVITY_INPUT));
+	} else {
+		systems::disconnect(jtSum.getInput(GRAVITY_INPUT));
+	}
 }
 
 template<size_t DOF>
