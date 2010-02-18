@@ -34,19 +34,19 @@ PIDController<InputType, OutputType>&
 PIDController<InputType, OutputType>::setFromConfig(const libconfig::Setting& setting)
 {
 	if (setting.exists("kp")) {
-		setKp(array_type(setting["kp"]));
+		setKp(vector_type(setting["kp"]));
 	}
 	if (setting.exists("ki")) {
-		setKi(array_type(setting["ki"]));
+		setKi(vector_type(setting["ki"]));
 	}
 	if (setting.exists("kd")) {
-		setKd(array_type(setting["kd"]));
+		setKd(vector_type(setting["kd"]));
 	}
 	if (setting.exists("integrator_limit")) {
-		setIntegratorLimit(array_type(setting["integrator_limit"]));
+		setIntegratorLimit(vector_type(setting["integrator_limit"]));
 	}
 	if (setting.exists("control_signal_limit")) {
-		setControlSignalLimit(array_type(setting["control_signal_limit"]));
+		setControlSignalLimit(vector_type(setting["control_signal_limit"]));
 	}
 
 	return *this;
@@ -62,7 +62,7 @@ PIDController<InputType, OutputType>::setSamplePeriod(double timeStep)
 
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
-PIDController<InputType, OutputType>::setKp(array_type proportionalGains)
+PIDController<InputType, OutputType>::setKp(vector_type proportionalGains)
 {
 	kp = proportionalGains;
 	return *this;
@@ -70,7 +70,7 @@ PIDController<InputType, OutputType>::setKp(array_type proportionalGains)
 
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
-PIDController<InputType, OutputType>::setKi(array_type integralGains)
+PIDController<InputType, OutputType>::setKi(vector_type integralGains)
 {
 	ki = integralGains;
 	return *this;
@@ -78,7 +78,7 @@ PIDController<InputType, OutputType>::setKi(array_type integralGains)
 
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
-PIDController<InputType, OutputType>::setKd(array_type derivitiveGains)
+PIDController<InputType, OutputType>::setKd(vector_type derivitiveGains)
 {
 	kd = derivitiveGains;
 	return *this;
@@ -87,7 +87,7 @@ PIDController<InputType, OutputType>::setKd(array_type derivitiveGains)
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
 PIDController<InputType, OutputType>::setIntegratorState(
-		array_type integratorState)
+		vector_type integratorState)
 {
 	// intError is written and read in operate(), so it needs to be locked.
 	SCOPED_LOCK(this->getEmMutex());
@@ -98,7 +98,7 @@ PIDController<InputType, OutputType>::setIntegratorState(
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
 PIDController<InputType, OutputType>::setIntegratorLimit(
-		array_type intSaturations)
+		vector_type intSaturations)
 {
 	intErrorLimit = intSaturations;
 	return *this;
@@ -107,7 +107,7 @@ PIDController<InputType, OutputType>::setIntegratorLimit(
 template<typename InputType, typename OutputType>
 PIDController<InputType, OutputType>&
 PIDController<InputType, OutputType>::setControlSignalLimit(
-		array_type csSaturations)
+		vector_type csSaturations)
 {
 	controlSignalLimit = csSaturations;
 	return *this;
@@ -117,7 +117,7 @@ PIDController<InputType, OutputType>::setControlSignalLimit(
 template<typename InputType, typename OutputType>
 inline void PIDController<InputType, OutputType>::resetIntegrator()
 {
-	setIntegratorState(array_type(0.0));
+	setIntegratorState(vector_type(0.0));
 }
 
 template<typename InputType, typename OutputType>

@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef TRAITS_H_
-#define TRAITS_H_
+#ifndef BARRETT_LOG_TRAITS_H_
+#define BARRETT_LOG_TRAITS_H_
 
 
 #include <boost/tuple/tuple.hpp>
@@ -83,4 +83,4 @@ struct Traits<boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> > {
 }
 
 
-#endif /* TRAITS_H_ */
+#endif /* BARRETT_LOG_TRAITS_H_ */

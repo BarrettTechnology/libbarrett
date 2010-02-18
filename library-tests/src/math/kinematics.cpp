@@ -58,7 +58,7 @@ TEST_F(KimematicsTest, Eval) {
 	jv_type jv;
 
 	jp << 7.30467e-05, -1.96708, -0.000456121, 3.04257, -0.0461776, 1.54314, -0.0226513;
-	jv.assign(0.0);
+	jv.setConstant(0.0);
 
 //	EXPECT_EQ(units::CartesianPosition(), (*kin)(boost::make_tuple(jp, jv)));
 }
@@ -68,7 +68,7 @@ TEST_F(KimematicsTest, Stuff) {
 	jv_type jv;
 
 	jp <<  0, -2, 0, 3.14, 0, 1.57, 0;
-	jv.assign(0.0);
+	jv.setConstant(0.0);
 
 	(*kin)(boost::make_tuple(jp, jv));
 	(*kin)(boost::make_tuple(jp, jv));

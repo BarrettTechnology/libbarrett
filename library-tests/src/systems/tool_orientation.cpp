@@ -42,7 +42,7 @@ TEST(ToolOrientationTest, Blah) {
 
 //	jp <<  0, -2, 0, 3.14, 0, 1.57, 0;
 	jp <<  1.21491, -1.96768, 0.0498996, 2.15371, 0.284814, 1.4271, 0.0467362;
-	jv.assign(0.0);
+	jv.setConstant(0.0);
 
 	systems::Constant<jp_type> jpSys(jp);
 	systems::Constant<jv_type> jvSys(jv);
@@ -87,7 +87,7 @@ TEST(ToolOrientationTest, Blah2) {
 
 //	jp <<  0, -2, 0, 3.14, 0, 1.57, 0;
 	jp <<  1.21491, -1.96768, 0.0498996, 2.15371, 0.284814, 1.4271, 0.0467362;
-	jv.assign(0.0);
+	jv.setConstant(0.0);
 
 	kin.eval(jp, jv);
 	bt_control_get_position(&con->base);

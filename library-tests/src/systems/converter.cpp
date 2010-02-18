@@ -52,8 +52,7 @@ TEST_F(ConverterTest, ConnectInputToExplicit) {
 	EXPECT_TRUE(sc.connectInputTo(eios.output,
 			new ConversionImpl<jt_type, jt_type>()));
 
-	jt_type jt;
-	jt << 5, 28.1, -7.2e4;  // the other elements will be zero-filled
+	jt_type jt(jt_type::Random());
 	checkConnected(&eios, eios, jt);
 
 	// can't be connected because output and conversion input are
@@ -79,8 +78,7 @@ TEST_F(ConverterTest, ConnectInputToAutomatic) {
 			new ConversionImpl<jt_type, jt_type>());
 	EXPECT_NO_THROW(sc.connectInputTo(eios.output));
 
-	jt_type jt;
-	jt << 5, 28.1, -7.2e4;  // the other elements will be zero-filled
+	jt_type jt(jt_type::Random());
 	checkConnected(&eios, eios, jt);
 }
 

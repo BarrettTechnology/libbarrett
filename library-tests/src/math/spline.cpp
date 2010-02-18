@@ -28,11 +28,11 @@ TEST(SplineTest, ImplicitParameter) {
 	units::JointPositions<DOF> jp;
 	std::vector<units::JointPositions<DOF> > points;
 
-	jp.assign(0);
+	jp.setConstant(0);
 	points.push_back(jp);
-	jp.assign(1);
+	jp.setConstant(1);
 	points.push_back(jp);
-	jp.assign(2);
+	jp.setConstant(2);
 	points.push_back(jp);
 
 	math::Spline<units::JointPositions<DOF> > spline(points);
@@ -40,7 +40,7 @@ TEST(SplineTest, ImplicitParameter) {
 
 	EXPECT_EQ(0.0, spline.initialX());
 
-	jp.assign(1.5);
+	jp.setConstant(1.5);
 	EXPECT_EQ(jp, spline.eval(spline.changeInX() * 3/4));
 }
 
@@ -50,11 +50,11 @@ TEST(SplineTest, ExplicitParameter) {
 	std::vector<tuple_type> samples;
 
 	sample.get<0>() = -2.0;
-	sample.get<1>().assign(-12.8);
+	sample.get<1>().setConstant(-12.8);
 	samples.push_back(sample);
 
 	sample.get<0>() = 5.0;
-	sample.get<1>().assign(2.0);
+	sample.get<1>().setConstant(2.0);
 	samples.push_back(sample);
 
 	math::Spline<units::JointPositions<DOF> > spline(samples);
@@ -67,12 +67,12 @@ TEST(SplineTest, ExplicitParameter) {
 	units::JointPositions<DOF> jp;
 
 	jp = spline.eval(-2.0);
-	for (size_t i = 0; i < jp.size(); ++i) {
+	for (size_t i = 0; i < DOF; ++i) {
 		EXPECT_DOUBLE_EQ(-12.8, jp[i]);
 	}
 
 	jp = spline.eval(5.0);
-	for (size_t i = 0; i < jp.size(); ++i) {
+	for (size_t i = 0; i < DOF; ++i) {
 		EXPECT_DOUBLE_EQ(2, jp[i]);
 	}
 }

@@ -26,29 +26,29 @@ template<typename InputType,
 		 typename OutputType = typename InputType::actuator_type>
 class PIDController : public Controller<InputType, OutputType> {
 public:
-	typedef typename InputType::array_type array_type;
+	typedef typename InputType::vector_type vector_type;
 
 	PIDController();
 	explicit PIDController(const libconfig::Setting& setting);
 
 	PIDController& setSamplePeriod(double timeStep);
 	PIDController& setFromConfig(const libconfig::Setting& setting);
-	PIDController& setKp(array_type proportionalGains);
-	PIDController& setKi(array_type integralGains);
-	PIDController& setKd(array_type derivitiveGains);
-	PIDController& setIntegratorState(array_type integratorState);
-	PIDController& setIntegratorLimit(array_type intSaturations);
-	PIDController& setControlSignalLimit(array_type csSaturations);
+	PIDController& setKp(vector_type proportionalGains);
+	PIDController& setKi(vector_type integralGains);
+	PIDController& setKd(vector_type derivitiveGains);
+	PIDController& setIntegratorState(vector_type integratorState);
+	PIDController& setIntegratorLimit(vector_type intSaturations);
+	PIDController& setControlSignalLimit(vector_type csSaturations);
 
 	void resetIntegrator();
 
 	double getSamplePeriod() const {  return T_s;  }
-	array_type getKp() const {  return kp;  }
-	array_type getKi() const {  return ki;  }
-	array_type getKd() const {  return kd;  }
-	array_type getIntegratorState() const {  return intError;  }
-	array_type getIntegratorLimit() const {  return intErrorLimit;  }
-	array_type getControlSignalLimit() const {  return controlSignalLimit;  }
+	vector_type getKp() const {  return kp;  }
+	vector_type getKi() const {  return ki;  }
+	vector_type getKd() const {  return kd;  }
+	vector_type getIntegratorState() const {  return intError;  }
+	vector_type getIntegratorLimit() const {  return intErrorLimit;  }
+	vector_type getControlSignalLimit() const {  return controlSignalLimit;  }
 
 	virtual void setExecutionManager(ExecutionManager* newEm);
 
@@ -57,8 +57,8 @@ protected:
 
 	double T_s;
 	InputType error, error_1;
-	array_type intError, intErrorLimit;
-	array_type kp, ki, kd;
+	vector_type intError, intErrorLimit;
+	vector_type kp, ki, kd;
 	OutputType controlSignal, controlSignalLimit;
 
 private:
