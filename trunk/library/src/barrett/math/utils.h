@@ -40,7 +40,7 @@ namespace math {
 /** Computes the sign (positive, zero, or negative) of its input.
  *
  * Sometimes referred to as the \c signum function. The function operates
- * element-wise for barrett::math::Array inputs.
+ * coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x
@@ -52,7 +52,7 @@ template<typename T> T sign(const T& x);
 
 /** Computes the absolute value of its input.
  *
- * The function operates element-wise for barrett::math::Array inputs.
+ * The function operates coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x
@@ -63,7 +63,7 @@ template<typename T> T abs(const T& x);
 
 /** Returns the minimum of its two inputs.
  *
- * The function operates element-wise for barrett::math::Array inputs.
+ * The function operates coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] a
@@ -75,7 +75,7 @@ template<typename T> T min(const T& a, const T& b);
 
 /** Returns the maximum of its two inputs.
  *
- * The function operates element-wise for barrett::math::Array inputs.
+ * The function operates coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] a
@@ -87,7 +87,7 @@ template<typename T> T max(const T& a, const T& b);  //NOLINT: this is not the m
 
 /** Ensures the input does not exceed the given limits.
  *
- * The function operates element-wise for barrett::math::Array inputs.
+ * The function operates coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x Input value.
@@ -101,7 +101,7 @@ template<typename T> T saturate(const T& x, const T& limit);
 
 /** Maps input values smaller than the given cutoff to zero.
  *
- * The function operates element-wise for barrett::math::Array inputs.
+ * The function operates coefficient-wise for barrett::math::Array inputs.
  *
  * @tparam Designed to operate on a \c double or barrett::math::Array.
  * @param[in] x Input value.

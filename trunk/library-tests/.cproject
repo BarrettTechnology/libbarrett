@@ -47,7 +47,7 @@
 <listOptionValue builtIn="false" value="barrett"/>
 </option>
 <option id="gnu.cpp.link.option.paths.712846095" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-remote}&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-local}&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/Debug_local}&quot;"/>
 </option>
 <option id="gnu.cpp.link.option.other.925854388" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
@@ -88,7 +88,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="systems/abstract/joint_torque_adapter.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="math/utils.cpp|systems/pid_controller.cpp|main.cpp|systems/abstract/joint_torque_adapter.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -97,7 +97,7 @@
 <externalSetting>
 <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/library"/>
 <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug"/>
-<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-remote"/>
+<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/library/Debug-local"/>
 </externalSetting>
 </externalSettings>
 </storageModule>

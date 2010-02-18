@@ -10,7 +10,7 @@
 #include <libconfig.h++>
 #include <gtest/gtest.h>
 
-#include <barrett/math/array.h>
+#include <barrett/math/vector.h>
 #include <barrett/systems/helpers.h>
 #include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/abstract/system.h>
@@ -24,7 +24,7 @@ namespace {
 using namespace barrett;
 
 
-typedef math::Array<5> i_type;
+typedef math::Vector<5> i_type;
 const double T_s = 0.002;
 
 
@@ -72,17 +72,17 @@ TEST_F(PIDControllerTest, SamplePeriodChangesWithExecutionManager) {
 
 TEST_F(PIDControllerTest, GainsZeroInitilized) {
 	// kp
-	a.assign(1);
+	a.setConstant(1);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(), eios.getInputValue());
 
 	// ki
-	a.assign(1);
+	a.setConstant(1);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(), eios.getInputValue());
 
 	// kd
-	a.assign(1e3);
+	a.setConstant(1e3);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(), eios.getInputValue());
 }
@@ -92,19 +92,19 @@ TEST_F(PIDControllerTest, ConfigCtor) {
 	config.readFile("test.config");
 	systems::PIDController<i_type, i_type> pid2(config.lookup("pid_controller_test"));
 
-	a.assign(1);
+	a.setConstant(1);
 	EXPECT_EQ(a, pid2.getKp());
 
-	a.assign(2);
+	a.setConstant(2);
 	EXPECT_EQ(a, pid2.getKi());
 
-	a.assign(3);
+	a.setConstant(3);
 	EXPECT_EQ(a, pid2.getKd());
 
-	a.assign(4);
+	a.setConstant(4);
 	EXPECT_EQ(a, pid2.getIntegratorLimit());
 
-	a.assign(5);
+	a.setConstant(5);
 	EXPECT_EQ(a, pid2.getControlSignalLimit());
 }
 
@@ -113,24 +113,24 @@ TEST_F(PIDControllerTest, SetFromConfig) {
 	config.readFile("test.config");
 	pid.setFromConfig(config.lookup("pid_controller_test"));
 
-	a.assign(1);
+	a.setConstant(1);
 	EXPECT_EQ(a, pid.getKp());
 
-	a.assign(2);
+	a.setConstant(2);
 	EXPECT_EQ(a, pid.getKi());
 
-	a.assign(3);
+	a.setConstant(3);
 	EXPECT_EQ(a, pid.getKd());
 
-	a.assign(4);
+	a.setConstant(4);
 	EXPECT_EQ(a, pid.getIntegratorLimit());
 
-	a.assign(5);
+	a.setConstant(5);
 	EXPECT_EQ(a, pid.getControlSignalLimit());
 }
 
 TEST_F(PIDControllerTest, SetKp) {
-	a.assign(38);
+	a.setConstant(38);
 	pid.setKp(a);
 
 	for (size_t i = 0; i < 10; ++i) {
@@ -140,10 +140,10 @@ TEST_F(PIDControllerTest, SetKp) {
 }
 
 TEST_F(PIDControllerTest, SetKi) {
-	a.assign(500);
+	a.setConstant(500);
 	pid.setKi(a);
 
-	a.assign(1);
+	a.setConstant(1);
 	for (size_t i = 0; i < 10; ++i) {
 		eios.setOutputValue(a);
 		EXPECT_EQ(a*i, eios.getInputValue());
@@ -151,28 +151,28 @@ TEST_F(PIDControllerTest, SetKi) {
 }
 
 TEST_F(PIDControllerTest, SetKd) {
-	a.assign(10*T_s);
+	a.setConstant(10*T_s);
 	pid.setKd(a);
 
 	size_t i = 0;
-	a.assign(i);
+	a.setConstant(i);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(0.0), eios.getInputValue());
 	for (i = 1; i < 10; ++i) {
-		a.assign(i);
+		a.setConstant(i);
 		eios.setOutputValue(a);
 		EXPECT_EQ(i_type(10), eios.getInputValue());
 	}
 }
 
 TEST_F(PIDControllerTest, SetIntegratorState) {
-	a.assign(10);
+	a.setConstant(10);
 	pid.setKi(a);
 
-	a.assign(1);
+	a.setConstant(1);
 	pid.setIntegratorState(a);
 
-	a.assign(0);
+	a.setConstant(0);
 	for (size_t i = 0; i < 10; ++i) {
 		eios.setOutputValue(a);
 		EXPECT_EQ(i_type(1), eios.getInputValue());
@@ -180,13 +180,13 @@ TEST_F(PIDControllerTest, SetIntegratorState) {
 }
 
 TEST_F(PIDControllerTest, SetIntegratorLimit) {
-	a.assign(500);
+	a.setConstant(500);
 	pid.setKi(a);
 
-	a.assign(5.8);
+	a.setConstant(5.8);
 	pid.setIntegratorLimit(a);
 
-	a.assign(1);
+	a.setConstant(1);
 	for (size_t i = 0; i <= 5; ++i) {
 		eios.setOutputValue(a);
 		EXPECT_EQ(a*i, eios.getInputValue());
@@ -196,10 +196,10 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 		EXPECT_EQ(i_type(5.8), eios.getInputValue());
 	}
 
-	a.assign(-1);
+	a.setConstant(-1);
 	for (size_t i = 0; i <= 11; ++i) {
 		eios.setOutputValue(a);
-		EXPECT_EQ(5.8 + a*i, eios.getInputValue());
+		EXPECT_EQ(5.8 + (a*i).cwise(), eios.getInputValue());
 	}
 	for (size_t i = 12; i < 15; ++i) {
 		eios.setOutputValue(a);
@@ -207,16 +207,16 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 	}
 
 	// the output isn't saturated, just the integrator
-	a.assign(500);
+	a.setConstant(500);
 	pid.setKp(a);
 
-	a.assign(-1);
+	a.setConstant(-1);
 	eios.setOutputValue(a);
 	EXPECT_EQ(i_type(-505.8), eios.getInputValue());
 }
 
 TEST_F(PIDControllerTest, SetControlSignalLimit) {
-	a.assign(10);
+	a.setConstant(10);
 	pid.setKp(a);
 	pid.setControlSignalLimit(a);
 
@@ -231,7 +231,7 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 TEST_F(PIDControllerTest, ResetIntegrator) {
 	pid.setKi(i_type(500));
 
-	a.assign(1);
+	a.setConstant(1);
 	for (size_t i = 0; i < 10; ++i) {
 		eios.setOutputValue(a);
 		EXPECT_EQ(a*i, eios.getInputValue());
