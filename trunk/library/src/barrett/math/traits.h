@@ -13,6 +13,8 @@ namespace barrett {
 namespace math {
 
 
+// TODO(dc): test!
+
 // Default designed for built-in arithmetic types.
 template<typename T> struct Traits {
 	static T zero() {
