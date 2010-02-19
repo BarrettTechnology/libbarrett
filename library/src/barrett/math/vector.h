@@ -153,12 +153,16 @@ template<size_t N>
 std::ostream& operator<< (std::ostream& os, const Vector<N>& a);
 
 
-template<size_t N> struct Traits<Vector<N> > {
-	static Vector<N> zero() {
-		return Vector<N>::Zero();
+template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> > {
+	typedef Eigen::MatrixBase<TraitsDerived> MatrixBaseType;
+	typedef typename MatrixBaseType::ConstantReturnType ConstantReturnType;
+
+	static const ConstantReturnType zero() {
+		return MatrixBaseType::Zero();
 	}
 
-	static void zero(Vector<N>& t) {
+	template<typename Derived>
+	static void zero(Eigen::MatrixBase<Derived>& t) {
 		t.setZero();
 	}
 
@@ -251,7 +255,7 @@ template<size_t N> struct Traits<Vector<N> > {
 //			Derived
 //		>
 //	>
-	Vector<N>
+	const typename MatrixBaseType::PlainMatrixType
 	sub(double l, const Eigen::MatrixBase<Derived>& r) {
 		return l + (-r).cwise();
 	}
@@ -295,13 +299,14 @@ template<size_t N> struct Traits<Vector<N> > {
 //			Derived
 //		>
 //	>
-	Vector<N>
+	const typename MatrixBaseType::PlainMatrixType
 	div(double l, const Eigen::MatrixBase<Derived>& r) {
 		return l * r.cwise().inverse();
 	}
-
 };
 
+template<size_t N> struct Traits<Vector<N> > :
+		public Traits<Eigen::MatrixBase<typename Vector<N>::Base> > {};
 
 }
 }

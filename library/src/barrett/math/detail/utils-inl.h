@@ -1,5 +1,5 @@
 /** <b> Implementation file: do not include.\ </b> Math utilities and operators
- * for \c double and descendants of barrett::math::Array.
+ * for \c double and descendants of barrett::math::Vector.
  *
  * @file math/utils-inl.h
  * @date Nov 11, 2009
@@ -40,22 +40,26 @@
 
 namespace barrett {
 namespace math {
-using std::abs;
 
 
-template<typename T>
-inline T sign(const T& x)
-{
-	T res;
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = sign(x[i]);
+namespace detail {
+template<typename Scalar> struct CwiseSignOp {
+	inline const Scalar operator() (const Scalar& x) const {
+		return sign(x);
 	}
-	return res;
+};
 }
 
-/// @cond SPECIALIZATIONS
-template<>
-inline double sign(const double& x)
+template<typename Derived>
+inline const Eigen::CwiseUnaryOp<
+	detail::CwiseSignOp<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> sign(const Eigen::MatrixBase<Derived>& x)
+{
+	return x.unaryExpr(detail::CwiseSignOp<typename Eigen::ei_traits<Derived>::Scalar>());
+}
+
+inline double sign(double x)
 {
 	if (x > 0.0) {
 		return 1.0;
@@ -65,83 +69,148 @@ inline double sign(const double& x)
 		return -1.0;
 	}
 }
-/// @endcond
 
 
-template<typename T>
-inline T abs(const T& x)
+using std::abs;
+
+template<typename Derived>
+inline const Eigen::CwiseUnaryOp<
+	Eigen::ei_scalar_abs_op<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> abs(const Eigen::MatrixBase<Derived>& x)
 {
-	T res;
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = abs(x[i]);
-	}
-	return res;
+	return x.cwise().abs();
 }
 
 
-template<typename T>
-inline T min(const T& a, const T& b)
+template<typename Derived1, typename Derived2>
+inline const Eigen::CwiseBinaryOp<
+	Eigen::ei_scalar_min_op<typename Eigen::ei_traits<Derived1>::Scalar>,
+	Derived1,
+	Derived2
+> min(const Eigen::MatrixBase<Derived1>& a, const Eigen::MatrixBase<Derived2>& b)
 {
-	T res;
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = min(a[i], b[i]);
-	}
-	return res;
+	return a.cwise().min(b);
 }
 
-/// @cond SPECIALIZATIONS
-template<>
-inline double min(const double& a, const double& b)
+inline double min(double a, double b)
 {
 	return std::min(a, b);
 }
-/// @endcond
 
 
-template<typename T>
-inline T max(const T& a, const T& b)
+template<typename Derived1, typename Derived2>
+inline const Eigen::CwiseBinaryOp<
+	Eigen::ei_scalar_max_op<typename Eigen::ei_traits<Derived1>::Scalar>,
+	Derived1,
+	Derived2
+> max(const Eigen::MatrixBase<Derived1>& a, const Eigen::MatrixBase<Derived2>& b)
 {
-	T res;
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = max(a[i], b[i]);
-	}
-	return res;
+	return a.cwise().max(b);
 }
 
-/// @cond SPECIALIZATIONS
-template<>
-inline double max(const double& a, const double& b)
+inline double max(double a, double b)
 {
 	return std::max(a, b);
 }
-/// @endcond
 
 
-template<typename T>
-inline T saturate(const T& x, const T& limit)
-{
-	return sign(x) * min(abs(x), limit);
-}
+namespace detail {
+template<typename Scalar> struct CwiseUnarySaturateOp {
+	CwiseUnarySaturateOp(Scalar limit) : limit(limit) {}
 
-
-// TODO(dc): test!
-template<typename T>
-inline T deadband(const T& x, const T& cutoff)
-{
-	T res;
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = deadBand(x[i], cutoff[i]);
+	inline const Scalar operator() (const Scalar& x) const {
+		return saturate(x, limit);
 	}
-	return res;
+
+	Scalar limit;
+};
+
+template<typename Scalar> struct CwiseBinarySaturateOp {
+	inline const Scalar operator() (const Scalar& x, const Scalar& limit) const {
+		return saturate(x, limit);
+	}
+};
 }
 
-/// @cond SPECIALIZATIONS
-template<>
-inline double deadband(const double& x, const double& cutoff)
+template<typename Derived>
+inline const Eigen::CwiseUnaryOp<
+	detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> saturate(const Eigen::MatrixBase<Derived>& x, double limit)
 {
-	return (abs(x) > cutoff) ? (x - cutoff * sign(x)) : 0.0;
+	return x.unaryExpr(detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>(limit));
 }
-/// @endcond
+
+template<typename Derived1, typename Derived2>
+inline const Eigen::CwiseBinaryOp<
+	detail::CwiseBinarySaturateOp<typename Eigen::ei_traits<Derived1>::Scalar>,
+	Derived1,
+	Derived2
+> saturate(const Eigen::MatrixBase<Derived1>& x, const Eigen::MatrixBase<Derived2>& limit)
+{
+	return x.binaryExpr(limit, detail::CwiseBinarySaturateOp<typename Eigen::ei_traits<Derived1>::Scalar>());
+}
+
+inline double saturate(double x, double limit)
+{
+	if (x > limit) {
+		return limit;
+	} else if (x < -limit) {
+		return -limit;
+	} else {
+		return x;
+	}
+}
+
+
+namespace detail {
+template<typename Scalar> struct CwiseUnaryDeadbandOp {
+	CwiseUnaryDeadbandOp(Scalar cutoff) : cutoff(cutoff) {}
+
+	inline const Scalar operator() (const Scalar& x) const {
+		return deadband(x, cutoff);
+	}
+
+	Scalar cutoff;
+};
+
+template<typename Scalar> struct CwiseBinaryDeadbandOp {
+	inline const Scalar operator() (const Scalar& x, const Scalar& cutoff) const {
+		return deadband(x, cutoff);
+	}
+};
+}
+
+template<typename Derived>
+inline const Eigen::CwiseUnaryOp<
+	detail::CwiseUnaryDeadbandOp<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> deadband(const Eigen::MatrixBase<Derived>& x, double cutoff)
+{
+	return x.unaryExpr(detail::CwiseUnaryDeadbandOp<typename Eigen::ei_traits<Derived>::Scalar>(cutoff));
+}
+
+template<typename Derived1, typename Derived2>
+inline const Eigen::CwiseBinaryOp<
+	detail::CwiseBinaryDeadbandOp<typename Eigen::ei_traits<Derived1>::Scalar>,
+	Derived1,
+	Derived2
+> deadband(const Eigen::MatrixBase<Derived1>& x, const Eigen::MatrixBase<Derived2>& cutoff)
+{
+	return x.binaryExpr(cutoff, detail::CwiseBinaryDeadbandOp<typename Eigen::ei_traits<Derived1>::Scalar>());
+}
+
+inline double deadband(double x, double cutoff)
+{
+	if (x > cutoff) {
+		return x - cutoff;
+	} else if (x < -cutoff) {
+		return x + cutoff;
+	} else {
+		return 0.0;
+	}
+}
 
 
 }
