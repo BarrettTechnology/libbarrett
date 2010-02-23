@@ -1,0 +1,29 @@
+Dan Cody
+libbarrett
+Barrett Technology
+11-24-2009
+
+
+**** Documentation ****
+
+libbarrett is documented using in-code deoxygen comments. deoxygen (http://www.stack.nl/~dimitri/doxygen/index.html) is a source code documentation generator tool. To generate HTML documentation, run the 'deoxgygen' utility from the 'libbarrett/trunk' directory. The documentation will be in 'libbarrett/trunk/doc/html/index.html'.
+
+
+**** Eclipse projects ****
+
+Some of these subdirectories contain Eclipse projects, but Eclipse's workspace metadata is not included in the repository. To regenerate it:
+
+1) Open Eclipse
+2) Set your Workspace directory to 'libbarrett/trunk'
+3) Select File -> Import
+4) Under the General category, choose "Existing Projects into Workspace", and then Next
+5) Choose "Select root directory" and use 'libbarrett/trunk' as the directory
+6) At this point, the projects should be listed. Select them all and click Finish.
+
+When this is completed, it sometimes looks as if nothing has changed. If this is the case, close the Welcome screen and/or choose Window -> Open Perspective -> Other -> C/C++.
+
+
+**** Note on generated files ****
+
+When committing, do not add the 'libbarrett/trunk/.metedata' directory, any of the Release/Debug/Debug-local build directories, or any files under the 'libbarrett/trunk/doc' directory to the repository. These directories should be ignored automatically.
+
