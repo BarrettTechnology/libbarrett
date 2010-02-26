@@ -92,9 +92,10 @@ protected:
 	Sink sink;
 	Source source;
 
-private:
+public:
 	struct bt_wambot_phys* wambot;
 
+private:
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
 };
 
