@@ -97,6 +97,7 @@ public:
 	jv_type getJointVelocities();
 
 	void gravityCompensate(bool compensate = true);
+	void moveTo(jp_type point); // TODO(dc): make this generic
 	void moveHome();
 	bool moveIsDone();
 	void idle();
