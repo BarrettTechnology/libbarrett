@@ -10,7 +10,7 @@
 #include <libconfig.h++>
 #include <gtest/gtest.h>
 
-#include <barrett/math/vector.h>
+#include <barrett/math/matrix.h>
 #include <barrett/systems/helpers.h>
 #include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/abstract/system.h>
@@ -24,7 +24,7 @@ namespace {
 using namespace barrett;
 
 
-typedef math::Vector<5> i_type;
+typedef math::Vector<5>::type i_type;
 const double T_s = 0.002;
 
 

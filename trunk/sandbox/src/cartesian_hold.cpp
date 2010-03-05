@@ -73,7 +73,7 @@ int main() {
 
 	systems::ToolPosition<DOF> toolPos;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
-	systems::PIDController<units::CartesianPosition> pid;
+	systems::PIDController<units::CartesianPosition::type> pid;
 
 	systems::ToolOrientation<DOF> toolOrient;
 	systems::ToolOrientationController<DOF> toolOrientController;
@@ -125,7 +125,7 @@ int main() {
 	waitForEnter();
 	wam.gravityCompensate();
 
-//	systems::ExposedOutput<units::CartesianPosition> setPointLoc;
+//	systems::ExposedOutput<units::CartesianPosition::type> setPointLoc;
 	systems::ExposedOutput<Eigen::Quaterniond> setPointOrient;
 	std::string line;
 	bool going = true, holding = false, gravComp = true;

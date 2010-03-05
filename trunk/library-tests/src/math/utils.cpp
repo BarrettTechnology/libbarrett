@@ -7,7 +7,7 @@
 
 
 #include <gtest/gtest.h>
-#include <barrett/math/vector.h>
+#include <barrett/math/matrix.h>
 #include <barrett/math/utils.h>
 
 
@@ -20,7 +20,7 @@ const size_t N = 5;
 
 class MathUtilsTest : public ::testing::Test {
 protected:
-	math::Vector<N> a, b, e;
+	math::Vector<N>::type a, b, e;
 };
 
 

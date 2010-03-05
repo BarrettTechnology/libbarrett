@@ -23,19 +23,19 @@ namespace systems {
 
 
 template<size_t DOF>
-class ToolForceToJointTorques : public SingleIO<units::CartesianForce, units::JointTorques<DOF> >, public KinematicsInput<DOF> {
+class ToolForceToJointTorques : public SingleIO<units::CartesianForce::type, typename units::JointTorques<DOF>::type>, public KinematicsInput<DOF> {
 public:
 	ToolForceToJointTorques() :
-		SingleIO<units::CartesianForce, units::JointTorques<DOF> >(), KinematicsInput<DOF>(this) {}
+		SingleIO<units::CartesianForce::type, typename units::JointTorques<DOF>::type>(), KinematicsInput<DOF>(this) {}
 	virtual ~ToolForceToJointTorques() {}
 
 protected:
 	virtual void operate() {
-		units::JointTorques<DOF> jt;
+		typename units::JointTorques<DOF>::type jt;
 
 		// Multiply by the Jacobian-transpose at the tool
 		gsl_blas_dgemv(CblasTrans, 1.0, this->kinInput.getValue()->impl->tool_jacobian_linear,
-					this->input.getValue().asGslVector(), 1.0, jt.asGslVector());
+					this->input.getValue().asGslType(), 1.0, jt.asGslType());
 
 		this->outputValue->setValue(jt);
 	}

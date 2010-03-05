@@ -21,12 +21,13 @@
 
 namespace {
 using namespace barrett;
-const size_t DOF = 5;
 
+const size_t DOF = 5;
+typedef units::JointPositions<DOF>::type jp_type;
 
 TEST(SplineTest, ImplicitParameter) {
-	units::JointPositions<DOF> jp;
-	std::vector<units::JointPositions<DOF> > points;
+	jp_type jp;
+	std::vector<jp_type> points;
 
 	jp.setConstant(0);
 	points.push_back(jp);
@@ -35,7 +36,7 @@ TEST(SplineTest, ImplicitParameter) {
 	jp.setConstant(2);
 	points.push_back(jp);
 
-	math::Spline<units::JointPositions<DOF> > spline(points);
+	math::Spline<jp_type> spline(points);
 
 
 	EXPECT_EQ(0.0, spline.initialX());
@@ -45,7 +46,7 @@ TEST(SplineTest, ImplicitParameter) {
 }
 
 TEST(SplineTest, ExplicitParameter) {
-	typedef math::Spline<units::JointPositions<DOF> >::tuple_type tuple_type;
+	typedef math::Spline<jp_type>::tuple_type tuple_type;
 	tuple_type sample;
 	std::vector<tuple_type> samples;
 
@@ -57,14 +58,14 @@ TEST(SplineTest, ExplicitParameter) {
 	sample.get<1>().setConstant(2.0);
 	samples.push_back(sample);
 
-	math::Spline<units::JointPositions<DOF> > spline(samples);
+	math::Spline<jp_type> spline(samples);
 
 
 	EXPECT_EQ(-2.0, spline.initialX());
 	EXPECT_EQ(5.0, spline.finalX());
 	EXPECT_EQ(7.0, spline.changeInX());
 
-	units::JointPositions<DOF> jp;
+	jp_type jp;
 
 	jp = spline.eval(-2.0);
 	for (size_t i = 0; i < DOF; ++i) {

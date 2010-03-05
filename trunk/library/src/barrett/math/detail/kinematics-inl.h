@@ -36,14 +36,14 @@ Kinematics<DOF>::~Kinematics()
 template<size_t DOF>
 void Kinematics<DOF>::eval(const jp_type& jp, const jv_type& jv)
 {
-	bt_kinematics_eval(impl, jp.asGslVector(), jv.asGslVector());
+	bt_kinematics_eval(impl, jp.asGslType(), jv.asGslType());
 }
 
 template<size_t DOF>
-units::CartesianPosition Kinematics<DOF>::operator() (const boost::tuple<jp_type, jv_type>& jointState)
+units::CartesianPosition::type Kinematics<DOF>::operator() (const boost::tuple<jp_type, jv_type>& jointState)
 {
 	eval(boost::tuples::get<0>(jointState), boost::tuples::get<1>(jointState));
-	return units::CartesianPosition(impl->tool->origin_pos);
+	return units::CartesianPosition::type(impl->tool->origin_pos);
 }
 
 

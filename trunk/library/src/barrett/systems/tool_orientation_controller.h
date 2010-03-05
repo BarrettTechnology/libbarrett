@@ -36,7 +36,7 @@ namespace systems {
 
 template<size_t DOF>
 class ToolOrientationController : public Controller<Eigen::Quaterniond,
-													units::JointTorques<DOF> >,
+													typename units::JointTorques<DOF>::type>,
 								  public KinematicsInput<DOF> {
 public:
 	ToolOrientationController() :
@@ -78,7 +78,7 @@ protected:
 		jTau = jacobian.transpose() * torque;
 
 
-		units::JointTorques<DOF> jt;
+		typename units::JointTorques<DOF>::type jt;
 		for (size_t i = 0; i < DOF; ++i) {
 			jt[i] = jTau[i];
 		}
@@ -91,7 +91,7 @@ protected:
 
 //		math::Array<3> caa, tau;
 //		math::Array<4> p, r, e;
-//		units::JointTorques<DOF> jTau;
+//		units::JointTorques<DOF>::type jTau;
 //		Eigen::Quaterniond tmp;
 //
 //		tmp = this->feedbackInput.getValue();
@@ -100,24 +100,24 @@ protected:
 //		tmp = this->referenceInput.getValue();
 //		r << tmp.w(), tmp.x(), tmp.y(), tmp.z();
 //
-//		q_mult_conj(e.asGslVector(), p.asGslVector(), r.asGslVector());
-//		q_to_angle_axis(e.asGslVector(), caa.asGslVector());
+//		q_mult_conj(e.asGslType(), p.asGslType(), r.asGslType());
+//		q_to_angle_axis(e.asGslType(), caa.asGslType());
 //
-//	      gsl_blas_dscal( 5.0, caa.asGslVector()); /* P TERM */
+//	      gsl_blas_dscal( 5.0, caa.asGslType()); /* P TERM */
 //
 //	      /* Next, multiply it by the to_world transform
 //	       * to get it in the world frame */
 //	      gsl_blas_dgemv( CblasNoTrans, 1.0, this->kinInput.getValue()->impl->tool->rot_to_world,
-//	                      caa.asGslVector(),
-//	                      0.0, tau.asGslVector() );
+//	                      caa.asGslType(),
+//	                      0.0, tau.asGslType() );
 //
 ////	      /* Also, add in the angular velocity (D term) */
 ////	      gsl_blas_daxpy( - c->rot_d, c->kin->tool_velocity_angular, c->torque ); /* D TERM */
 //
 //	      /* Multiply by the Jacobian-transpose at the tool (torque) */
 //	      gsl_blas_dgemv( CblasTrans, 1.0, this->kinInput.getValue()->impl->tool_jacobian_angular,
-//	                      tau.asGslVector(),
-//	                      1.0, jTau.asGslVector());
+//	                      tau.asGslType(),
+//	                      1.0, jTau.asGslType());
 //
 //		std::cout << jTau << "\n";
 

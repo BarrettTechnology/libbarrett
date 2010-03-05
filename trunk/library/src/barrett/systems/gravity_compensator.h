@@ -27,9 +27,9 @@ namespace systems {
 template<size_t DOF>
 class GravityCompensator : public System,
 						   public KinematicsInput<DOF>,
-						   public SingleOutput<units::JointTorques<DOF> > {
+						   public SingleOutput<typename units::JointTorques<DOF>::type> {
 public:
-	typedef units::JointTorques<DOF> jt_type;
+	typedef typename units::JointTorques<DOF>::type jt_type;
 
 
 	explicit GravityCompensator(const libconfig::Setting& setting) :
@@ -46,7 +46,7 @@ public:
 protected:
 	virtual void operate() {
 		jt_type jt;
-		bt_calgrav_eval(impl, this->kinInput.getValue()->impl, jt.asGslVector());
+		bt_calgrav_eval(impl, this->kinInput.getValue()->impl, jt.asGslType());
 		this->outputValue->setValue(jt);
 	}
 

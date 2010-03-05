@@ -19,7 +19,7 @@ namespace {
 using namespace barrett;
 
 
-typedef units::JointTorques<3> jt_type;
+typedef units::JointTorques<3>::type jt_type;
 
 
 // we just want this to compile
