@@ -135,7 +135,7 @@ TEST_F(PIDControllerTest, SetKp) {
 
 	for (size_t i = 0; i < 10; ++i) {
 		eios.setOutputValue(a);
-		EXPECT_EQ(a*a, eios.getInputValue());
+		EXPECT_EQ(a.cwise()*a, eios.getInputValue());
 	}
 }
 
@@ -221,7 +221,7 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 	pid.setControlSignalLimit(a);
 
 	eios.setOutputValue(i_type(0.1));
-	EXPECT_EQ(i_type(0.1) * a, eios.getInputValue());
+	EXPECT_EQ(i_type(0.1).cwise() * a, eios.getInputValue());
 	eios.setOutputValue(i_type(2.0));
 	EXPECT_EQ(a, eios.getInputValue());
 	eios.setOutputValue(i_type(-5));

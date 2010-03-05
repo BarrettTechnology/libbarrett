@@ -36,7 +36,6 @@ template<int R, int C, typename Units> class Matrix;
 
 template<int R, typename Units = void>
 struct Vector {
-//	typedef ::barrett::math::Matrix<R,1, Units> type;
 	typedef math::Matrix<R,1, Units> type;
 };
 
