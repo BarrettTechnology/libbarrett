@@ -20,7 +20,7 @@ namespace {
 using namespace barrett;
 
 
-// TODO(dc): test matrix functionality
+// TODO(dc): test matrix functionality, not just vector stuff
 
 template<int R> struct LocalUnits {
 	typedef typename math::Vector<R, LocalUnits<R> >::type type;
