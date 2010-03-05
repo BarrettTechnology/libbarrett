@@ -72,8 +72,8 @@ int main() {
 
 	math::Kinematics<DOF> kin(config.lookup("wam.kinematics"));
 	kin.eval(config.lookup("wam.low_level.home"), jv_type());
-	systems::Constant<units::CartesianPosition> tpPoint(
-			units::CartesianPosition(kin.impl->tool->origin_pos));
+	systems::Constant<units::CartesianPosition::type> tpPoint(
+			units::CartesianPosition::type(kin.impl->tool->origin_pos));
 
 	Eigen::Matrix3d rot;
 	for (size_t r = 0; r < 3; ++r) {

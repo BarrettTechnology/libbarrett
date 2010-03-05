@@ -58,9 +58,9 @@ namespace barrett {
 template<size_t DOF>
 class Wam {
 public:
-	typedef units::JointTorques<DOF> jt_type;
-	typedef units::JointPositions<DOF> jp_type;
-	typedef units::JointVelocities<DOF> jv_type;
+	typedef units::JointTorques<DOF>::type jt_type;
+	typedef units::JointPositions<DOF>::type jp_type;
+	typedef units::JointVelocities<DOF>::type jv_type;
 
 
 	// these need to be before the IO references
@@ -72,7 +72,7 @@ public:
 
 	systems::Converter<jt_type> supervisoryController;
 	systems::PIDController<jp_type> jpController;
-	systems::PIDController<units::CartesianPosition> tpController;
+	systems::PIDController<units::CartesianPosition::type> tpController;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 	systems::ToolOrientationController<DOF> toController;
 

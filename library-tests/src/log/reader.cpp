@@ -15,7 +15,7 @@
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/tuple/tuple_io.hpp>
 
-#include <barrett/math/vector.h>
+#include <barrett/math/matrix.h>
 #include <barrett/units.h>
 #include <barrett/log/reader.h>
 #include <barrett/log/writer.h>
@@ -70,7 +70,7 @@ TEST(LogReaderTest, TupleA) {
 }
 
 TEST(LogReaderTest, TupleB) {
-	typedef boost::tuple<math::Vector<15>, double, double, units::JointTorques<3> > tuple_type;
+	typedef boost::tuple<math::Vector<15>::type, double, double, units::JointTorques<3>::type> tuple_type;
 
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
@@ -101,16 +101,16 @@ TEST(LogReaderTest, Array) {
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
 
-	math::Vector<15> d;
+	math::Vector<15>::type d;
 	d <<	23,	54,		34,		4,		25,
 			23,	6,		46,		23,		-6,
 			11,	868,	12312,	-44.2,	1;
 
-	log::Writer<math::Vector<15> > lw(tmpFile);
+	log::Writer<math::Vector<15>::type> lw(tmpFile);
 	lw.putRecord(d);
 	lw.close();
 
-	log::Reader<math::Vector<15> > lr(tmpFile);
+	log::Reader<math::Vector<15>::type> lr(tmpFile);
 	EXPECT_EQ(1, lr.numRecords());
 	EXPECT_EQ(d, lr.getRecord());
 	EXPECT_THROW(lr.getRecord(), std::underflow_error);

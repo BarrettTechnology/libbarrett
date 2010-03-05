@@ -41,8 +41,8 @@ private:
 template<size_t DOF>
 class KinematicsBase : public System {
 // IO
-public:		Input<units::JointPositions<DOF> > jpInput;
-public:		Input<units::JointVelocities<DOF> > jvInput;
+public:		Input<typename units::JointPositions<DOF>::type> jpInput;
+public:		Input<typename units::JointVelocities<DOF>::type> jvInput;
 public:		Output<const math::Kinematics<DOF>*> kinOutput;
 protected:	typename Output<const math::Kinematics<DOF>*>::Value* kinOutputValue;
 

@@ -62,7 +62,8 @@
 
 
 #include <libconfig.h++>
-#include "./math/vector.h"
+//#include "./math/vector.h"
+#include "./math/matrix.h"
 
 
 /// @cond DETAIL
@@ -71,7 +72,25 @@
 	public:
 
 #define DECLARE_UNITS_IMPL_F(ClassName, N)  \
-		explicit ClassName(double d = 0.0) :  \
+		ClassName() :  \
+			::barrett::math::Vector<N>() {}  \
+/*		ClassName(double x, double y) :  \
+			::barrett::math::Vector<N>(x, y) {}  \
+		ClassName(double x, double y, double z) :  \
+			::barrett::math::Vector<N>(x, y, z) {}  \
+		ClassName(double x, double y, double z, double w) :  \
+			::barrett::math::Vector<N>(x, y, z, w) {}  \
+*/		explicit ClassName(const double* data) :  \
+			::barrett::math::Vector<N>(data) {}  \
+		template<typename OtherDerived>  \
+		ClassName(const Eigen::MatrixBase<OtherDerived>& other) :  \
+			::barrett::math::Vector<N>(other) {}  \
+		template<typename OtherDerived>  \
+		explicit ClassName(const Eigen::RotationBase<OtherDerived,  \
+						::barrett::math::Vector<N>::Base::ColsAtCompileTime>& r) :  \
+			::barrett::math::Vector<N>(r) {}  \
+		\
+		explicit ClassName(double d) :  \
 			::barrett::math::Vector<N>(d) {}  \
 		explicit ClassName(const gsl_vector* vec) :  \
 			::barrett::math::Vector<N>(vec) {}  \
@@ -81,6 +100,11 @@
 			::barrett::math::Vector<N>(a) {}  \
 		using ::barrett::math::Vector<N>::operator=;  \
 	}
+
+//
+//	using ::barrett::math::Traits;
+//	template<size_t N> struct Traits<ClassName<N> > :
+//			public ::barrett::math::Traits< ::barrett::math::Vector<N> > {}
 /// @endcond
 
 
@@ -198,12 +222,30 @@ namespace barrett {
 namespace units {
 
 
-DECLARE_UNITS(JointTorques);
-DECLARE_UNITS_WITH_ACTUATOR(JointPositions, JointTorques);
-DECLARE_UNITS_WITH_ACTUATOR(JointVelocities, JointTorques);
+template<int R> struct JointTorques {
+	typedef typename math::Vector<R, JointTorques<R> >::type type;
+};
+template<int R> struct JointPositions {
+	typedef typename math::Vector<R, JointPositions<R> >::type type;
+};
+template<int R> struct JointVelocities {
+	typedef typename math::Vector<R, JointVelocities<R> >::type type;
+};
 
-DECLARE_FIXED_SIZE_UNITS(CartesianForce, 3);
-DECLARE_FIXED_SIZE_UNITS_WITH_ACTUATOR(CartesianPosition, CartesianForce, 3);
+
+struct CartesianForce {
+	typedef math::Vector<3, CartesianForce>::type type;
+};
+struct CartesianPosition {
+	typedef math::Vector<3, CartesianPosition>::type type;
+};
+
+//DECLARE_UNITS(JointTorques);
+//DECLARE_UNITS_WITH_ACTUATOR(JointPositions, JointTorques);
+//DECLARE_UNITS_WITH_ACTUATOR(JointVelocities, JointTorques);
+//
+//DECLARE_FIXED_SIZE_UNITS(CartesianForce, 3);
+//DECLARE_FIXED_SIZE_UNITS_WITH_ACTUATOR(CartesianPosition, CartesianForce, 3);
 
 
 }

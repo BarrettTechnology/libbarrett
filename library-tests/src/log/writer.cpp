@@ -9,7 +9,7 @@
 #include <cstdio>
 
 #include <gtest/gtest.h>
-#include <barrett/math/vector.h>
+#include <barrett/math/matrix.h>
 #include <barrett/log/writer.h>
 #include "./verify_file_contents.h"
 
@@ -56,16 +56,16 @@ TEST(LogWriterTest, Array) {
 	char tmpFile[L_tmpnam];
 	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
 
-	math::Vector<15> d;
+	math::Vector<15>::type d;
 	d <<	23,	54,		34,		4,		25,
 			23,	6,		46,		23,		-6,
 			11,	868,	12312,	-44.2,	1;
 
-	log::Writer<math::Vector<15> > lw(tmpFile);
+	log::Writer<math::Vector<15>::type> lw(tmpFile);
 	lw.putRecord(d);
 	lw.close();
 
-	verifyFileContents(tmpFile, reinterpret_cast<char*>(d.data()), sizeof(double) * math::Vector<15>::SIZE);
+	verifyFileContents(tmpFile, reinterpret_cast<char*>(d.data()), sizeof(double) * d.size());
 	std::remove(tmpFile);
 }
 

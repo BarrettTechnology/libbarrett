@@ -22,17 +22,17 @@ namespace systems {
 
 template<size_t DOF>
 class ToolPosition : public System, public KinematicsInput<DOF>,
-					 public SingleOutput<units::CartesianPosition> {
+					 public SingleOutput<units::CartesianPosition::type> {
 public:
 	ToolPosition() :
 		KinematicsInput<DOF>(this),
-		SingleOutput<units::CartesianPosition>(this) {}
+		SingleOutput<units::CartesianPosition::type>(this) {}
 	virtual ~ToolPosition() {}
 
 protected:
 	virtual void operate() {
 		this->outputValue->setValue(
-				units::CartesianPosition(
+				units::CartesianPosition::type(
 						this->kinInput.getValue()->impl->tool->origin_pos));
 	}
 

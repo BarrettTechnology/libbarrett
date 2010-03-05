@@ -27,9 +27,9 @@ using namespace barrett;
 
 
 const size_t DOF = 7;
-typedef units::JointPositions<DOF> jp_type;
-typedef units::JointVelocities<DOF> jv_type;
-typedef units::JointTorques<DOF> jt_type;
+typedef units::JointTorques<DOF>::type jt_type;
+typedef units::JointPositions<DOF>::type jp_type;
+typedef units::JointVelocities<DOF>::type jv_type;
 
 
 // TODO(dc): actually test this!
@@ -102,7 +102,7 @@ TEST(ToolOrientationTest, Blah2) {
 	gsl_vector_set(con->ref_quat, 2, -0.528556);
 	gsl_vector_set(con->ref_quat, 3, -0.496962);
 
-	bt_control_eval(&con->base, jt.asGslVector(), 0.002);
+	bt_control_eval(&con->base, jt.asGslType(), 0.002);
 
 
 	bt_control_cartesian_xyz_q_destroy(con);
