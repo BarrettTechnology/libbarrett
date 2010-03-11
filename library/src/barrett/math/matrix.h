@@ -64,7 +64,7 @@ public:
 
 
 	// Duplicate the non-inherited parts of Eigen's interface.
-	Matrix();
+//	Matrix();
 	Matrix(double x, double y);
 	Matrix(double x, double y, double z);
 	Matrix(double x, double y, double z, double w);
@@ -84,6 +84,7 @@ public:
 		return *this;
 	}
 
+	// make sure units match
 	template<int OtherR, int OtherC, typename OtherUnits>
 	inline Matrix<R,C, Units>& operator=(const Matrix<OtherR,OtherC, OtherUnits>& other) {
 		BOOST_MPL_ASSERT((	boost::mpl::or_<
@@ -111,13 +112,15 @@ public:
 	 *
 	 * @param[in] d The initial value of the Matrix's coefficients.
 	 */
-	explicit Matrix(double d);
+	explicit Matrix(double d = 0.0);
 	explicit Matrix(const gsl_type* gslType);
 	Matrix(const libconfig::Setting& setting);  // deliberately non-explicit
-	Matrix(const Matrix& a);
+	Matrix(const Matrix& a);  // TODO(dc): make sure units match in a copy construction
 	~Matrix();
 
-	// TODO(dc): How does this need to change to support dynamicly sized Matricies?
+	// TODO(dc): add a ctor that doesn't initialize the data?
+
+	// TODO(dc): How does this need to change to support dynamically sized Matrices?
 	static size_t serializedLength();
 	void serialize(char* dest) const;
 	static Matrix<R,C, Units> unserialize(char* source);
@@ -131,7 +134,6 @@ public:
 	const gsl_type* asGslType() const;
 
 protected:
-//	template<typename T>
 	void initGslType(gsl_vector* g);
 	void initGslType(gsl_matrix* g);
 

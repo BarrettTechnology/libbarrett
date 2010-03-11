@@ -29,10 +29,11 @@ template<int R> struct LocalUnits {
 
 // template parameters list the types the following tests should be run over
 typedef ::testing::Types<
-		math::Vector<5>::type,
-		units::JointTorques<5>::type,
-		units::JointPositions<5>::type,
-		LocalUnits<5>::type> UATypes;
+			math::Vector<5>::type,
+			units::JointTorques<5>::type,
+			units::JointPositions<5>::type,
+			LocalUnits<5>::type
+		> UATypes;
 
 template<typename T>
 class VectorTypedTest : public ::testing::Test {
@@ -45,6 +46,12 @@ protected:
 
 TYPED_TEST_CASE(VectorTypedTest, UATypes);
 
+
+TYPED_TEST(VectorTypedTest, DefaultCtor) {
+	for (int i = 0; i < this->a.size(); ++i) {
+		EXPECT_EQ(0.0, this->a[i]);
+	}
+}
 
 TYPED_TEST(VectorTypedTest, InitialValueCtor) {
 	TypeParam a(-487.9);
