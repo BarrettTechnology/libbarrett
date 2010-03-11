@@ -62,6 +62,9 @@ int speed = -100;
 int spreadspeed = -20;
 int port = 3333;
 
+const size_t J6_IDX = 5;
+const double GIMBALS_J6_OFFSET = M_PI/2;
+
 const size_t DOF = 7;
 const double T_s = 0.002;
 
@@ -80,13 +83,21 @@ void handleHandCommands(struct bt_bus *bus, bool* going);
 
 int main(int argc, char** argv) {
 	// check arguments
-	if (argc != 2) {
-		printf("Usage: %s <otherip>\n", argv[0]);
+	if (argc != 2  &&  argc != 3) {
+		printf("Usage: %s <otherip> [-g]\n", argv[0]);
 		return 0;
 	}
 
 
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
+
+
+	bool isGimbals = (argc == 3);
+	jp_type origin(0.0);
+	if (isGimbals) {
+		origin[J6_IDX] += GIMBALS_J6_OFFSET;
+	}
+
 
 	libconfig::Config config;
 	config.readFile("/etc/wam/wamg-new.config");
@@ -99,6 +110,20 @@ int main(int argc, char** argv) {
 	Wam<DOF> wam(config.lookup("wam"));
 
 	systems::MasterMaster<DOF> mm(argv[1]);
+
+	systems::Constant<double> j6Offset(GIMBALS_J6_OFFSET);
+	systems::Summer<double> add;
+	systems::ArraySplitter<jp_type> asAdd;
+	systems::ArrayEditor<jp_type> aeAdd;
+
+	std::bitset<2> polarity;
+	polarity[0] = true;
+	polarity[1] = false;
+	systems::Summer<double> subtract(polarity);
+//	systems::Summer<double> subtract("+-");
+	systems::ArraySplitter<jp_type> asSubtract;
+	systems::ArrayEditor<jp_type> aeSubtract;
+
 	systems::FirstOrderFilter<jp_type> lpf1;
 	systems::FirstOrderFilter<jp_type> lpf2;
 	systems::Summer<jp_type, 2> sum;
@@ -110,12 +135,44 @@ int main(int argc, char** argv) {
 
 
 	// connect systems
-	connect(wam.jpOutput, mm.input);
-	connect(mm.output, lpf1.input);
+	systems::System::Output<jp_type>* mmOutput;
+	if (isGimbals) {
+//		connect(wam.jpOutput, asSubtract.input);
+//		connect(asSubtract.getOutput(J6_IDX), subtract.getInput(0));
+//		connect(j6Offset.output, subtract.getInput(1));
+//		connect(wam.jpOutput, aeSubtract.input);
+//		connect(subtract.output, aeSubtract.getElementInput(J6_IDX));
+//		connect(aeSubtract.output, mm.input);
+//
+//		connect(mm.output, asAdd.input);
+//		connect(asAdd.getOutput(J6_IDX), add.getInput(0));
+//		connect(j6Offset.output, add.getInput(1));
+//		connect(mm.output, aeAdd.input);
+//		connect(add.output, aeAdd.getElementInput(J6_IDX));
+//		mmOutput = &aeAdd.output;
+
+		connect(wam.jpOutput, asSubtract.input);
+		connect(asSubtract.getOutput(J6_IDX), subtract.getInput(0));
+		connect(j6Offset.output, subtract.getInput(1));
+		connect(wam.jpOutput, aeSubtract.input);
+		connect(subtract.output, aeSubtract.getElementInput(J6_IDX));
+		connect(aeSubtract.output, mm.input);
+
+		connect(mm.output, asAdd.input);
+		connect(asAdd.getOutput(J6_IDX), add.getInput(0));
+		connect(j6Offset.output, add.getInput(1));
+		connect(mm.output, aeAdd.input);
+		connect(add.output, aeAdd.getElementInput(J6_IDX));
+		mmOutput = &aeAdd.output;
+} else {
+		connect(wam.jpOutput, mm.input);
+		mmOutput = &mm.output;
+	}
+	connect(*mmOutput, lpf1.input);
 	connect(lpf1.output, lpf2.input);
 
 	connect(wam.jpOutput, sum.getInput(0));
-//	connect(mm.output, sum.getInput(1));
+//	connect(*mmOutput, sum.getInput(1));
 	connect(lpf2.output, sum.getInput(1));
 	connect(sum.output, half.input);
 
@@ -153,6 +210,25 @@ int main(int argc, char** argv) {
 			}
 			break;
 
+		case 'r':
+			printf("Waking hand pucks ...\n");
+			//   bus = wam.wam.wambot->bus;
+			for (int i = 11; i <= 14; i++)
+				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 0, 0); // Set STAT to STATUS_RESET
+
+			usleep((long) 1e6);
+
+			for (int i = 11; i <= 14; i++)
+				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+
+			usleep((long) 1e6);
+
+			for (int i = 11; i <= 14; i++)
+				bt_bus_set_property(wam.wam.wambot->bus, i, 78, 0, 50); // Set TSTOP to 50 ms
+
+			printf("Initializing hand ...\n");
+			break;
+
 		case 'l':
 			if (mm.isLocked()) {
 				mm.unlock();
@@ -160,7 +236,7 @@ int main(int argc, char** argv) {
 				// build spline to setPoint
 				std::vector<Wam<DOF>::jp_type> vec;
 				vec.push_back(wam.getJointPositions());
-				vec.push_back(jp_type());
+				vec.push_back(origin);
 				math::Spline<Wam<DOF>::jp_type> spline(vec);
 				math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
 
@@ -178,7 +254,7 @@ int main(int argc, char** argv) {
 				waitForEnter();
 
 			//	wam.trackReferenceSignal(half.output);
-				wam.trackReferenceSignal(mm.output);
+				wam.trackReferenceSignal(*mmOutput);
 			//	wam.trackReferenceSignal(lpf.output);
 
 
@@ -248,6 +324,10 @@ int main(int argc, char** argv) {
 //			break;
 
 		default:
+//			std::cout << mm.input.getValue() << std::endl << wam.jpController.referenceInput.getValue();
+//			std::cout << subtract.polarity[0] << " " << subtract.polarity[1] << std::endl;
+//			std::cout << add.getInput(0).getValue() << " " << add.getInput(1).getValue() << " " << aeAdd.getElementInput(J6_IDX).getValue() << std::endl;
+//			std::cout << subtract.getInput(0).getValue() << " " << subtract.getInput(1).getValue() << " " << aeSubtract.getElementInput(J6_IDX).getValue() << std::endl;
 			std::cout	<< "\n\t'l' to toggle locking with other WAM\n"
 						<< "\t'h' to toggle hand controller buttons\n"
 						<< "\t't' to tune control gains\n";

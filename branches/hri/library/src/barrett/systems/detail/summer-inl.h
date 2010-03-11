@@ -59,7 +59,7 @@ inline System::Input<T>& Summer<T, numInputs>::getInput(const size_t i) {
 template<typename T, size_t numInputs>
 void Summer<T, numInputs>::operate()
 {
-	T sum;
+	T sum(0.0);
 	for (size_t i = 0; i < numInputs; ++i) {
 		if (inputs[i]->valueDefined()) {
 			sum = sum + polarity[i] * inputs[i]->getValue();
