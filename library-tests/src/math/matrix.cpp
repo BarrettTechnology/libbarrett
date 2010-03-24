@@ -271,90 +271,96 @@ TYPED_TEST(VectorTypedTest, AccessAndModifyMembersByIndex) {
 //	EXPECT_FALSE(this->a < a_copy);
 //}
 
-//TYPED_TEST(VectorTypedTest, TraitsZero) {
-//	// TODO(dc): test
-//}
-//
-//TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
-//	typedef math::Traits<TypeParam> T;
-////	using math::Traits<TypeParam>::add;
-////	using math::Traits<TypeParam>::sub;
-////	using math::Traits<TypeParam>::mult;
-////	using math::Traits<TypeParam>::div;
-//
-//	TypeParam a1, a2, expected, result;
-//
-//	a1 << 1, 2, 3, 4, 5;
-//	a2 << 5, 4, 3, 2, 1;
-//
-//	result = T::add(a1, a2);
-//	expected.setConstant(6);
-//	EXPECT_EQ(expected, result);
-//
-//	result = T::sub(a1, a2);
-//	expected << -4, -2, 0, 2, 4;
-//	EXPECT_EQ(expected, result);
-//
-//	result = T::mult(a1, a2);
-//	expected << 5, 8, 9, 8, 5;
-//	EXPECT_EQ(expected, result);
-//
-//	result = T::div(a1, a2);
-//	expected << 0.2, 0.5, 1, 2, 5;
-//	EXPECT_EQ(expected, result);
-//
-////	result = T::neg(a1);
-////	expected << -1, -2, -3, -4, -5;
-////	EXPECT_EQ(expected, result);
-//
-////	result = ((a1/a2) + (a1*a2)) / (-a1);
-////	result = T::div( T::add(T::div(a1,a2), T::mult(a1,a2)), T::neg(a1) );
-////	expected << -5.2, -4.25, -10.0/3.0, -2.5, -2;
-////	EXPECT_EQ(expected, result);
-//}
+TYPED_TEST(VectorTypedTest, TraitsZero) {
+	typedef math::Traits<TypeParam> T;
 
-//TYPED_TEST(VectorTypedTest, VectorScalarTraitsArithmetic) {
-//	TypeParam a, expected, result;
-//
-//	a << 1, 2, 3, 4, 5;
-//
-//	result = a + 5;
-//	expected << 6, 7, 8, 9, 10;
-//	EXPECT_EQ(expected, result);
-//
-//	result = 5 + a;
-//	expected << 6, 7, 8, 9, 10;
-//	EXPECT_EQ(expected, result);
-//
-//	result = a - 5;
-//	expected << -4, -3, -2, -1, 0;
-//	EXPECT_EQ(expected, result);
-//
-//	result = 5 - a;
-//	expected << 4, 3, 2, 1, 0;
-//	EXPECT_EQ(expected, result);
-//
-//	result = a * 5;
-//	expected << 5, 10, 15, 20, 25;
-//	EXPECT_EQ(expected, result);
-//
-//	result = 5 * a;
-//	expected << 5, 10, 15, 20, 25;
-//	EXPECT_EQ(expected, result);
-//
-//	result = a / 5;
-//	expected << 0.2, 0.4, 0.6, 0.8, 1;
-//	EXPECT_EQ(expected, result);
-//
-//	result = 5 / a;
-//	expected << 5, 2.5, 5.0/3.0, 1.25, 1;
-//	EXPECT_EQ(expected, result);
-//
-//	// TODO(dc): need an approxEqual() method
-////	result = (0.6*a + 8) / 0.6 - a;
-////	expected.setConstant(8.0/0.6);
-////	EXPECT_EQ(expected, result);
-//}
+	TypeParam expected, result;
+	expected.setZero();
+	result.setConstant(7);
+
+	T::zero(result);
+	EXPECT_EQ(expected, result);
+	EXPECT_EQ(expected, T::zero());
+}
+
+TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
+	typedef math::Traits<TypeParam> T;
+
+	TypeParam a1, a2, expected, result;
+
+	a1 << 1, 2, 3, 4, 5;
+	a2 << 5, 4, 3, 2, 1;
+
+	result = T::add(a1, a2);
+	expected.setConstant(6);
+	EXPECT_EQ(expected, result);
+
+	result = T::sub(a1, a2);
+	expected << -4, -2, 0, 2, 4;
+	EXPECT_EQ(expected, result);
+
+	result = T::mult(a1, a2);
+	expected << 5, 8, 9, 8, 5;
+	EXPECT_EQ(expected, result);
+
+	result = T::div(a1, a2);
+	expected << 0.2, 0.5, 1, 2, 5;
+	EXPECT_EQ(expected, result);
+
+	result = T::neg(a1);
+	expected << -1, -2, -3, -4, -5;
+	EXPECT_EQ(expected, result);
+
+//	result = ((a1/a2) + (a1*a2)) / (-a1);
+	result = T::div( T::add(T::div(a1,a2), T::mult(a1,a2)), T::neg(a1) );
+	expected << -5.2, -4.25, -10.0/3.0, -2.5, -2;
+	EXPECT_EQ(expected, result);
+}
+
+TYPED_TEST(VectorTypedTest, VectorScalarTraitsArithmetic) {
+	typedef math::Traits<TypeParam> T;
+
+	TypeParam a, expected, result;
+
+	a << 1, 2, 3, 4, 5;
+
+	result = T::add(a,5);
+	expected << 6, 7, 8, 9, 10;
+	EXPECT_EQ(expected, result);
+
+	result = T::add(5, a);
+	expected << 6, 7, 8, 9, 10;
+	EXPECT_EQ(expected, result);
+
+	result = T::sub(a, 5);
+	expected << -4, -3, -2, -1, 0;
+	EXPECT_EQ(expected, result);
+
+	result = T::sub(5, a);
+	expected << 4, 3, 2, 1, 0;
+	EXPECT_EQ(expected, result);
+
+	result = T::mult(a, 5);
+	expected << 5, 10, 15, 20, 25;
+	EXPECT_EQ(expected, result);
+
+	result = T::mult(5, a);
+	expected << 5, 10, 15, 20, 25;
+	EXPECT_EQ(expected, result);
+
+	result = T::div(a, 5);
+	expected << 0.2, 0.4, 0.6, 0.8, 1;
+	EXPECT_TRUE(expected.isApprox(result));
+
+	result = T::div(5, a);
+	expected << 5, 2.5, 5.0/3.0, 1.25, 1;
+	EXPECT_TRUE(expected.isApprox(result));
+
+//	result = (0.6*a + 8) / 0.6 - a;
+	result = T::sub(T::div(T::add(T::mult(0.6, a), 8), 0.6), a);
+	expected.setConstant(8.0/0.6);
+	EXPECT_TRUE(expected.isApprox(result));
+}
 
 TYPED_TEST(VectorTypedTest, OstreamOperator) {
 	this->a.setConstant(0);

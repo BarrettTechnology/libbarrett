@@ -43,7 +43,7 @@ public:
 	void disconnectInput();
 
 protected:
-	virtual void operate() {  /* TODO(dc): invalidate outputs */  }
+	virtual void operate() {  invalidateOutputs();  }
 
 	std::list<Conversion<OutputType>*> conversions;
 

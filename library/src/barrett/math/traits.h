@@ -21,7 +21,7 @@ template<typename T> struct Traits {
 		return T();
 	}
 
-	static void zero(T t) {
+	static void zero(T& t) {
 		t = 0;
 	}
 
@@ -31,6 +31,10 @@ template<typename T> struct Traits {
 
 	static T sub(T l, T r) {
 		return l - r;
+	}
+
+	static T neg(T t) {
+		return -t;
 	}
 
 	static T mult(T l, T r) {

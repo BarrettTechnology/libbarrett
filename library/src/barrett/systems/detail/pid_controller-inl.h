@@ -135,7 +135,7 @@ void PIDController<InputType, OutputType, MathTraits>::operate()
 
 	error = MT::sub(this->referenceInput.getValue(), this->feedbackInput.getValue());
 
-	intError = MT::add(intError, MT::mult(ki, MT::mult(T_s, error_1)));  // TODO(dc): += operators
+	intError = MT::add(intError, MT::mult(ki, MT::mult(T_s, error_1)));
 	if ( !intErrorLimit.isZero() ) {
 		intError = math::saturate(intError, intErrorLimit);
 	}
