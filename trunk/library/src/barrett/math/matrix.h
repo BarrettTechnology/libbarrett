@@ -236,6 +236,15 @@ template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> 
 	}
 
 	template<typename Derived> static
+	const Eigen::CwiseUnaryOp<
+		Eigen::ei_scalar_opposite_op<typename Eigen::ei_traits<Derived>::Scalar>,
+		Derived
+	>
+	neg(const Eigen::MatrixBase<Derived>& t) {
+		return -t;
+	}
+
+	template<typename Derived> static
 // TODO(dc): this method returns random (uninitialized? deallocated?) values when it has the commented-out return type. i don't know why.
 //	const Eigen::CwiseUnaryOp<
 //		Eigen::ei_scalar_add_op<typename Eigen::ei_traits<Eigen::CwiseUnaryOp<

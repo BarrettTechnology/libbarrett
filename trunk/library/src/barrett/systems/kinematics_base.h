@@ -36,8 +36,6 @@ private:
 };
 
 
-// TODO(dc): add a configuration file interface
-
 template<size_t DOF>
 class KinematicsBase : public System {
 // IO

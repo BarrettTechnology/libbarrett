@@ -30,7 +30,7 @@
 
 #ifndef BARRETT_SYSTEMS_HELPERS_H_
 #define BARRETT_SYSTEMS_HELPERS_H_
-// FIXME: rename to manipulators.h?
+// FIXME(dc): rename to manipulators.h?
 
 
 #include <stdexcept>
