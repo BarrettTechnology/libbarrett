@@ -59,8 +59,6 @@
 #include "systems/tool_force_to_joint_torques.h"
 #include "systems/tool_orientation_controller.h"
 
-#include "systems/haptic_ball.h"
-
 #include "systems/summer.h"
 #include "systems/gain.h"
 

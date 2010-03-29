@@ -106,14 +106,14 @@ void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
 }
 
 template<size_t DOF>
-units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
+typename units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
 {
 	// TODO(dc): stub
 	return jp_type();
 }
 
 template<size_t DOF>
-units::JointVelocities::type<DOF> Wam<DOF>::getJointVelocities()
+typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
 {
 	// TODO(dc): stub
 	return jv_type();

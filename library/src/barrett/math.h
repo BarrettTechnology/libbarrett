@@ -9,7 +9,6 @@
 #define MATH_H_
 
 
-#include "math/array.h"
 #include "math/matrix.h"
 #include "math/utils.h"
 
