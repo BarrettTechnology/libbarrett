@@ -92,9 +92,10 @@ protected:
 	Sink sink;
 	Source source;
 
-private:
-	struct bt_wambot_phys* wambot;
+public:
+	struct bt_wambot_phys* wambot;  // TODO(dc): hack to quickly let other entities talk on the CAN bus (e.g. BH8-280).
 
+private:
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
 };
 

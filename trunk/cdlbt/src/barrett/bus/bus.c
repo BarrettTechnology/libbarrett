@@ -427,7 +427,7 @@ int bt_bus_set_torques(struct bt_bus * bus)
             data[i] = 0;
       }
 
-      if(gid != 7) /* xxx Temp hack for BHand demo */
+      if(gid != 7) {  /* xxx Temp hack for BHand demo */
          bt_bus_can_set_torques(bus->dev, gid, data, bus->p->TORQ);
       }
    }
