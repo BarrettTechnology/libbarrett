@@ -426,7 +426,10 @@ int bt_bus_set_torques(struct bt_bus * bus)
          else
             data[i] = 0;
       }
-      bt_bus_can_set_torques(bus->dev, gid, data, bus->p->TORQ);
+
+      if(gid != 7) /* xxx Temp hack for BHand demo */
+         bt_bus_can_set_torques(bus->dev, gid, data, bus->p->TORQ);
+      }
    }
    
    return 0;
@@ -478,7 +481,7 @@ static int retrieve_puck_positions( struct bt_bus * bus )
             syslog(LOG_ERR,"puck %d invalid position: %ld\n",i,data[i]);
             continue;
          }
-         else if( abs(data[i] - p->puck_position) > 1000)
+         else if( abs(data[i] - p->puck_position) > (p->counts_per_rev >> 2))
          {
             syslog(LOG_ERR,"puck %d insane position diff: %ld\n",i,
                    data[i] - p->puck_position);

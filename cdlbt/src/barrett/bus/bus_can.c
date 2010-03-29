@@ -57,7 +57,8 @@
 #endif
 
 /* CAN stuff */
-#define MAX_NODES (31) /* For iteration */
+//#define MAX_NODES (31) /* For iteration */
+#define MAX_NODES (11) /* xxx Temp Hack for BH8-280 demo */
 
 #define BORDER(Value,Min,Max) \
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
