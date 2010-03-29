@@ -71,7 +71,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="haptics.cpp|high_level_wam.cpp|low_level_wam.cpp|teach.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="test.cpp|haptics.cpp|high_level_wam.cpp|low_level_wam.cpp|teach.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

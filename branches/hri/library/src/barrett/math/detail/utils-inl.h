@@ -130,7 +130,7 @@ inline T deadband(const T& x, const T& cutoff)
 {
 	T res;
 	for (size_t i = 0; i < T::SIZE; ++i) {
-		res[i] = deadBand(x[i], cutoff[i]);
+		res[i] = deadband(x[i], cutoff[i]);
 	}
 	return res;
 }
