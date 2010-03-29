@@ -719,7 +719,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/refgen/refgen_teachplay_const.h|barrett/refgen/refgen_teachplay_const.c|barrett/wambot/wambot_sim.c|wambot/wambot_sim.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="barrett/os|barrett/refgen/refgen_teachplay_const.h|barrett/refgen/refgen_teachplay_const.c|barrett/wambot/wambot_sim.c|wambot/wambot_sim.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
