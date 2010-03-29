@@ -15,6 +15,7 @@
 
 #include "../detail/ca_macro.h"
 #include "./abstract/system.h"
+#include "./abstract/single_io.h"
 
 
 namespace barrett {
@@ -50,6 +51,7 @@ public:
 
 	explicit Summer(const Polarity& inputPolarity = Polarity(), bool undefinedIsZero = false);
 	explicit Summer(const std::string& inputPolarity, bool undefinedIsZero = false);
+	explicit Summer(const char* inputPolarity, bool undefinedIsZero = false);  // Without this, a string literal argument calls the Summer(bool) overload.
 	explicit Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero = false);
 	explicit Summer(bool undefinedIsZero);
 	virtual ~Summer();
