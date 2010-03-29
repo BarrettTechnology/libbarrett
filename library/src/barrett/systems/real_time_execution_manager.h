@@ -39,7 +39,7 @@ void rtemEntryPoint(void* cookie);
 
 class RealTimeExecutionManager : public ExecutionManager {
 public:
-	explicit RealTimeExecutionManager(double period_s, int rt_priority = 50);
+	explicit RealTimeExecutionManager(double period_s, bool warnOnSwitchToSecondaryMode = true, int rt_priority = 50);
 	explicit RealTimeExecutionManager(const libconfig::Setting& setting);  //TODO(dc): test!
 	virtual ~RealTimeExecutionManager();
 
@@ -50,6 +50,7 @@ public:
 protected:
 	RT_TASK* task;
 	int priority;
+	bool warnOnSwitch;
 	bool running, stopRunning;
 
 private:

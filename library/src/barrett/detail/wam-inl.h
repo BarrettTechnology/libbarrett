@@ -108,15 +108,13 @@ void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
 template<size_t DOF>
 typename units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
 {
-	// TODO(dc): stub
-	return jp_type();
+	return kinematicsBase.jpInput.getValue();
 }
 
 template<size_t DOF>
 typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
 {
-	// TODO(dc): stub
-	return jv_type();
+	return kinematicsBase.jvInput.getValue();
 }
 
 
