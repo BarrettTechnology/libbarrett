@@ -10,6 +10,7 @@
 #include <bitset>
 
 #include "../../detail/stl_utils.h"
+#include "../../math/traits.h"
 #include "../abstract/system.h"
 
 
@@ -26,6 +27,13 @@ Summer<T, numInputs>::Summer(const Polarity& inputPolarity, bool undefinedIsZero
 
 template<typename T, size_t numInputs>
 Summer<T, numInputs>::Summer(const std::string& inputPolarity, bool undefinedIsZero) :
+	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+{
+	initInputs();
+}
+
+template<typename T, size_t numInputs>
+Summer<T, numInputs>::Summer(const char* inputPolarity, bool undefinedIsZero) :
 	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
 {
 	initInputs();
@@ -59,10 +67,12 @@ inline System::Input<T>& Summer<T, numInputs>::getInput(const size_t i) {
 template<typename T, size_t numInputs>
 void Summer<T, numInputs>::operate()
 {
-	T sum;
+	typedef math::Traits<T> Traits;
+
+	T sum = Traits::zero();
 	for (size_t i = 0; i < numInputs; ++i) {
 		if (inputs[i]->valueDefined()) {
-			sum = sum + polarity[i] * inputs[i]->getValue();
+			sum = Traits::add(sum, Traits::mult(polarity[i], inputs[i]->getValue()));
 		} else if (strict) {
 			this->outputValue->setValueUndefined();
 			return;
