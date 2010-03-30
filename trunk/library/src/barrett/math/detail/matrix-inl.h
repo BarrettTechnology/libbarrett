@@ -145,7 +145,7 @@ template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyTo(gsl_type* gslType) const
 throw(std::logic_error)
 {
-	if (gslType->size != this->size()) {
+	if (gslType->size != static_cast<size_t>(this->size())) {
 		std::stringstream ss;
 		ss << "(math::Matrix<>::copyTo(gsl_type*)): The size of the "
 				"gsl_type must match the size of the Matrix. Expected size "
@@ -153,7 +153,7 @@ throw(std::logic_error)
 		throw std::logic_error(ss.str());
 	}
 
-	for (size_t i = 0; i < this->size(); ++i) {
+	for (int i = 0; i < this->size(); ++i) {
 		gsl_vector_set(gslType, i, (*this)[i]);
 	}
 }
@@ -162,7 +162,7 @@ template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyFrom(const gsl_type* gslType)
 throw(std::logic_error)
 {
-	if (gslType->size != this->size()) {
+	if (gslType->size != static_cast<size_t>(this->size())) {
 		std::stringstream ss;
 		ss << "(math::Matrix<>::copyFrom(gsl_type*)): The size of the "
 				"gsl_type must match the size of the Matrix. Expected size "
@@ -170,7 +170,7 @@ throw(std::logic_error)
 		throw std::logic_error(ss.str());
 	}
 
-	for (size_t i = 0; i < this->size(); ++i) {
+	for (int i = 0; i < this->size(); ++i) {
 		(*this)[i] = gsl_vector_get(gslType, i);
 	}
 }
@@ -188,7 +188,7 @@ inline void Matrix<R,C, Units>::copyFrom(const libconfig::Setting& setting)
 		throw std::runtime_error(ss.str());
 	}
 
-	for (size_t i = 0; i < this->size(); ++i) {
+	for (int i = 0; i < this->size(); ++i) {
 		(*this)[i] = detail::numericToDouble(setting[i]);
 	}
 }
