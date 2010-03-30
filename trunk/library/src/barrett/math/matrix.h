@@ -52,7 +52,7 @@ public:
 		gsl_matrix
 	>::type gsl_type;
 
-//	static const size_t SIZE = R*C;  ///< Length of the array.
+	static const size_t SIZE = R*C;  ///< Length of the array. Avoid using this if possible in case dynamic sizing is supported in the future.
 
 	/** Used by clients of child classes to loose type info when necessary.
 	 *
