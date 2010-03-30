@@ -61,7 +61,7 @@ int main() {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg.config");
+	config.readFile("/etc/wam/wamg-new.config");
 	systems::KinematicsBase<DOF> kin(config.lookup("wam.kinematics"));
 
 
@@ -69,11 +69,11 @@ int main() {
 	systems::System::defaultExecutionManager = &rtem;
 
 
-	Wam<DOF> wam;
+	Wam<DOF> wam(config.lookup("wam"));
 
 	systems::ToolPosition<DOF> toolPos;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
-	systems::PIDController<units::CartesianPosition::type> pid;
+	systems::PIDController<units::CartesianPosition::type, units::CartesianForce::type> pid(config.lookup("wam.tool_position_control"));
 
 	systems::ToolOrientation<DOF> toolOrient;
 	systems::ToolOrientationController<DOF> toolOrientController;
@@ -81,13 +81,13 @@ int main() {
 //	systems::Summer<Wam<DOF>::jt_type, 2> jtSum;
 
 
-	math::Array<3> tmp;
-	tmp.assign(2e3);
-	pid.setKp(tmp);
-	tmp.assign(2e1);
-	pid.setKd(tmp);
-	tmp.assign(1e2);
-	pid.setControlSignalLimit(tmp);
+//	math::Array<3> tmp;
+//	tmp.assign(2e3);
+//	pid.setKp(tmp);
+//	tmp.assign(2e1);
+//	pid.setKd(tmp);
+//	tmp.assign(1e2);
+//	pid.setControlSignalLimit(tmp);
 
 
 	connect(wam.jpOutput, kin.jpInput);

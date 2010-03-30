@@ -43,6 +43,10 @@ using boost::ref;
 const size_t DOF = 7;
 const double T_s = 0.002;
 
+typedef LowLevelWam<DOF>::jt_type jt_type;
+typedef LowLevelWam<DOF>::jp_type jp_type;
+typedef LowLevelWam<DOF>::jv_type jv_type;
+
 
 void waitForEnter() {
 	static std::string line;
@@ -62,9 +66,9 @@ int main() {
 
     // instantiate Systems
 	LowLevelWam<DOF> llw(config.lookup("wam.low_level"));
-	systems::PIDController<LowLevelWam<DOF>::jp_type> jpController(
-			config.lookup("wam.joint_position_controller"));
-	systems::Constant<LowLevelWam<DOF>::jp_type> point(
+	systems::PIDController<jp_type, jt_type> jpController(
+			config.lookup("wam.joint_position_control"));
+	systems::Constant<jp_type> point(
 			config.lookup("wam.low_level.home"));
 
 
