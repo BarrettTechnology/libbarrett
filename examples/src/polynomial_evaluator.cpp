@@ -17,7 +17,7 @@ protected:	Output<double>::Value* outputValue;
 
 public:
 	explicit PolynomialEvaluator(const vector<double>& coefficients) :
-		input(this), output(&outputValue), coeff(coefficients) {}
+		input(this), output(this, &outputValue), coeff(coefficients) {}
 	virtual ~PolynomialEvaluator() {}
 
 protected:
@@ -44,6 +44,10 @@ int main() {
 	vector<double> coeff(coeffArray,
 			coeffArray + sizeof(coeffArray) / sizeof(double));
 
+	// install execution manager
+	systems::ManualExecutionManager mem(0.0);
+	systems::System::defaultExecutionManager = &mem;
+
 	// instantiate Systems
 	systems::ExposedOutput<double> eoSys;
 	PolynomialEvaluator peSys(coeff);
@@ -53,12 +57,18 @@ int main() {
 	systems::connect(eoSys.output, peSys.input);
 	systems::connect(peSys.output, printSys.input);
 
-    // push data into peSys' input, causing peSys::operate() to be called
+    // push data into peSys' input and run an execution cycle,
+	// causing peSys::operate() to be called
 	eoSys.setValue(-1);
+	mem.runExecutionCycle();
 	eoSys.setValue(-0.5);
+	mem.runExecutionCycle();
 	eoSys.setValue(0);
+	mem.runExecutionCycle();
 	eoSys.setValue(0.5);
+	mem.runExecutionCycle();
 	eoSys.setValue(1);
+	mem.runExecutionCycle();
 	
 	return 0;
 }
