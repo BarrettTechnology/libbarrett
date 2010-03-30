@@ -78,7 +78,7 @@ int main() {
 	Eigen::Matrix3d rot;
 	for (size_t r = 0; r < 3; ++r) {
 		for (size_t c = 0; c < 3; ++c) {
-			rot(c,r) = gsl_matrix_get(kin.impl->tool->rot_to_world, r,c);  // transpose to get tool to world transform
+			rot(c,r) = gsl_matrix_get(kin.impl->tool->rot_to_world, r,c);  // transpose to get tool-to-world transform
 		}
 	}
 	Eigen::Quaterniond q(rot);

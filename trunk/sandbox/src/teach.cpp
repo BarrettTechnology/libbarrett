@@ -40,6 +40,10 @@ using boost::ref;
 const size_t DOF = 7;
 const double T_s = 0.002;
 
+typedef Wam<DOF>::jt_type jt_type;
+typedef Wam<DOF>::jp_type jp_type;
+typedef Wam<DOF>::jv_type jv_type;
+
 
 void waitForEnter() {
 	static std::string line;
@@ -49,32 +53,14 @@ void waitForEnter() {
 int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
-	math::Array<DOF> tmp;
+	libconfig::Config config;
+	config.readFile("/etc/wam/wamg-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
 
-	Wam<DOF> wam;
-
-	systems::PIDController<Wam<DOF>::jp_type>* pid =
-			new systems::PIDController<Wam<DOF>::jp_type>();
-
-	tmp << 900, 2500, 600, 500, 40, 20, 5;
-	pid->setKp(tmp);
-	tmp << 2, 2, 0.5, 0.8, 0.8, 0.1, 0.1;
-	pid->setKd(tmp);
-	tmp << 25.0, 20.0, 15.0, 15.0, 5, 5, 5;
-	pid->setControlSignalLimit(tmp);
-
-	connect(wam.jpOutput, pid->feedbackInput);
-
-	systems::Converter<Wam<DOF>::jt_type> supervisoryController;
-	supervisoryController.registerConversion(pid);
-	connect(supervisoryController.output, wam.input);
-
-	// tie inputs together for zero torque
-	supervisoryController.connectInputTo(wam.jpOutput);
+	Wam<DOF> wam(config.lookup("wam"));
 
 
 	// start the main loop!
@@ -128,23 +114,18 @@ int main() {
 	unitRamp.stop();
 	unitRamp.setOutput(spline.initialX());
 
-	systems::Callback<double, Wam<DOF>::jp_type> trajectory(bind(ref(spline), bind(math::saturate<double>, _1, spline.finalX())));
+	double (*saturatePtr)(double,double) = math::saturate;  // cast needed because math::saturate is overloaded
+	systems::Callback<double, jp_type> trajectory(bind(ref(spline), bind(saturatePtr, _1, spline.finalX())));
 
 	connect(time, trajectory.input);
-	supervisoryController.connectInputTo(trajectory.output);
+	wam.trackReferenceSignal(trajectory.output);
 	unitRamp.start();
 
 
-	std::cout << "Enter to move home.\n";
+	std::cout << "Enter to idle.\n";
 	waitForEnter();
-	supervisoryController.connectInputTo(wam.jpOutput);
-	wam.moveHome();
-	while ( !wam.moveIsDone() ) {
-		usleep(static_cast<int>(1e5));
-	}
-
-	wam.gravityCompensate(false);
 	wam.idle();
+	wam.gravityCompensate(false);
 
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
