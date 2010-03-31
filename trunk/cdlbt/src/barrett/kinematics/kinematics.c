@@ -151,8 +151,12 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
       
       /* DH-Parameters from config file */
       if (link == kin->base)
-      {         
-         /* Set the base-to-world transform to the identity by default */
+      {
+         int j, k;
+         config_setting_t * world;
+         config_setting_t * world_row;
+
+          /* Allocate the base-to-world transform */
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          if (!link->trans_to_prev)
          {
@@ -160,8 +164,47 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
             bt_kinematics_destroy(kin);
             return -1;
          }
-         gsl_matrix_set_identity( link->trans_to_prev );
          
+         /* Make sure we have an appropriate configuration for the world to base transform */
+         if ( (world = config_setting_get_member(kinconfig,"world")) ) {
+            if (    (config_setting_type(world) != CONFIG_TYPE_LIST)
+                ||  (config_setting_length(world) != 4) ) {
+               syslog(LOG_ERR,"%s: kinematics:world not a list with 4 elements.",__func__);
+               bt_kinematics_destroy(kin);
+               return -1;
+            }
+
+            for (j = 0; j < 4; ++j) {
+               /* Grab a row from the configuration */
+               world_row = config_setting_get_elem( world, j );
+               if (   (config_setting_type(world_row) != CONFIG_TYPE_LIST)
+                   || (config_setting_length(world_row) != 4)
+               ) {
+                  syslog(LOG_ERR,"%s: kinematics:world #%d not a 4-element list.",__func__,j);
+                  bt_kinematics_destroy(kin);
+                  return -1;
+               }
+
+               for (k = 0; k < 4; ++k)
+               {
+                  double val;
+
+                  if (bt_gsl_config_get_double(config_setting_get_elem( world_row, k ), &val)) {
+                	  syslog(LOG_ERR,"%s: that's not a number!",__func__);
+                	  bt_kinematics_destroy(kin);
+                  }
+
+                  gsl_matrix_set(link->trans_to_prev, j,k, val);
+               }
+
+
+            }
+         } else {
+            /* If unspecified, set the base-to-world transform to the identity by default */
+            gsl_matrix_set_identity( link->trans_to_prev );
+         }
+
+
          /* Our transform to the previous frame is equivalent to
           * the transform to the world frame. */
          link->trans_to_world = link->trans_to_prev;
