@@ -12,6 +12,8 @@
 #include "math/matrix.h"
 #include "math/utils.h"
 
+#include "math/first_order_filter.h"
+
 #include "math/spline.h"
 #include "math/trapezoidal_velocity_profile.h"
 

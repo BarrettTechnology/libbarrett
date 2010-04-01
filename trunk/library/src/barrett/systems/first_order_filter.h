@@ -5,11 +5,12 @@
  *      Author: dc
  */
 
-#ifndef FIRST_ORDER_FILTER_H_
-#define FIRST_ORDER_FILTER_H_
+#ifndef BARRETT_SYSTEMS_FIRST_ORDER_FILTER_H_
+#define BARRETT_SYSTEMS_FIRST_ORDER_FILTER_H_
 
 
 #include "../detail/ca_macro.h"
+#include "../math/first_order_filter.h"
 #include "./abstract/single_io.h"
 
 
@@ -21,28 +22,15 @@ namespace systems {
 // TODO(dc): add a configuration file interface
 
 template<typename T>
-class FirstOrderFilter : public SingleIO<T, T> {
+class FirstOrderFilter : public SingleIO<T, T>, public math::FirstOrderFilter<T> {
 public:
 	explicit FirstOrderFilter(bool updateEveryExecutionCycle = false);
-
-	void setSamplePeriod(double timeStep);
-	void setLowPass(T omega_p, T dcGain);
-	void setHighPass(T omega_p, T dcGain);
-	void setZPK(T omega_z, T omega_p, T dcGain);
-	void setIntegrator(T gain);
-	void setParameters(T a, T b, T c);
+	virtual ~FirstOrderFilter() {}
 
 	virtual void setExecutionManager(ExecutionManager* newEm);
 
 protected:
-	void updateCoefficients();
 	virtual void operate();
-
-	T a, b, c;
-	double T_s;
-
-	T c1, c2, c3;
-	T y_0, y_1, x_0, x_1;
 
 private:
 	void getSamplePeriodFromEM();
@@ -59,4 +47,4 @@ private:
 #include "./detail/first_order_filter-inl.h"
 
 
-#endif /* FIRST_ORDER_FILTER_H_ */
+#endif /* BARRETT_SYSTEMS_FIRST_ORDER_FILTER_H_ */

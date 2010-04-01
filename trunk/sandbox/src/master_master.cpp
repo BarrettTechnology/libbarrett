@@ -128,14 +128,14 @@ int main(int argc, char** argv) {
 	systems::ArraySplitter<jp_type> asSubtract;
 	systems::ArrayEditor<jp_type> aeSubtract;
 
-//	systems::FirstOrderFilter<jp_type> lpf1;
-//	systems::FirstOrderFilter<jp_type> lpf2;
+	systems::FirstOrderFilter<jp_type> lpf1;
+	systems::FirstOrderFilter<jp_type> lpf2;
 	systems::Summer<jp_type, 2> sum;
 	systems::Gain<jp_type, double, jp_type> half(0.5);
 
 
-//	lpf1.setLowPass(jp_type(300), jp_type(1));
-//	lpf2.setLowPass(jp_type(300), jp_type(1));
+	lpf1.setLowPass(jp_type(300), jp_type(1));
+	lpf2.setLowPass(jp_type(300), jp_type(1));
 
 
 	// connect systems
@@ -172,12 +172,12 @@ int main(int argc, char** argv) {
 		connect(wam.jpOutput, mm.input);
 		mmOutput = &mm.output;
 	}
-//	connect(*mmOutput, lpf1.input);
-//	connect(lpf1.output, lpf2.input);
+	connect(*mmOutput, lpf1.input);
+	connect(lpf1.output, lpf2.input);
 
 	connect(wam.jpOutput, sum.getInput(0));
-//	connect(*mmOutput, sum.getInput(1));
-//	connect(lpf2.output, sum.getInput(1));
+	connect(*mmOutput, sum.getInput(1));
+	connect(lpf2.output, sum.getInput(1));
 	connect(sum.output, half.input);
 
 
