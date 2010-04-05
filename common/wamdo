@@ -4,5 +4,5 @@
 
 scriptpath=`dirname $0`
 
-echo $* | ssh root@`cat $scriptpath/wam-ip.txt`
+echo $* | ssh `cat $scriptpath/wam-hostname.txt`
 

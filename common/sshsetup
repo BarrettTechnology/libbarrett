@@ -10,7 +10,7 @@ ip=$1
 
 if [ -z "$ip" ]
 then
-   echo "You must provide the IP address ..."
+   echo "You must provide the hostname: [user@]hostname"
    exit
 fi
 
@@ -20,4 +20,4 @@ pubkey=`cat ~/.ssh/id_dsa.pub` # auto-create if not exists?
 str=
 str+="mkdir -p ~/.ssh;" # permissions?
 str+="echo $pubkey >> ~/.ssh/authorized_keys;"
-echo $str | ssh -l root $ip
+echo $str | ssh $ip
