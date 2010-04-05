@@ -33,10 +33,17 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include <syslog.h>
 #include <linux/version.h>
 #include <signal.h>
+
+#ifdef CANTYPE_SOCKET
+# include <rtdm/rtcan.h>
+
+typedef int HANDLE;
+#endif
 
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
 # include <libpcan.h>
@@ -165,6 +172,55 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
       return -1;
    }
    
+#ifdef CANTYPE_SOCKET
+   char devname[10];
+   struct ifreq ifr;
+   struct sockaddr_can to_addr;
+   nanosecs_rel_t timeout;
+
+   sprintf(devname, "rtcan%d", port);
+   syslog(LOG_ERR, "CAN device = %s", devname);
+
+	/* Create the socket */
+	err = rt_dev_socket(PF_CAN, SOCK_RAW, CAN_RAW);
+   if (err < 0) {
+		syslog(LOG_ERR, "rt_dev_socket: %s\n", strerror(-err));
+		syslog(LOG_ERR, "%s: rt_dev_socket(): cannot open device with type=socket, port=%d", __func__, port);
+		bt_bus_can_destroy(dev);
+		return -1;
+   }
+   dev->handle = err;
+
+	strncpy(ifr.ifr_name, devname, IFNAMSIZ);
+
+   err = rt_dev_ioctl(dev->handle, SIOCGIFINDEX, &ifr);
+   if (err < 0) {
+		syslog(LOG_ERR, "rt_dev_ioctl(SIOCGIFINDEX): %s\n", strerror(-err));
+		bt_bus_can_destroy(dev);
+		return -1;
+   }
+
+   memset(&to_addr, 0, sizeof(to_addr));
+   to_addr.can_ifindex = ifr.ifr_ifindex;
+   to_addr.can_family = AF_CAN;
+
+	err = rt_dev_bind(dev->handle, (struct sockaddr *)&to_addr, sizeof(to_addr));
+	if (err < 0) {
+	    syslog(LOG_ERR, "rt_dev_bind: %s\n", strerror(-err));
+	    bt_bus_can_destroy(dev);
+	    return -1;
+	}
+
+	timeout = (nanosecs_rel_t)RTDM_TIMEOUT_INFINITE;
+	err = rt_dev_ioctl(dev->handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
+	if (err) {
+	    syslog(LOG_ERR, "rt_dev_ioctl(RCV_TIMEOUT): %s\n", strerror(-err));
+	    err = rt_dev_close(dev->handle);
+	    return -1;
+	}
+
+#endif /* CANTYPE_SOCKET */
+
 #ifdef CANTYPE_PEAKISA
    /* assign ports and irqs to buses
     * needs to be updated to read ports from cat /proc/pcan/ */
@@ -268,12 +324,24 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 
 int bt_bus_can_destroy(struct bt_bus_can * dev)
 {
-   if (dev->handle)
+   if (dev->handle) {
+#ifdef CANTYPE_SOCKET
+		struct  ifreq ifr;
+		can_mode_t *mode;
+
+	   mode = (can_mode_t *)&ifr.ifr_ifru;
+	    *mode = CAN_MODE_STOP;
+		rt_dev_ioctl(dev->handle, SIOCSCANMODE, &ifr);
+	   rt_dev_close(dev->handle);
+#endif
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
       CAN_Close(dev->handle);
-#else
+#endif
+#ifdef CANTYPE_ESD
       canClose(dev->handle);
 #endif
+   }
+
    if (dev->mutex)
       bt_os_mutex_destroy(dev->mutex);
    free(dev);
@@ -300,7 +368,7 @@ int bt_bus_can_clearmsg(struct bt_bus_can * dev)
    }
    return 0;
    
-#else
+#else  // CANTYPE_ESD and CANTYPE_SOCKET
    
    int id, len;
    unsigned char data[8];
@@ -546,6 +614,55 @@ int bt_bus_can_set_torques(struct bt_bus_can * dev, int group, int * values,
 static int read_msg(struct bt_bus_can * dev, int * id, int * len,
                     unsigned char * data, int blocking)
 {
+#ifdef CANTYPE_SOCKET
+
+	int i, ret;
+	   struct can_frame frame;
+
+	   /* Read a message back from the CAN bus */
+	   //syslog(LOG_ERR, "rt_dev_recv: about to read");
+	   if(blocking){
+		   ret = rt_dev_recv(dev->handle, (void *)&frame, sizeof(can_frame_t), 0);  // can_frame != can_frame_t, but this is how the example does it...
+		}else{
+			ret = rt_dev_recv(dev->handle, (void *)&frame, sizeof(can_frame_t), MSG_DONTWAIT);
+		}
+
+	   if (ret < 0) {
+		    switch (ret) {
+		    case -ETIMEDOUT:
+			    syslog(LOG_ERR, "%s: rt_dev_recv: timed out", __func__);
+			    return(1);
+			break;
+		    case -EBADF:
+			    syslog(LOG_ERR, "%s: rt_dev_recv: aborted because socket was closed", __func__);
+			    return(2);
+			case -EAGAIN: // -EWOULDBLOCK
+				//syslog(LOG_ERR, "rt_dev_recv: no data available during non-blocking read");
+			    return(2);
+			break;
+		    default:
+				syslog(LOG_ERR, "%s: rt_dev_recv: %s\n", __func__, strerror(-ret));
+				return(2);
+		    }
+		}
+		//syslog(LOG_ERR, "rt_dev_recv: read %d bytes", frame.can_dlc);
+
+		*id = frame.can_id;
+		*len = frame.can_dlc;
+		for (i = 0; i < frame.can_dlc; i++) {
+			data[i] = frame.data[i];
+		}
+
+		if (frame.can_id & CAN_ERR_FLAG) {
+			if (frame.can_id & CAN_ERR_BUSOFF)
+				syslog(LOG_ERR, "%s: bus-off", __func__);
+			if (frame.can_id & CAN_ERR_CRTL)
+				syslog(LOG_ERR, "%s: controller problem", __func__);
+			return(2);
+		}
+		return(0);
+
+#endif /* CANTYPE_SOCKET */
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
    
    long err;
@@ -586,7 +703,8 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
       data[i] = msg.Msg.DATA[i];
    return 0;
    
-#else
+#endif
+#ifdef CANTYPE_ESD
    
    long err;
    int i;
@@ -621,7 +739,40 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 static int write_msg(struct bt_bus_can * dev, int id, char len,
                      unsigned char * data, int blocking)
 {
+#ifdef CANTYPE_SOCKET
+
+	int i, ret;
+	   struct can_frame frame;
+	   frame.can_id = id;
+	   frame.can_dlc = len;
+	   for(i = 0; i < len; i++)
+	      frame.data[i] = data[i];
+
+		  //syslog(LOG_ERR, "rt_dev_recv: about to send");
+		ret = rt_dev_send(dev->handle, (void *)&frame, sizeof(can_frame_t), 0);
+		if (ret < 0) {
+		    switch (ret) {
+		    case -ETIMEDOUT:
+			    syslog(LOG_ERR, "%s: rt_dev_send: timed out", __func__);
+			    return(1);
+			break;
+		    case -EBADF:
+			    syslog(LOG_ERR, "%s: rt_dev_send: aborted because socket was closed", __func__);
+			    return(2);
+			case -EAGAIN: // -EWOULDBLOCK
+				syslog(LOG_ERR, "%s: rt_dev_send: data would block during non-blocking send (output buffer full)", __func__);
+			    return(2);
+			break;
+		    default:
+				syslog(LOG_ERR, "%s: rt_dev_send: %s\n", __func__, strerror(-ret));
+				return(2);
+		    }
+		}
+	 return(0);
+
+#endif /* CANTYPE_SOCKET */
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
+
    long err;
    int i;
    TPCANMsg  msg;
@@ -655,7 +806,8 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
    }
    return 0;
 
-#else
+#endif
+#ifdef CANTYPE_ESD
    
    long err;
    int i;

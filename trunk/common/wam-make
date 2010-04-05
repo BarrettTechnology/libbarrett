@@ -19,7 +19,7 @@ shift
 #--delete (removed because I like incremental builds and having dependancies around...)
 rsync -av --exclude=".*" --exclude="*~" \
 	$scriptpath/.. \
-	root@`cat $scriptpath/wam-ip.txt`:libbarrett/trunk \
+	`cat $scriptpath/wam-hostname.txt`:libbarrett \
 && \
-$scriptpath/wamdo "cd libbarrett/trunk/$builddir; make" $*
+$scriptpath/wamdo "cd libbarrett/$builddir; make" $*
 
