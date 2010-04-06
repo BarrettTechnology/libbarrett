@@ -8,14 +8,10 @@
 #include <iostream>
 #include <string>
 
-#include <unistd.h>  // usleep
-
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include <barrett/exception.h>
-#include <barrett/detail/debug.h>
 #include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/log.h>
@@ -51,8 +47,6 @@ void waitForEnter() {
 }
 
 int main() {
-	barrett::installExceptionHandler();  // give us pretty stack traces when things die
-
 	libconfig::Config config;
 	config.readFile("/etc/wam/wam4-new.config");
 
@@ -73,24 +67,23 @@ int main() {
 	std::cout << "Enter to start teaching.\n";
 	waitForEnter();
 
-	typedef boost::tuple<double, Wam<DOF>::jp_type> jp_sample_type;
+	typedef boost::tuple<double, jp_type> jp_sample_type;
 
-	systems::Ramp unitRamp;
-	systems::TupleGrouper<double, Wam<DOF>::jp_type> jpLogTg;
+	systems::Ramp time;
+	systems::TupleGrouper<double, jp_type> jpLogTg;
 
 	// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
 	systems::PeriodicDataLogger<jp_sample_type> jpLogger(
 			new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
 			10);
 
-	unitRamp.setSamplePeriod(T_s);
-	systems::System::Output<double>& time = unitRamp.output;
+	time.setSamplePeriod(T_s);
 
-	connect(time, jpLogTg.getInput<0>());
+	connect(time.output, jpLogTg.getInput<0>());
 	connect(wam.jpOutput, jpLogTg.getInput<1>());
 	connect(jpLogTg.output, jpLogger.input);
 
-	unitRamp.start();
+	time.start();
 
 
 	std::cout << "Enter to stop teaching.\n";
@@ -106,28 +99,28 @@ int main() {
 		vec.push_back(lr.getRecord());
 	}
 
-	math::Spline<Wam<DOF>::jp_type> spline(vec);
+	math::Spline<jp_type> spline(vec);
 
 	std::cout << "Enter to play back.\n";
 	waitForEnter();
 
-	wam.moveTo(spline.eval(spline.initialX()));  // move to starting position
+	// first move to the starting position
+	wam.moveTo(spline.eval(spline.initialX()));
 
-	unitRamp.stop();
-	unitRamp.setOutput(spline.initialX());
+	// then play back the recorded motion
+	time.stop();
+	time.setOutput(spline.initialX());
 
 	double (*saturatePtr)(double,double) = math::saturate;  // cast needed because math::saturate is overloaded
 	systems::Callback<double, jp_type> trajectory(bind(ref(spline), bind(saturatePtr, _1, spline.finalX())));
 
-	connect(time, trajectory.input);
+	connect(time.output, trajectory.input);
 	wam.trackReferenceSignal(trajectory.output);
-	unitRamp.start();
+	time.start();
 
-
-	std::cout << "Enter to idle.\n";
+	std::cout << "Enter to release position constraint.\n";
 	waitForEnter();
 	wam.idle();
-	wam.gravityCompensate(false);
 
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();
