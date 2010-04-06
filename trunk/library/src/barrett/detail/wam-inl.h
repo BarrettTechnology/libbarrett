@@ -33,6 +33,11 @@
  */
 
 
+#include <unistd.h>  // usleep
+
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include <libconfig.h>
 
 #include "../units.h"
@@ -60,7 +65,9 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 
 	jtSum(true),
 
-	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput)
+	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput),
+
+	doneMoving(true)
 {
 	using systems::connect;
 	using systems::makeIOConversion;
@@ -129,21 +136,82 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 }
 
 template<size_t DOF>
-void Wam<DOF>::moveHome()
+void Wam<DOF>::moveHome(bool blocking)
 {
+	moveTo(jp_type(wam.wambot->base.home), blocking);
+}
+
+template<size_t DOF>
+inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking)
+{
+	moveTo(getJointPositions(), destination, blocking);
+}
+
+template<size_t DOF>
+template<typename T>
+void Wam<DOF>::moveTo(const T& currentPos, const T& destination, bool blocking)
+{
+	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, destination);
+
+	// wait until thread starts
+	while (moveIsDone()) {
+		usleep(1000);
+	}
+
+	if (blocking) {
+		while (!moveIsDone()) {
+			usleep(10000);
+		}
+	}
 }
 
 template<size_t DOF>
 bool Wam<DOF>::moveIsDone()
 {
-	// TODO(dc): stub
-	return false;
+	return doneMoving;
 }
 
 template<size_t DOF>
 void Wam<DOF>::idle()
 {
 	supervisoryController.disconnectInput();
+}
+
+
+template<size_t DOF>
+template<typename T>
+void Wam<DOF>::moveToThread(const T& currentPos, const T& destination)
+{
+	std::vector<T> vec;
+	vec.push_back(currentPos);
+	vec.push_back(destination);
+	math::Spline<T> spline(vec);
+	// TODO(dc): write a vel/acc traits class to give intelligent defaults forthese values
+	math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
+//	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
+
+	systems::Ramp time;
+	systems::Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+
+	// TODO(dc): Ramp should get this from the EM itself
+	time.setSamplePeriod(tf2jt.getExecutionManager()->getPeriod());  // get the EM from one of the Wam's Systems...
+
+	systems::connect(time.output, trajectory.input);
+	trackReferenceSignal(trajectory.output);
+	time.start();
+
+	doneMoving = false;
+
+	while (trajectory.input.getValue() < profile.finalT()) {
+		usleep(10000);
+	}
+
+	doneMoving = true;
+
+	// TODO(dc): notice when trajectory.output is no longer needed and exit the thread
+	while (true) {
+		sleep(1);
+	}
 }
 
 
