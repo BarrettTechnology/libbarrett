@@ -37,7 +37,7 @@ using boost::bind;
 using boost::ref;
 
 
-const size_t DOF = 7;
+const size_t DOF = 4;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -54,7 +54,7 @@ int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg-new.config");
+	config.readFile("/etc/wam/wam4-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -110,6 +110,8 @@ int main() {
 
 	std::cout << "Enter to play back.\n";
 	waitForEnter();
+
+	wam.moveTo(spline.eval(spline.initialX()));  // move to starting position
 
 	unitRamp.stop();
 	unitRamp.setOutput(spline.initialX());

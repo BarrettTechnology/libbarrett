@@ -97,9 +97,16 @@ public:
 	jv_type getJointVelocities();
 
 	void gravityCompensate(bool compensate = true);
-	void moveHome();
+	void moveHome(bool blocking = true);
+	void moveTo(const jp_type& destination, bool blocking = true);
+	template<typename T> void moveTo(const T& currentPos, const T& destination, bool blocking = true);
 	bool moveIsDone();
 	void idle();
+
+protected:
+	template<typename T> void moveToThread(const T& currentPos, const T& destination);
+
+	bool doneMoving;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Wam);
