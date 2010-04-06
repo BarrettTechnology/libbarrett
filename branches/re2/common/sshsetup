@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Allows this user on this host to ssh into another machine without entering a password every time.
+
+# Note -- you must type:
+# ssh-keygen -t dsa
+# ONCE for this to work for you!
+
+ip=$1
+
+if [ -z "$ip" ]
+then
+   echo "You must provide the hostname: [user@]hostname"
+   exit
+fi
+
+# Set up the WAM for public key authentication
+echo "Setting Up Public Key Authentication ..."
+pubkey=`cat ~/.ssh/id_dsa.pub` # auto-create if not exists?
+str=
+str+="mkdir -p ~/.ssh;" # permissions?
+str+="echo $pubkey >> ~/.ssh/authorized_keys;"
+echo $str | ssh $ip

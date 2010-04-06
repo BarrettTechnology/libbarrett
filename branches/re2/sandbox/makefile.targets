@@ -1,0 +1,10 @@
+%: ./src/%.o $(USER_OBJS)
+	@echo 'Building target: $@'
+	@echo 'Invoking: GCC C++ Linker'
+	g++ -L/home/robot/libbarrett/library/Debug -L/home/robot/libbarrett/cdlbt/Debug -Xlinker -rpath /home/robot/libbarrett/library/Debug -Xlinker -rpath /usr/xenomai/lib -o"$@" ./src/$@.o $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+	
+#all: cartesian_hold high_level_wam low_level_wam master_master teach zero_torque
+all: teach

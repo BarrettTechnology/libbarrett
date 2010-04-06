@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]
+then
+	echo "Synchronizes files to the active WAM, and then builds the specified project. Does not copy hidden or temporary files."
+	echo "	Usage: wam-make {build-dir} {make arguments}"
+	echo "	As an Eclipse make command: \${workspace_loc:}/common/wam-make \${ProjName}/\${ConfigName}"
+	echo "	Must be executed from the project's build directory, which must be an immediate child of the project directory."
+	exit
+fi
+
+
+scriptpath=`dirname $0`
+
+builddir=$1
+shift
+
+# copy the files over to the WAM
+#--delete (removed because I like incremental builds and having dependancies around...)
+rsync -av --exclude=".*" --exclude="*~" \
+	$scriptpath/.. \
+	`cat $scriptpath/wam-hostname.txt`:libbarrett \
+&& \
+$scriptpath/wamdo "cd libbarrett/$builddir; make" $*
+
