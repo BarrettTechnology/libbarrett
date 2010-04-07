@@ -376,8 +376,13 @@ int bt_bus_can_clearmsg(struct bt_bus_can * dev)
    /*find a better way of clearing the bus*/
    while (read_msg(dev, &id, &len, data, 0) == 0)
    {
-      syslog(LOG_ERR, "Cleared unexpected message from CANbus.");
-      bt_os_usleep(1);
+	   int in_property, ispacked;
+	   long reply;
+	   parse_msg(id, len, data, &id, &in_property, &ispacked, &reply);
+	   if (id < 11  || id > 14) {
+		   syslog(LOG_ERR, "Cleared unexpected message CANbus from ID:%d", id);
+		      bt_os_usleep(1);
+	   }
    }
    return 0;
    
@@ -563,8 +568,10 @@ int bt_bus_can_get_packed(struct bt_bus_can * dev, int group, int how_many,
       err = parse_msg(msgID, len, packet, &id, &in_property, &ispacked, &reply);
       if(ispacked)
       {
-         data[id] = reply;
-         how_many--;
+    	  if (id < 11  ||  id > 14) {
+			 data[id] = reply;
+			 how_many--;
+    	  }
       }
       else
       {

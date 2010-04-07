@@ -41,6 +41,7 @@
 #include <libconfig.h>
 
 #include "../units.h"
+#include "../math.h"
 #include "../systems/abstract/system.h"
 #include "../systems/io_conversion.h"
 
