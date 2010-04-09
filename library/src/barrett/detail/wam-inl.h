@@ -41,6 +41,8 @@
 #include <libconfig.h>
 
 #include "../units.h"
+#include "../math/spline.h"
+#include "../math/trapezoidal_velocity_profile.h"
 #include "../systems/abstract/system.h"
 #include "../systems/io_conversion.h"
 

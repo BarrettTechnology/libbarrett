@@ -1,0 +1,9 @@
+%: ./src/%.o $(USER_OBJS)
+	@echo 'Building target: $@'
+	@echo 'Invoking: GCC C++ Linker'
+	g++ -L/root/libbarrett/library/Debug -L/root/libbarrett/cdlbt/Debug -Xlinker -rpath /root/libbarrett/library/Debug -Xlinker -rpath /usr/xenomai/lib -obt-wam-"$@" ./src/$@.o $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+	
+all: calibrate
