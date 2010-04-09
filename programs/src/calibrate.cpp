@@ -491,26 +491,26 @@ int main()
       for (i=0; i<n; i++) if (mz_mechisset[i])
       { printf("      zeroangle = %s\n",zeromag); break; }
       printf("--------\n");
-      {
-         FILE * logfile;
-         logfile = fopen("cal-zero.log","w");
-         if (logfile)
-         {
-            fprintf(logfile,"      # Calibrated zero values ...\n");
-            fprintf(logfile,"      home = %s\n",newhome);
-            for (i=0; i<n; i++) if (mz_mechisset[i])
-            { fprintf(logfile,"      zeromag = %s\n",zeromag); break; }
-            fclose(logfile);
-            printf("This text has been saved to cal-zero.log.\n");
-            printf("\n");
-         }
-         else
-         {
-            syslog(LOG_ERR,"Could not write to cal-zero.log.");
-            printf("Error: Could not write to cal-zero.log.\n");
-            printf("\n");
-         }
-      }
+//      {
+//         FILE * logfile;
+//         logfile = fopen("cal-zero.log","w");
+//         if (logfile)
+//         {
+//            fprintf(logfile,"      # Calibrated zero values ...\n");
+//            fprintf(logfile,"      home = %s\n",newhome);
+//            for (i=0; i<n; i++) if (mz_mechisset[i])
+//            { fprintf(logfile,"      zeromag = %s\n",zeromag); break; }
+//            fclose(logfile);
+//            printf("This text has been saved to cal-zero.log.\n");
+//            printf("\n");
+//         }
+//         else
+//         {
+//            syslog(LOG_ERR,"Could not write to cal-zero.log.");
+//            printf("Error: Could not write to cal-zero.log.\n");
+//            printf("\n");
+//         }
+//      }
       printf("Note that you must E-Stop (or power-cycle) your WAM\n");
       printf("for the calibrated settings to take effect!\n");
       printf("\n");
