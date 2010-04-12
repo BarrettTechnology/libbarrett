@@ -138,22 +138,22 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 }
 
 template<size_t DOF>
-void Wam<DOF>::moveHome(bool blocking)
+void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
-	moveTo(jp_type(wam.wambot->base.home), blocking);
+	moveTo(jp_type(wam.wambot->base.home), blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
-inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking)
+inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getJointPositions(), destination, blocking);
+	moveTo(getJointPositions(), destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveTo(const T& currentPos, const T& destination, bool blocking)
+void Wam<DOF>::moveTo(const T& currentPos, const T& destination, bool blocking, double velocity, double acceleration)
 {
-	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, destination);
+	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, destination, velocity, acceleration);
 
 	// wait until thread starts
 	while (moveIsDone()) {
@@ -182,14 +182,14 @@ void Wam<DOF>::idle()
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveToThread(const T& currentPos, const T& destination)
+void Wam<DOF>::moveToThread(const T& currentPos, const T& destination, double velocity, double acceleration)
 {
 	std::vector<T> vec;
 	vec.push_back(currentPos);
 	vec.push_back(destination);
 	math::Spline<T> spline(vec);
 	// TODO(dc): write a vel/acc traits class to give intelligent defaults forthese values
-	math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
+	math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0, spline.changeInX());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
 
 	systems::Ramp time;

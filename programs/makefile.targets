@@ -6,4 +6,5 @@
 	@echo ' '
 
 	
-all: calibrate
+all: zerocal gravitycal
+#all: gravitycal
