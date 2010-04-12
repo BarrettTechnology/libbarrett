@@ -1,5 +1,5 @@
 /*
- * calibrate.cpp
+ * zerocal.cpp
  *
  *  Created on: Apr 8, 2010
  *      Author: dc
@@ -8,7 +8,6 @@
 
 
 #include <string.h>
-#include <sys/mman.h>
 
 #include <syslog.h>
 #include <curses.h>
@@ -21,10 +20,6 @@
 
 #include <barrett/systems.h>
 #include <barrett/wam.h>
-
-
-using namespace barrett;
-
 
 //#include "btkey.h"
 
@@ -78,6 +73,8 @@ enum btkey btkey_get()
    }
 }
 
+
+using namespace barrett;
 
 const int DOF = 4;
 const double T_s = 0.002;
@@ -192,6 +189,7 @@ int main()
 	systems::System::defaultExecutionManager = &rtem;
 
 	Wam<DOF> wam(config.lookup("wam"));
+	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
 	bus = wam.wam.wambot->bus;
 
 	rtem.start();
