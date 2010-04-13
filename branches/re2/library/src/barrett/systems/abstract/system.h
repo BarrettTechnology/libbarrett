@@ -228,6 +228,8 @@ public:
 		/// @details Virtual in order to make this class polymorphic.
 		virtual ~AbstractOutput() = 0;
 
+		virtual bool isConnected() const = 0;
+
 	private:
 		DISALLOW_COPY_AND_ASSIGN(AbstractOutput);
 	};
@@ -417,6 +419,8 @@ public:
 		Output(System* parentSystem, Value** valuePtr);
 
 		virtual ~Output();
+
+		inline virtual bool isConnected() const;
 
 	protected:
 		Value* getValueObject();
