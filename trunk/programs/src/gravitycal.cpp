@@ -372,6 +372,10 @@ int main()
    mvprintw(1,0,"Note: Press [Control+C] at any time to cancel the calibration.");
    mvprintw(2,0,"DO NOT TOUCH the WAM during the calibration process!");
    done = 0;
+
+   jp_type prev(wam.getJointPositions());
+   jp_type cur;
+
    signal(SIGINT, sigint);
    while (!done)
    {
@@ -413,7 +417,9 @@ int main()
             gsl_blas_daxpy(1.0,angle_diff,moveto_vec);
             syslog(LOG_ERR,"Moving to: %s",bt_gsl_vector_sprintf(buf,moveto_vec));
 //            bt_wam_local_moveto_vec(wam_local,moveto_vec);
-            wam.moveTo(jp_type(moveto_vec), false);
+            cur.copyFrom(moveto_vec);
+            wam.moveTo(prev, cur, false);
+            prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
          case MU_P_TO_TOP:
@@ -422,7 +428,9 @@ int main()
 //            bt_wam_set_velocity(wam, 0.05);
 //            bt_wam_set_acceleration(wam, 0.05);
 //            bt_wam_local_moveto_vec(wam_local,poses[pose]);
-            wam.moveTo(jp_type(poses[pose]), false, 0.05, 0.05);
+            cur.copyFrom(poses[pose]);
+            wam.moveTo(prev, cur, false, 0.05, 0.05);
+            prev = cur;
             phase = (enum PHASE)((int)phase + 1);
          case MU_P_FROM_TOP:
             if (!wam.moveIsDone()) break;
@@ -439,7 +447,9 @@ int main()
             gsl_blas_dcopy(poses[pose],moveto_vec);
             gsl_blas_daxpy(-1.0,angle_diff,moveto_vec);
 //            bt_wam_local_moveto_vec(wam_local,moveto_vec);
-            wam.moveTo(jp_type(moveto_vec), false);
+            cur.copyFrom(moveto_vec);
+            wam.moveTo(prev, cur, false);
+            prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
          case MU_P_TO_BOT:
@@ -448,7 +458,9 @@ int main()
 //            bt_wam_set_velocity(wam, 0.05);
 //            bt_wam_set_acceleration(wam, 0.05);
 //            bt_wam_local_moveto_vec(wam_local,poses[pose]);
-            wam.moveTo(jp_type(poses[pose]), false, 0.05, 0.05);
+            cur.copyFrom(poses[pose]);
+            wam.moveTo(prev, cur, false, 0.05, 0.05);
+            prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
          case MU_P_FROM_BOT:
@@ -482,7 +494,8 @@ int main()
    clear();
    mvprintw(0,0,"Moving back to the park location ...");
    refresh();
-   wam.moveHome();
+//   wam.moveHome();
+   wam.moveTo(prev, jp_type(config.lookup("wam.low_level.home")));
    mvprintw(1,0,"Shift+Idle, and press [Enter] to continue.");
    refresh();
    while (btkey_get()!=BTKEY_ENTER) bt_os_usleep(10000);
