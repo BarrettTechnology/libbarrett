@@ -38,6 +38,12 @@ System::Output<T>::~Output()
 	}
 }
 
+// TODO(dc): test
+template<typename T>
+bool System::Output<T>::isConnected() const
+{
+	return !inputs.empty();
+}
 
 template<typename T>
 typename System::Output<T>::Value*

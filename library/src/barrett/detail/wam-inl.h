@@ -192,7 +192,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, const T& destination, double ve
 	math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0, spline.changeInX());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
 
-	systems::Ramp time;
+	systems::Ramp time(1.0, false);
 	systems::Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
 
 	// TODO(dc): Ramp should get this from the EM itself
@@ -210,9 +210,9 @@ void Wam<DOF>::moveToThread(const T& currentPos, const T& destination, double ve
 
 	doneMoving = true;
 
-	// TODO(dc): notice when trajectory.output is no longer needed and exit the thread
-	while (true) {
-		sleep(1);
+	// wait until the trajectory is no longer referenced by supervisoryController
+	while (trajectory.output.isConnected()) {
+		usleep(10000);
 	}
 }
 
