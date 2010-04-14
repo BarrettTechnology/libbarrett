@@ -205,6 +205,10 @@ void Wam<DOF>::moveToThread(const T& currentPos, const T& destination, double ve
 	doneMoving = false;
 
 	while (trajectory.input.getValue() < profile.finalT()) {
+		// if the move is interrupted, clean up and end the thread
+		if ( !trajectory.output.isConnected() ) {
+			return;
+		}
 		usleep(10000);
 	}
 
