@@ -17,13 +17,15 @@ namespace systems {
 
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>::PIDController()
+PIDController<InputType, OutputType, MathTraits>::PIDController() :
+	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0), kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
 {
 	getSamplePeriodFromEM();
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>::PIDController(const libconfig::Setting& setting)
+PIDController<InputType, OutputType, MathTraits>::PIDController(const libconfig::Setting& setting) :
+	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0), kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
 {
 	getSamplePeriodFromEM();
 	setFromConfig(setting);
@@ -136,14 +138,14 @@ void PIDController<InputType, OutputType, MathTraits>::operate()
 	error = MT::sub(this->referenceInput.getValue(), this->feedbackInput.getValue());
 
 	intError = MT::add(intError, MT::mult(ki, MT::mult(T_s, error_1)));
-	if ( !intErrorLimit.isZero() ) {
+	if (intErrorLimit != MT::zero()) {
 		intError = math::saturate(intError, intErrorLimit);
 	}
 
 	controlSignal = MT::add(MT::mult(kp, error),
 							MT::add(intError,
 								MT::mult(kd, MT::div(MT::sub(error, error_1), T_s))));
-	if ( !controlSignalLimit.isZero() ) {
+	if (controlSignalLimit != MT::zero()) {
 		controlSignal = math::saturate(controlSignal, controlSignalLimit);
 	}
 
