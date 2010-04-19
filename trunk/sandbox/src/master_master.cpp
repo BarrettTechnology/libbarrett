@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
 	connect(lpf1.output, lpf2.input);
 
 	connect(wam.jpOutput, sum.getInput(0));
-	connect(*mmOutput, sum.getInput(1));
+//	connect(*mmOutput, sum.getInput(1));
 	connect(lpf2.output, sum.getInput(1));
 	connect(sum.output, half.input);
 

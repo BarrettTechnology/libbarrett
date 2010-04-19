@@ -6,5 +6,4 @@
 	@echo ' '
 
 	
-#all: zerocal gravitycal
-all: gravitycal
+all: zerocal gravitycal

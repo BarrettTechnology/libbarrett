@@ -40,7 +40,6 @@
 <option id="gnu.c.compiler.option.misc.other.1164687890" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.c.compiler.option.include.paths.867914381" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-<listOptionValue builtIn="false" value="~/libbarrett/library/src"/>
 </option>
 <option id="gnu.c.compiler.option.preprocessor.def.symbols.616669728" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>

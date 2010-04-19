@@ -64,63 +64,79 @@ int main() {
 	waitForEnter();
 	wam.gravityCompensate();
 
-	std::cout << "Enter to start teaching.\n";
-	waitForEnter();
+	while (true) {
+		std::cout << "Enter to start teaching.\n";
+		waitForEnter();
 
-	typedef boost::tuple<double, jp_type> jp_sample_type;
+		typedef boost::tuple<double, jp_type> jp_sample_type;
 
-	systems::Ramp time;
-	systems::TupleGrouper<double, jp_type> jpLogTg;
+		systems::Ramp time;
+		systems::TupleGrouper<double, jp_type> jpLogTg;
 
-	// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
-	systems::PeriodicDataLogger<jp_sample_type> jpLogger(
-			new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
-			10);
+		// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
+		systems::PeriodicDataLogger<jp_sample_type> jpLogger(
+				new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
+				10);
 
-	time.setSamplePeriod(T_s);
+		time.setSamplePeriod(T_s);
 
-	connect(time.output, jpLogTg.getInput<0>());
-	connect(wam.jpOutput, jpLogTg.getInput<1>());
-	connect(jpLogTg.output, jpLogger.input);
+		connect(time.output, jpLogTg.getInput<0>());
+		connect(wam.jpOutput, jpLogTg.getInput<1>());
+		connect(jpLogTg.output, jpLogger.input);
 
-	time.start();
+		time.start();
 
 
-	std::cout << "Enter to stop teaching.\n";
-	waitForEnter();
+		std::cout << "Enter to stop teaching.\n";
+		waitForEnter();
 
-	jpLogger.closeLog();
-	disconnect(jpLogger.input);
+		jpLogger.closeLog();
+		disconnect(jpLogger.input);
 
-	// build spline between recorded points
-	barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");
-	std::vector<jp_sample_type> vec;
-	for (size_t i = 0; i < lr.numRecords(); ++i) {
-		vec.push_back(lr.getRecord());
+		// build spline between recorded points
+		barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");
+		std::vector<jp_sample_type> vec;
+		for (size_t i = 0; i < lr.numRecords(); ++i) {
+			vec.push_back(lr.getRecord());
+		}
+
+		math::Spline<jp_type> spline(vec);
+
+		std::cout << "Enter to play back.\n";
+		waitForEnter();
+
+		bool repeat = true;
+		while (repeat) {
+			// first move to the starting position
+			wam.moveTo(spline.eval(spline.initialX()));
+
+			// then play back the recorded motion
+			time.stop();
+			time.setOutput(spline.initialX());
+
+			double (*saturatePtr)(double,double) = math::saturate;  // cast needed because math::saturate is overloaded
+			systems::Callback<double, jp_type> trajectory(bind(ref(spline), bind(saturatePtr, _1, spline.finalX())));
+
+			connect(time.output, trajectory.input);
+			wam.trackReferenceSignal(trajectory.output);
+
+			time.start();
+
+//			while (trajectory.input.getValue() < spline.finalX()) {
+//				usleep(100000);
+//			}
+
+			std::string line;
+			std::cin >> line;
+			if (line[0] == 'x') {
+				repeat = false;
+			}
+		}
+
+		std::cout << "Enter to repeat, 'x' Enter to teach again.\n";
+//		waitForEnter();
+		wam.idle();
 	}
-
-	math::Spline<jp_type> spline(vec);
-
-	std::cout << "Enter to play back.\n";
-	waitForEnter();
-
-	// first move to the starting position
-	wam.moveTo(spline.eval(spline.initialX()));
-
-	// then play back the recorded motion
-	time.stop();
-	time.setOutput(spline.initialX());
-
-	double (*saturatePtr)(double,double) = math::saturate;  // cast needed because math::saturate is overloaded
-	systems::Callback<double, jp_type> trajectory(bind(ref(spline), bind(saturatePtr, _1, spline.finalX())));
-
-	connect(time.output, trajectory.input);
-	wam.trackReferenceSignal(trajectory.output);
-	time.start();
-
-	std::cout << "Enter to release position constraint.\n";
-	waitForEnter();
-	wam.idle();
 
 	std::cout << "Shift-idle, then press enter.\n";
 	waitForEnter();

@@ -19,8 +19,8 @@ echo $ip > $scriptpath/wam-hostname.txt
 # allow us to login to the WAM without typing the password every time
 $scriptpath/sshsetup $ip
 
-echo "Syncing clocks..."
-$scriptpath/wamdo date `date +%m%d%H%M%Y.%S -u`
+#echo "Syncing clocks..."
+#$scriptpath/wamdo date `date +%m%d%H%M%Y.%S -u`
 
 echo "Done!"
 
