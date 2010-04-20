@@ -20,6 +20,9 @@
 
 #include <unistd.h>  // usleep
 
+#include <native/task.h>
+#include <native/mutex.h>
+
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -414,6 +417,9 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 	  printf("Could not bind to socket on port %d.", port);
 	  return;
    }
+
+   // register this task with xenomai so we can talk on the CAN bus
+   rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
    printf("Waking hand pucks ...\n");
 //   bus = wam.wam.wambot->bus;

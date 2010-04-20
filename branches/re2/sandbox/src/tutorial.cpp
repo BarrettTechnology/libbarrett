@@ -8,6 +8,9 @@
 #include <iostream>
 #include <string>
 
+#include <native/task.h>
+#include <native/mutex.h>
+
 #include <boost/thread.hpp>
 
 #include <barrett/systems.h>
@@ -111,7 +114,9 @@ void handThread(struct bt_bus *bus) {
 	int spreadspeed = 20;
 	int i;
 
-	printf("Initializing hand ...\n");
+	// register this task with xenomai so we can talk on the CAN bus
+	rt_task_shadow(new RT_TASK, NULL, 10, 0);
+
 	printf("Waking hand pucks ...\n");
 
 	for(i = 11; i <= 14; i++) {
@@ -120,6 +125,7 @@ void handThread(struct bt_bus *bus) {
 
 	usleep((long)1e6);
 
+	printf("Setting TSTOP ...\n");
 	for(i = 11; i <= 14; i++) {
 		bt_bus_set_property(bus, i, 78, 0, 50); // Set TSTOP to 50 ms
 	}
@@ -131,5 +137,6 @@ void handThread(struct bt_bus *bus) {
 		spreadspeed = -spreadspeed;
 		printf("Sending spread command(%d)\n",spreadspeed);
 		bt_bus_set_property(bus, 14, 44, 0, spreadspeed);
+		bt_bus_set_property(bus, 14, 8, 0, 4);
 	}
 }
