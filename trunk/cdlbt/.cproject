@@ -42,7 +42,7 @@
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <option id="gnu.c.compiler.option.preprocessor.def.symbols.616669728" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="CANTYPE_PEAKISA"/>
+<listOptionValue builtIn="false" value="CANTYPE_SOCKET"/>
 <listOptionValue builtIn="false" value="HAVE_INLINE"/>
 <listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
 <listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
