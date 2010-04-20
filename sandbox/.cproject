@@ -30,9 +30,9 @@
 <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1934678532" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.163804777" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1336867618" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/root/libbarrett/library/src"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
-<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1271554429" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
@@ -50,11 +50,11 @@
 <listOptionValue builtIn="false" value="cdlbt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1165109221" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="/root/libbarrett/library/Debug"/>
-<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/Debug"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/Debug"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.other.1799805625" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath /root/libbarrett/library/Debug"/>
+<listOptionValue builtIn="false" value="-rpath /home/robot/libbarrett/library/Debug"/>
 <listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <option defaultValue="true" id="gnu.cpp.link.option.shared.1367050556" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
@@ -69,9 +69,20 @@
 </tool>
 </toolChain>
 </folderInfo>
+<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.307481827.1012257947" name="master_master.cpp" rcbsApplicability="disable" resourcePath="src/master_master.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686.221455991">
+<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686.221455991" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686">
+<option id="gnu.cpp.compiler.option.include.paths.507598339" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
+<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
+</option>
+<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.798904454" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+</tool>
+</fileInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="HAPI_haptics.cpp|network_haptics.h|haptics.cpp|master_master.h|master_master.cpp|network_haptics.cpp|haptic_test.cpp|zero_torque.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="teach.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|zero_torque.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

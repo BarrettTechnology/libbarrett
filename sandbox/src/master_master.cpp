@@ -10,15 +10,16 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+#include <string>
 
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
 #include <arpa/inet.h>  /* For inet_aton() */
-
-#include <iostream>
-#include <string>
-
 #include <unistd.h>  // usleep
+
+#include <native/task.h>
+#include <native/mutex.h>
 
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
@@ -69,7 +70,7 @@ int port = 3333;
 const size_t J6_IDX = 5;
 const double GIMBALS_J6_OFFSET = M_PI/2;
 
-const size_t DOF = 7;
+const size_t DOF = 4;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -104,7 +105,7 @@ int main(int argc, char** argv) {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg-new.config");
+	config.readFile("/etc/wam/wam4-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s, false);
 	systems::System::defaultExecutionManager = &rtem;
@@ -414,6 +415,9 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 	  printf("Could not bind to socket on port %d.", port);
 	  return;
    }
+
+   // register this task with xenomai so we can talk on the CAN bus
+   rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
    printf("Waking hand pucks ...\n");
 //   bus = wam.wam.wambot->bus;

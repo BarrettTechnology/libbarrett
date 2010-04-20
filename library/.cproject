@@ -376,7 +376,7 @@
 <option id="gnu.cpp.compiler.so.debug.option.debugging.level.159927738" name="Debug Level" superClass="gnu.cpp.compiler.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.other.other.525304823" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.1461442815" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
@@ -394,7 +394,7 @@
 <option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.628866549" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.libs.2077790806" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gsl"/>
-<listOptionValue builtIn="false" value="pcan"/>
+<listOptionValue builtIn="false" value="xenomai"/>
 <listOptionValue builtIn="false" value="native"/>
 <listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="config++"/>
@@ -404,7 +404,7 @@
 <listOptionValue builtIn="false" value="gslcblas"/>
 </option>
 <option id="gnu.cpp.link.option.paths.809842889" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/Debug/"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/Debug/"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/lib"/>
 </option>
 <option id="gnu.cpp.link.option.other.1387701595" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
