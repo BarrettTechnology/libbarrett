@@ -7,4 +7,4 @@
 
 	
 #all: cartesian_hold high_level_wam low_level_wam master_master teach zero_torque tutorial
-all: tutorial master_master
+all: update_properties tutorial
