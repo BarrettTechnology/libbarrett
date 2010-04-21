@@ -49,9 +49,18 @@
 /** CAN Broadcast Groups */
 enum broadcast_groups
 {
-   WHOLE_ARM = 0,
-   LOWER_ARM = -1,
-   UPPER_ARM = -2
+   WHOLE_BUS_GRP = 0,  // everything but the safety puck
+
+   WAM_GRP = 4,  // the whole WAM (pucks 1-7)
+   LOWER_WAM_GRP = 1,  // a packed-torque group (pucks 1-4)
+   UPPER_WAM_GRP = 2,  // a packed-torque group (pucks 5-7)
+
+   HAND_GRP = 5,  // the whole hand (pucks 11-14)
+
+   // When responding to position requests, pucks send to group 3 so the safety puck can listen.
+   POSITION_FEEDBACK_GRP = 3,
+   // When responding to non-position requests, pucks send to group 6.
+   OTHER_FEEDBACK_GRP = 6
 };
 
 /** Puck status values */
@@ -185,7 +194,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
    /* Wake all the pucks on the bus */
    syslog(LOG_ERR, "Waking all pucks");
    /* Must use '5' for STAT*/
-   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WHOLE_ARM), 5, 0,
+   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WAM_GRP), 5, 0,
                            STATUS_READY);
    bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
    
@@ -464,11 +473,11 @@ static int retrieve_puck_positions( struct bt_bus * bus )
    long int data[MAXPUCKID];
    
    /* Fill with illegal values */
-   for(i = 0; i < 20; i++)
+   for(i = 0; i < MAXPUCKID; i++)
       data[i] = 0x80000000;
    
    /* Perform the btcan broadcast to get positions (group 0) */
-   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->AP);
+   bt_bus_can_get_packed(bus->dev, WAM_GRP, bus->num_pucks, data, bus->p->AP);
    
    /* Unpack from data into the pucks array */
    for (i=0; i<bus->pucks_size; i++) if ( (p = bus->puck[i]) )
@@ -514,12 +523,12 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
    long int data[MAXPUCKID]; 
    
    /* Fill with illegal values */
-   for(i = 0; i < 20; i++)
+   for(i = 0; i < MAXPUCKID; i++)
       data[i] = 0x80000000;
    
    /* Update acceleration w/ broadcast */
    /* CHANGE TO 'A' */
-   bt_bus_can_get_packed(bus->dev, 0, bus->num_pucks, data, bus->p->MECH);
+   bt_bus_can_get_packed(bus->dev, WAM_GRP, bus->num_pucks, data, bus->p->MECH);
    
    /* Unpack from data into the pucks array */
    for (i=0; i<bus->pucks_size; i++) if ((p = bus->puck[i]))
