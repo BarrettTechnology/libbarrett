@@ -9,7 +9,7 @@
 #define VERIFY_FILE_CONTENTS_H_
 
 
-void verifyFileContents(char* fileName, char* expectedContents, long expectedSize);
+void verifyFileContents(const char* fileName, const char* expectedContents, long expectedSize);
 
 
 #endif /* VERIFY_FILE_CONTENTS_H_ */

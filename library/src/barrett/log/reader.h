@@ -27,7 +27,11 @@ public:
 	~Reader();
 
 	size_t numRecords() const;
+
 	T getRecord();
+	void exportCSV(const char* outputFileName);
+	void exportCSV(std::ostream& os);
+
 	void close();
 
 protected:
