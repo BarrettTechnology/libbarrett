@@ -70,6 +70,7 @@ typedef int HANDLE;
 #define BORDER(Value,Min,Max) \
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
+long jointPosition[32];
 
 /** Read a message from the CAN device.
  *
@@ -836,7 +837,6 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
 #endif
 }
 
-
 static int parse_msg(int msgid, int len, unsigned char * message_data,
                      int * id, int * property, int * ispacked, long * value)
 {
@@ -862,21 +862,25 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
       if (*value & 0x00200000) /* If negative */
          *value |= 0xFFC00000; /* Sign-extend */
 
+	  jointPosition[*id] = 0;
+      jointPosition[*id] |= ( (long)messageData[3] << 16) & 0x003F0000;
+      jointPosition[*id] |= ( (long)messageData[4] << 8 ) & 0x0000FF00;
+      jointPosition[*id] |= ( (long)messageData[5] ) & 0x000000FF;
+      
+      if (jointPosition[*id] & 0x00200000) /* If negative */
+         jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
+         
       *ispacked=1;
       /**property = AP;*/
       /*syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);*/
       break;
    case 2:  /* Data is normal, SET */
-      *property = message_data[0] & 0x7F;
-      /*syslog(LOG_ERR, "Received property: %d", *property);*/
+      *property = messageData[0] & 0x7F;
+      //syslog(LOG_ERR, "Received property: %d", *property);
       /* Store the value, second byte of message is zero (for DSP word alignment) */
-      *value = 0;
-      for (i = 0; i < len - 2; i++)
-         *value |= ((unsigned long)message_data[i + 2] << (i * 8))
-                   & (0x000000FF << (i * 8));
-
-      if (*value & (1 << ((i*8) - 1)))
-         *value |= 0xFFFFFFFF << (i * 8); /* Sign extend the value */
+      *value = messageData[len-1] & 0x80 ? -1L : 0;
+      for (i = len-1; i >= 2; i--)
+         *value = *value << 8 | messageData[i];
 
       /*syslog(LOG_ERR, "Received normal set property: %d from node: %d value:%d", *property, *node, *value);*/
       /*syslog(LOG_ERR,"parsemessage after %d",value);*/
