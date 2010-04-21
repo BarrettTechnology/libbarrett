@@ -71,6 +71,25 @@ inline T Reader<T, Traits>::getRecord()
 }
 
 template<typename T, typename Traits>
+inline void Reader<T, Traits>::exportCSV(const char* outputFileName)
+{
+	std::ofstream ofs(outputFileName);
+	exportCSV(ofs);
+	ofs.close();
+}
+
+template<typename T, typename Traits>
+void Reader<T, Traits>::exportCSV(std::ostream& os)
+{
+	try {
+		for (size_t i = 0; i < numRecords(); ++i) {
+			Traits::asCSV(getRecord(), os);
+			os << std::endl;
+		}
+	} catch (std::underflow_error) {}
+}
+
+template<typename T, typename Traits>
 inline void Reader<T, Traits>::close()
 {
 	file.close();

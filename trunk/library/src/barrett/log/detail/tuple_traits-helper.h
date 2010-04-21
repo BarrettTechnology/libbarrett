@@ -47,6 +47,15 @@ struct TupleTraitsHelper {
 		boost::get<INDEX>(*t) = element_traits::unserialize(source);
 		next_helper::unserialize(source + element_traits::serializedLength(), t);
 	}
+
+	static void asCSV(parameter_type source, std::ostream& os) {
+		if (INDEX != 0) {
+			os << ",";
+		}
+
+		element_traits::asCSV(boost::get<INDEX>(source), os);
+		next_helper::asCSV(source, os);
+	}
 };
 
 // base-case specialization (N == 0)
@@ -59,6 +68,7 @@ struct TupleTraitsHelper<0, TraitsType> {
 	static size_t serializedLength() {  return 0;  }
 	static void serialize(parameter_type source, char* dest) {}
 	static void unserialize(char* source, tuple_type* t) {}
+	static void asCSV(parameter_type source, std::ostream& os) {}
 };
 
 
