@@ -32,8 +32,10 @@ public:
 
 	template<template<typename U, typename = std::allocator<U> > class Container>
 	Spline(const Container<tuple_type>& samples);
+
+	// initialDirection will be normalized internally
 	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<T>& points);
+	Spline(const Container<T>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0));
 
 	~Spline();
 

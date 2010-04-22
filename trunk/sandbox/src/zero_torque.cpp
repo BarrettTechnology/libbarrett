@@ -6,7 +6,6 @@
  */
 
 #include <iostream>
-#include <string>
 
 #include <barrett/systems.h>
 #include <barrett/wam.h>
@@ -37,5 +36,6 @@ int main() {
 		sleep(1);
 	}
 
+	rtem.stop();
 	return 0;
 }

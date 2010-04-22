@@ -849,7 +849,7 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
    if ((*id) == -1)
       syslog(LOG_ERR,"msgID:%x ",msgid);
    dataHeader = ((message_data[0] >> 6) & 0x0002) | ((msgid & 0x041F) == 0x0403) | ((msgid & 0x041F) == 0x0407);
-   /*messageData[0] &= 0x7F;*/
+   /*message_data[0] &= 0x7F;*/
    /*syslog(LOG_ERR,"Entering parsemessage");*/
    switch (dataHeader)
    {
@@ -863,9 +863,9 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
          *value |= 0xFFC00000; /* Sign-extend */
 
 	  jointPosition[*id] = 0;
-      jointPosition[*id] |= ( (long)messageData[3] << 16) & 0x003F0000;
-      jointPosition[*id] |= ( (long)messageData[4] << 8 ) & 0x0000FF00;
-      jointPosition[*id] |= ( (long)messageData[5] ) & 0x000000FF;
+      jointPosition[*id] |= ( (long)message_data[3] << 16) & 0x003F0000;
+      jointPosition[*id] |= ( (long)message_data[4] << 8 ) & 0x0000FF00;
+      jointPosition[*id] |= ( (long)message_data[5] ) & 0x000000FF;
       
       if (jointPosition[*id] & 0x00200000) /* If negative */
          jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
@@ -875,12 +875,12 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
       /*syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);*/
       break;
    case 2:  /* Data is normal, SET */
-      *property = messageData[0] & 0x7F;
+      *property = message_data[0] & 0x7F;
       //syslog(LOG_ERR, "Received property: %d", *property);
       /* Store the value, second byte of message is zero (for DSP word alignment) */
-      *value = messageData[len-1] & 0x80 ? -1L : 0;
+      *value = message_data[len-1] & 0x80 ? -1L : 0;
       for (i = len-1; i >= 2; i--)
-         *value = *value << 8 | messageData[i];
+         *value = *value << 8 | message_data[i];
 
       /*syslog(LOG_ERR, "Received normal set property: %d from node: %d value:%d", *property, *node, *value);*/
       /*syslog(LOG_ERR,"parsemessage after %d",value);*/
