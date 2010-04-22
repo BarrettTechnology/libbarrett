@@ -99,12 +99,12 @@ public:
 	void gravityCompensate(bool compensate = true);
 	void moveHome(bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
-	template<typename T> void moveTo(const T& currentPos, const T& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
+	template<typename T> void moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration);
 	bool moveIsDone();
 	void idle();
 
 protected:
-	template<typename T> void moveToThread(const T& currentPos, const T& destination, double velocity, double acceleration);
+	template<typename T> void moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration);
 
 	bool doneMoving;
 
