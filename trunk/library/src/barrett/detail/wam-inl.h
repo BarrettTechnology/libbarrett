@@ -126,6 +126,24 @@ typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
 	return kinematicsBase.jvInput.getValue();
 }
 
+//template<size_t DOF>
+//typename units::JointVelocities<DOF>::type Wam<DOF>::getJointTorques()
+//{
+//	return kinematicsBase.jvInput.getValue();
+//}
+//
+//template<size_t DOF>
+//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolPosition()
+//{
+//	return kinematicsBase.jvInput.getValue();
+//}
+//
+//template<size_t DOF>
+//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolOrientation()
+//{
+//	return kinematicsBase.jvInput.getValue();
+//}
+
 
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
@@ -146,16 +164,17 @@ void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getJointPositions(), destination, blocking, velocity, acceleration);
+	moveTo(getJointPositions(), getJointVelocities(), destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveTo(const T& currentPos, const T& destination, bool blocking, double velocity, double acceleration)
+void Wam<DOF>::moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration)
 {
-	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, destination, velocity, acceleration);
+	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, currentVel, destination, velocity, acceleration);
 
 	// wait until thread starts
+	// TODO(dc): potential deadlock issue for very short trajectories
 	while (moveIsDone()) {
 		usleep(1000);
 	}
@@ -182,14 +201,14 @@ void Wam<DOF>::idle()
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveToThread(const T& currentPos, const T& destination, double velocity, double acceleration)
+void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration)
 {
 	std::vector<T> vec;
 	vec.push_back(currentPos);
 	vec.push_back(destination);
-	math::Spline<T> spline(vec);
-	// TODO(dc): write a vel/acc traits class to give intelligent defaults forthese values
-	math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0, spline.changeInX());
+	math::Spline<T> spline(vec, currentVel);
+	// TODO(dc): write a vel/acc traits class to give intelligent defaults for these values
+	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInX());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
 
 	systems::Ramp time(1.0, false);
