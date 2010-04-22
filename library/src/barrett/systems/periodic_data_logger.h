@@ -24,6 +24,7 @@ namespace systems {
 template<typename T, typename LogWriterType = log::RealTimeWriter<T> >
 class PeriodicDataLogger : public System, public SingleInput<T> {
 public:
+	// The PeriodicDataLogger owns the logWriter pointer and will delete it when it is no longer needed.
 	PeriodicDataLogger(LogWriterType* logWriter, size_t periodMultiplier = 10);
 	virtual ~PeriodicDataLogger();
 
