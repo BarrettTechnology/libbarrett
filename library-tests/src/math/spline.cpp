@@ -45,6 +45,28 @@ TEST(SplineTest, ImplicitParameter) {
 	EXPECT_EQ(jp, spline.eval(spline.changeInX() * 3/4));
 }
 
+TEST(SplineTest, InitialDirection) {
+	jp_type jp;
+	std::vector<jp_type> points;
+
+	jp.setConstant(0);
+	points.push_back(jp);
+	jp.setConstant(1);
+	points.push_back(jp);
+	jp.setConstant(2);
+	points.push_back(jp);
+
+	units::JointVelocities<DOF>::type jv(-1);
+	math::Spline<jp_type> spline(points, jv);
+
+
+	EXPECT_EQ(0.0, spline.initialX());
+
+	// the spline should go the "wrong" direction at first...
+	jp.setConstant(0.0);
+	EXPECT_TRUE((spline.eval(spline.changeInX() * 0.1).cwise() < jp).all());
+}
+
 TEST(SplineTest, ExplicitParameter) {
 	typedef math::Spline<jp_type>::tuple_type tuple_type;
 	tuple_type sample;
