@@ -6,5 +6,5 @@
 	@echo ' '
 
 	
-#all: cartesian_hold high_level_wam low_level_wam master_master teach zero_torque tutorial
-all: update_properties tutorial
+#all: cartesian_hold hand_feedback high_level_wam low_level_wam master_master teach tutorial update_properties zero_torque
+all: tutorial hand_feedback update_properties

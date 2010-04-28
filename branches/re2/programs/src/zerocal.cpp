@@ -144,7 +144,6 @@ int main()
    int i;           /* For iterating through the pucks */
    int n;
    int done;
-   int err;
 
    /* GUI stuff */
    enum MODE {
@@ -184,6 +183,14 @@ int main()
    /* Open the WAM */
 	libconfig::Config config;
 	config.readFile("/etc/wam/wam7-new.config");
+
+	// remove existing zerocal information, if present
+	libconfig::Setting& llSetting = config.lookup("wam.low_level");
+	if (llSetting.exists("zeroangle")) {
+		llSetting.remove(llSetting["zeroangle"].getIndex());
+		syslog(LOG_ERR, "Ignoring previous zeroangle entry.");
+	}
+
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -238,7 +245,6 @@ int main()
    done = 0;
    while (!done)
    {
-      char buf[100];
       int j;
       int line;
       enum btkey key;

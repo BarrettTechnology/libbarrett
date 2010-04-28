@@ -77,7 +77,7 @@ enum btkey btkey_get()
 
 using namespace barrett;
 
-const int DOF = 4;
+const int DOF = 7;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -216,7 +216,9 @@ int main()
       MU_P_MEAS_BOT,
       MU_P_DONE
    } phase;
-   char * phasenm[] = {
+
+   // the longest string below is 9 characters (including the NULL termination)
+   char phasenm[][9] = {
       "START",
       "TO_TOP",
       "FROM_TOP",
@@ -247,7 +249,7 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
+	config.readFile("/etc/wam/wam7-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -418,7 +420,7 @@ int main()
             syslog(LOG_ERR,"Moving to: %s",bt_gsl_vector_sprintf(buf,moveto_vec));
 //            bt_wam_local_moveto_vec(wam_local,moveto_vec);
             cur.copyFrom(moveto_vec);
-            wam.moveTo(prev, cur, false);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
             prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
@@ -429,7 +431,7 @@ int main()
 //            bt_wam_set_acceleration(wam, 0.05);
 //            bt_wam_local_moveto_vec(wam_local,poses[pose]);
             cur.copyFrom(poses[pose]);
-            wam.moveTo(prev, cur, false, 0.05, 0.05);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.05, 0.05);
             prev = cur;
             phase = (enum PHASE)((int)phase + 1);
          case MU_P_FROM_TOP:
@@ -448,7 +450,7 @@ int main()
             gsl_blas_daxpy(-1.0,angle_diff,moveto_vec);
 //            bt_wam_local_moveto_vec(wam_local,moveto_vec);
             cur.copyFrom(moveto_vec);
-            wam.moveTo(prev, cur, false);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
             prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
@@ -459,7 +461,7 @@ int main()
 //            bt_wam_set_acceleration(wam, 0.05);
 //            bt_wam_local_moveto_vec(wam_local,poses[pose]);
             cur.copyFrom(poses[pose]);
-            wam.moveTo(prev, cur, false, 0.05, 0.05);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.05, 0.05);
             prev = cur;
             phase = (enum PHASE)((int)phase + 1);
             break;
@@ -495,7 +497,7 @@ int main()
    mvprintw(0,0,"Moving back to the park location ...");
    refresh();
 //   wam.moveHome();
-   wam.moveTo(prev, jp_type(config.lookup("wam.low_level.home")));
+   wam.moveTo(prev, jv_type(0.0), jp_type(config.lookup("wam.low_level.home")), true, 0.5, 0.5);
    mvprintw(1,0,"Shift+Idle, and press [Enter] to continue.");
    refresh();
    while (btkey_get()!=BTKEY_ENTER) bt_os_usleep(10000);
