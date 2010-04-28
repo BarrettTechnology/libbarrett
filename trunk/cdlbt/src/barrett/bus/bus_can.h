@@ -5,6 +5,7 @@
  * \author Traveler Hauptman
  * \author Sam Clanton
  * \author Christopher Dellin
+ * \author Dan Cody
  * \date 2003-2009
  */
 
@@ -46,6 +47,7 @@
 extern "C" {
 #endif
 
+
 #define BT_BUS_CAN_MBXID (0)
 #define BT_BUS_CAN_BASEID (0)
 #define BT_BUS_CAN_ADDR2NODE(x) ((((x) >> 5) & 0x001F) - BT_BUS_CAN_BASEID)
@@ -57,9 +59,34 @@ extern "C" {
 #define BT_BUS_CAN_GROUPID(n) \
    (((BT_BUS_CAN_MBXID + BT_BUS_CAN_BASEID) << 5) | (0x0400 + (n)))
 
+// With a flight time of 75us per message, the CAN bus could handle a maximum
+// of 133 messages in 10ms.
+#define ASYNC_BUF_SIZE (150)
+
 
 /** An abstracted CAN device. */
-struct bt_bus_can;
+struct bt_can_msg
+{
+	int id;
+	int len;
+	unsigned char data[8];
+};
+
+struct bt_bus_can_dev;
+
+struct bt_bus_can
+{
+   struct bt_bus_can_dev * dev;
+
+   struct bt_os_mutex * mutex;
+   int iterator;
+
+   struct bt_os_mutex * async_mutex;
+   struct bt_can_msg async_buf[ASYNC_BUF_SIZE];
+   int abr_idx;  // index of the most recently read entry
+   int abw_idx;  // index of the most recent valid entry
+};
+
 
 
 /** Create a bt_bus_can object.
@@ -87,7 +114,7 @@ int bt_bus_can_destroy(struct bt_bus_can * dev);
  * \param[in] dev The bt_bus_can device to clear
  * \retval 0 Success
  */
-int bt_bus_can_clearmsg(struct bt_bus_can * dev);
+//int bt_bus_can_clearmsg(struct bt_bus_can * dev);
 
 
 /** Start iterating over a set of CAN nodes.
@@ -98,7 +125,7 @@ int bt_bus_can_clearmsg(struct bt_bus_can * dev);
 int bt_bus_can_iterate_start(struct bt_bus_can * dev);
 
 
-/** Retreive the next node's ID and status.
+/** Retrieve the next node's ID and status.
  *
  * \param[in] dev The bt_bus_can device over which to iterate
  * \param[out] nextid The location to place the next ID found
@@ -108,6 +135,18 @@ int bt_bus_can_iterate_start(struct bt_bus_can * dev);
  */
 int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
                             int * nextstatus);
+
+
+/** Retrieve an asynchronous CAN message from the buffer. Be sure to lock
+ *  dev->asynch_mutex around any request-reply sequence of messages.
+ */
+int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property,
+                          long * value, int blocking, int manual_update);
+
+
+/** Sends the request for a property, but doesn't wait for the response.
+ */
+int bt_bus_can_async_get_property(struct bt_bus_can * dev, int id, int property);
 
 
 /** Get a property value from a node.
@@ -123,7 +162,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
  * \retval 2 The returned property wasn't what was asked for
  */
 int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
-                            long * reply);
+                            long * reply, int manual_update);
 
 
 /** Set a property value on a node.
@@ -135,13 +174,12 @@ int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
  * \param[in] dev The bt_bus_can device to use
  * \param[in] id The ID of the node
  * \param[in] property The property to set; se bt_bus_properties for a list
- * \param[in] verify Whether to verify the set's success
  * \param[in] value The property's value to set
  * \retval 0 Success
  * \retval 2 The verified value didn't match what was set
  */
 int bt_bus_can_set_property(struct bt_bus_can * dev, int id, int property,
-                            int verify, long value);
+                            long value);
 
 
 /** Get a set of values from a group of nodes.

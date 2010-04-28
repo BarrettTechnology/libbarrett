@@ -76,7 +76,7 @@ enum btkey btkey_get()
 
 using namespace barrett;
 
-const int DOF = 4;
+const int DOF = 7;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -144,7 +144,6 @@ int main()
    int i;           /* For iterating through the pucks */
    int n;
    int done;
-   int err;
 
    /* GUI stuff */
    enum MODE {
@@ -183,7 +182,7 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
+	config.readFile("/etc/wam/wam7-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -238,7 +237,6 @@ int main()
    done = 0;
    while (!done)
    {
-      char buf[100];
       int j;
       int line;
       enum btkey key;

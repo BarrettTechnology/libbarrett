@@ -164,7 +164,8 @@ void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getJointPositions(), getJointVelocities(), destination, blocking, velocity, acceleration);
+//	moveTo(getJointPositions(), getJointVelocities(), destination, blocking, velocity, acceleration);
+	moveTo(getJointPositions(), jv_type(0.0), destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>

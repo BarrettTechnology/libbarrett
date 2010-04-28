@@ -57,6 +57,43 @@ extern "C" {
 #include "../os/os.h"
 
 
+/** CAN Broadcast Groups */
+enum bt_broadcast_groups
+{
+   WHOLE_BUS_GRP = 0,  // everything but the safety puck
+
+   WAM_GRP = 4,  // the whole WAM (pucks 1-7)
+   LOWER_WAM_GRP = 1,  // a packed-torque group (pucks 1-4)
+   UPPER_WAM_GRP = 2,  // a packed-torque group (pucks 5-7)
+
+   HAND_GRP = 5,  // the whole hand (pucks 11-14)
+
+   // When responding to position requests, pucks send to group 3 so the safety puck can listen.
+   POSITION_FEEDBACK_GRP = 3,
+   // When responding to non-position requests, pucks send to group 6.
+   OTHER_FEEDBACK_GRP = 6
+};
+
+/** Puck status values */
+enum bt_puck_status
+{
+   STATUS_OFFLINE = -1,
+   STATUS_RESET = 0,
+   STATUS_ERR = 1,
+   STATUS_READY = 2
+};
+
+/** Puck control mode states */
+enum bt_control_modes
+{
+   MODE_IDLE = 0,
+   MODE_DUTY = 1,
+   MODE_TORQUE = 2,
+   MODE_PID = 3,
+   MODE_VELOCITY = 4,
+   MODE_TRAPEZOIDAL = 5
+};
+
 /** Static IDs for particular types of Puck */
 enum bt_bus_puck_id
 {
@@ -237,15 +274,13 @@ int bt_bus_get_property(struct bt_bus * bus, int id, int property,
  * \param[in] bus The bt_bus object to use
  * \param[in] id The ID of the Puck
  * \param[in] property The property to set; se bt_bus_properties for a list
- * \param[in] verify Whether to verify the set's success
  * \param[in] value The property's value to set
  * \retval 0 Success
  * \retval 1 The property is beyond the maximum in the properties list
  * \return For other return values, see bt_bus_can_set_property() in
  *         bus_can.h
  */
-int bt_bus_set_property(struct bt_bus * bus, int id, int property,
-                        int verify, long value);
+int bt_bus_set_property(struct bt_bus * bus, int id, int property, long value);
 
 
 /** A list of properties available on each Puck on the bus.

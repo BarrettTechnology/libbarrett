@@ -31,6 +31,7 @@
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.163804777" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1336867618" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 </option>
@@ -69,20 +70,9 @@
 </tool>
 </toolChain>
 </folderInfo>
-<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.307481827.1012257947" name="master_master.cpp" rcbsApplicability="disable" resourcePath="src/master_master.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686.221455991">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686.221455991" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1821251686">
-<option id="gnu.cpp.compiler.option.include.paths.507598339" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
-<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-<listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
-</option>
-<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.798904454" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-</tool>
-</fileInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="teach.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|zero_torque.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="haptics.cpp|zero_torque.cpp|log_velocity.cpp|move_to.cpp|master_master.h|master_master.cpp|teach.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

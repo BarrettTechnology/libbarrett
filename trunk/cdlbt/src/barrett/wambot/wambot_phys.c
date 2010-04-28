@@ -38,6 +38,7 @@
 #include "wambot.h"
 #include "wambot_phys.h"
 #include "../bus/bus.h"
+#include "../bus/bus_can.h"  // for bt_bus_can_get_property()
 #include "../gsl/gsl.h"
 
 /** Implementation of bt_wambot::update for bt_wambot_phys. */
@@ -57,13 +58,13 @@ int define_pos(struct bt_wambot_phys * wambot, gsl_vector * jpos)
 
    /* Tell the safety logic to ignore the next several faults
     * (position will appear to be changing rapidly) */
-   bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->IFAULT, 1, 8);
+   bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->IFAULT, 8);
    
    /* Manually set the encoder values */
    for (j=0; j<jpos->size; j++)
    {
       pos = floor( 4096 / (2*3.14159265358979) * gsl_vector_get(wambot->mposition,j) );
-      bt_bus_set_property(wambot->bus, j+1, wambot->bus->p->AP, 0, pos);
+      bt_bus_set_property(wambot->bus, j+1, wambot->bus->p->AP, pos);
       bt_os_usleep(1000);
    }
    
@@ -224,7 +225,7 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
       /* Communicate with the bus */
       /* Zero the WAM */
       long reply;
-      bt_bus_get_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, &reply);
+      bt_bus_can_get_property(wambot->bus->dev, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, &reply, 1);
       if(reply)
       {
          syslog(LOG_ERR, "WAM was already zeroed");
@@ -246,8 +247,8 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
             for (m=0; m<n; m++)
             {
                long cts;
-               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->MECH, &reply);
-               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->CTS, &cts);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->MECH, &reply, 1);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->CTS, &cts, 1);
                gsl_vector_set(cur_angle,m,2.0*M_PI*((double)reply)/((double)cts));
             }
             /* Calculate the error angle err_angle */
@@ -267,12 +268,12 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
             {
                /* If the ROLE does not have its 256 bit set, then it's not
                 * an absolute encoder; do no error compensation */
-               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->ROLE, &reply);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->ROLE, &reply, 1);
                if (!(reply & 256)) gsl_vector_set(err_angle, m, 0.0);
                
                /* If the firmware version number is less than 118, then it's
                 * not exposing anything useful on MECH; do no error compensation */
-               bt_bus_get_property(wambot->bus, m+1, wambot->bus->p->VERS, &reply);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->VERS, &reply, 1);
                if (reply < 118) gsl_vector_set(err_angle, m, 0.0);
                
                /* If the zeroangle value is out of range, then the calibration
@@ -293,7 +294,7 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
          /* Define the WAM position */
          define_pos(wambot, wambot->base.jposition);
 
-         bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, 1, 1);
+         bt_bus_set_property(wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, 1);
          syslog(LOG_ERR, "WAM zeroed by application");
          gsl_vector_free(err_angle);
       }
