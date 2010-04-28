@@ -10,14 +10,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+#include <string>
 
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
 #include <arpa/inet.h>  /* For inet_aton() */
-
-#include <iostream>
-#include <string>
-
 #include <unistd.h>  // usleep
 
 #include <native/task.h>
@@ -221,17 +219,17 @@ int main(int argc, char** argv) {
 			printf("Waking hand pucks ...\n");
 			//   bus = wam.wam.wambot->bus;
 			for (int i = 11; i <= 14; i++)
-				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 0, 0); // Set STAT to STATUS_RESET
+				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 0); // Set STAT to STATUS_RESET
 
 			usleep((long) 1e6);
 
 			for (int i = 11; i <= 14; i++)
-				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+				bt_bus_set_property(wam.wam.wambot->bus, i, 5, 2); // Set STAT to STATUS_READY
 
 			usleep((long) 1e6);
 
 			for (int i = 11; i <= 14; i++)
-				bt_bus_set_property(wam.wam.wambot->bus, i, 78, 0, 50); // Set TSTOP to 50 ms
+				bt_bus_set_property(wam.wam.wambot->bus, i, 78, 50); // Set TSTOP to 50 ms
 
 			printf("Initializing hand ...\n");
 			break;
@@ -424,19 +422,19 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
    printf("Waking hand pucks ...\n");
 //   bus = wam.wam.wambot->bus;
    for(i = 11; i <= 14; i++)
-	   bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+	   bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 
    usleep((long)1e6);
 
    for(i = 11; i <= 14; i++)
-   	   bt_bus_set_property(bus, i, 78, 0, 50); // Set TSTOP to 50 ms
+   	   bt_bus_set_property(bus, i, 78, 50); // Set TSTOP to 50 ms
 
    printf("Initializing hand ...\n");
    /* Initialize the hand
-   bt_bus_set_property(bus, 11, 29, 0, 13); // Set CMD to CMD_HI
-   bt_bus_set_property(bus, 12, 29, 0, 13); // Set CMD to CMD_HI
-   bt_bus_set_property(bus, 13, 29, 0, 13); // Set CMD to CMD_HI
-   bt_bus_set_property(bus, 14, 29, 0, 13); // Set CMD to CMD_HI
+   bt_bus_set_property(bus, 11, 29, 13); // Set CMD to CMD_HI
+   bt_bus_set_property(bus, 12, 29, 13); // Set CMD to CMD_HI
+   bt_bus_set_property(bus, 13, 29, 13); // Set CMD to CMD_HI
+   bt_bus_set_property(bus, 14, 29, 13); // Set CMD to CMD_HI
 */
    printf(" ... done.\n");
 
@@ -462,10 +460,10 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 		 if (num_missed == 50 && realtime)
 		 {
 			printf("Sending stop command to hand.\n");
-			bt_bus_set_property(bus, 11, 8, 0, 0); // Set MODE to MODE_IDLE
-			bt_bus_set_property(bus, 12, 8, 0, 0); // Set MODE to MODE_IDLE
-			bt_bus_set_property(bus, 13, 8, 0, 0); // Set MODE to MODE_IDLE
-			bt_bus_set_property(bus, 14, 8, 0, 3); // Set MODE to MODE_PID
+			bt_bus_set_property(bus, 11, 8, 0); // Set MODE to MODE_IDLE
+			bt_bus_set_property(bus, 12, 8, 0); // Set MODE to MODE_IDLE
+			bt_bus_set_property(bus, 13, 8, 0); // Set MODE to MODE_IDLE
+			bt_bus_set_property(bus, 14, 8, 3); // Set MODE to MODE_PID
 		 }
 
 		 usleep(10000); /* ~ 100 Hz */
@@ -487,28 +485,28 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 	  if (realtime)
 	  {
 		 /* Spread */
-		 if      (  b1(bits) && !b2(bits) ) bt_bus_set_property(bus, 14, 44, 0, -spreadspeed); // Open
-		 else if ( !b1(bits) &&  b2(bits) ) bt_bus_set_property(bus, 14, 44, 0,  spreadspeed); // Close
-		 else                               bt_bus_set_property(bus, 14, 44, 0,      0); // Stop
-		 bt_bus_set_property(bus, 14, 8, 0, 4);
+		 if      (  b1(bits) && !b2(bits) ) bt_bus_set_property(bus, 14, 44, -spreadspeed); // Open
+		 else if ( !b1(bits) &&  b2(bits) ) bt_bus_set_property(bus, 14, 44,  spreadspeed); // Close
+		 else                               bt_bus_set_property(bus, 14, 44,      0); // Stop
+		 bt_bus_set_property(bus, 14, 8, 4);
 
 		 /* Finger 1 */
-		 if      (  b3(bits) && !b4(bits) ) bt_bus_set_property(bus, 12, 44, 0, -speed); // Open
-		 else if ( !b3(bits) &&  b4(bits) ) bt_bus_set_property(bus, 12, 44, 0,  speed); // Close
-		 else                               bt_bus_set_property(bus, 12, 44, 0,      0); // Stop
-		 bt_bus_set_property(bus, 12, 8, 0, 4);
+		 if      (  b3(bits) && !b4(bits) ) bt_bus_set_property(bus, 12, 44, -speed); // Open
+		 else if ( !b3(bits) &&  b4(bits) ) bt_bus_set_property(bus, 12, 44,  speed); // Close
+		 else                               bt_bus_set_property(bus, 12, 44,      0); // Stop
+		 bt_bus_set_property(bus, 12, 8, 4);
 
 		 /* Finger 2 */
-		 if      (  b5(bits) && !b6(bits) ) bt_bus_set_property(bus, 13, 44, 0, -speed); // Open
-		  else if ( !b5(bits) &&  b6(bits) ) bt_bus_set_property(bus, 13, 44, 0,  speed); // Close
-		  else                               bt_bus_set_property(bus, 13, 44, 0,      0); // Stop
-		  bt_bus_set_property(bus, 13, 8, 0, 4);
+		 if      (  b5(bits) && !b6(bits) ) bt_bus_set_property(bus, 13, 44, -speed); // Open
+		  else if ( !b5(bits) &&  b6(bits) ) bt_bus_set_property(bus, 13, 44,  speed); // Close
+		  else                               bt_bus_set_property(bus, 13, 44,      0); // Stop
+		  bt_bus_set_property(bus, 13, 8, 4);
 
 		 /* Finger 3 */
-		  if      (  b7(bits) && !b8(bits) ) bt_bus_set_property(bus, 11, 44, 0, -speed); // Open
-		   else if ( !b7(bits) &&  b8(bits) ) bt_bus_set_property(bus, 11, 44, 0,  speed); // Close
-		   else                               bt_bus_set_property(bus, 11, 44, 0,      0); // Stop
-		   bt_bus_set_property(bus, 11, 8, 0, 4);
+		  if      (  b7(bits) && !b8(bits) ) bt_bus_set_property(bus, 11, 44, -speed); // Open
+		   else if ( !b7(bits) &&  b8(bits) ) bt_bus_set_property(bus, 11, 44,  speed); // Close
+		   else                               bt_bus_set_property(bus, 11, 44,      0); // Stop
+		   bt_bus_set_property(bus, 11, 8, 4);
 
 		 //bhand_RTUpdate(bhand,1,1);
 	  }

@@ -120,14 +120,14 @@ void handThread(struct bt_bus *bus) {
 	printf("Waking hand pucks ...\n");
 
 	for(i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+		bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 	}
 
 	usleep((long)1e6);
 
 	printf("Setting TSTOP ...\n");
 	for(i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 78, 0, 50); // Set TSTOP to 50 ms
+		bt_bus_set_property(bus, i, 78, 50); // Set TSTOP to 50 ms
 	}
 
 	printf(" ... done.\n");
@@ -136,7 +136,7 @@ void handThread(struct bt_bus *bus) {
 		sleep(1);
 		spreadspeed = -spreadspeed;
 		printf("Sending spread command(%d)\n",spreadspeed);
-		bt_bus_set_property(bus, 14, 44, 0, spreadspeed);
-		bt_bus_set_property(bus, 14, 8, 0, 4);
+		bt_bus_set_property(bus, 14, 44, spreadspeed);
+		bt_bus_set_property(bus, 14, 8, 4);
 	}
 }

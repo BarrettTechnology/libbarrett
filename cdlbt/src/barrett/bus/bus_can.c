@@ -5,6 +5,7 @@
  * \author Traveler Hauptman
  * \author Sam Clanton
  * \author Christopher Dellin
+ * \author Dan Cody
  * \date 2003-2009
  */
 
@@ -39,6 +40,7 @@
 #include <linux/version.h>
 #include <signal.h>
 
+
 #ifdef CANTYPE_SOCKET
 # include <rtdm/rtcan.h>
 
@@ -53,7 +55,9 @@ typedef int HANDLE;
 # include "ntcan.h"
 #endif
 
+
 #include "bus_can.h"
+#include "bus.h"
 #include "../os/os.h"
 
 #ifdef CANTYPE_ESD
@@ -67,10 +71,13 @@ typedef int HANDLE;
 //#define MAX_NODES (31) /* For iteration */
 #define MAX_NODES (11) /* xxx Temp Hack for BH8-280 demo */
 
+
+#define AB_NEXT_IDX(i) (((i) + 1) % ASYNC_BUF_SIZE)
+
 #define BORDER(Value,Min,Max) \
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
-long jointPosition[32];
+//long jointPosition[32];
 
 /** Read a message from the CAN device.
  *
@@ -138,11 +145,8 @@ static void allow_msg(struct bt_bus_can * dev, int id, int mask);
 #endif
 
 
-struct bt_bus_can
-{
+struct bt_bus_can_dev {
    HANDLE handle;
-   struct bt_os_mutex * mutex;
-   int iterator;
 };
 
 
@@ -160,10 +164,21 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
    }
     
    /* Initialize */
-   dev->handle = 0;
+   dev->dev = 0;
    dev->mutex = 0;
    dev->iterator = 0;
-    
+
+   dev->dev = (struct bt_bus_can_dev *) malloc(sizeof(struct bt_bus_can_dev));
+   if (!dev->dev)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_bus_can_destroy(dev);
+      (*devptr) = 0;
+      return -1;
+   }
+
+   dev->dev->handle = 0;
+
    bt_os_mutex_create(&dev->mutex, BT_OS_RT);
    if (!dev->mutex)
    {
@@ -173,6 +188,19 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
       return -1;
    }
    
+   bt_os_mutex_create(&dev->async_mutex, BT_OS_RT);
+   if (!dev->async_mutex)
+   {
+      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      bt_bus_can_destroy(dev);
+      (*devptr) = 0;
+      return -1;
+   }
+
+   dev->abr_idx = 0;
+   dev->abw_idx = 0;
+
+
 #ifdef CANTYPE_SOCKET
    char devname[10];
    struct ifreq ifr;
@@ -190,11 +218,11 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 		bt_bus_can_destroy(dev);
 		return -1;
    }
-   dev->handle = err;
+   dev->dev->handle = err;
 
 	strncpy(ifr.ifr_name, devname, IFNAMSIZ);
 
-   err = rt_dev_ioctl(dev->handle, SIOCGIFINDEX, &ifr);
+   err = rt_dev_ioctl(dev->dev->handle, SIOCGIFINDEX, &ifr);
    if (err < 0) {
 		syslog(LOG_ERR, "rt_dev_ioctl(SIOCGIFINDEX): %s\n", strerror(-err));
 		bt_bus_can_destroy(dev);
@@ -205,7 +233,7 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
    to_addr.can_ifindex = ifr.ifr_ifindex;
    to_addr.can_family = AF_CAN;
 
-	err = rt_dev_bind(dev->handle, (struct sockaddr *)&to_addr, sizeof(to_addr));
+	err = rt_dev_bind(dev->dev->handle, (struct sockaddr *)&to_addr, sizeof(to_addr));
 	if (err < 0) {
 	    syslog(LOG_ERR, "rt_dev_bind: %s\n", strerror(-err));
 	    bt_bus_can_destroy(dev);
@@ -213,10 +241,10 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 	}
 
 	timeout = (nanosecs_rel_t)RTDM_TIMEOUT_INFINITE;
-	err = rt_dev_ioctl(dev->handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
+	err = rt_dev_ioctl(dev->dev->handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (err) {
 	    syslog(LOG_ERR, "rt_dev_ioctl(RCV_TIMEOUT): %s\n", strerror(-err));
-	    err = rt_dev_close(dev->handle);
+	    err = rt_dev_close(dev->dev->handle);
 	    return -1;
 	}
 
@@ -228,10 +256,10 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
    switch (port)
    {
       case 0:
-         dev->handle = CAN_Open(HW_ISA_SJA, 0x300, 7);
+         dev->dev->handle = CAN_Open(HW_ISA_SJA, 0x300, 7);
          break;
       case 1:
-         dev->handle = CAN_Open(HW_ISA_SJA, 0x320, 5);
+         dev->dev->handle = CAN_Open(HW_ISA_SJA, 0x320, 5);
          break;
       default:
          syslog(LOG_ERR, "%s: incorrect bus number, cannot open port %d",
@@ -241,7 +269,7 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
          return -1;
    }
 
-   if (!dev->handle)
+   if (!dev->dev->handle)
    {
       syslog(LOG_ERR,
              "%s: CAN_Open(): cannot open device with type=isa, "
@@ -256,8 +284,8 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 #endif /* CANTYPE_PEAKISA */
 
 #ifdef CANTYPE_PEAKPCI
-   dev->handle = CAN_Open(HW_PCI, (port + 1));
-   if (!dev->handle)
+   dev->dev->handle = CAN_Open(HW_PCI, (port + 1));
+   if (!dev->dev->handle)
    {
       syslog(LOG_ERR,
              "%s: CAN_Open(): cannot open device with type=pci, port=%d",
@@ -271,9 +299,9 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
 
    /* Clear Status */
-   CAN_Status(dev->handle);
+   CAN_Status(dev->dev->handle);
 
-   err = CAN_Init(dev->handle, CAN_BAUD_1M, CAN_INIT_TYPE_ST);
+   err = CAN_Init(dev->dev->handle, CAN_BAUD_1M, CAN_INIT_TYPE_ST);
    if (err)
    {
       syslog(LOG_ERR, "%s: CAN_Init() failed with %d,", __func__,errno);
@@ -282,26 +310,26 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
       return -1;
    }
    
-   CAN_ResetFilter(dev->handle);
-   CAN_MsgFilter(dev->handle, 0x0000, 0x053F, MSGTYPE_STANDARD);
+   CAN_ResetFilter(dev->dev->handle);
+   CAN_MsgFilter(dev->dev->handle, 0x0000, 0x053F, MSGTYPE_STANDARD);
    
 #endif /* CANTYPE_PEAK */
 
 #ifdef CANTYPE_ESD
    /* Opening can for esd. */
    err = canOpen(port, 0, TX_QUEUE_SIZE, RX_QUEUE_SIZE, TX_TIMEOUT,
-                 RX_TIMEOUT, &(dev->handle));
+                 RX_TIMEOUT, &(dev->dev->handle));
    if(err != NTCAN_SUCCESS)
    {
       syslog(LOG_ERR, "%s: canOpen() failed with error %ld", __func__, err);
-      dev->handle = 0;
+      dev->dev->handle = 0;
       bt_bus_can_destroy(dev);
       (*devptr) = 0;
       return -1;
    }
 
    /* 1 = 1Mbps, 2 = 500kbps, 3 = 250kbps*/
-   err = canSetBaudrate(dev->handle, 0);
+   err = canSetBaudrate(dev->dev->handle, 0);
    if(err != 0)
    {
       syslog(LOG_ERR, "initCAN(): canSetBaudrate() failed with error %ld",
@@ -325,65 +353,72 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 
 int bt_bus_can_destroy(struct bt_bus_can * dev)
 {
-   if (dev->handle) {
+   if (dev->dev) {
+      if (dev->dev->handle) {
 #ifdef CANTYPE_SOCKET
-		struct  ifreq ifr;
-		can_mode_t *mode;
+         struct  ifreq ifr;
+         can_mode_t *mode;
 
-	   mode = (can_mode_t *)&ifr.ifr_ifru;
-	    *mode = CAN_MODE_STOP;
-		rt_dev_ioctl(dev->handle, SIOCSCANMODE, &ifr);
-	   rt_dev_close(dev->handle);
+         mode = (can_mode_t *)&ifr.ifr_ifru;
+         *mode = CAN_MODE_STOP;
+         rt_dev_ioctl(dev->dev->handle, SIOCSCANMODE, &ifr);
+         rt_dev_close(dev->dev->handle);
 #endif
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
-      CAN_Close(dev->handle);
+      CAN_Close(dev->dev->handle);
 #endif
 #ifdef CANTYPE_ESD
-      canClose(dev->handle);
+      canClose(dev->dev->handle);
 #endif
+      }
+
+      free(dev->dev);
+      dev->dev = NULL;
    }
 
    if (dev->mutex)
       bt_os_mutex_destroy(dev->mutex);
+   if (dev->async_mutex)
+      bt_os_mutex_destroy(dev->async_mutex);
    free(dev);
    return 0;
 }
 
 
-int bt_bus_can_clearmsg(struct bt_bus_can * dev)
-{
-#if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
-   long err;
-   int pendread;
-   int pendwrite;
-   int id, len;
-   unsigned char data[8];
-   
-   pendread = 1;
-   err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
-   
-   while (pendread)
-   {
-      err = read_msg(dev, &id, &len, data, 1);
-      err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
-   }
-   return 0;
-   
-#else  // CANTYPE_ESD and CANTYPE_SOCKET
-   
-   int id, len;
-   unsigned char data[8];
-   
-   /*find a better way of clearing the bus*/
-   while (read_msg(dev, &id, &len, data, 0) == 0)
-   {
-      syslog(LOG_ERR, "Cleared unexpected message from CANbus.");
-      bt_os_usleep(1);
-   }
-   return 0;
-   
-#endif
-}
+//int bt_bus_can_clearmsg(struct bt_bus_can * dev)
+//{
+//#if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
+//   long err;
+//   int pendread;
+//   int pendwrite;
+//   int id, len;
+//   unsigned char data[8];
+//
+//   pendread = 1;
+//   err = LINUX_CAN_Extended_Status(dev->dev->handle, &pendread, &pendwrite);
+//
+//   while (pendread)
+//   {
+//      err = read_msg(dev, &id, &len, data, 1);
+//      err = LINUX_CAN_Extended_Status(dev->dev->handle, &pendread, &pendwrite);
+//   }
+//   return 0;
+//
+//#else  // CANTYPE_ESD and CANTYPE_SOCKET
+//
+//   int id, len;
+//   unsigned char data[8];
+//
+//   /*find a better way of clearing the bus*/
+//   while (read_msg(dev, &id, &len, data, 0) == 0)
+//   {
+//      syslog(LOG_ERR, "Cleared unexpected message from CANbus.");
+//      bt_os_usleep(1);
+//   }
+//   return 0;
+//
+//#endif
+//}
 
 
 int bt_bus_can_iterate_start(struct bt_bus_can * dev)
@@ -405,7 +440,6 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
       int ret;
       unsigned char data[8];
       int id_in;
-      int len_in;
       int property_in;
       long status_in;
       
@@ -419,26 +453,21 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
       bt_os_usleep(1000);
       
       /* Try to get 1 reply (non-blocking read)*/
-      ret = read_msg(dev, &id_in, &len_in, data, 0);
-      
-      /* If no error*/
-      if(!ret)
-      {
-         int ispackedpos;
-         /* Parse the reply*/
-         /* What if there's an error? */
-         parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos,
-                   &status_in);
-         if (status_in >= 0)
-         {
-            /* We found a live one! */
-            bt_os_mutex_unlock(dev->mutex);
-            dev->iterator = id + 1;
-            *nextid = id;
-            *nextstatus = status_in;
-            return 1;
-         }
-      }
+	 ret = bt_bus_can_async_read(dev, &id_in, &property_in, &status_in, 0, 1);
+	 if (ret) {
+		// most likely we didn't receive a reply because the puck doesn't exist
+		if (ret != 3) {
+			syslog(LOG_ERR, "%s: bt_bus_can_async_read error = %d",__func__,ret);
+		}
+	 } else if (status_in >= 0)
+	 {
+		/* We found a live one! */
+		bt_os_mutex_unlock(dev->mutex);
+		dev->iterator = id + 1;
+		*nextid = id;
+		*nextstatus = status_in;
+		return 1;
+	 }
    }
    
    bt_os_mutex_unlock(dev->mutex);
@@ -447,40 +476,100 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
    return 0;
 }
 
+int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, long * value, int blocking, int manual_update)
+{
+	while (1) {
+		if (manual_update) {
+			int tmp_id, tmp_len;
+			unsigned char data[8];
+
+			if ( !read_msg(dev, &tmp_id, &tmp_len, data, 0) ) {
+				syslog(LOG_ERR, "%s: Received an unexpected position message from the WAM.",__func__);
+				return 4;
+			}
+		}
+
+		if (dev->abr_idx == dev->abw_idx) {  // the buffer is empty
+			if (blocking) {
+				bt_os_usleep(1000);
+				continue;
+			} else {
+				return 3;
+			}
+		} else {
+			int err, ispacked;
+
+			dev->abr_idx = AB_NEXT_IDX(dev->abr_idx);
+			err = parse_msg(
+					dev->async_buf[dev->abr_idx].id,
+					dev->async_buf[dev->abr_idx].len,
+					dev->async_buf[dev->abr_idx].data,
+					id, property, &ispacked, value);
+
+			if (err) {
+				return err;
+//			} else if (ispacked) {
+//				syslog(LOG_ERR, "%s: Received an unexpected packed message.",__func__);
+//				return 2;
+			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
+				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
+				continue;
+			} else {
+				return 0;
+			}
+		}
+	}
+}
+
+int bt_bus_can_async_get_property(struct bt_bus_can * dev, int id, int property)
+{
+	int err;
+	unsigned char data[8];
+
+	/* Compile the packet*/
+	data[0] = (unsigned char)property;
+
+	/* Send the packet*/
+	bt_os_mutex_lock(dev->mutex);
+	err = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
+	bt_os_mutex_unlock(dev->mutex);
+
+	if (err) {
+		syslog(LOG_ERR, "%s: write_msg error = %d",__func__,err);
+		return 1;
+	}
+
+	return 0;
+}
 
 int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
-                            long * reply)
+                            long * reply, int manual_update)
 {
    int err;
-   unsigned char data[8];
-   int len_in;
    int id_in;
    int property_in;
-   int ispackedpos;
 
-   /* Compile the packet*/
-   data[0] = (unsigned char)property;
-
-   bt_os_mutex_lock(dev->mutex);
-   /* Send the packet*/
-   err = write_msg(dev, BT_BUS_CAN_NODE2ADDR(id), 1, data, 1);
-   /* Wait for 1 reply*/
-   err = read_msg(dev, &id_in, &len_in, data, 1);
-   bt_os_mutex_unlock(dev->mutex);
-   
+   bt_os_mutex_lock(dev->async_mutex);
+   err = bt_bus_can_async_get_property(dev, id, property);
    if (err)
    {
-      syslog(LOG_ERR, "%s: read_msg error = %d",__func__,err);
+      bt_os_mutex_unlock(dev->async_mutex);
+      syslog(LOG_ERR, "%s: bt_bus_can_async_get_property error = %d",__func__,err);
       return 1;
    }
 
-   /* Parse the reply*/
-   err = parse_msg(id_in, len_in, data, &id_in, &property_in, &ispackedpos,
-                   reply);
+   /* Wait for 1 reply*/
+   err = bt_bus_can_async_read(dev, &id_in, &property_in, reply, 1, manual_update);
+   bt_os_mutex_unlock(dev->async_mutex);
    
-   /* Check that the id and property match,
-    * and that its not a packed position packet */
-   if((id != id_in) || (ispackedpos) || (property != property_in))
+   if (err)
+   {
+      syslog(LOG_ERR, "%s: bt_bus_can_async_read error = %d",__func__,err);
+      return 1;
+   }
+
+   /* Check that the id and property match */
+   if((id != id_in) || (property != property_in))
    {
       syslog(LOG_ERR, "%s: returned id or property do not match",__func__);
       return 2;
@@ -492,9 +581,9 @@ int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
 
 
 int bt_bus_can_set_property(struct bt_bus_can * dev, int id, int property,
-                            int verify, long value)
+                            long value)
 {
-   long            response;
+//   long            response;
    unsigned char   data[8];
    int             len;
    int             err;
@@ -513,16 +602,16 @@ int bt_bus_can_set_property(struct bt_bus_can * dev, int id, int property,
                    len, data, 1);
    bt_os_mutex_unlock(dev->mutex);
 
-   /* BUG: This will not verify properties from groups of pucks*/
-   if(verify)
-   {
-      /* Get the new value of the property*/
-      bt_bus_can_get_property(dev, id, property, &response);
-
-      /* Compare response to value*/
-      if(response != value)
-         return 2;
-   }
+//   /* BUG: This will not verify properties from groups of pucks*/
+//   if(verify)
+//   {
+//      /* Get the new value of the property*/
+//      bt_bus_can_get_property(dev, id, property, &response, 0);
+//
+//      /* Compare response to value*/
+//      if(response != value)
+//         return 2;
+//   }
    return 0;
 }
 
@@ -623,9 +712,9 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 	   /* Read a message back from the CAN bus */
 	   //syslog(LOG_ERR, "rt_dev_recv: about to read");
 	   if(blocking){
-		   ret = rt_dev_recv(dev->handle, (void *)&frame, sizeof(can_frame_t), 0);  // can_frame != can_frame_t, but this is how the example does it...
+		   ret = rt_dev_recv(dev->dev->handle, (void *)&frame, sizeof(can_frame_t), 0);  // can_frame != can_frame_t, but this is how the example does it...
 		}else{
-			ret = rt_dev_recv(dev->handle, (void *)&frame, sizeof(can_frame_t), MSG_DONTWAIT);
+			ret = rt_dev_recv(dev->dev->handle, (void *)&frame, sizeof(can_frame_t), MSG_DONTWAIT);
 		}
 
 	   if (ret < 0) {
@@ -661,7 +750,6 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 				syslog(LOG_ERR, "%s: controller problem", __func__);
 			return(2);
 		}
-		return(0);
 
 #endif /* CANTYPE_SOCKET */
 #if defined(CANTYPE_PEAKISA) || defined(CANTYPE_PEAKPCI)
@@ -672,21 +760,21 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 
    bt_os_rt_set_mode_hard();
    if(blocking)
-      err = LINUX_CAN_Read(dev->handle, &msg);
+      err = LINUX_CAN_Read(dev->dev->handle, &msg);
    else
    {
       /* check if a message is pending, if not wait for a period and try again and return */
       int pendread;
       int pendwrite;
-      err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
+      err = LINUX_CAN_Extended_Status(dev->dev->handle, &pendread, &pendwrite);
       if(pendread)
-         err = LINUX_CAN_Read(dev->handle, &msg);
+         err = LINUX_CAN_Read(dev->dev->handle, &msg);
       else
       {
          bt_os_usleep(1000);
-         err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
+         err = LINUX_CAN_Extended_Status(dev->dev->handle, &pendread, &pendwrite);
          if(pendread)
-            err = LINUX_CAN_Read(dev->handle, &msg);
+            err = LINUX_CAN_Read(dev->dev->handle, &msg);
          else
             return 1; /* returned empty */
       }
@@ -702,7 +790,6 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
    (*len) = msg.Msg.LEN;
    for(i = 0; i < msg.Msg.LEN; i++)
       data[i] = msg.Msg.DATA[i];
-   return 0;
    
 #endif
 #ifdef CANTYPE_ESD
@@ -713,9 +800,9 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
    CMSG msg;
    
    if(blocking)
-      err = canRead(dev->handle, &msg, &msgCt, 0);
+      err = canRead(dev->dev->handle, &msg, &msgCt, 0);
    else
-      err = canTake(dev->handle, &msg, &msgCt);
+      err = canTake(dev->dev->handle, &msg, &msgCt);
    if(err != NTCAN_SUCCESS)
    {
       if(err == NTCAN_RX_TIMEOUT)
@@ -731,9 +818,25 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
    (*len) = msg.len;
    for(i = 0; i < msg.len; i++)
       data[i] = msg.data[i];
-   return 0;
    
 #endif
+
+	// if the message contains a position from the WAM (nodes 1-7), the id is of the form 0b100***00011
+	// (this mask also catches node 0, but that's us and we neither send to group 3 nor see our own messages)
+	if ( (*id & 0x71F) == 0x403 ) {
+		// return normally
+		return 0;
+	} else {  // the message is an asynchronous response
+		// put this message in the asynchronous buffer...
+		int i = AB_NEXT_IDX(dev->abw_idx);
+		dev->async_buf[i].id = *id;
+		dev->async_buf[i].len = *len;
+		memcpy(dev->async_buf[i].data, data, *len);
+		dev->abw_idx = i;
+
+		// ...and try again for the synchronous position message
+		return read_msg(dev, id, len, data, blocking);
+	}
 }
 
 
@@ -750,7 +853,7 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
 	      frame.data[i] = data[i];
 
 		  //syslog(LOG_ERR, "rt_dev_recv: about to send");
-		ret = rt_dev_send(dev->handle, (void *)&frame, sizeof(can_frame_t), 0);
+		ret = rt_dev_send(dev->dev->handle, (void *)&frame, sizeof(can_frame_t), 0);
 		if (ret < 0) {
 		    switch (ret) {
 		    case -ETIMEDOUT:
@@ -788,17 +891,17 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
    /* make sure that write is in primary mode */
    bt_os_rt_set_mode_hard();
    if(blocking)
-      err = CAN_Write(dev->handle, &msg);
+      err = CAN_Write(dev->dev->handle, &msg);
    else
    {
       /*non-blocking, check to see if bus is full or sending errors, if not send, else return*/
       int pendread;
       int pendwrite = 1;
-      err = LINUX_CAN_Extended_Status(dev->handle, &pendread, &pendwrite);
+      err = LINUX_CAN_Extended_Status(dev->dev->handle, &pendread, &pendwrite);
       if (err != CAN_ERR_OK)
          syslog(LOG_ERR, "%s: error while trying to get status",__func__);
       else
-         err = CAN_Write(dev->handle, &msg);
+         err = CAN_Write(dev->dev->handle, &msg);
    }
    if(err)
    {
@@ -823,9 +926,9 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
    
    msgCt = 1;
    if(blocking)
-      err = canWrite(dev->handle, &msg, &msgCt, 0);
+      err = canWrite(dev->dev->handle, &msg, &msgCt, 0);
    else
-      err = canSend(dev->handle, &msg, &msgCt);
+      err = canSend(dev->dev->handle, &msg, &msgCt);
 
    if(err != NTCAN_SUCCESS)
    {
@@ -849,7 +952,7 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
    if ((*id) == -1)
       syslog(LOG_ERR,"msgID:%x ",msgid);
    dataHeader = ((message_data[0] >> 6) & 0x0002) | ((msgid & 0x041F) == 0x0403) | ((msgid & 0x041F) == 0x0407);
-   /*messageData[0] &= 0x7F;*/
+   /*message_data[0] &= 0x7F;*/
    /*syslog(LOG_ERR,"Entering parsemessage");*/
    switch (dataHeader)
    {
@@ -862,13 +965,13 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
       if (*value & 0x00200000) /* If negative */
          *value |= 0xFFC00000; /* Sign-extend */
 
-	  jointPosition[*id] = 0;
-      jointPosition[*id] |= ( (long)message_data[3] << 16) & 0x003F0000;
-      jointPosition[*id] |= ( (long)message_data[4] << 8 ) & 0x0000FF00;
-      jointPosition[*id] |= ( (long)message_data[5] ) & 0x000000FF;
-      
-      if (jointPosition[*id] & 0x00200000) /* If negative */
-         jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
+//	  jointPosition[*id] = 0;
+//      jointPosition[*id] |= ( (long)message_data[3] << 16) & 0x003F0000;
+//      jointPosition[*id] |= ( (long)message_data[4] << 8 ) & 0x0000FF00;
+//      jointPosition[*id] |= ( (long)message_data[5] ) & 0x000000FF;
+//
+//      if (jointPosition[*id] & 0x00200000) /* If negative */
+//         jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
          
       *ispacked=1;
       /**property = AP;*/
@@ -929,6 +1032,6 @@ static void allow_msg(struct bt_bus_can * dev, int id, int mask)
    int i;
    for(i = 0; i < 2048; i++)
       if((i & ~mask) == id)
-         canIdAdd(dev->handle, i);
+         canIdAdd(dev->dev->handle, i);
 }
 #endif
