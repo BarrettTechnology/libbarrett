@@ -41,34 +41,34 @@ int main() {
 
 	printf("Waking pucks...\n");
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+		bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 	}
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+		bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 	}
 	usleep(500000);
 	printf("Done.\n");
 
 	printf("WAM: Setting GRPC to 4...\n");
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_set_property(bus, i, 28, 0, 4);
+		bt_bus_set_property(bus, i, 28, 4);
 	}
 	usleep(1000);
 	printf("Done.\n");
 
 	printf("HAND: Setting GRPC to 5...\n");
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 28, 0, 5);
+		bt_bus_set_property(bus, i, 28, 5);
 	}
 	usleep(1000);
 	printf("Done.\n");
 
 	printf("Saving changes...\n");
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_set_property(bus, i, 30, 0, -1);
+		bt_bus_set_property(bus, i, 30, -1);
 	}
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 30, 0, -1);
+		bt_bus_set_property(bus, i, 30, -1);
 	}
 	usleep(1000);
 	printf("Done.\n");
@@ -79,19 +79,18 @@ int main() {
 
 	printf("Waking pucks...\n");
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+		bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 	}
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_set_property(bus, i, 5, 0, 2); // Set STAT to STATUS_READY
+		bt_bus_set_property(bus, i, 5, 2); // Set STAT to STATUS_READY
 	}
 	usleep(500000);
 	printf("Done.\n");
 
 	printf("Verifying changes...\n");
-	bt_bus_can_clearmsg(bus->dev);
 	long reply;
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_get_property(bus, i, 28, &reply);
+		bt_bus_can_get_property(bus->dev, i, 28, &reply, 1);
 		printf("ID%d: ", i);
 		if (reply == 4) {
 			printf("PASS\n");
@@ -100,7 +99,7 @@ int main() {
 		}
 	}
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_get_property(bus, i, 28, &reply);
+		bt_bus_can_get_property(bus->dev, i, 28, &reply, 1);
 		printf("ID%d: ", i);
 		if (reply == 5) {
 			printf("PASS\n");

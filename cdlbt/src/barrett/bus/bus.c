@@ -46,44 +46,6 @@
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
 
-/** CAN Broadcast Groups */
-enum broadcast_groups
-{
-   WHOLE_BUS_GRP = 0,  // everything but the safety puck
-
-   WAM_GRP = 4,  // the whole WAM (pucks 1-7)
-   LOWER_WAM_GRP = 1,  // a packed-torque group (pucks 1-4)
-   UPPER_WAM_GRP = 2,  // a packed-torque group (pucks 5-7)
-
-   HAND_GRP = 5,  // the whole hand (pucks 11-14)
-
-   // When responding to position requests, pucks send to group 3 so the safety puck can listen.
-   POSITION_FEEDBACK_GRP = 3,
-   // When responding to non-position requests, pucks send to group 6.
-   OTHER_FEEDBACK_GRP = 6
-};
-
-/** Puck status values */
-enum puck_status
-{
-   STATUS_OFFLINE = -1,
-   STATUS_RESET = 0,
-   STATUS_ERR = 1,
-   STATUS_READY = 2
-};
-
-/** Puck control mode states */
-enum control_modes
-{
-   MODE_IDLE = 0,
-   MODE_DUTY = 1,
-   MODE_TORQUE = 2,
-   MODE_PID = 3,
-   MODE_VELOCITY = 4,
-   MODE_TRAPEZOIDAL = 5
-};
-
-
 /** Create a bt_bus_properties list given a firmware version */
 static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
 
@@ -194,7 +156,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
    /* Wake all the pucks on the bus */
    syslog(LOG_ERR, "Waking all pucks");
    /* Must use '5' for STAT*/
-   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WAM_GRP), 5, 0,
+   bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WAM_GRP), 5,
                            STATUS_READY);
    bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
    
@@ -205,12 +167,12 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
       bt_bus_can_iterate_start(bus->dev);
       while (bt_bus_can_iterate_next(bus->dev,&id,&status))
       {
-         /* Initialize proprty definitions */
+         /* Initialize property definitions */
          if (!(bus->p))
          {
             long fw_vers;
             /* Get the firmware version*/
-            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers);
+            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers, 1);
             bus->p = prop_defs_create(fw_vers);
             if (!bus->p)
             {
@@ -260,7 +222,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
                syslog(LOG_ERR, "Waking puck %d", id);
                /*wakePuck(bus->dev, id);*/
                /* Must use '5' for STAT*/
-               bt_bus_can_set_property(bus->dev, id, 5, 0, STATUS_READY);
+               bt_bus_can_set_property(bus->dev, id, 5, STATUS_READY);
                bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
             }
             /* Make a new puck */
@@ -273,18 +235,18 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
             }
             puck->id = id;
             /* Make sure the puck is in IDLE mode */
-            bt_bus_can_set_property(bus->dev, id, bus->p->MODE, 0,MODE_IDLE);
+            bt_bus_can_set_property(bus->dev, id, bus->p->MODE, MODE_IDLE);
             bt_os_usleep(200);
             /* Fill the puck structure */
-            bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply, 1);
             puck->vers = reply;
-            bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply, 1);
             puck->counts_per_rev = reply;
-            bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply, 1);
             puck->puckI_per_Nm = reply; /* Aah, this is a double! */
-            bt_bus_can_get_property(bus->dev, id, bus->p->PIDX, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->PIDX, &reply, 1);
             puck->order = reply-1;
-            bt_bus_can_get_property(bus->dev, id, bus->p->GRPB, &reply);
+            bt_bus_can_get_property(bus->dev, id, bus->p->GRPB, &reply, 1);
             puck->gid = reply;
             
             syslog(LOG_ERR,"Puck: ID=%d CTS=%d IPNM=%.2f PIDX=%d GRPB=%d",
@@ -367,7 +329,7 @@ int bt_bus_update(struct bt_bus * bus)
    double dt;
    
    /* Clear CAN bus of any unwanted messages */
-   bt_bus_can_clearmsg( bus->dev );
+//   bt_bus_can_clearmsg( bus->dev );
    
    /* Retrieve the time */
    rtime = bt_os_rt_get_time();
@@ -450,16 +412,15 @@ int bt_bus_get_property(struct bt_bus * bus, int id, int property,
 {
    if (property > bus->p->PROP_END)
       return 1;
-   return bt_bus_can_get_property(bus->dev, id, property, reply);
+   return bt_bus_can_get_property(bus->dev, id, property, reply, 0);
 }
 
 
-int bt_bus_set_property(struct bt_bus * bus, int id, int property,
-                        int verify, long value)
+int bt_bus_set_property(struct bt_bus * bus, int id, int property, long value)
 {
    if (property > bus->p->PROP_END)
       return 1;
-   return bt_bus_can_set_property(bus->dev, id, property, verify, value);
+   return bt_bus_can_set_property(bus->dev, id, property, value);
 }
 
 
