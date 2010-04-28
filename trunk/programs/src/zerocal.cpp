@@ -184,6 +184,14 @@ int main()
 	libconfig::Config config;
 	config.readFile("/etc/wam/wam7-new.config");
 
+	// remove existing zerocal information, if present
+	libconfig::Setting& llSetting = config.lookup("wam.low_level");
+	if (llSetting.exists("zeroangle")) {
+		llSetting.remove(llSetting["zeroangle"].getIndex());
+		syslog(LOG_ERR, "Ignoring previous zeroangle entry.");
+	}
+
+
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
