@@ -38,9 +38,14 @@
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
 #include <libconfig.h>
 
 #include "../units.h"
+#include "../thread/abstract/mutex.h"
 #include "../math/spline.h"
 #include "../math/trapezoidal_velocity_profile.h"
 #include "../systems/abstract/system.h"
@@ -117,32 +122,37 @@ void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
 template<size_t DOF>
 typename units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
 {
+	SCOPED_LOCK(gravity.getEmMutex());
 	return kinematicsBase.jpInput.getValue();
 }
 
 template<size_t DOF>
 typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
 {
+	SCOPED_LOCK(gravity.getEmMutex());
 	return kinematicsBase.jvInput.getValue();
 }
 
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getJointTorques()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
-//
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolPosition()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
-//
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolOrientation()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
+template<size_t DOF>
+typename units::JointTorques<DOF>::type Wam<DOF>::getJointTorques()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return wam.input.getValue();
+}
+
+template<size_t DOF>
+units::CartesianPosition::type Wam<DOF>::getToolPosition()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return tpController.feedbackInput.getValue();
+}
+
+template<size_t DOF>
+Eigen::Quaterniond Wam<DOF>::getToolOrientation()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return toController.feedbackInput.getValue();
+}
 
 
 template<size_t DOF>

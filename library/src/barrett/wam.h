@@ -95,6 +95,10 @@ public:
 
 	jp_type getJointPositions();
 	jv_type getJointVelocities();
+	jt_type getJointTorques();
+	units::CartesianPosition::type getToolPosition();
+	Eigen::Quaterniond getToolOrientation();
+
 
 	void gravityCompensate(bool compensate = true);
 	void moveHome(bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
