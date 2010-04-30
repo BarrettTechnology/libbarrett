@@ -39,6 +39,7 @@
 #include "./systems/abstract/system.h"
 
 #include "./systems/low_level_wam.h"
+#include "./systems/first_order_filter.h"
 #include "./systems/converter.h"
 #include "./systems/summer.h"
 
@@ -67,11 +68,15 @@ public:
 	systems::LowLevelWam<DOF> wam;
 	systems::KinematicsBase<DOF> kinematicsBase;
 	systems::GravityCompensator<DOF> gravity;
+	systems::FirstOrderFilter<jv_type> jvFilter;
 	systems::ToolPosition<DOF> toolPosition;
 	systems::ToolOrientation<DOF> toolOrientation;
 
 	systems::Converter<jt_type> supervisoryController;
+	systems::Gain<jt_type, double> jtPassthrough;
 	systems::PIDController<jp_type, jt_type> jpController;
+	systems::PIDController<jv_type, jt_type> jvController1;
+	systems::FirstOrderFilter<jt_type> jvController2;
 	systems::PIDController<units::CartesianPosition::type, units::CartesianForce::type> tpController;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 	systems::ToolOrientationController<DOF> toController;
@@ -93,9 +98,9 @@ public:
 	template<typename T>
 	void trackReferenceSignal(systems::System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
 
+	jt_type getJointTorques();
 	jp_type getJointPositions();
 	jv_type getJointVelocities();
-	jt_type getJointTorques();
 	units::CartesianPosition::type getToolPosition();
 	Eigen::Quaterniond getToolOrientation();
 
