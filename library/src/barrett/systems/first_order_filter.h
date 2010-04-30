@@ -9,6 +9,8 @@
 #define BARRETT_SYSTEMS_FIRST_ORDER_FILTER_H_
 
 
+#include <libconfig.h++>
+
 #include "../detail/ca_macro.h"
 #include "../math/first_order_filter.h"
 #include "./abstract/single_io.h"
@@ -25,6 +27,7 @@ template<typename T>
 class FirstOrderFilter : public SingleIO<T, T>, public math::FirstOrderFilter<T> {
 public:
 	explicit FirstOrderFilter(bool updateEveryExecutionCycle = false);
+	explicit FirstOrderFilter(const libconfig::Setting& setting, bool updateEveryExecutionCycle = false);
 	virtual ~FirstOrderFilter() {}
 
 	virtual void setExecutionManager(ExecutionManager* newEm);
