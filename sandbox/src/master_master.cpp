@@ -485,10 +485,15 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 	  if (realtime)
 	  {
 		 /* Spread */
-		 if      (  b1(bits) && !b2(bits) ) bt_bus_set_property(bus, 14, 44, -spreadspeed); // Open
-		 else if ( !b1(bits) &&  b2(bits) ) bt_bus_set_property(bus, 14, 44,  spreadspeed); // Close
-		 else                               bt_bus_set_property(bus, 14, 44,      0); // Stop
-		 bt_bus_set_property(bus, 14, 8, 4);
+		 // To prevent the spread from gradually relaxing, only update if
+		 // there was a change to the spread buttons. This doesn't matter for
+		 // the non-backdrivable joints.
+		 if (b1(bits) != b1(old_bits)  ||  b2(bits) != b2(old_bits)) {
+		    if      (  b1(bits) && !b2(bits) ) bt_bus_set_property(bus, 14, 44, -spreadspeed); // Open
+		    else if ( !b1(bits) &&  b2(bits) ) bt_bus_set_property(bus, 14, 44,  spreadspeed); // Close
+		    else                               bt_bus_set_property(bus, 14, 44,      0); // Stop
+		    bt_bus_set_property(bus, 14, 8, 4);
+		 }
 
 		 /* Finger 1 */
 		 if      (  b3(bits) && !b4(bits) ) bt_bus_set_property(bus, 12, 44, -speed); // Open
