@@ -38,9 +38,14 @@
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
 #include <libconfig.h>
 
 #include "../units.h"
+#include "../thread/abstract/mutex.h"
 #include "../math/spline.h"
 #include "../math/trapezoidal_velocity_profile.h"
 #include "../systems/abstract/system.h"
@@ -56,18 +61,22 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	wam(setting["low_level"]),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
+	jvFilter(setting["joint_velocity_filter"]),
 	toolPosition(),
 	toolOrientation(),
 
 	supervisoryController(),
+	jtPassthrough(1.0),
 	jpController(setting["joint_position_control"]),
+	jvController1(setting["joint_velocity_control"][0]),
+	jvController2(setting["joint_velocity_control"][1]),
 	tpController(setting["tool_position_control"]),
 	tf2jt(),
 	toController(),
 
 	jtSum(true),
 
-	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(wam.jvOutput),
+	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(jvFilter.output),
 
 	doneMoving(true)
 {
@@ -75,7 +84,7 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	using systems::makeIOConversion;
 
 	connect(wam.jpOutput, kinematicsBase.jpInput);
-	connect(wam.jvOutput, kinematicsBase.jvInput);
+	connect(jvOutput, kinematicsBase.jvInput);
 
 	connect(kinematicsBase.kinOutput, gravity.kinInput);
 	// Don't connect gravity.output here. Gravity compensation is off by default.
@@ -85,9 +94,25 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);
 
+	connect(wam.jvOutput, jvFilter.input);
+//	jv_type corners;
+//	corners.setConstant(180.0);
+//	jvFilter.setLowPass(corners);
+
+	supervisoryController.registerConversion(makeIOConversion(
+			jtPassthrough.input, jtPassthrough.output));
+
 	connect(wam.jpOutput, jpController.feedbackInput);
 	supervisoryController.registerConversion(makeIOConversion(
 			jpController.referenceInput, jpController.controlOutput));
+
+	// TODO(dc): change to a FirstOrderFilterController
+	connect(jvOutput, jvController1.feedbackInput);
+	connect(jvController1.controlOutput, jvController2.input);
+	supervisoryController.registerConversion(makeIOConversion(
+			jvController1.referenceInput, jvController2.output));
+//	corners << 180, 180, 56, 56, 10, 30, 3;
+//	jvController2.setLowPass(corners);
 
 	connect(toolPosition.output, tpController.feedbackInput);
 	connect(tpController.controlOutput, tf2jt.input);
@@ -115,34 +140,39 @@ void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
 }
 
 template<size_t DOF>
+typename units::JointTorques<DOF>::type Wam<DOF>::getJointTorques()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return wam.input.getValue();
+}
+
+template<size_t DOF>
 typename units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
 {
+	SCOPED_LOCK(gravity.getEmMutex());
 	return kinematicsBase.jpInput.getValue();
 }
 
 template<size_t DOF>
 typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
 {
+	SCOPED_LOCK(gravity.getEmMutex());
 	return kinematicsBase.jvInput.getValue();
 }
 
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getJointTorques()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
-//
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolPosition()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
-//
-//template<size_t DOF>
-//typename units::JointVelocities<DOF>::type Wam<DOF>::getToolOrientation()
-//{
-//	return kinematicsBase.jvInput.getValue();
-//}
+template<size_t DOF>
+units::CartesianPosition::type Wam<DOF>::getToolPosition()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return tpController.feedbackInput.getValue();
+}
+
+template<size_t DOF>
+Eigen::Quaterniond Wam<DOF>::getToolOrientation()
+{
+	SCOPED_LOCK(gravity.getEmMutex());
+	return toController.feedbackInput.getValue();
+}
 
 
 template<size_t DOF>

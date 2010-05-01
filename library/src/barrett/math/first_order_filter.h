@@ -9,6 +9,7 @@
 #define BARRETT_MATH_FIRST_ORDER_FILTER_H_
 
 
+#include <libconfig.h++>
 #include "../detail/ca_macro.h"
 #include "./traits.h"
 
@@ -24,10 +25,12 @@ protected:
 
 public:
 	explicit FirstOrderFilter(double timeStep = 0.0);
+	explicit FirstOrderFilter(const libconfig::Setting& setting);
 
 	void setSamplePeriod(double timeStep);
+	void setFromConfig(const libconfig::Setting& setting);
 	void setLowPass(T omega_p, T dcGain = T(1.0));
-	void setHighPass(T omega_p, T dcGain = T(1.0));
+	void setHighPass(T omega_p, T hfGain = T(1.0));
 	void setZPK(T omega_z, T omega_p, T dcGain = T(1.0));
 	void setIntegrator(T gain = T(1.0));
 	void setParameters(T a, T b, T c);
