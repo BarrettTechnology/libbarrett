@@ -974,7 +974,11 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
 //         jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
          
       *ispacked=1;
-      /**property = AP;*/
+      if ( (msgid & 0x41F) == 0x403 ) {  // if it's sent to group 3
+    	  *property = AP;
+      } else {
+    	  *property = -1;
+      }
       /*syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);*/
       break;
    case 2:  /* Data is normal, SET */

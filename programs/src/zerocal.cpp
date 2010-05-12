@@ -234,6 +234,9 @@ int main()
    /* Hold position */
 //   bt_wam_hold(wam);
 
+   jp_type prev(wam.getJointPositions());
+   jp_type cur;
+
    /* Start the user interface */
    mode = MODE_TOZERO;
    joint = 0;
@@ -355,9 +358,10 @@ int main()
                case MODE_TOZERO:
 //                  if (!bt_wam_moveisdone(wam)) break;
                   gsl_vector_set_zero(jangle);
-                  wam.moveTo(jp_type(jangle));
+                  cur.copyFrom(jangle);
+                  wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+                  prev = cur;
 //                  bt_wam_local_moveto_vec(wam_local,jangle);
-            	  wam.moveTo(jp_type(jangle));
                   break;
                case MODE_CANCEL:
                   done = -1;
@@ -408,7 +412,9 @@ int main()
          case BTKEY_UP:
 //            if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) += pow(10,-decplace);
-            wam.moveTo(jp_type(jangle));
+            cur.copyFrom(jangle);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+            prev = cur;
 //            err = bt_wam_local_moveto_vec(wam_local,jangle);
 //            if (err)
 //            {
@@ -419,7 +425,9 @@ int main()
          case BTKEY_DOWN:
 //            if (!bt_wam_moveisdone(wam)) break;
             *(gsl_vector_ptr(jangle,joint)) -= pow(10,-decplace);
-            wam.moveTo(jp_type(jangle));
+            cur.copyFrom(jangle);
+            wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+            prev = cur;
 //            err = bt_wam_local_moveto_vec(wam_local,jangle);
 //            if (err)
 //            {
