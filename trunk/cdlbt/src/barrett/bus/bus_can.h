@@ -139,9 +139,11 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
 
 /** Retrieve an asynchronous CAN message from the buffer. Be sure to lock
  *  dev->asynch_mutex around any request-reply sequence of messages.
+ *
+ *  value2 can be NULL
  */
 int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property,
-                          long * value, int blocking, int manual_update);
+                          long * value1, long * value2, int blocking, int manual_update);
 
 
 /** Sends the request for a property, but doesn't wait for the response.
@@ -162,7 +164,7 @@ int bt_bus_can_async_get_property(struct bt_bus_can * dev, int id, int property)
  * \retval 2 The returned property wasn't what was asked for
  */
 int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
-                            long * reply, int manual_update);
+                            long * reply1, long * reply2, int manual_update);
 
 
 /** Set a property value on a node.
