@@ -116,12 +116,13 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
  * \param[out] id Location into which to put the node ID
  * \param[out] property Location into which to put the associated property
  * \param[out] ispacked Whether the message is in packed format
- * \param[out] value Location into which to put the value
+ * \param[out] value1 Location into which to put the value
+ * \param[out] value2 Location into which to put the second value (if ispacked) (can be NULL)
  * \retval 0 Success
  * \retval 1 Illegal message header
  */
 static int parse_msg(int msgid, int len, unsigned char * message_data,
-                     int * id, int * property, int * ispacked, long * value);
+                     int * id, int * property, int * ispacked, long * value1, long * value2);
 
 
 /** Compile a message from a property and value
@@ -453,7 +454,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
       bt_os_usleep(1000);
       
       /* Try to get 1 reply (non-blocking read)*/
-	 ret = bt_bus_can_async_read(dev, &id_in, &property_in, &status_in, 0, 1);
+	 ret = bt_bus_can_async_read(dev, &id_in, &property_in, &status_in, NULL, 0, 1);
 	 if (ret) {
 		// most likely we didn't receive a reply because the puck doesn't exist
 		if (ret != 3) {
@@ -476,7 +477,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
    return 0;
 }
 
-int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, long * value, int blocking, int manual_update)
+int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, long * value1, long * value2, int blocking, int manual_update)
 {
 	while (1) {
 		if (manual_update) {
@@ -504,16 +505,16 @@ int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, lon
 					dev->async_buf[dev->abr_idx].id,
 					dev->async_buf[dev->abr_idx].len,
 					dev->async_buf[dev->abr_idx].data,
-					id, property, &ispacked, value);
+					id, property, &ispacked, value1, value2);
 
 			if (err) {
 				return err;
 //			} else if (ispacked) {
 //				syslog(LOG_ERR, "%s: Received an unexpected packed message.",__func__);
 //				return 2;
-			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
-				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
-				continue;
+//			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
+//				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
+//				continue;
 			} else {
 				return 0;
 			}
@@ -543,7 +544,7 @@ int bt_bus_can_async_get_property(struct bt_bus_can * dev, int id, int property)
 }
 
 int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
-                            long * reply, int manual_update)
+		long * reply1, long * reply2, int manual_update)
 {
    int err;
    int id_in;
@@ -559,7 +560,7 @@ int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
    }
 
    /* Wait for 1 reply*/
-   err = bt_bus_can_async_read(dev, &id_in, &property_in, reply, 1, manual_update);
+   err = bt_bus_can_async_read(dev, &id_in, &property_in, reply1, reply2, 1, manual_update);
    bt_os_mutex_unlock(dev->async_mutex);
    
    if (err)
@@ -650,7 +651,7 @@ int bt_bus_can_get_packed(struct bt_bus_can * dev, int group, int how_many,
       }
        
       /* Parse the reply*/
-      err = parse_msg(msgID, len, packet, &id, &in_property, &ispacked, &reply);
+      err = parse_msg(msgID, len, packet, &id, &in_property, &ispacked, &reply, NULL);
       if(ispacked)
       {
          data[id] = reply;
@@ -827,12 +828,14 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 		// return normally
 		return 0;
 	} else {  // the message is an asynchronous response
-		// put this message in the asynchronous buffer...
-		int i = AB_NEXT_IDX(dev->abw_idx);
-		dev->async_buf[i].id = *id;
-		dev->async_buf[i].len = *len;
-		memcpy(dev->async_buf[i].data, data, *len);
-		dev->abw_idx = i;
+		if (*id != 0x540) {  // ignore broadcasts from the safety puck
+			// put this message in the asynchronous buffer...
+			int i = AB_NEXT_IDX(dev->abw_idx);
+			dev->async_buf[i].id = *id;
+			dev->async_buf[i].len = *len;
+			memcpy(dev->async_buf[i].data, data, *len);
+			dev->abw_idx = i;
+		}
 
 		// ...and try again for the synchronous position message
 		return read_msg(dev, id, len, data, blocking);
@@ -941,7 +944,7 @@ static int write_msg(struct bt_bus_can * dev, int id, char len,
 }
 
 static int parse_msg(int msgid, int len, unsigned char * message_data,
-                     int * id, int * property, int * ispacked, long * value)
+                     int * id, int * property, int * ispacked, long * value1, long * value2)
 {
    int i;
    int dataHeader;
@@ -957,40 +960,46 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
    switch (dataHeader)
    {
    case 3:  /* Data is a packed 22-bit position, acceleration, etc SET */
-      *value = 0x00000000;
-      *value |= ( (long)message_data[0] << 16) & 0x003F0000;
-      *value |= ( (long)message_data[1] << 8 ) & 0x0000FF00;
-      *value |= ( (long)message_data[2] ) & 0x000000FF;
+      *value1 = 0x00000000;
+      *value1 |= ( (long)message_data[0] << 16) & 0x003F0000;
+      *value1 |= ( (long)message_data[1] << 8 ) & 0x0000FF00;
+      *value1 |= ( (long)message_data[2] ) & 0x000000FF;
 
-      if (*value & 0x00200000) /* If negative */
-         *value |= 0xFFC00000; /* Sign-extend */
+      if (*value1 & 0x00200000) /* If negative */
+         *value1 |= 0xFFC00000; /* Sign-extend */
 
-//	  jointPosition[*id] = 0;
-//      jointPosition[*id] |= ( (long)message_data[3] << 16) & 0x003F0000;
-//      jointPosition[*id] |= ( (long)message_data[4] << 8 ) & 0x0000FF00;
-//      jointPosition[*id] |= ( (long)message_data[5] ) & 0x000000FF;
-//
-//      if (jointPosition[*id] & 0x00200000) /* If negative */
-//         jointPosition[*id] |= 0xFFC00000; /* Sign-extend */
+      if (value2 != NULL) {
+		  *value2 = 0;
+		  *value2 |= ( (long)message_data[3] << 16) & 0x003F0000;
+		  *value2 |= ( (long)message_data[4] << 8 ) & 0x0000FF00;
+		  *value2 |= ( (long)message_data[5] ) & 0x000000FF;
+
+		  if (*value2 & 0x00200000) /* If negative */
+			 *value2 |= 0xFFC00000; /* Sign-extend */
+      }
          
       *ispacked=1;
-      /**property = AP;*/
+      if ( (msgid & 0x41F) == 0x403 ) {  // if it's sent to group 3
+    	  *property = 48;  // position feedback
+      } else {
+    	  *property = -1;
+      }
       /*syslog(LOG_ERR,"Received packed set property: %d from node: %d value:%d",*property,*node,*value);*/
       break;
    case 2:  /* Data is normal, SET */
       *property = message_data[0] & 0x7F;
       //syslog(LOG_ERR, "Received property: %d", *property);
       /* Store the value, second byte of message is zero (for DSP word alignment) */
-      *value = message_data[len-1] & 0x80 ? -1L : 0;
+      *value1 = message_data[len-1] & 0x80 ? -1L : 0;
       for (i = len-1; i >= 2; i--)
-         *value = *value << 8 | message_data[i];
+         *value1 = *value1 << 8 | message_data[i];
 
       /*syslog(LOG_ERR, "Received normal set property: %d from node: %d value:%d", *property, *node, *value);*/
       /*syslog(LOG_ERR,"parsemessage after %d",value);*/
       break;
    case 0:  /* Assume firmware request (GET) */
          *property = -(message_data[0] & 0x7F); /* A negative (or zero) property means GET */
-      *value = 0;
+      *value1 = 0;
       /*syslog(LOG_ERR, "Received normal get property: %d from node: %d value:%d", *property, *node, *value);*/
       break;
    default:

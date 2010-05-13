@@ -38,7 +38,7 @@ typedef units::JointPositions<HAND_DOF>::type hjp_type;
 
 bool going = true;
 struct bt_bus* bus;
-hjp_type hjp;
+hjp_type hjp1, hjp2;
 
 
 int main() {
@@ -61,7 +61,7 @@ int main() {
 	printf("Press [Enter] to print hand positions.\n");
 	while (true) {
 		waitForEnter();
-		std::cout << hjp << std::endl;
+		std::cout << hjp1 << "  " << hjp2 << std::endl;
 //		sleep(1);
 	}
 
@@ -72,7 +72,7 @@ int main() {
 
 void handFeedback() {
 	int id, property;
-	long value;
+	long value1, value2;
 
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
@@ -103,11 +103,12 @@ void handFeedback() {
 //		printf(" ... done.\n");
 
 		for (int i = 0; i < HAND_DOF; ++i) {
-			bt_bus_can_async_read(bus->dev, &id, &property, &value, 1, 0);
+			bt_bus_can_async_read(bus->dev, &id, &property, &value1, &value2, 1, 0);
 			if (id >=11  &&  id <= 14) {
-				hjp[id-11] = (double) value;
+				hjp2[id-11] = (double) value1;
+				hjp1[id-11] = (double) value2;
 			} else {
-				printf("%s: Spurious asynchronous CAN message (ID=%d, PROPERTY=%d, VALUE=%ld)\n", __func__, id, property, value);
+				printf("%s: Spurious asynchronous CAN message (ID=%d, PROPERTY=%d, VALUE=%ld)\n", __func__, id, property, value1);
 			}
 		}
 

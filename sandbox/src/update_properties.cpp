@@ -90,7 +90,7 @@ int main() {
 	printf("Verifying changes...\n");
 	long reply;
 	for(int i = 1; i <= 7; i++) {
-		bt_bus_can_get_property(bus->dev, i, 28, &reply, 1);
+		bt_bus_can_get_property(bus->dev, i, 28, &reply, NULL, 1);
 		printf("ID%d: ", i);
 		if (reply == 4) {
 			printf("PASS\n");
@@ -99,7 +99,7 @@ int main() {
 		}
 	}
 	for(int i = 11; i <= 14; i++) {
-		bt_bus_can_get_property(bus->dev, i, 28, &reply, 1);
+		bt_bus_can_get_property(bus->dev, i, 28, &reply, NULL, 1);
 		printf("ID%d: ", i);
 		if (reply == 5) {
 			printf("PASS\n");

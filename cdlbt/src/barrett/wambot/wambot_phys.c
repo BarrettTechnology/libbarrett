@@ -225,7 +225,7 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
       /* Communicate with the bus */
       /* Zero the WAM */
       long reply;
-      bt_bus_can_get_property(wambot->bus->dev, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, &reply, 1);
+      bt_bus_can_get_property(wambot->bus->dev, BT_BUS_PUCK_ID_WAMSAFETY, wambot->bus->p->ZERO, &reply, NULL, 1);
       if(reply)
       {
          syslog(LOG_ERR, "WAM was already zeroed");
@@ -247,8 +247,8 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
             for (m=0; m<n; m++)
             {
                long cts;
-               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->MECH, &reply, 1);
-               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->CTS, &cts, 1);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->MECH, &reply, NULL, 1);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->CTS, &cts, NULL, 1);
                gsl_vector_set(cur_angle,m,2.0*M_PI*((double)reply)/((double)cts));
             }
             /* Calculate the error angle err_angle */
@@ -268,12 +268,12 @@ int bt_wambot_phys_create(struct bt_wambot_phys ** wambotptr,
             {
                /* If the ROLE does not have its 256 bit set, then it's not
                 * an absolute encoder; do no error compensation */
-               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->ROLE, &reply, 1);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->ROLE, &reply, NULL, 1);
                if (!(reply & 256)) gsl_vector_set(err_angle, m, 0.0);
                
                /* If the firmware version number is less than 118, then it's
                 * not exposing anything useful on MECH; do no error compensation */
-               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->VERS, &reply, 1);
+               bt_bus_can_get_property(wambot->bus->dev, m+1, wambot->bus->p->VERS, &reply, NULL, 1);
                if (reply < 118) gsl_vector_set(err_angle, m, 0.0);
                
                /* If the zeroangle value is out of range, then the calibration
