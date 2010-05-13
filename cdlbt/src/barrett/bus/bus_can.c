@@ -512,9 +512,9 @@ int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, lon
 //			} else if (ispacked) {
 //				syslog(LOG_ERR, "%s: Received an unexpected packed message.",__func__);
 //				return 2;
-			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
-				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
-				continue;
+//			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
+//				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
+//				continue;
 			} else {
 				return 0;
 			}
@@ -828,12 +828,14 @@ static int read_msg(struct bt_bus_can * dev, int * id, int * len,
 		// return normally
 		return 0;
 	} else {  // the message is an asynchronous response
-		// put this message in the asynchronous buffer...
-		int i = AB_NEXT_IDX(dev->abw_idx);
-		dev->async_buf[i].id = *id;
-		dev->async_buf[i].len = *len;
-		memcpy(dev->async_buf[i].data, data, *len);
-		dev->abw_idx = i;
+		if (*id != 0x540) {  // ignore broadcasts from the safety puck
+			// put this message in the asynchronous buffer...
+			int i = AB_NEXT_IDX(dev->abw_idx);
+			dev->async_buf[i].id = *id;
+			dev->async_buf[i].len = *len;
+			memcpy(dev->async_buf[i].data, data, *len);
+			dev->abw_idx = i;
+		}
 
 		// ...and try again for the synchronous position message
 		return read_msg(dev, id, len, data, blocking);
