@@ -172,7 +172,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
          {
             long fw_vers;
             /* Get the firmware version*/
-            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers, 1);
+            bt_bus_can_get_property(bus->dev, id, 0, &fw_vers, NULL, 1);
             bus->p = prop_defs_create(fw_vers);
             if (!bus->p)
             {
@@ -238,15 +238,15 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
             bt_bus_can_set_property(bus->dev, id, bus->p->MODE, MODE_IDLE);
             bt_os_usleep(200);
             /* Fill the puck structure */
-            bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply, 1);
+            bt_bus_can_get_property(bus->dev, id, bus->p->VERS, &reply, NULL, 1);
             puck->vers = reply;
-            bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply, 1);
+            bt_bus_can_get_property(bus->dev, id, bus->p->CTS, &reply, NULL, 1);
             puck->counts_per_rev = reply;
-            bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply, 1);
+            bt_bus_can_get_property(bus->dev, id, bus->p->IPNM, &reply, NULL, 1);
             puck->puckI_per_Nm = reply; /* Aah, this is a double! */
-            bt_bus_can_get_property(bus->dev, id, bus->p->PIDX, &reply, 1);
+            bt_bus_can_get_property(bus->dev, id, bus->p->PIDX, &reply, NULL, 1);
             puck->order = reply-1;
-            bt_bus_can_get_property(bus->dev, id, bus->p->GRPB, &reply, 1);
+            bt_bus_can_get_property(bus->dev, id, bus->p->GRPB, &reply, NULL, 1);
             puck->gid = reply;
             
             syslog(LOG_ERR,"Puck: ID=%d CTS=%d IPNM=%.2f PIDX=%d GRPB=%d",
@@ -412,7 +412,7 @@ int bt_bus_get_property(struct bt_bus * bus, int id, int property,
 {
    if (property > bus->p->PROP_END)
       return 1;
-   return bt_bus_can_get_property(bus->dev, id, property, reply, 0);
+   return bt_bus_can_get_property(bus->dev, id, property, reply, NULL, 0);
 }
 
 

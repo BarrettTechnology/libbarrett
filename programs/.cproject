@@ -25,8 +25,8 @@
 <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.980147625" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1766320843" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.1084243518" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/library/src"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/src"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1741543156" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -44,12 +44,12 @@
 <listOptionValue builtIn="false" value="cdlbt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.861885864" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/Debug"/>
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/Debug"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/library/Debug"/>
+<listOptionValue builtIn="false" value="/root/libbarrett/cdlbt/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.flags.1197494519" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
 <option id="gnu.cpp.link.option.other.1724153727" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath /home/robot/libbarrett/library/Debug"/>
+<listOptionValue builtIn="false" value="-rpath /root/libbarrett/library/Debug"/>
 <listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.330309320" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

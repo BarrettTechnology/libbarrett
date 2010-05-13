@@ -65,7 +65,7 @@ int main() {
 		case 'g':
 			cout << "\tProperty: ";
 			cin >> property;
-			bt_bus_can_get_property(bus->dev, id, property, &value, 1);
+			bt_bus_can_get_property(bus->dev, id, property, &value, NULL, 1);
 			printf("GET %d: %d = %ld\n", id, property, value);
 
 		default:

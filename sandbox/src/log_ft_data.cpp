@@ -140,7 +140,7 @@ void canThread() {
 		t_1 = t_0;
 
 		for (int i = 0; i < 6; ++i) {
-			bt_bus_can_async_read(bus->dev, &id, &property, &value, 1, 1);
+			bt_bus_can_async_read(bus->dev, &id, &property, &value, NULL, 1, 1);
 			boost::get<1>(t)[property-34] = value;
 		}
 		lw->putRecord(t);

@@ -7,4 +7,4 @@
 
 	
 #all: can_terminal cartesian_hold hand_feedback HAPI_haptics haptics high_level_wam log_ft_data log_velocity low_level_wam master_master move_to network_haptics teach update_properties zero_torque
-all: log_ft_data
+all: hand_feedback update_properties
