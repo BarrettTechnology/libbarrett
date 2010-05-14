@@ -33,7 +33,7 @@ using boost::bind;
 using boost::ref;
 
 
-const size_t DOF = 4;
+const size_t DOF = 7;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -46,9 +46,9 @@ void waitForEnter() {
 	std::getline(std::cin, line);
 }
 
-int main() {
+int main(int argc, char** argv) {
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
+	config.readFile("/etc/wam/wam7-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -65,33 +65,35 @@ int main() {
 	wam.gravityCompensate();
 
 	while (true) {
-		std::cout << "Enter to start teaching.\n";
-		waitForEnter();
-
 		typedef boost::tuple<double, jp_type> jp_sample_type;
 
 		systems::Ramp time;
-		systems::TupleGrouper<double, jp_type> jpLogTg;
-
-		// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
-		systems::PeriodicDataLogger<jp_sample_type> jpLogger(
-				new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
-				10);
-
 		time.setSamplePeriod(T_s);
 
-		connect(time.output, jpLogTg.getInput<0>());
-		connect(wam.jpOutput, jpLogTg.getInput<1>());
-		connect(jpLogTg.output, jpLogger.input);
+		if (argc == 1) {
+			std::cout << "Enter to start teaching.\n";
+			waitForEnter();
 
-		time.start();
+			systems::TupleGrouper<double, jp_type> jpLogTg;
+
+			// TODO(dc): use TriggeredDataLogger to take samples with a spatial period instead of a temporal period
+			systems::PeriodicDataLogger<jp_sample_type> jpLogger(
+					new barrett::log::RealTimeWriter<jp_sample_type>("/tmp/test.bin", T_s),
+					10);
+
+			connect(time.output, jpLogTg.getInput<0>());
+			connect(wam.jpOutput, jpLogTg.getInput<1>());
+			connect(jpLogTg.output, jpLogger.input);
+
+			time.start();
 
 
-		std::cout << "Enter to stop teaching.\n";
-		waitForEnter();
+			std::cout << "Enter to stop teaching.\n";
+			waitForEnter();
 
-		jpLogger.closeLog();
-		disconnect(jpLogger.input);
+			jpLogger.closeLog();
+			disconnect(jpLogger.input);
+		}
 
 		// build spline between recorded points
 		barrett::log::Reader<jp_sample_type> lr("/tmp/test.bin");
@@ -122,15 +124,15 @@ int main() {
 
 			time.start();
 
-//			while (trajectory.input.getValue() < spline.finalX()) {
-//				usleep(100000);
-//			}
-
-			std::string line;
-			std::cin >> line;
-			if (line[0] == 'x') {
-				repeat = false;
+			while (trajectory.input.getValue() < spline.finalX()) {
+				usleep(10000);
 			}
+
+//			std::string line;
+//			std::cin >> line;
+//			if (line[0] == 'x') {
+//				repeat = false;
+//			}
 		}
 
 		std::cout << "Enter to repeat, 'x' Enter to teach again.\n";
