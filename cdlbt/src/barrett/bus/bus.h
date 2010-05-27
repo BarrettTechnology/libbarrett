@@ -97,7 +97,8 @@ enum bt_control_modes
 /** Static IDs for particular types of Puck */
 enum bt_bus_puck_id
 {
-   BT_BUS_PUCK_ID_WAMSAFETY = 10
+   BT_BUS_PUCK_ID_WAMSAFETY = 10,
+   BT_BUS_PUCK_ID_FT = 8
 };
 
 

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 
 #include <sys/mman.h>
 #include <signal.h>
@@ -46,11 +47,14 @@ void canThread();
 
 using namespace barrett;
 
-const double T_s = 0.002;
+double T_s = 0.002;
 const int ID = 8;
 const RTIME FLIGHT_TIME = 75000;
 
 bool going = true;
+bool fileMode = false;
+int windowSize, numSamples, numSets = 0;
+math::Vector<6>::type sum;
 struct bt_bus* bus;
 
 typedef boost::tuple<double, math::Vector<6>::type> tuple_type;
@@ -58,11 +62,30 @@ log::RealTimeWriter<tuple_type>* lw;
 
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
-		printf("Usage: %s <fileName>\n", argv[0]);
+	char* outFile = NULL;
+
+	if (argc == 4) {
+		T_s = std::atof(argv[3]);
+	} else if (argc != 3) {
+		printf("Usage: %s {-f <fileName> | -a <windowSize>} [<samplePeriodInSeconds>]\n", argv[0]);
+		printf("    -f <fileName>    Log data to a file\n");
+		printf("    -a <windowSize>  Print statistics on segments of data\n");
 		return 0;
 	}
-	char* outFile = argv[1];
+
+	printf("Sample period: %fs\n", T_s);
+	if (strcmp(argv[1], "-f") == 0) {
+		fileMode = true;
+		outFile = argv[2];
+		printf("Output file: %s\n", outFile);
+	} else if (strcmp(argv[1], "-a") == 0) {
+		fileMode = false;
+		windowSize = atoi(argv[2]);
+		numSamples = windowSize;
+		printf("Window size: %d\n", windowSize);
+	}
+	printf("\n");
+
 
 	mlockall(MCL_CURRENT|MCL_FUTURE);
 	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
@@ -75,30 +98,46 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	printf(">>> Press [Enter] to start collecting data.\n");
-	waitForEnter();
+	if (fileMode) {
+		printf(">>> Press [Enter] to start collecting data.\n");
+		waitForEnter();
 
-//	char tmpFile[] = "blah.bin";
-	char tmpFile[L_tmpnam];
-	if (std::tmpnam(tmpFile) == NULL) {
-		printf("Couldn't create temporary file!\n");
-		return 1;
+		char tmpFile[L_tmpnam];
+		if (std::tmpnam(tmpFile) == NULL) {
+			printf("Couldn't create temporary file!\n");
+			return 1;
+		}
+		lw = new log::RealTimeWriter<tuple_type>(tmpFile, T_s);
+		boost::thread t(canThread);
+
+
+		printf(">>> Press [Enter] to stop collecting data.\n");
+		waitForEnter();
+
+		going = false;
+		t.join();
+		delete lw;
+
+		log::Reader<tuple_type> lr(tmpFile);
+		lr.exportCSV(outFile);
+
+		std::remove(tmpFile);
+	} else {
+		boost::thread t(canThread);
+
+		printf(">>> Press [Enter] to start a sample.\n");
+		while (true) {
+			waitForEnter();
+			numSamples = 0;
+			while (numSamples != windowSize) {
+				usleep(100000);
+			}
+
+			sum /= windowSize;
+			printf("%d,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
+		}
 	}
-	lw = new log::RealTimeWriter<tuple_type>(tmpFile, T_s);
-	boost::thread t(canThread);
 
-
-	printf(">>> Press [Enter] to stop collecting data.\n");
-	waitForEnter();
-
-	going = false;
-	t.join();
-	delete lw;
-
-	log::Reader<tuple_type> lr(tmpFile);
-	lr.exportCSV(outFile);
-
-	std::remove(tmpFile);
 	return 0;
 }
 
@@ -114,11 +153,6 @@ void canThread() {
 
 	RTIME t_0 = rt_timer_read();
 	RTIME t_1 = t_0;
-
-//	while (going) {
-//		bt_bus_can_async_get_property(bus->dev, ID, 35);
-//		rt_task_wait_period(NULL);
-//	}
 
 	while (going) {
 		bt_bus_can_async_get_property(bus->dev, ID, 34);
@@ -143,7 +177,18 @@ void canThread() {
 			bt_bus_can_async_read(bus->dev, &id, &property, &value, NULL, 1, 1);
 			boost::get<1>(t)[property-34] = value;
 		}
-		lw->putRecord(t);
+
+		if (fileMode) {
+			lw->putRecord(t);
+		} else {
+			if (numSamples == 0) {
+				sum.setConstant(0.0);
+			}
+			if (numSamples < windowSize) {
+				sum += boost::get<1>(t);
+				++numSamples;
+			}
+		}
 	}
 
 	rt_task_set_mode(T_WARNSW, 0, NULL);
