@@ -1,0 +1,5 @@
+#include <afxres.h>
+#include "windows-resources.h"
+
+IDI_LOGO32 ICON DISCARDABLE "windows-logo-32.ico"
+IDI_LOGO16 ICON DISCARDABLE "windows-logo-16.ico"
