@@ -1,0 +1,11 @@
+README for wamdiscover client
+
+This client has a windows GUI version (wamdiscover.exe)
+and a linux command-line version (wamdiscover).
+By default, make will compile both versions.
+
+To build the windows version (wamdiscover.exe) from linux,
+you must have mingw installed.  From ubuntu:
+
+$ sudo apt-get install mingw32
+
