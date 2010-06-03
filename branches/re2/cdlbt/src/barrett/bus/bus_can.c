@@ -444,6 +444,11 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
       int property_in;
       long status_in;
       
+      // don't iterate over the force-torque sensor
+      if (id == BT_BUS_PUCK_ID_FT) {
+    	  continue;
+      }
+
       /* Compile the packet*/
       data[0] = 5; /* STAT = 5 */
       
@@ -954,6 +959,27 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
    (*id) = BT_BUS_CAN_ADDR2NODE(msgid);
    if ((*id) == -1)
       syslog(LOG_ERR,"msgID:%x ",msgid);
+
+
+   if ( (msgid & 0x041F) == 0x0408 ) {  // tactile feedback
+	   *property = 106;
+	   *ispacked = 1;
+
+	   *value1 = 0;
+	   *value1 |= ( (long)message_data[0] << 24) & 0xFF000000;
+	   *value1 |= ( (long)message_data[1] << 16) & 0x00FF0000;
+	   *value1 |= ( (long)message_data[2] << 8 ) & 0x0000FF00;
+	   *value1 |= ( (long)message_data[3] ) & 0x000000FF;
+
+	   *value2 = 0;
+	   *value2 |= ( (long)message_data[4] << 24) & 0xFF000000;
+	   *value2 |= ( (long)message_data[5] << 16) & 0x00FF0000;
+	   *value2 |= ( (long)message_data[6] << 8 ) & 0x0000FF00;
+	   *value2 |= ( (long)message_data[7] ) & 0x000000FF;
+
+	   return 0;
+   }
+
    dataHeader = ((message_data[0] >> 6) & 0x0002) | ((msgid & 0x041F) == 0x0403) | ((msgid & 0x041F) == 0x0407);
    /*message_data[0] &= 0x7F;*/
    /*syslog(LOG_ERR,"Entering parsemessage");*/
