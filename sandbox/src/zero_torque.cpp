@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include <libconfig.h++>
+
 #include <barrett/systems.h>
 #include <barrett/wam.h>
 
