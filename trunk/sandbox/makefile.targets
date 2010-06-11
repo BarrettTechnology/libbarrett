@@ -6,5 +6,5 @@
 	@echo ' '
 
 	
-#all: can_terminal cartesian_hold hand_feedback HAPI_haptics haptics high_level_wam log_ft_data log_velocity low_level_wam master_master move_to network_haptics read_safety_state teach update_properties zero_torque
-all: master_master hand_feedback read_safety_state update_properties
+#all: can_terminal cartesian_hold friction_data hand_feedback HAPI_haptics haptics high_level_wam log_ft_data log_velocity low_level_wam master_master move_to network_haptics read_safety_state teach update_properties zero_torque
+all: can_terminal hand_feedback haptics update_properties

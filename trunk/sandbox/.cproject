@@ -72,7 +72,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="log_ft_data.cpp|master_master.h|master_master.cpp|can_terminal.cpp|haptics.cpp|zero_torque.cpp|log_velocity.cpp|move_to.cpp|teach.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="friction_data.cpp|read_safety_state.cpp|master_master.cpp|log_ft_data.cpp|teach.cpp|master_master.h|zero_torque.cpp|log_velocity.cpp|move_to.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
