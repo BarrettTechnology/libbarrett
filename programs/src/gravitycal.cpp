@@ -264,7 +264,6 @@ int main()
 
 	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
 
-	rtem.start();
 
 
    n = DOF;
@@ -333,6 +332,8 @@ int main()
    /* Set the WAM callback */
    mu_n = NUM_POINTS; /* So we're presently not collecting data */
 //   bt_wam_local_set_callback(wam_local, &mu_callback);
+	rtem.start();
+
 
    /* Allocate some vectors */
    angle_diff = gsl_vector_alloc(n);
