@@ -106,13 +106,11 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	supervisoryController.registerConversion(makeIOConversion(
 			jpController.referenceInput, jpController.controlOutput));
 
-	// TODO(dc): change to a FirstOrderFilterController
+	// TODO(dc): combine into single controller
 	connect(jvOutput, jvController1.feedbackInput);
 	connect(jvController1.controlOutput, jvController2.input);
 	supervisoryController.registerConversion(makeIOConversion(
 			jvController1.referenceInput, jvController2.output));
-//	corners << 180, 180, 56, 56, 10, 30, 3;
-//	jvController2.setLowPass(corners);
 
 	connect(toolPosition.output, tpController.feedbackInput);
 	connect(tpController.controlOutput, tf2jt.input);
