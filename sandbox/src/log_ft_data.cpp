@@ -49,13 +49,14 @@ using namespace barrett;
 
 double T_s = 0.002;
 const int ID = 8;
+const int CAN_PORT = 1;
 const RTIME FLIGHT_TIME = 75000;
 
 bool going = true;
 bool fileMode = false;
 int windowSize, numSamples, numSets = 0;
 math::Vector<6>::type sum;
-struct bt_bus* bus;
+struct bt_bus_can* dev = NULL;
 
 typedef boost::tuple<double, math::Vector<6>::type> tuple_type;
 log::RealTimeWriter<tuple_type>* lw;
@@ -90,12 +91,9 @@ int main(int argc, char** argv) {
 	mlockall(MCL_CURRENT|MCL_FUTURE);
 	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 
-	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
-
-	if (bt_bus_create(&bus, config.lookup("wam.low_level.bus").getCSetting(), bt_bus_UPDATE_POS_DIFF)) {
-		printf("Couldn't create bus.\n");
-		return 1;
+	if (bt_bus_can_create(&dev, CAN_PORT)) {
+		printf("Couldn't open the CAN bus on port %d.\n", CAN_PORT);
+		return -1;
 	}
 
 	if (fileMode) {
@@ -155,17 +153,17 @@ void canThread() {
 	RTIME t_1 = t_0;
 
 	while (going) {
-		bt_bus_can_async_get_property(bus->dev, ID, 34);
+		bt_bus_can_async_get_property(dev, ID, 34);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(bus->dev, ID, 35);
+		bt_bus_can_async_get_property(dev, ID, 35);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(bus->dev, ID, 36);
+		bt_bus_can_async_get_property(dev, ID, 36);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(bus->dev, ID, 37);
+		bt_bus_can_async_get_property(dev, ID, 37);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(bus->dev, ID, 38);
+		bt_bus_can_async_get_property(dev, ID, 38);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(bus->dev, ID, 39);
+		bt_bus_can_async_get_property(dev, ID, 39);
 
 		rt_task_wait_period(NULL);
 
@@ -174,7 +172,7 @@ void canThread() {
 		t_1 = t_0;
 
 		for (int i = 0; i < 6; ++i) {
-			bt_bus_can_async_read(bus->dev, &id, &property, &value, NULL, 1, 1);
+			bt_bus_can_async_read(dev, &id, &property, &value, NULL, 1, 1);
 			boost::get<1>(t)[property-34] = value;
 		}
 
