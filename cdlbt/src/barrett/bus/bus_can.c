@@ -961,7 +961,7 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
       syslog(LOG_ERR,"msgID:%x ",msgid);
 
 
-   if ( (msgid & 0x041F) == 0x0408 ) {  // tactile feedback
+   if ( (msgid & 0x041F) == 0x0408  ||  (msgid & 0x041F) == 0x0409 ) {  // tactile feedback
 	   *property = 106;
 	   *ispacked = 1;
 
