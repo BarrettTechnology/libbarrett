@@ -650,9 +650,14 @@ int bt_os_timestat_get(struct bt_os_timestat * ts,
    int i;
    for (i=0; i<ts->numchans; i++)
    {
-      means[i] = ts->sums[i] / ts->numsamps;
-      variances[i] = (ts->sumsqs[i] / ts->numsamps)
-                          - (means[i] * means[i]);
+      if (ts->numsamps != 0) {
+         means[i] = ts->sums[i] / ts->numsamps;
+         variances[i] = (ts->sumsqs[i] / ts->numsamps)
+                         - (means[i] * means[i]);
+      } else {
+         means[i] = 0;
+         variances[i] = 0;
+      }
       mins[i] = ts->mins[i];
       maxs[i] = ts->maxs[i];
    }
