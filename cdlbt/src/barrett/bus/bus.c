@@ -275,8 +275,10 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
                 || !(bus->group[puck->gid]) )
             {
                struct bt_bus_group * group;
+
+               /* Allocate new group, initialize puck array to NULL */
                group = (struct bt_bus_group *)
-                  malloc(sizeof(struct bt_bus_group));
+                  calloc(1, sizeof(struct bt_bus_group));
                if (!group)
                {
                   syslog(LOG_ERR,"%s: Out of memory.",__func__);
