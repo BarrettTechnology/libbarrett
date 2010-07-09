@@ -51,15 +51,16 @@ double T_s = 0.002;
 const int ID = 8;
 const int CAN_PORT = 1;
 const RTIME FLIGHT_TIME = 75000;
+const int NUM_SENSORS = 9;  // 6 strain gauges, 3 thermistors
 
 bool going = true;
 bool fileMode = false;
 int windowSize, numSamples, numSets = 0;
-math::Vector<6>::type sum;
+math::Vector<NUM_SENSORS>::type sum;
 struct bt_bus_can* dev = NULL;
 
-typedef boost::tuple<double, math::Vector<6>::type> tuple_type;
-log::RealTimeWriter<tuple_type>* lw;
+typedef boost::tuple<double, math::Vector<NUM_SENSORS>::type> tuple_type;
+barrett::log::RealTimeWriter<tuple_type>* lw;
 
 
 int main(int argc, char** argv) {
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 			printf("Couldn't create temporary file!\n");
 			return 1;
 		}
-		lw = new log::RealTimeWriter<tuple_type>(tmpFile, T_s);
+		lw = new barrett::log::RealTimeWriter<tuple_type>(tmpFile, T_s);
 		boost::thread t(canThread);
 
 
@@ -116,7 +117,7 @@ int main(int argc, char** argv) {
 		t.join();
 		delete lw;
 
-		log::Reader<tuple_type> lr(tmpFile);
+		barrett::log::Reader<tuple_type> lr(tmpFile);
 		lr.exportCSV(outFile);
 
 		std::remove(tmpFile);
@@ -124,6 +125,8 @@ int main(int argc, char** argv) {
 		boost::thread t(canThread);
 
 		printf(">>> Press [Enter] to start a sample.\n");
+		printf("ID,SG1,SG2,SG3,SG4,SG5,SG6,T1,T2,T3\n");
+
 		while (true) {
 			waitForEnter();
 			numSamples = 0;
@@ -132,7 +135,7 @@ int main(int argc, char** argv) {
 			}
 
 			sum /= windowSize;
-			printf("%d,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
+			printf("%d,%f,%f,%f,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], sum[7], sum[8]);
 		}
 	}
 
@@ -153,6 +156,7 @@ void canThread() {
 	RTIME t_1 = t_0;
 
 	while (going) {
+		// strain gruages
 		bt_bus_can_async_get_property(dev, ID, 34);
 		rt_timer_spin(FLIGHT_TIME);
 		bt_bus_can_async_get_property(dev, ID, 35);
@@ -165,15 +169,28 @@ void canThread() {
 		rt_timer_spin(FLIGHT_TIME);
 		bt_bus_can_async_get_property(dev, ID, 39);
 
+		// temp sensors
+		rt_timer_spin(FLIGHT_TIME);
+		bt_bus_can_async_get_property(dev, ID, 40);
+		rt_timer_spin(FLIGHT_TIME);
+		bt_bus_can_async_get_property(dev, ID, 41);
+		rt_timer_spin(FLIGHT_TIME);
+		bt_bus_can_async_get_property(dev, ID, 9);
+
 		rt_task_wait_period(NULL);
 
 		t_0 = rt_timer_read();
 		boost::get<0>(t) = ((double) t_0 - t_1) * 1e-9;
 		t_1 = t_0;
 
-		for (int i = 0; i < 6; ++i) {
+		for (int i = 0; i < NUM_SENSORS; ++i) {
 			bt_bus_can_async_read(dev, &id, &property, &value, NULL, 1, 1);
-			boost::get<1>(t)[property-34] = value;
+
+			if (property == 9) {
+				boost::get<1>(t)[8] = value;
+			} else {
+				boost::get<1>(t)[property-34] = value;
+			}
 		}
 
 		if (fileMode) {

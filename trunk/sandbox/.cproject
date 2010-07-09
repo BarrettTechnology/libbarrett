@@ -35,6 +35,7 @@
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 </option>
+<option id="gnu.cpp.compiler.option.debugging.gprof.326968307" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1271554429" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1019155101" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -60,6 +61,7 @@
 </option>
 <option defaultValue="true" id="gnu.cpp.link.option.shared.1367050556" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
 <option id="gnu.cpp.link.option.flags.619570531" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
+<option id="gnu.cpp.link.option.debugging.gprof.1602935662" name="Generate gprof information (-pg)" superClass="gnu.cpp.link.option.debugging.gprof" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.99632616" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -72,7 +74,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="tactile_test.cpp|update_properties.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|read_safety_state.cpp|master_master.cpp|teach.cpp|master_master.h|zero_torque.cpp|log_velocity.cpp|move_to.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="hand_feedback.cpp|zero_torque.cpp|master_master.h|master_master.cpp|update_properties.cpp|haptics.cpp|tactile_test.cpp|friction_data.cpp|read_safety_state.cpp|teach.cpp|log_velocity.cpp|move_to.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
