@@ -25,7 +25,7 @@ using namespace barrett;
 const int HAND_MOVE_TIME = 1;  // seconds
 const size_t DOF = 4;
 const double T_s = 0.002;
-const int ID = 8;
+const int ID = BT_BUS_PUCK_ID_FT;
 const RTIME FLIGHT_TIME = 75000;
 const int NUM_SENSORS = 6;  // 6 strain gauges, 3 thermistors
 struct bt_bus_can* dev = NULL;
