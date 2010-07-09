@@ -48,9 +48,10 @@ void canThread();
 using namespace barrett;
 
 double T_s = 0.002;
-const int ID = 8;
+const int ID = BT_BUS_PUCK_ID_FT;
 const int CAN_PORT = 1;
 const RTIME FLIGHT_TIME = 75000;
+const int MIN_FW_VERS = 100;  // bogus value, but at least it rules out monitor
 const int NUM_SENSORS = 9;  // 6 strain gauges, 3 thermistors
 
 bool going = true;
@@ -144,11 +145,29 @@ int main(int argc, char** argv) {
 
 
 void canThread() {
+	struct bt_bus_properties* plist;
 	int id, property;
 	long value;
 	tuple_type t;
 
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
+
+	// init sensor
+	bt_bus_can_set_property(dev, ID, 5, 2);
+	usleep(1000000);
+
+	bt_bus_can_get_property(dev, ID, 0, &value, NULL, 1);  // get VERS
+	if (value < MIN_FW_VERS) {
+		printf("The F/T Sensor does not have recent firmware. (Actual version = %ld. Required version >= %d.)\n", value, MIN_FW_VERS);
+		exit(-1);
+	}
+	if (bt_bus_properties_create(&plist, value)) {
+		printf("Couldn't create property list.\n");
+		exit(-1);
+	}
+
+
+	// collect data
 	rt_task_set_mode(0, T_PRIMARY | T_WARNSW, NULL);
 	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(T_s));
 
@@ -156,26 +175,26 @@ void canThread() {
 	RTIME t_1 = t_0;
 
 	while (going) {
-		// strain gruages
-		bt_bus_can_async_get_property(dev, ID, 34);
+		// strain gauges
+		bt_bus_can_async_get_property(dev, ID, plist->SG1);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 35);
+		bt_bus_can_async_get_property(dev, ID, plist->SG2);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 36);
+		bt_bus_can_async_get_property(dev, ID, plist->SG3);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 37);
+		bt_bus_can_async_get_property(dev, ID, plist->SG4);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 38);
+		bt_bus_can_async_get_property(dev, ID, plist->SG5);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 39);
+		bt_bus_can_async_get_property(dev, ID, plist->SG6);
 
 		// temp sensors
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 40);
+		bt_bus_can_async_get_property(dev, ID, plist->T1);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 41);
+		bt_bus_can_async_get_property(dev, ID, plist->T2);
 		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 9);
+		bt_bus_can_async_get_property(dev, ID, plist->T3);
 
 		rt_task_wait_period(NULL);
 
@@ -186,10 +205,10 @@ void canThread() {
 		for (int i = 0; i < NUM_SENSORS; ++i) {
 			bt_bus_can_async_read(dev, &id, &property, &value, NULL, 1, 1);
 
-			if (property == 9) {
-				boost::get<1>(t)[8] = value;
+			if (property >= plist->SG1  &&  property <= plist->SG6) {
+				boost::get<1>(t)[property - plist->SG1] = value;
 			} else {
-				boost::get<1>(t)[property-34] = value;
+				boost::get<1>(t)[property - plist->T1 + 6] = value;
 			}
 		}
 
@@ -207,4 +226,6 @@ void canThread() {
 	}
 
 	rt_task_set_mode(T_WARNSW, 0, NULL);
+
+	bt_bus_properties_destroy(plist);
 }
