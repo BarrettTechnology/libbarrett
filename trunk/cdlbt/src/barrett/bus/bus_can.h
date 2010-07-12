@@ -140,10 +140,10 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
 /** Retrieve an asynchronous CAN message from the buffer. Be sure to lock
  *  dev->asynch_mutex around any request-reply sequence of messages.
  *
- *  value2 can be NULL
+ *  value2  and data can be NULL
  */
 int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property,
-                          long * value1, long * value2, int blocking, int manual_update);
+                          long * value1, long * value2, unsigned char* data, int blocking, int manual_update);
 
 
 /** Sends the request for a property, but doesn't wait for the response.

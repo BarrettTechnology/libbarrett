@@ -459,7 +459,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
       bt_os_usleep(1000);
       
       /* Try to get 1 reply (non-blocking read)*/
-	 ret = bt_bus_can_async_read(dev, &id_in, &property_in, &status_in, NULL, 0, 1);
+	 ret = bt_bus_can_async_read(dev, &id_in, &property_in, &status_in, NULL, NULL, 0, 1);
 	 if (ret) {
 		// most likely we didn't receive a reply because the puck doesn't exist
 		if (ret != 3) {
@@ -482,7 +482,7 @@ int bt_bus_can_iterate_next(struct bt_bus_can * dev, int * nextid,
    return 0;
 }
 
-int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, long * value1, long * value2, int blocking, int manual_update)
+int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, long * value1, long * value2, unsigned char* data, int blocking, int manual_update)
 {
 	while (1) {
 		if (manual_update) {
@@ -503,25 +503,32 @@ int bt_bus_can_async_read(struct bt_bus_can * dev, int * id, int * property, lon
 				return 3;
 			}
 		} else {
-			int err, ispacked;
-
 			dev->abr_idx = AB_NEXT_IDX(dev->abr_idx);
-			err = parse_msg(
-					dev->async_buf[dev->abr_idx].id,
-					dev->async_buf[dev->abr_idx].len,
-					dev->async_buf[dev->abr_idx].data,
-					id, property, &ispacked, value1, value2);
-
-			if (err) {
-				return err;
-//			} else if (ispacked) {
-//				syslog(LOG_ERR, "%s: Received an unexpected packed message.",__func__);
-//				return 2;
-//			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
-//				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
-//				continue;
+			if (data != NULL) {
+				*id = dev->async_buf[dev->abr_idx].id;
+				*value1 = dev->async_buf[dev->abr_idx].len;
+				memcpy(data, dev->async_buf[dev->abr_idx].data, (*value1) * sizeof(unsigned char));
+				 return 0;
 			} else {
-				return 0;
+				int err, ispacked;
+
+				err = parse_msg(
+						dev->async_buf[dev->abr_idx].id,
+						dev->async_buf[dev->abr_idx].len,
+						dev->async_buf[dev->abr_idx].data,
+						id, property, &ispacked, value1, value2);
+
+				if (err) {
+					return err;
+	//			} else if (ispacked) {
+	//				syslog(LOG_ERR, "%s: Received an unexpected packed message.",__func__);
+	//				return 2;
+	//			} else if (*id == BT_BUS_PUCK_ID_WAMSAFETY  &&  *property == 8) {
+	//				// this is a Shift-Activate (*value == 2) or Shift-Idle (*value == 0) message
+	//				continue;
+				} else {
+					return 0;
+				}
 			}
 		}
 	}
@@ -565,7 +572,7 @@ int bt_bus_can_get_property(struct bt_bus_can * dev, int id, int property,
    }
 
    /* Wait for 1 reply*/
-   err = bt_bus_can_async_read(dev, &id_in, &property_in, reply1, reply2, 1, manual_update);
+   err = bt_bus_can_async_read(dev, &id_in, &property_in, reply1, reply2, NULL, 1, manual_update);
    bt_os_mutex_unlock(dev->async_mutex);
    
    if (err)
