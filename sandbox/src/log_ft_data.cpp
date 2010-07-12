@@ -52,7 +52,8 @@ const int ID = BT_BUS_PUCK_ID_FT;
 const int CAN_PORT = 1;
 const RTIME FLIGHT_TIME = 75000;
 const int MIN_FW_VERS = 100;  // bogus value, but at least it rules out monitor
-const int NUM_SENSORS = 9;  // 6 strain gauges, 3 thermistors
+const int NUM_SENSORS = 6;  // 6 strain gauges, 3 thermistors
+const int NUM_MESSAGES = 2;  // 2 from strain gauges, 3 from the thermistors
 
 bool going = true;
 bool fileMode = false;
@@ -126,7 +127,8 @@ int main(int argc, char** argv) {
 		boost::thread t(canThread);
 
 		printf(">>> Press [Enter] to start a sample.\n");
-		printf("ID,SG1,SG2,SG3,SG4,SG5,SG6,T1,T2,T3\n");
+//		printf("ID,SG1,SG2,SG3,SG4,SG5,SG6,T1,T2,T3\n");
+		printf("ID,SG1,SG2,SG3,SG4,SG5,SG6\n");
 
 		while (true) {
 			waitForEnter();
@@ -136,18 +138,29 @@ int main(int argc, char** argv) {
 			}
 
 			sum /= windowSize;
-			printf("%d,%f,%f,%f,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], sum[7], sum[8]);
+//			printf("%d,%f,%f,%f,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], sum[7], sum[8]);
+			printf("%d,%f,%f,%f,%f,%f,%f", ++numSets, sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
 		}
 	}
 
 	return 0;
 }
 
+int twoByte2int(unsigned char lsb, unsigned char msb) {
+	int res = ((int)msb << 8)  |  lsb;
+
+	if (res & 0x00008000) {
+		res |= 0xffff0000;
+	}
+
+	return res;
+}
 
 void canThread() {
 	struct bt_bus_properties* plist;
 	int id, property;
 	long value;
+	unsigned char data[8];
 	tuple_type t;
 
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
@@ -166,6 +179,8 @@ void canThread() {
 		exit(-1);
 	}
 
+	bt_bus_can_set_property(dev, ID, plist->FT, 0);  // tarre
+
 
 	// collect data
 	rt_task_set_mode(0, T_PRIMARY | T_WARNSW, NULL);
@@ -176,25 +191,15 @@ void canThread() {
 
 	while (going) {
 		// strain gauges
-		bt_bus_can_async_get_property(dev, ID, plist->SG1);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG2);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG3);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG4);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG5);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG6);
+		bt_bus_can_async_get_property(dev, ID, plist->FT);
 
-		// temp sensors
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T1);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T2);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T3);
+//		// temp sensors
+//		rt_timer_spin(FLIGHT_TIME);
+//		bt_bus_can_async_get_property(dev, ID, plist->T1);
+//		rt_timer_spin(FLIGHT_TIME);
+//		bt_bus_can_async_get_property(dev, ID, plist->T2);
+//		rt_timer_spin(FLIGHT_TIME);
+//		bt_bus_can_async_get_property(dev, ID, plist->T3);
 
 		rt_task_wait_period(NULL);
 
@@ -202,14 +207,26 @@ void canThread() {
 		boost::get<0>(t) = ((double) t_0 - t_1) * 1e-9;
 		t_1 = t_0;
 
-		for (int i = 0; i < NUM_SENSORS; ++i) {
-			bt_bus_can_async_read(dev, &id, &property, &value, NULL, 1, 1);
+		for (int i = 0; i < NUM_MESSAGES; ++i) {
+			bt_bus_can_async_read(dev, &id, NULL, &value, NULL, data, 1, 1);
 
-			if (property >= plist->SG1  &&  property <= plist->SG6) {
-				boost::get<1>(t)[property - plist->SG1] = value;
-			} else {
-				boost::get<1>(t)[property - plist->T1 + 6] = value;
+//			printf("%x (%ld): %x %x %x %x %x %x\n", id, value, data[0], data[1], data[2], data[3], data[4], data[5]);
+			if ((id & 0x041F) == 0x040a) {
+				boost::get<1>(t)[0] = twoByte2int(data[0], data[1]);
+				boost::get<1>(t)[1] = twoByte2int(data[2], data[3]);
+				boost::get<1>(t)[2] = twoByte2int(data[4], data[5]);
 			}
+			if ((id & 0x041F) == 0x040b) {
+				boost::get<1>(t)[3] = twoByte2int(data[0], data[1]);
+				boost::get<1>(t)[4] = twoByte2int(data[2], data[3]);
+				boost::get<1>(t)[5] = twoByte2int(data[4], data[5]);
+			}
+
+//			if (property >= plist->SG1  &&  property <= plist->SG6) {
+//				boost::get<1>(t)[property - plist->SG1] = value;
+//			} else {
+//				boost::get<1>(t)[property - plist->T1 + 6] = value;
+//			}
 		}
 
 		if (fileMode) {
