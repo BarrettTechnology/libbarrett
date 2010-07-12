@@ -27,11 +27,12 @@ const size_t DOF = 4;
 const double T_s = 0.002;
 const int ID = BT_BUS_PUCK_ID_FT;
 const RTIME FLIGHT_TIME = 75000;
-const int NUM_SENSORS = 6;  // 6 strain gauges, 3 thermistors
+const int MIN_FW_VERS = 100;  // bogus value, but at least it rules out monitor
+const int NUM_SENSORS = 6;  // FX, FY, FZ, TX, TY, TZ
+const int NUM_MESSAGES = 2;  // F/T readings are packed into 2 messages
 struct bt_bus_can* dev = NULL;
 
 bool going = true;
-math::Vector<NUM_SENSORS>::type sum;
 
 typedef boost::tuple<double, math::Vector<NUM_SENSORS>::type> tuple_type;
 barrett::log::RealTimeWriter<tuple_type>* lw;
@@ -114,53 +115,66 @@ int main() {
 }
 
 
+int twoByte2int(unsigned char lsb, unsigned char msb) {
+	int res = ((int)msb << 8)  |  lsb;
+
+	if (res & 0x00008000) {
+		res |= 0xffff0000;
+	}
+
+	return res;
+}
+
 void ftThread() {
-	int id, property;
+	struct bt_bus_properties* plist;
+	int id;
 	long value;
+	unsigned char data[8];
 	tuple_type t;
 
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
-//	rt_task_set_mode(0, T_PRIMARY | T_WARNSW, NULL);
-//	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(T_s));
+
+	// init sensor
+	bt_bus_can_set_property(dev, ID, 5, 2);
+	usleep(1000000);
+
+	bt_bus_can_get_property(dev, ID, 0, &value, NULL, 1);  // get VERS
+	if (value < MIN_FW_VERS) {
+		printf("The F/T Sensor does not have recent firmware. (Actual version = %ld. Required version >= %d.)\n", value, MIN_FW_VERS);
+		exit(-1);
+	}
+	if (bt_bus_properties_create(&plist, value)) {
+		printf("Couldn't create property list.\n");
+		exit(-1);
+	}
+
+	bt_bus_can_set_property(dev, ID, plist->FT, 0);  // tarre (do this whenever necessary)
+
 
 	RTIME t_0 = rt_timer_read();
 	RTIME t_1 = t_0;
 
 	while (going) {
 		// strain gruages
-		bt_bus_can_async_get_property(dev, ID, 34);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 35);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 36);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 37);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 38);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, 39);
-
-		// temp sensors
-//		rt_timer_spin(FLIGHT_TIME);
-//		bt_bus_can_async_get_property(dev, ID, 40);
-//		rt_timer_spin(FLIGHT_TIME);
-//		bt_bus_can_async_get_property(dev, ID, 41);
-//		rt_timer_spin(FLIGHT_TIME);
-//		bt_bus_can_async_get_property(dev, ID, 9);
-
-//		rt_task_wait_period(NULL);
+		bt_bus_can_async_get_property(dev, ID, plist->FT);
 
 		t_0 = rt_timer_read();
 		boost::get<0>(t) = ((double) t_0 - t_1) * 1e-9;
 		t_1 = t_0;
 
-		for (int i = 0; i < NUM_SENSORS; ++i) {
-			bt_bus_can_async_read(dev, &id, &property, &value, NULL, 1, 0);
+		for (int i = 0; i < NUM_MESSAGES; ++i) {
+			bt_bus_can_async_read(dev, &id, NULL, &value, NULL, data, 1, 0);
 
-			if (property == 9) {
-				boost::get<1>(t)[8] = value;
+			if ((id & 0x041F) == 0x040a) {
+				boost::get<1>(t)[0] = twoByte2int(data[0], data[1]);
+				boost::get<1>(t)[1] = twoByte2int(data[2], data[3]);
+				boost::get<1>(t)[2] = twoByte2int(data[4], data[5]);
+			} else if ((id & 0x041F) == 0x040b) {
+				boost::get<1>(t)[3] = twoByte2int(data[0], data[1]);
+				boost::get<1>(t)[4] = twoByte2int(data[2], data[3]);
+				boost::get<1>(t)[5] = twoByte2int(data[4], data[5]);
 			} else {
-				boost::get<1>(t)[property-34] = value;
+				printf("Unexpected CAN message!\n");
 			}
 		}
 
@@ -168,6 +182,7 @@ void ftThread() {
 	}
 
 	rt_task_set_mode(T_WARNSW, 0, NULL);
+	bt_bus_properties_destroy(plist);
 }
 
 void handControl() {
