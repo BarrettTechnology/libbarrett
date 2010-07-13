@@ -284,6 +284,13 @@ int bt_bus_get_property(struct bt_bus * bus, int id, int property,
 int bt_bus_set_property(struct bt_bus * bus, int id, int property, long value);
 
 
+/** Create a bt_bus_properties list given a firmware version */
+int bt_bus_properties_create(struct bt_bus_properties ** propptr, long firmwareVersion);
+
+/** Destroy a bt_bus_properties list */
+int bt_bus_properties_destroy(struct bt_bus_properties * prop);
+
+
 /** A list of properties available on each Puck on the bus.
  *
  * This structure is presently filled with the correct values as the bt_bus
@@ -447,6 +454,31 @@ struct bt_bus_properties
    int TIE;
    int LFLAGS;
    int LCTC;
+
+   /* FT */
+   int SG1;
+   int SG2;
+   int SG3;
+   int SG4;
+   int SG5;
+   int SG6;
+   int FX;
+   int FY;
+   int FZ;
+   int TX;
+   int TY;
+   int TZ;
+   int FT;
+   int AX;
+   int AY;
+   int AZ;
+   int GM;
+   int OV;
+   int LED;
+   int T1;
+   int T2;
+   int T3;
+   int FT_END;
 };
 
 

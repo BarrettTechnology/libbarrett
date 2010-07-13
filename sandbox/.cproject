@@ -72,7 +72,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="master_master.cpp|teach.cpp|zero_torque.cpp|master_master.h|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="log_sg_data.cpp|teach.cpp|load_ft_cal.cpp|can_terminal.cpp|read_safety_state.cpp|update_properties.cpp|tutorial.cpp|hand_feedback.cpp|master_master.cpp|zero_torque.cpp|master_master.h|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
