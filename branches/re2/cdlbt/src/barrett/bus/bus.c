@@ -46,12 +46,6 @@
    ((Value)<(Min))?(Min):(((Value)>(Max))?(Max):(Value))
 
 
-/** Create a bt_bus_properties list given a firmware version */
-static struct bt_bus_properties * prop_defs_create(long firmwareVersion);
-
-/** Destroy a bt_bus_properties list */
-static int prop_defs_destroy(struct bt_bus_properties * p);
-
 /** Query and receive a packed CAN packet of Puck accelerations */
 static int retrieve_puck_accelerations(struct bt_bus * bus);
 
@@ -173,8 +167,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
             long fw_vers;
             /* Get the firmware version*/
             bt_bus_can_get_property(bus->dev, id, 0, &fw_vers, NULL, 1);
-            bus->p = prop_defs_create(fw_vers);
-            if (!bus->p)
+            if (bt_bus_properties_create(&bus->p, fw_vers))
             {
                syslog(LOG_ERR,
                       "%s: Could not initialize property definitions.",
@@ -309,7 +302,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
 int bt_bus_destroy(struct bt_bus * bus)
 {
    int i;
-   if (bus->p) prop_defs_destroy(bus->p);
+   if (bus->p) bt_bus_properties_destroy(bus->p);
    if (bus->safety_puck) free(bus->safety_puck);
    for (i=0; i<bus->groups_size; i++)
       if (bus->group[i]) free(bus->group[i]);
@@ -529,7 +522,7 @@ static int retrieve_puck_accelerations( struct bt_bus * bus )
 }
 
 
-static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
+int bt_bus_properties_create(struct bt_bus_properties ** propptr, long firmwareVersion)
 {
    struct bt_bus_properties * p;
    int i;
@@ -538,7 +531,8 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
    if (!p)
    {
       syslog(LOG_ERR,"%s: Out of memory.",__func__);
-      return 0;
+      *propptr = 0;
+      return 1;
    }
    
    i = 0;
@@ -654,7 +648,7 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->JIDX = i++;
       p->IPNM = i++;
 
-      p->PROP_END = i++;
+      p->PROP_END = i;
 
       p->T = p->TORQ;
       p->FET0 = p->B;
@@ -726,7 +720,7 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->X6 = i++;
       p->X7 = i++;
 
-      p->COMMON_END = i++;
+      p->COMMON_END = i;
 
       /* Safety */
       i = p->COMMON_END;
@@ -746,7 +740,7 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->IFAULT = i++;
       p->VNOM = i++;
 
-      p->SAFETY_END = i++;
+      p->SAFETY_END = i;
 
       /* Tater */
       i = p->COMMON_END;
@@ -810,18 +804,47 @@ static struct bt_bus_properties * prop_defs_create(long firmwareVersion)
       p->LCTC = i++;
       p->LCVC = i++;
 
-      p->PROP_END = i++;
+      p->PROP_END = i;
+
+      /* FT */
+      i = p->COMMON_END;
+      p->SG1 = i++;
+      p->SG2 = i++;
+      p->SG3 = i++;
+      p->SG4 = i++;
+      p->SG5 = i++;
+      p->SG6 = i++;
+      p->FX = i++;
+      p->FY = i++;
+      p->FZ = i++;
+      p->TX = i++;
+      p->TY = i++;
+      p->TZ = i++;
+      p->FT = i++;
+      p->AX = i++;
+      p->AY = i++;
+      p->AZ = i++;
+      p->GM = i++;
+      p->OV = i++;
+      p->LED = i++;
+      p->T1 = i++;
+      p->T2 = i++;
+      p->T3 = i++;
+
+      p->FT_END = i;
+
 
       p->AP = p->P; /* Handle parameter name change*/
       p->TENSION = p->FET1;
    }
    
-   return p;
+   *propptr = p;
+   return 0;
 }
 
 
-static int prop_defs_destroy(struct bt_bus_properties * p)
+int bt_bus_properties_destroy(struct bt_bus_properties * prop)
 {
-   free(p);
+   free(prop);
    return 0;
 }
