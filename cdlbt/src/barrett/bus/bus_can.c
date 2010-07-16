@@ -978,11 +978,13 @@ static int parse_msg(int msgid, int len, unsigned char * message_data,
 	   *value1 |= ( (long)message_data[2] << 8 ) & 0x0000FF00;
 	   *value1 |= ( (long)message_data[3] ) & 0x000000FF;
 
-	   *value2 = 0;
-	   *value2 |= ( (long)message_data[4] << 24) & 0xFF000000;
-	   *value2 |= ( (long)message_data[5] << 16) & 0x00FF0000;
-	   *value2 |= ( (long)message_data[6] << 8 ) & 0x0000FF00;
-	   *value2 |= ( (long)message_data[7] ) & 0x000000FF;
+	   if (value2 != NULL) {
+		   *value2 = 0;
+		   *value2 |= ( (long)message_data[4] << 24) & 0xFF000000;
+		   *value2 |= ( (long)message_data[5] << 16) & 0x00FF0000;
+		   *value2 |= ( (long)message_data[6] << 8 ) & 0x0000FF00;
+		   *value2 |= ( (long)message_data[7] ) & 0x000000FF;
+	   }
 
 	   return 0;
    }
