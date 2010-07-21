@@ -33,7 +33,6 @@
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 </option>
 <option id="gnu.cpp.compiler.option.debugging.gprof.326968307" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1271554429" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -49,11 +48,9 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.352375228" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 <option id="gnu.cpp.link.option.libs.36674891" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="barrett"/>
-<listOptionValue builtIn="false" value="cdlbt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1165109221" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/library/Debug"/>
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.other.1799805625" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
 <listOptionValue builtIn="false" value="-rpath /home/robot/libbarrett/library/Debug"/>
@@ -74,7 +71,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="hand_feedback.cpp|zero_torque.cpp|master_master.h|master_master.cpp|update_properties.cpp|haptics.cpp|tactile_test.cpp|friction_data.cpp|read_safety_state.cpp|teach.cpp|log_velocity.cpp|move_to.cpp|HAPI_haptics.cpp|network_haptics.h|network_haptics.cpp|haptic_test.cpp|low_level_wam.cpp|high_level_wam.cpp|cartesian_hold.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="zero_torque.cpp|update_properties.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_sg_data.cpp|log_ft_data.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

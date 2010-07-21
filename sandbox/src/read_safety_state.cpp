@@ -14,8 +14,8 @@
 
 #include <barrett/systems.h>
 #include <barrett/wam.h>
-#include <barrett/bus/bus.h>
-#include <barrett/bus/bus_can.h>
+#include <barrett/cdlbt/bus/bus.h>
+#include <barrett/cdlbt/bus/bus_can.h>
 
 
 using namespace barrett;

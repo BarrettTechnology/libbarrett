@@ -13,10 +13,10 @@
 #include <curses.h>
 #include <gsl/gsl_math.h> /* For M_PI */
 
-#include <barrett/wambot/wambot_phys.h>
-#include <barrett/bus/bus.h>
-#include <barrett/gsl/gsl.h>
-#include <barrett/os/os.h>
+#include <barrett/cdlbt/wambot/wambot_phys.h>
+#include <barrett/cdlbt/bus/bus.h>
+#include <barrett/cdlbt/gsl/gsl.h>
+#include <barrett/cdlbt/os/os.h>
 
 #include <barrett/systems.h>
 #include <barrett/wam.h>

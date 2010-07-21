@@ -70,7 +70,7 @@ int port = 3333;
 const size_t J6_IDX = 5;
 const double GIMBALS_J6_OFFSET = M_PI/2;
 
-const size_t DOF = 4;
+const size_t DOF = 7;
 const double T_s = 0.002;
 
 typedef Wam<DOF>::jt_type jt_type;
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
+	config.readFile("/etc/wam/wam7-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s, false);
 	systems::System::defaultExecutionManager = &rtem;
@@ -428,6 +428,12 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 
    for(i = 11; i <= 14; i++)
    	   bt_bus_set_property(bus, i, 78, 50); // Set TSTOP to 50 ms
+
+//   usleep((long)1e4);
+//   bt_bus_set_property(bus, 14, 44, -spreadspeed);
+//   usleep((long)1e4);
+//   bt_bus_set_property(bus, 14, 8, 4);
+
 
    printf("Initializing hand ...\n");
    /* Initialize the hand

@@ -27,7 +27,6 @@
 <option id="gnu.cpp.compiler.option.include.paths.946116199" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/src}&quot;"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/src}&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.16080351" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1049980977" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -43,12 +42,10 @@
 <option id="gnu.cpp.link.option.libs.1668146861" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="gtest_main"/>
 <listOptionValue builtIn="false" value="config++"/>
-<listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="barrett"/>
 </option>
 <option id="gnu.cpp.link.option.paths.712846095" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Debug-remote}&quot;"/>
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/Debug_local}&quot;"/>
 </option>
 <option id="gnu.cpp.link.option.other.925854388" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
 <listOptionValue builtIn="false" value="-rpath &quot;${workspace_loc:/library/Debug-local}&quot;"/>
