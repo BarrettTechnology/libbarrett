@@ -16,8 +16,8 @@
 
 #include <curses.h>
 
-#include <barrett/bus/bus.h>
-#include <barrett/bus/bus_can.h>
+#include <barrett/cdlbt/bus/bus.h>
+#include <barrett/cdlbt/bus/bus_can.h>
 
 
 const int HAND_DOF = 4;

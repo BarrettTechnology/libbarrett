@@ -11,12 +11,11 @@
 
 #include <libconfig.h++>
 
-#include <barrett/wambot/wambot_phys.h>
-
 #include "../detail/ca_macro.h"
 #include "../units.h"
 #include "./abstract/system.h"
 #include "./abstract/single_io.h"
+#include "../cdlbt/wambot/wambot_phys.h"
 
 
 namespace barrett {

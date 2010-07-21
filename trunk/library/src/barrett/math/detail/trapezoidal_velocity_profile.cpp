@@ -6,7 +6,7 @@
  */
 
 
-#include <barrett/profile/profile.h>
+#include "../../cdlbt/profile/profile.h"
 #include "../trapezoidal_velocity_profile.h"
 
 

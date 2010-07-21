@@ -11,8 +11,8 @@
 
 #include <libconfig.h++>
 
-#include <barrett/kinematics/kinematics.h>
 #include "../../units.h"
+#include "../../cdlbt/kinematics/kinematics.h"
 
 
 namespace barrett {

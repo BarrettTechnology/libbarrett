@@ -20,8 +20,8 @@
 #include <native/task.h>
 #include <native/timer.h>
 
-#include <barrett/bus/bus.h>
-#include <barrett/bus/bus_can.h>
+#include <barrett/cdlbt/bus/bus.h>
+#include <barrett/cdlbt/bus/bus_can.h>
 #include <barrett/log.h>
 #include <barrett/detail/stacktrace.h>
 

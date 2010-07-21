@@ -13,9 +13,9 @@
 #include <native/task.h>
 #include <native/timer.h>
 
-#include <barrett/os/os.h>
-#include <barrett/bus/bus.h>
-#include <barrett/bus/bus_can.h>
+#include <barrett/cdlbt/os/os.h>
+#include <barrett/cdlbt/bus/bus.h>
+#include <barrett/cdlbt/bus/bus_can.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/wam.h>
@@ -68,11 +68,27 @@ int main() {
 		std::cout << hjp << std::endl;
 		printf("%06lX %06lX %06lX %06lX\n", tactTop10[0], tactTop10[1], tactTop10[2], tactTop10[3]);
 		printf("%d %d\n", ft[0], ft[1]);
-//		sleep(1);
 	}
 
 	rtem.stop();
 	return 0;
+}
+
+
+void handControl() {
+	int spreadspeed = 20;
+
+	rt_task_shadow(new RT_TASK, NULL, 10, 0);
+
+	printf(" ... done.\n");
+
+	while (1) {
+		sleep(1);
+		spreadspeed = -spreadspeed;
+		printf("Sending spread command(%d)\n",spreadspeed);
+		bt_bus_set_property(bus, 14, 44, spreadspeed);
+		bt_bus_set_property(bus, 14, 8, 4);
+	}
 }
 
 
@@ -95,36 +111,39 @@ void handFeedback() {
 
 	printf("Initializing tactile sensors...\n");
 
-	// first time, read garbage
-	for(int i = 11; i <= 14; i++) {
-		bt_bus_get_property(bus, i, 34, &value1);
-	}
+//	// first time, read garbage
+//	for(int i = 11; i <= 14; i++) {
+//		bt_bus_get_property(bus, i, 34, &value1);
+//	}
 
 	// second time, read number of sensors (24)
-	for(int i = 11; i <= 14; i++) {
-		bt_bus_get_property(bus, i, 34, &value1);
-		if (value1 != 24) {
-			printf("Failed to init tactile sensors on ID=%d. Repored %ld sensors.\n", i, value1);
-		}
-	}
-	bt_bus_set_property(bus, BT_BUS_CAN_GROUPID(HAND_GRP), 29, 23);
+//	for(int i = 11; i <= 14; i++) {
+//		bt_bus_get_property(bus, i, 106, &value1);
+//		if (value1 == -2) {
+//			printf("Failed to init tactile sensors on ID=%d. (TACT=%ld)\n", i, value1);
+//		}
+//	}
+//	bt_bus_set_property(bus, BT_BUS_CAN_GROUPID(HAND_GRP), 29, 23);
 	usleep((long)1e3);
 
 
 
 	printf(" ... done.\n");
+//
+//	printf("Starting hand control thread...\n");
+//	boost::thread t(handControl);
 
 
 	int osHandPos = HAND_DOF, osTact = HAND_DOF;
 
 	bt_bus_can_async_get_property(bus->dev, BT_BUS_CAN_GROUPID(HAND_GRP), 48);
 	rt_timer_spin(FLIGHT_TIME);
-	bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(HAND_GRP), 106, 1);
-	rt_timer_spin(FLIGHT_TIME);
-	bt_bus_can_async_get_property(bus->dev, 8, 34);
+//	bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(HAND_GRP), 106, 1);
+//	rt_timer_spin(FLIGHT_TIME);
+//	bt_bus_can_async_get_property(bus->dev, 8, 34);
 
 	while (going) {
-		bt_bus_can_async_read(bus->dev, &id, &property, &value1, &value2, 1, 0);
+		bt_bus_can_async_read(bus->dev, &id, &property, &value1, &value2, NULL, 1, 0);
 		switch (id) {
 		// force-torque
 		case 8:
@@ -176,27 +195,4 @@ void handFeedback() {
 			printf("%s: Spurious CAN message (ID=%d, PROPERTY=%d, VALUE=%ld)\n", __func__, id, property, value1);
 		}
 	}
-
-////	rt_task_set_mode(0, T_PRIMARY | T_WARNSW, NULL);
-//	while (going) {
-////		waitForEnter();
-////		printf("Acquiring mutex ...\n");
-//		bt_os_mutex_lock(bus->dev->async_mutex);
-//
-////		printf("Requesting positions ...\n");
-//		bt_bus_can_async_get_property(bus->dev, BT_BUS_CAN_GROUPID(HAND_GRP), 48);
-////		printf(" ... done.\n");
-//
-//		for (int i = 0; i < HAND_DOF; ++i) {
-//			bt_bus_can_async_read(bus->dev, &id, &property, &value1, &value2, 1, 0);
-//			if (id >=11  &&  id <= 14) {
-//				hjp[id-11] = (double) value1;
-//			} else {
-//				printf("%s: Spurious asynchronous CAN message (ID=%d, PROPERTY=%d, VALUE=%ld)\n", __func__, id, property, value1);
-//			}
-//		}
-//
-//		bt_os_mutex_unlock(bus->dev->async_mutex);
-////		std::cout << hjp << std::endl;
-//	}
 }

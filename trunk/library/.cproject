@@ -52,12 +52,9 @@
 <listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="config++"/>
 <listOptionValue builtIn="false" value="boost_thread"/>
-<listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
 </option>
-<option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/cdlbt/Debug_local}&quot;"/>
-</option>
+<option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1863663531" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -97,7 +94,7 @@
 <fileInfo id="cdt.managedbuild.config.gnu.so.debug.1789923406.511757878" name="wam.h" rcbsApplicability="disable" resourcePath="src/barrett/wam.h" toolsToInvoke=""/>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="barrett/thread/real_time_mutex.h|barrett/thread/detail/real_time_mutex.cpp|barrett/systems/real_time_execution_manager.h|barrett/systems/detail/real_time_execution_manager.cpp|barrett/threading/real_time_mutex.h|barrett/threading/detail/real_time_mutex.cpp|barrett/detail/wam-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="barrett/cdlbt/os/os.h|barrett/cdlbt/os/os.c|barrett/cdlbt/wambot/wambot_phys.h|barrett/cdlbt/wambot/wambot_phys.c|barrett/cdlbt/bus/bus.h|barrett/cdlbt/bus/bus.c|barrett/cdlbt/bus/bus_can.h|barrett/cdlbt/bus/bus_can.c|barrett/thread/real_time_mutex.h|barrett/thread/detail/real_time_mutex.cpp|barrett/systems/real_time_execution_manager.h|barrett/systems/detail/real_time_execution_manager.cpp|barrett/threading/real_time_mutex.h|barrett/threading/detail/real_time_mutex.cpp|barrett/detail/wam-inl.h|barrett/wam.h|barrett/detail/wam.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -376,7 +373,6 @@
 <option id="gnu.cpp.compiler.so.debug.option.debugging.level.159927738" name="Debug Level" superClass="gnu.cpp.compiler.so.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.other.other.525304823" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 <option id="gnu.cpp.compiler.option.include.paths.1461442815" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/src"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
@@ -385,6 +381,15 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.so.debug.1896749082" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.so.debug.option.optimization.level.958501699" name="Optimization Level" superClass="gnu.c.compiler.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.so.debug.option.debugging.level.977348812" name="Debug Level" superClass="gnu.c.compiler.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.24898515" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="CANTYPE_SOCKET"/>
+<listOptionValue builtIn="false" value="HAVE_INLINE"/>
+<listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
+<listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
+</option>
+<option id="gnu.c.compiler.option.include.paths.1539836252" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.937110900" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.so.debug.672453481" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.debug">
@@ -399,12 +404,10 @@
 <listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="config++"/>
 <listOptionValue builtIn="false" value="boost_thread"/>
-<listOptionValue builtIn="false" value="cdlbt"/>
 <listOptionValue builtIn="false" value="rtdm"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
 </option>
 <option id="gnu.cpp.link.option.paths.809842889" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="/home/robot/libbarrett/cdlbt/Debug/"/>
 <listOptionValue builtIn="false" value="/usr/xenomai/lib"/>
 </option>
 <option id="gnu.cpp.link.option.other.1387701595" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
