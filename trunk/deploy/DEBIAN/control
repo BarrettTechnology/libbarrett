@@ -1,0 +1,10 @@
+Package: libbarrett
+Version: 0.2.0
+Section: misc
+Priority: extra
+Architecture: all
+Depends: libboost1.40-dev, libboost-thread1.40-dev
+Recommends: g++
+Installed-Size: 31100
+Maintainer: Barrett Technology <support@barrett.com>
+Description: This software is provided by Barrett Technology for operating the Barrett WAM Arm and the BH8-280 series BarrettHand in conjunction with a WAM. It contains a C++ library, utilities, demos, and examples.
