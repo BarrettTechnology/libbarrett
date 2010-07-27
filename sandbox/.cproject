@@ -53,7 +53,6 @@
 <listOptionValue builtIn="false" value="/home/robot/libbarrett/library/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.other.1799805625" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath /home/robot/libbarrett/library/Debug"/>
 <listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <option defaultValue="true" id="gnu.cpp.link.option.shared.1367050556" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
@@ -71,7 +70,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="zero_torque.cpp|update_properties.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_sg_data.cpp|log_ft_data.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="tactile_test.cpp|zero_torque.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|low_level_wam.cpp|log_velocity.cpp|log_sg_data.cpp|log_ft_data.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

@@ -58,7 +58,7 @@ int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;

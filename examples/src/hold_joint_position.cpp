@@ -19,7 +19,7 @@ void waitForEnter() {
 
 int main() {
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg-new.config");
+	config.readFile("/etc/wam/wam7-new.config");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;

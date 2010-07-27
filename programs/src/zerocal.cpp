@@ -182,7 +182,7 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam7-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 
 	// remove existing zerocal information, if present
 	libconfig::Setting& llSetting = config.lookup("wam.low_level");
