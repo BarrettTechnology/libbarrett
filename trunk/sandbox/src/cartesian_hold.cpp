@@ -61,7 +61,7 @@ int main() {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wamg-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 	systems::KinematicsBase<DOF> kin(config.lookup("wam.kinematics"));
 
 

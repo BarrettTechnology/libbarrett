@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam7-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s, false);
 	systems::System::defaultExecutionManager = &rtem;
@@ -189,6 +189,8 @@ int main(int argc, char** argv) {
 	waitForEnter();
 	wam.gravityCompensate();
 
+
+	rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
 
 	bool going = true;

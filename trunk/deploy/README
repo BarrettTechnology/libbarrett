@@ -1,0 +1,12 @@
+Dan Cody
+libbarrett
+Barrett Technology
+7-27-2010
+
+
+**** Deploy Documentation ****
+
+Edit DEBIAN/control to have the correct version and installed size. Edit deploy.sh to have the correct $dep_rev and $repo_base variables. Finally, execute the deploy.sh script.
+
+The letters appended to the version string encode configuration options. 'x' stands for Xenomai, 's' stands for SocketCAN.
+

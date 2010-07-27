@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 	}
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam4-new.config");
+	config.readFile("/etc/barrett/wam4.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s, false);
 	systems::System::defaultExecutionManager = &rtem;

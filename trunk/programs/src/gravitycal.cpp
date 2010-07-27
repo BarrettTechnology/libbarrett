@@ -250,7 +250,7 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam7-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
@@ -277,11 +277,11 @@ int main()
       config_setting_t * poses_array;
 
       config_init(&cfg);
-      err = config_read_file(&cfg,"/etc/wam/gravitycal.config");
+      err = config_read_file(&cfg,"/etc/barrett/gravitycal.conf");
       if (err != CONFIG_TRUE)
       {
          syslog(LOG_ERR,"Calibration configuration file cal.conf not found.");
-         printf("Calibration configuration file /etc/wam/gravitycal.config not found.\n");
+         printf("Calibration configuration file /etc/barrett/gravitycal.conf not found.\n");
          rtem.stop();
          config_destroy(&cfg);
          endwin();

@@ -48,7 +48,7 @@ int main() {
 	long safetyState, lastSafetyState;
 
 	libconfig::Config config;
-	config.readFile("/etc/wam/wam7-new.config");
+	config.readFile("/etc/barrett/wam7.conf");
 
 	mlockall(MCL_CURRENT|MCL_FUTURE);
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);

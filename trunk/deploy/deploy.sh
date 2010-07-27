@@ -8,13 +8,15 @@ prefix_dir=/usr/local
 cd `dirname $0`
 deploy_dir=`pwd`
 root_dir=$deploy_dir/root
+rp_dir=$root_dir$prefix_dir
 build_dir=$deploy_dir/..
 
 #echo $deploy_dir
 #echo $root_dir
 
-# pass an argument to the script to prevent cleaning $root_dir and rebuilding dependencies
-if [ $# -eq 0 ]
+
+# clean the package root
+if [ $# -eq 0  -o  $1 = "clean" ]
 then
     if [ -d $root_dir ]
     then
@@ -28,8 +30,14 @@ then
         mkdir $root_dir
     fi
     
-    svn export $repo_base/deploy/DEBIAN $root_dir/DEBIAN
-    
+    mkdir $root_dir/etc
+    mkdir $root_dir/etc/barrett
+fi
+
+
+# build source dependencies    
+if [ $# -eq 0  -o  $1 = "deps" ]
+then
     cd $deploy_dir
     svn export -r $dep_rev http://web.barrett.com/svn/libbarrett/dependencies/libconfig-1.3.2-PATCHED.tar.gz
     tar xzf libconfig-1.3.2-PATCHED.tar.gz
@@ -56,11 +64,27 @@ then
 fi
 
 
-# copy libbarrett into the fake root
+# copy libbarrett into the package root
 # binaries should already be built
-svn export --force $repo_base/library/src $root_dir$prefix_dir/include/
-find root/usr/local/include/barrett/ -depth \( \! -iname "*.h" \) -and -type f -delete
+if [ $# -eq 0  -o  $1 = "lib" ]
+then
+    rm -Rf $rp_dir/include/barrett
+    svn export $repo_base/library/src/barrett $rp_dir/include/barrett
+    find $rp_dir/include/barrett/ -depth \( \! -iname "*.h" \) -and -type f -print -delete
 
-cp $build_dir/library/Debug/libbarrett.so $root_dir$prefix_dir/lib/
-cp $build_dir/programs/Debug/bt-* $root_dir$prefix_dir/bin/
+    cp $build_dir/library/Debug/libbarrett.so $rp_dir/lib/
+    rm -Rf $rp_dir/bin/bt-*
+    cp $build_dir/programs/Debug/bt-* $rp_dir/bin/
+
+    cp -R $build_dir/config/* $root_dir/etc/barrett/
+fi
+
+
+# build package
+if [ $# -eq 0  -o  $1 = "package" ]
+then
+    rm -Rf $root_dir/DEBIAN
+    svn export $repo_base/deploy/DEBIAN $root_dir/DEBIAN
+    dpkg-deb -b root .
+fi
 
