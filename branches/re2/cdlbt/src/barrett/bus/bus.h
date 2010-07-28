@@ -67,11 +67,21 @@ enum bt_broadcast_groups
    UPPER_WAM_GRP = 2,  // a packed-torque group (pucks 5-7)
 
    HAND_GRP = 5,  // the whole hand (pucks 11-14)
+   // On hands with tactile sensors, TOP10 formated TACT data is sent to group 8.
+   TACT_TOP10_FEEDBACK_GRP = 8,
+   // On hands with tactile sensors, FULL formated TACT data is sent to group 9.
+   TACT_FULL_FEEDBACK_GRP = 9,
+
+   // Force-Torque sensor
+   FT_FORCE_FEEDBACK_GRP = 10,  // Packed force data is sent to group 10.
+   FT_TORQUE_FEEDBACK_GRP = 11,  // Packed torque data is sent to group 11.
 
    // When responding to position requests, pucks send to group 3 so the safety puck can listen.
    POSITION_FEEDBACK_GRP = 3,
    // When responding to non-position requests, pucks send to group 6.
-   OTHER_FEEDBACK_GRP = 6
+   OTHER_FEEDBACK_GRP = 6,
+
+   RESERVED7_GRP = 7  // Reserved
 };
 
 /** Puck status values */
