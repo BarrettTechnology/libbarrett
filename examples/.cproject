@@ -25,8 +25,7 @@
 <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1744296375" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.exe.debug.option.debugging.level.618759819" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.option.include.paths.591183924" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/src"/>
-<listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/src"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/src"/>
 <listOptionValue builtIn="false" value="/usr/local/include/eigen2"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.329239610" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -42,18 +41,15 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1609100904" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 <option id="gnu.cpp.link.option.libs.132023060" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="barrett"/>
-<listOptionValue builtIn="false" value="cdlbt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1362551223" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-<listOptionValue builtIn="false" value="/root/libbarrett/trunk/library/Debug"/>
-<listOptionValue builtIn="false" value="/root/libbarrett/trunk/cdlbt/Debug"/>
+<listOptionValue builtIn="false" value="/home/robot/libbarrett/library/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.other.1242675713" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" valueType="stringList">
-<listOptionValue builtIn="false" value="-rpath /root/libbarrett/trunk/library/Debug"/>
 <listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <option defaultValue="true" id="gnu.cpp.link.option.shared.684776281" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
-<option id="gnu.cpp.link.option.flags.824253079" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.824253079" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.78511539" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -539,7 +535,7 @@
 <listOptionValue builtIn="false" value="-rpath /usr/xenomai/lib"/>
 </option>
 <option defaultValue="true" id="gnu.cpp.link.option.shared.1586111081" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
-<option id="gnu.cpp.link.option.flags.433895702" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.433895702" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-c" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1631797597" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>

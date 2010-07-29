@@ -1,7 +1,7 @@
 %: ./src/%.o $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/root/libbarrett/trunk/library/Debug -L/root/libbarrett/trunk/cdlbt/Debug -Xlinker -rpath /root/libbarrett/trunk/library/Debug -Xlinker -rpath /usr/xenomai/lib -o"$@" ./src/$@.o $(USER_OBJS) $(LIBS)
+	g++ -L/home/robot/libbarrett/library/Debug -Xlinker -rpath /usr/xenomai/lib -o"$@" ./src/$@.o $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
