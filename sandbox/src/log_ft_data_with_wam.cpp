@@ -27,7 +27,7 @@ const size_t DOF = 4;
 const double T_s = 0.002;
 const int ID = BT_BUS_PUCK_ID_FT;
 const RTIME FLIGHT_TIME = 75000;
-const int MIN_FW_VERS = 100;  // bogus value, but at least it rules out monitor
+const int FW_VERS = 148;  // bogus value until the F/T firmware implements VERS
 const int NUM_SENSORS = 6;  // FX, FY, FZ, TX, TY, TZ
 const int NUM_MESSAGES = 2;  // F/T readings are packed into 2 messages
 struct bt_bus_can* dev = NULL;
@@ -138,12 +138,7 @@ void ftThread() {
 	bt_bus_can_set_property(dev, ID, 5, 2);
 	usleep(1000000);
 
-	bt_bus_can_get_property(dev, ID, 0, &value, NULL, 1);  // get VERS
-	if (value < MIN_FW_VERS) {
-		printf("The F/T Sensor does not have recent firmware. (Actual version = %ld. Required version >= %d.)\n", value, MIN_FW_VERS);
-		exit(-1);
-	}
-	if (bt_bus_properties_create(&plist, value)) {
+	if (bt_bus_properties_create(&plist, FW_VERS)) {
 		printf("Couldn't create property list.\n");
 		exit(-1);
 	}
@@ -155,7 +150,7 @@ void ftThread() {
 	RTIME t_1 = t_0;
 
 	while (going) {
-		// strain gruages
+		// strain gauges
 		bt_bus_can_async_get_property(dev, ID, plist->FT);
 
 		t_0 = rt_timer_read();
