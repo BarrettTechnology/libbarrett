@@ -88,6 +88,19 @@ struct CartesianPosition {
 };
 
 
+namespace typedefs {
+
+typedef JointTorques<Eigen::Dynamic>::type jt_type;
+typedef JointPositions<Eigen::Dynamic>::type jp_type;
+typedef JointVelocities<Eigen::Dynamic>::type jv_type;
+
+typedef CartesianForce::type cf_type;
+typedef CartesianPosition::type cp_type;
+
+}
+using namespace typedefs;
+
+
 }
 }
 
