@@ -26,35 +26,93 @@ template<int R> struct LocalUnits {
 	typedef typename math::Vector<R, LocalUnits<R> >::type type;
 };
 
+const int DIM = 5;
 
-// template parameters list the types the following tests should be run over
-typedef ::testing::Types<
-			math::Vector<5>::type,
-			units::JointTorques<5>::type,
-			units::JointPositions<5>::type,
-			LocalUnits<5>::type
-		> UATypes;
 
+// tests for fixed sized vectors
 template<typename T>
-class VectorTypedTest : public ::testing::Test {
+class FixedVectorTypedTest : public ::testing::Test {
 public:
-	VectorTypedTest() :
+	FixedVectorTypedTest() :
 		a() {}
 protected:
 	T a;
 };
 
-TYPED_TEST_CASE(VectorTypedTest, UATypes);
+typedef ::testing::Types<
+			math::Vector<DIM>::type,
+			units::JointTorques<DIM>::type,
+			LocalUnits<DIM>::type
+		> FixedTypes;
+TYPED_TEST_CASE(FixedVectorTypedTest, FixedTypes);
 
 
+// tests for dynamically sized vectors
+template<typename T>
+class DynamicVectorTypedTest : public ::testing::Test {
+public:
+	DynamicVectorTypedTest() :
+		a(DIM) {}
+protected:
+	T a;
+};
+
+typedef ::testing::Types<
+			math::v_type,
+			units::jt_type,
+			LocalUnits<Eigen::Dynamic>::type
+		> DynamicTypes;
+TYPED_TEST_CASE(DynamicVectorTypedTest, DynamicTypes);
+
+
+// common tests
+template<typename T>
+class VectorTypedTest : public ::testing::Test {
+public:
+	VectorTypedTest() :
+		a(DIM) {}
+protected:
+	T a;
+};
+
+typedef ::testing::Types<
+			math::Vector<DIM>::type,
+			units::JointTorques<DIM>::type,
+			LocalUnits<DIM>::type,
+			math::v_type,
+			units::jt_type,
+			LocalUnits<Eigen::Dynamic>::type
+		> BothTypes;
+TYPED_TEST_CASE(VectorTypedTest, BothTypes);
+
+
+
+// uses the actual default ctor
+TYPED_TEST(FixedVectorTypedTest, DefaultCtor) {
+	for (int i = 0; i < this->a.size(); ++i) {
+		EXPECT_EQ(0.0, this->a[i]);
+	}
+}
+
+// uses the closest thing to a default ctor that a dynamic vector has
+// both types of vectors should be able to be constructed this way
 TYPED_TEST(VectorTypedTest, DefaultCtor) {
 	for (int i = 0; i < this->a.size(); ++i) {
 		EXPECT_EQ(0.0, this->a[i]);
 	}
 }
 
-TYPED_TEST(VectorTypedTest, InitialValueCtor) {
+TYPED_TEST(FixedVectorTypedTest, InitialValueCtor) {
 	TypeParam a(-487.9);
+
+	for (int i = 0; i < a.size(); ++i) {
+		EXPECT_EQ(-487.9, a[i]);
+	}
+}
+
+// both types of vectors should be able to be constructed this way
+TYPED_TEST(VectorTypedTest, InitialValueCtor) {
+	TypeParam a(DIM, -487.9);
 
 	for (int i = 0; i < a.size(); ++i) {
 		EXPECT_EQ(-487.9, a[i]);
@@ -72,11 +130,30 @@ TYPED_TEST(VectorTypedTest, GslVectorCtor) {
 	for (int i = 0; i < a.size(); ++i) {
 		EXPECT_EQ(i*0.1, a[i]);
 	}
+
+	gsl_vector_free(gslVec);
 }
 
-TYPED_TEST(VectorTypedTest, GslVectorCtorThrows) {
+TYPED_TEST(FixedVectorTypedTest, GslVectorCtorThrows) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
 	EXPECT_THROW(TypeParam a(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
+
+	gslVec = gsl_vector_calloc(this->a.size() - 1);
+	EXPECT_THROW(TypeParam a(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
+}
+
+TYPED_TEST(DynamicVectorTypedTest, GslVectorCtorResizes) {
+	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
+	EXPECT_NO_THROW(TypeParam a(gslVec));
+	EXPECT_EQ(gslVec->size, TypeParam(gslVec).size());
+	gsl_vector_free(gslVec);
+
+	gslVec = gsl_vector_calloc(this->a.size() - 1);
+	EXPECT_NO_THROW(TypeParam a(gslVec));
+	EXPECT_EQ(gslVec->size, TypeParam(gslVec).size());
+	gsl_vector_free(gslVec);
 }
 
 TYPED_TEST(VectorTypedTest, ConfigCtor) {
@@ -89,7 +166,7 @@ TYPED_TEST(VectorTypedTest, ConfigCtor) {
 	EXPECT_EQ(this->a, b);
 }
 
-TYPED_TEST(VectorTypedTest, ConfigCtorThrows) {
+TYPED_TEST(FixedVectorTypedTest, ConfigCtorThrows) {
 	libconfig::Config config;
 	config.readFile("test.config");
 
@@ -97,8 +174,19 @@ TYPED_TEST(VectorTypedTest, ConfigCtorThrows) {
 	EXPECT_THROW(TypeParam(config.lookup("vector_test.six")), std::runtime_error);
 }
 
+TYPED_TEST(DynamicVectorTypedTest, ConfigCtorThrows) {
+	libconfig::Config config;
+	config.readFile("test.config");
+
+	EXPECT_NO_THROW(TypeParam(config.lookup("vector_test.four")));
+	EXPECT_EQ(4, TypeParam(config.lookup("vector_test.four")).size());
+
+	EXPECT_NO_THROW(TypeParam(config.lookup("vector_test.six")));
+	EXPECT_EQ(6, TypeParam(config.lookup("vector_test.six")).size());
+}
+
 TYPED_TEST(VectorTypedTest, CopyCtor) {
-	TypeParam a(-487.9);
+	TypeParam a(DIM, -487.9);
 	TypeParam b(a);
 
 	a.setConstant(2.0);
@@ -119,11 +207,18 @@ TYPED_TEST(VectorTypedTest, CopyToGslVector) {
 	for (int i = 0; i < this->a.size(); ++i) {
 		EXPECT_EQ(this->a[i], gsl_vector_get(gslVec, i));
 	}
+
+	gsl_vector_free(gslVec);
 }
 
 TYPED_TEST(VectorTypedTest, CopyToGslVectorThrows) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
 	EXPECT_THROW(this->a.copyTo(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
+
+	gslVec = gsl_vector_calloc(this->a.size() - 1);
+	EXPECT_THROW(this->a.copyTo(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
 }
 
 TYPED_TEST(VectorTypedTest, CopyFromGslVector) {
@@ -137,11 +232,18 @@ TYPED_TEST(VectorTypedTest, CopyFromGslVector) {
 	for (int i = 0; i < this->a.size(); ++i) {
 		EXPECT_EQ(i*0.1, this->a[i]);
 	}
+
+	gsl_vector_free(gslVec);
 }
 
 TYPED_TEST(VectorTypedTest, CopyFromGslVectorThrows) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
 	EXPECT_THROW(this->a.copyFrom(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
+
+	gslVec = gsl_vector_calloc(this->a.size() - 1);
+	EXPECT_THROW(this->a.copyFrom(gslVec), std::logic_error);
+	gsl_vector_free(gslVec);
 }
 
 TYPED_TEST(VectorTypedTest, CopyFromConfig) {
@@ -149,7 +251,7 @@ TYPED_TEST(VectorTypedTest, CopyFromConfig) {
 
 	libconfig::Config config;
 	config.readFile("test.config");
-	TypeParam b;
+	TypeParam b(DIM);
 	b.copyFrom(config.lookup("vector_test.five"));
 
 	EXPECT_EQ(this->a, b);
@@ -165,6 +267,10 @@ TYPED_TEST(VectorTypedTest, CopyFromConfigThrows) {
 
 TYPED_TEST(VectorTypedTest, AsGslVector) {
 	gsl_vector* gslVec = this->a.asGslType();
+
+	EXPECT_EQ(DIM, gslVec->size);
+	EXPECT_EQ(NULL, gslVec->block);
+	EXPECT_EQ(0, gslVec->owner);
 
 	this->a << 5, 42.8, 37, -12, 1.4;
 	for (int i = 0; i < this->a.size(); ++i) {
@@ -203,7 +309,7 @@ TYPED_TEST(VectorTypedTest, CopyFromTypeParam) {
 
 TYPED_TEST(VectorTypedTest, AssignFromTypeParam) {
 	this->a << 5, 42.8, 37, -12, 1.4;
-	TypeParam a_copy;
+	TypeParam a_copy(DIM);
 	a_copy = this->a;  // uses assignment operator
 
 	EXPECT_EQ(this->a, a_copy);
@@ -215,7 +321,7 @@ TYPED_TEST(VectorTypedTest, AssignFromTypeParam) {
 }
 
 TYPED_TEST(VectorTypedTest, CopyFromVector) {
-	math::Vector<5>::type vec;
+	math::Vector<DIM>::type vec;
 	vec << 5, 42.8, 37, -12, 1.4;
 	TypeParam vec_copy = vec;  // uses copy constructor
 
@@ -228,9 +334,9 @@ TYPED_TEST(VectorTypedTest, CopyFromVector) {
 }
 
 TYPED_TEST(VectorTypedTest, AssignFromVector) {
-	math::Vector<5>::type vec;
+	math::Vector<DIM>::type vec;
 	vec << 5, 42.8, 37, -12, 1.4;
-	TypeParam vec_copy;
+	TypeParam vec_copy(DIM);
 	vec_copy = vec;  // uses assignment operator
 
 	EXPECT_EQ(vec, vec_copy);
@@ -252,41 +358,36 @@ TYPED_TEST(VectorTypedTest, ExplicitAssignment) {
 
 TYPED_TEST(VectorTypedTest, AccessAndModifyMembersByIndex) {
 	for (int i = 0; i < this->a.size(); ++i) {
-		this->a[i] = i/10.0 - 1;  // test both at()
-		EXPECT_EQ(i/10.0 - 1, this->a[i]);  // and []
+		this->a[i] = i/10.0 - 1;
+		EXPECT_EQ(i/10.0 - 1, this->a[i]);
 	}
 }
 
-//// we just want this to compile
-//TYPED_TEST(VectorTypedTest, BoostArrayOperators) {
-//	TypeParam a_copy = this->a;
-//
-//	EXPECT_TRUE(this->a == a_copy);
-//	EXPECT_FALSE(this->a != a_copy);
-//
-//	EXPECT_TRUE(this->a <= a_copy);
-//	EXPECT_FALSE(this->a > a_copy);
-//
-//	EXPECT_TRUE(this->a >= a_copy);
-//	EXPECT_FALSE(this->a < a_copy);
-//}
-
-TYPED_TEST(VectorTypedTest, TraitsZero) {
+TYPED_TEST(VectorTypedTest, TraitsAssignZero) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam expected, result;
-	expected.setZero();
+	TypeParam result(DIM);
 	result.setConstant(7);
 
 	T::zero(result);
-	EXPECT_EQ(expected, result);
-	EXPECT_EQ(expected, T::zero());
+	EXPECT_EQ(TypeParam::Zero(DIM), result);
+}
+
+TYPED_TEST(FixedVectorTypedTest, TraitsInstantiateZero) {
+	typedef math::Traits<TypeParam> T;
+	EXPECT_EQ(TypeParam::Zero(), T::zero());
+}
+
+// both types of vectors should be able to be instantiated this way
+TYPED_TEST(VectorTypedTest, TraitsInstantiateZero) {
+	typedef math::Traits<TypeParam> T;
+	EXPECT_EQ(TypeParam::Zero(DIM), T::zero(DIM));
 }
 
 TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam a1, a2, expected, result;
+	TypeParam a1(DIM), a2(DIM), expected(DIM), result(DIM);
 
 	a1 << 1, 2, 3, 4, 5;
 	a2 << 5, 4, 3, 2, 1;
@@ -320,7 +421,7 @@ TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
 TYPED_TEST(VectorTypedTest, VectorScalarTraitsArithmetic) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam a, expected, result;
+	TypeParam a(DIM), expected(DIM), result(DIM);
 
 	a << 1, 2, 3, 4, 5;
 

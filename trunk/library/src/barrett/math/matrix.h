@@ -32,7 +32,7 @@ namespace barrett {
 namespace math {
 
 
-template<int R, int C, typename Units> class Matrix;
+template<int R, int C, typename Units = void> class Matrix;
 
 template<int R, typename Units = void>
 struct Vector {
@@ -40,7 +40,16 @@ struct Vector {
 };
 
 
-template<int R, int C, typename Units = void>
+namespace typedefs {
+
+typedef Matrix<Eigen::Dynamic, Eigen::Dynamic> m_type;
+typedef Vector<Eigen::Dynamic>::type v_type;
+
+}
+using namespace typedefs;
+
+
+template<int R, int C, typename Units>
 class Matrix : public Eigen::Matrix<double, R,C, Eigen::RowMajorBit> {
 public:
 	typedef Eigen::Matrix<double, R,C, Eigen::RowMajorBit> Base;
@@ -52,7 +61,7 @@ public:
 		gsl_matrix
 	>::type gsl_type;
 
-	static const size_t SIZE = R*C;  ///< Length of the array. Avoid using this if possible in case dynamic sizing is supported in the future.
+//	static const size_t SIZE = R*C;  ///< Length of the array. Avoid using this if possible in case dynamic sizing is supported in the future.
 
 	/** Used by clients of child classes to loose type info when necessary.
 	 *
@@ -65,6 +74,8 @@ public:
 
 	// Duplicate the non-inherited parts of Eigen's interface.
 //	Matrix();
+//	explicit Matrix(int dim);
+//	Matrix(int r, int c);
 	Matrix(double x, double y);
 	Matrix(double x, double y, double z);
 	Matrix(double x, double y, double z, double w);
@@ -113,6 +124,8 @@ public:
 	 * @param[in] d The initial value of the Matrix's coefficients.
 	 */
 	explicit Matrix(double d = 0.0);
+	explicit Matrix(int r, double d = 0.0);
+	Matrix(int r, int c, double d = 0.0);
 	explicit Matrix(const gsl_type* gslType);
 	Matrix(const libconfig::Setting& setting);  // deliberately non-explicit
 	Matrix(const Matrix& a);  // TODO(dc): make sure units match in a copy construction
@@ -121,9 +134,9 @@ public:
 	// TODO(dc): add a ctor that doesn't initialize the data?
 
 	// TODO(dc): How does this need to change to support dynamically sized Matrices?
-	static size_t serializedLength();
-	void serialize(char* dest) const;
-	static Matrix<R,C, Units> unserialize(char* source);
+//	static size_t serializedLength();
+//	void serialize(char* dest) const;
+//	static Matrix<R,C, Units> unserialize(char* source);
 
 	void copyTo(gsl_type* gslType) const throw(std::logic_error);
 	void copyFrom(const gsl_type* gslType) throw(std::logic_error);
@@ -134,8 +147,13 @@ public:
 	const gsl_type* asGslType() const;
 
 protected:
+	void resizeIfDynamic(int r, int c = 1);
+
 	void initGslType(gsl_vector* g);
 	void initGslType(gsl_matrix* g);
+
+	void resizeToMatchIfDynamic(const gsl_vector* g);
+	void resizeToMatchIfDynamic(const gsl_matrix* g);
 
 	gsl_type gsl;
 };
@@ -151,6 +169,14 @@ template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> 
 
 	static const ConstantReturnType zero() {
 		return MatrixBaseType::Zero();
+	}
+
+	static const ConstantReturnType zero(int r) {
+		return MatrixBaseType::Zero(r);
+	}
+
+	static const ConstantReturnType zero(int r, int c) {
+		return MatrixBaseType::Zero(r,c);
 	}
 
 	template<typename Derived>

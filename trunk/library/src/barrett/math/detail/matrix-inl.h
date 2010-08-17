@@ -7,10 +7,9 @@
 
 #include <stdexcept>
 #include <cstring>
-//#include <algorithm>
-//#include <functional>
 #include <sstream>
 
+#include <boost/type_traits/is_same.hpp>
 #include <boost/static_assert.hpp>
 #include <libconfig.h++>
 
@@ -27,6 +26,20 @@ namespace math {
 //template<int R, int C, typename Units>
 //inline Matrix<R,C, Units>::Matrix() :
 //	Base(), gsl()
+//{
+//	initGslType(&gsl);
+//}
+//
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units>::Matrix(int dim) :
+//	Base(dim), gsl()
+//{
+//	initGslType(&gsl);
+//}
+//
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units>::Matrix(int r, int c) :
+//	Base(r, c), gsl()
 //{
 //	initGslType(&gsl);
 //}
@@ -85,22 +98,43 @@ inline Matrix<R,C, Units>::Matrix(const Eigen::RotationBase<OtherDerived,Base::C
 
 
 template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix(double d)
+inline Matrix<R,C, Units>::Matrix(double d) :
+	Base(), gsl()
 {
 	initGslType(&gsl);
 	this->setConstant(d);
 }
 
 template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix(const gsl_type* gslType)
+inline Matrix<R,C, Units>::Matrix(int r, double d) :
+	Base(r), gsl()
 {
+	initGslType(&gsl);
+	this->setConstant(d);
+}
+
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units>::Matrix(int r, int c, double d) :
+	Base(r,c), gsl()
+{
+	initGslType(&gsl);
+	this->setConstant(d);
+}
+
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units>::Matrix(const gsl_type* gslType) :
+	Base(), gsl()
+{
+	resizeToMatchIfDynamic(gslType);
 	initGslType(&gsl);
 	copyFrom(gslType);
 }
 
 template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix(const libconfig::Setting& setting)
+inline Matrix<R,C, Units>::Matrix(const libconfig::Setting& setting) :
+	Base(), gsl()
 {
+	resizeIfDynamic(setting.getLength());  // TODO(dc): add support for Matrix settings
 	initGslType(&gsl);
 	copyFrom(setting);
 }
@@ -120,25 +154,25 @@ inline Matrix<R,C, Units>::~Matrix()
 }
 
 
-template<int R, int C, typename Units>
-inline size_t Matrix<R,C, Units>::serializedLength()
-{
-	return sizeof(double) * R*C;
-}
-
-template<int R, int C, typename Units>
-inline void Matrix<R,C, Units>::serialize(char* dest) const
-{
-	std::memcpy(dest, this->data(), serializedLength());
-}
-
-template<int R, int C, typename Units>
-inline Matrix<R,C, Units> Matrix<R,C, Units>::unserialize(char* source)
-{
-	Matrix<R,C, Units> a;
-	std::memcpy(a.data(), source, serializedLength());
-	return a;
-}
+//template<int R, int C, typename Units>
+//inline size_t Matrix<R,C, Units>::serializedLength()
+//{
+//	return sizeof(double) * R*C;
+//}
+//
+//template<int R, int C, typename Units>
+//inline void Matrix<R,C, Units>::serialize(char* dest) const
+//{
+//	std::memcpy(dest, this->data(), serializedLength());
+//}
+//
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units> Matrix<R,C, Units>::unserialize(char* source)
+//{
+//	Matrix<R,C, Units> a;
+//	std::memcpy(a.data(), source, serializedLength());
+//	return a;
+//}
 
 
 template<int R, int C, typename Units>
@@ -205,36 +239,45 @@ inline const typename Matrix<R,C, Units>::gsl_type* Matrix<R,C, Units>::asGslTyp
 	return &(this->gsl);
 }
 
-// init the gsl_type representation of the Matrix
-//template<int R, int C, typename Units>
-//template<typename T>
-//inline void Matrix<R,C, Units>::initGslType(T* g)
-//{
-//	// must use one of the specializations below
-////	BOOST_STATIC_ASSERT(false);
-//}
 template<int R, int C, typename Units>
-//template<>
+inline void Matrix<R,C, Units>::resizeIfDynamic(int r, int c)
+{
+	if (R == Eigen::Dynamic  ||  C == Eigen::Dynamic) {
+		this->resize(r,c);
+	}
+}
+
+template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::initGslType(gsl_vector* g)
 {
 	g->size = this->size();
 	g->stride = 1;
 	g->data = this->data();
-	g->block = 0;
+	g->block = NULL;
 	g->owner = 0;
 }
 template<int R, int C, typename Units>
-//template<>
 inline void Matrix<R,C, Units>::initGslType(gsl_matrix* g)
 {
 	g->size1 = this->rows();
 	g->size2 = this->cols();
 	g->tda = this->cols();
 	g->data = this->data();
-	g->block = 0;
+	g->block = NULL;
 	g->owner = 0;
 }
 
+
+template<int R, int C, typename Units>
+inline void Matrix<R,C, Units>::resizeToMatchIfDynamic(const gsl_vector* g)
+{
+	resizeIfDynamic(g->size);
+}
+template<int R, int C, typename Units>
+inline void Matrix<R,C, Units>::resizeToMatchIfDynamic(const gsl_matrix* g)
+{
+	resizeIfDynamic(g->size1, g->size2);
+}
 
 template<int R, int C, typename Units>
 std::ostream& operator<< (std::ostream& os, const Matrix<R,C, Units>& a) {
