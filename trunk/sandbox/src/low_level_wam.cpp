@@ -42,10 +42,7 @@ using boost::ref;
 
 const size_t DOF = 7;
 const double T_s = 0.002;
-
-typedef LowLevelWam<DOF>::jt_type jt_type;
-typedef LowLevelWam<DOF>::jp_type jp_type;
-typedef LowLevelWam<DOF>::jv_type jv_type;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 void waitForEnter() {

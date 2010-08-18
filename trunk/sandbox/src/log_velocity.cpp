@@ -18,11 +18,10 @@ using namespace barrett;
 
 const size_t DOF = 4;
 const double T_s = 0.002;
+BARRETT_UNITS_TYPEDEFS(DOF);
+
 const char BIN_FILE[] = "/tmp/jv.bin";
 const char CSV_FILE[] = "/tmp/jv.csv";
-
-
-typedef Wam<DOF>::jp_type jp_type;
 
 
 void waitForEnter() {

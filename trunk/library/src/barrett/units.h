@@ -69,6 +69,14 @@
 	typedef ::barrett::units::CartesianForce::type cf_type;  \
 	typedef ::barrett::units::CartesianPosition::type cp_type
 
+#define BARRETT_UNITS_TEMPLATE_TYPEDEFS(dimension)  \
+	typedef typename ::barrett::math::Vector<dimension>::type v_type;  \
+	typedef typename ::barrett::units::JointTorques<dimension>::type jt_type;  \
+	typedef typename ::barrett::units::JointPositions<dimension>::type jp_type;  \
+	typedef typename ::barrett::units::JointVelocities<dimension>::type jv_type;  \
+	typedef ::barrett::units::CartesianForce::type cf_type;  \
+	typedef ::barrett::units::CartesianPosition::type cp_type
+
 
 #include <libconfig.h++>
 #include "./math/matrix.h"

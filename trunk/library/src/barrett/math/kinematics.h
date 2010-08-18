@@ -26,10 +26,9 @@ namespace math {
 
 template<size_t DOF>
 class Kinematics {
-public:
-	typedef typename units::JointPositions<DOF>::type jp_type;
-	typedef typename units::JointVelocities<DOF>::type jv_type;
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+public:
 	explicit Kinematics(const libconfig::Setting& setting);
 	~Kinematics();
 

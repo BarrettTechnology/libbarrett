@@ -32,9 +32,9 @@ namespace systems {
 
 template<size_t DOF>
 class MasterMaster : public SingleIO<typename units::JointPositions<DOF>::type, typename units::JointPositions<DOF>::type> {
-public:
-	typedef typename units::JointPositions<DOF>::type jp_type;
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+public:
 	explicit MasterMaster(char* remoteHost, int port = 5555) :
 		sock(-1), init(true), locked(false), numMissed(), theirJp(), stopRunning(false), thread() {
 		int err;

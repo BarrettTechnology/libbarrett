@@ -24,11 +24,7 @@ namespace systems {
 
 template<size_t DOF>
 class LowLevelWam {
-public:
-	typedef typename units::JointTorques<DOF>::type jt_type;
-	typedef typename units::JointPositions<DOF>::type jp_type;
-	typedef typename units::JointVelocities<DOF>::type jv_type;
-
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:		System::Input<jt_type>& input;
 public:		System::Output<jp_type>& jpOutput;

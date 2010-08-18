@@ -16,9 +16,7 @@ using namespace barrett;
 
 const size_t DOF = 4;
 const double T_s = 0.002;
-
-
-typedef Wam<DOF>::jp_type jp_type;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 void waitForEnter() {

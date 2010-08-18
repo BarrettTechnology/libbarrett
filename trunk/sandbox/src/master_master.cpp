@@ -72,10 +72,7 @@ const double GIMBALS_J6_OFFSET = M_PI/2;
 
 const size_t DOF = 7;
 const double T_s = 0.002;
-
-typedef Wam<DOF>::jt_type jt_type;
-typedef Wam<DOF>::jp_type jp_type;
-typedef Wam<DOF>::jv_type jv_type;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 void waitForEnter() {
@@ -241,14 +238,14 @@ int main(int argc, char** argv) {
 				mm.unlock();
 			} else {
 				// build spline to setPoint
-				std::vector<Wam<DOF>::jp_type> vec;
+				std::vector<jp_type> vec;
 				vec.push_back(wam.getJointPositions());
 				vec.push_back(origin);
-				math::Spline<Wam<DOF>::jp_type> spline(vec);
+				math::Spline<jp_type> spline(vec);
 				math::TrapezoidalVelocityProfile profile(.5, 1.0, 0, spline.changeInX());
 
 				systems::Ramp time;
-				systems::Callback<double, Wam<DOF>::jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+				systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
 
 				time.setSamplePeriod(T_s);
 

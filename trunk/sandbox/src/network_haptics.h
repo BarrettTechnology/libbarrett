@@ -23,11 +23,11 @@
 
 
 class NetworkHaptics : public barrett::systems::SingleIO<barrett::units::CartesianPosition::type, barrett::units::CartesianForce::type> {
-public:
-	static const int SIZE_OF_MSG = 3 * sizeof(double);
-
 	typedef barrett::units::CartesianPosition::type cp_type;
 	typedef barrett::units::CartesianForce::type cf_type;
+
+public:
+	static const int SIZE_OF_MSG = 3 * sizeof(double);
 
 	explicit NetworkHaptics(char* remoteHost, int port = 5555) :
 		barrett::systems::SingleIO<cp_type, cf_type>(true), sock(-1), numMissed(0), cf(0.0)

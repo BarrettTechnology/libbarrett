@@ -27,9 +27,7 @@ using namespace barrett;
 
 
 const size_t DOF = 7;
-typedef units::JointTorques<DOF>::type jt_type;
-typedef units::JointPositions<DOF>::type jp_type;
-typedef units::JointVelocities<DOF>::type jv_type;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 // TODO(dc): actually test this!

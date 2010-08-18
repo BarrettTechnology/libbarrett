@@ -28,10 +28,10 @@ template<size_t DOF>
 class GravityCompensator : public System,
 						   public KinematicsInput<DOF>,
 						   public SingleOutput<typename units::JointTorques<DOF>::type> {
+
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
 public:
-	typedef typename units::JointTorques<DOF>::type jt_type;
-
-
 	explicit GravityCompensator(const libconfig::Setting& setting) :
 		KinematicsInput<DOF>(this), SingleOutput<jt_type>(this),
 		impl(NULL) {

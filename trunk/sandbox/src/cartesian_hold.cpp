@@ -43,6 +43,7 @@ using boost::ref;
 
 const size_t DOF = 7;
 const double T_s = 0.010;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 void waitForEnter() {
@@ -101,7 +102,7 @@ int main() {
 	connect(pid.controlOutput, tf2jt.input);
 //	connect(tf2jt.output, jtSum.getInput(0));
 
-	systems::PrintToStream<Wam<DOF>::jt_type> jtPrint;
+	systems::PrintToStream<jt_type> jtPrint;
 	connect(toolOrient.output, toolOrientController.feedbackInput);
 	connect(toolOrientController.controlOutput, wam.input);
 //	connect(toolOrientController.controlOutput, jtSum.getInput(1));
@@ -130,7 +131,7 @@ int main() {
 	std::string line;
 	bool going = true, holding = false, gravComp = true;
 	Eigen::Quaterniond q;
-	Wam<DOF>::jp_type jp;
+	jp_type jp;
 	while (going) {
 		std::cout << ">>> ";
 		std::getline(std::cin, line);

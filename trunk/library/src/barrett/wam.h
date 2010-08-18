@@ -58,11 +58,9 @@ namespace barrett {
 
 template<size_t DOF>
 class Wam {
-public:
-	typedef typename units::JointTorques<DOF>::type jt_type;
-	typedef typename units::JointPositions<DOF>::type jp_type;
-	typedef typename units::JointVelocities<DOF>::type jv_type;
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+public:
 
 	// these need to be before the IO references
 	systems::LowLevelWam<DOF> wam;
