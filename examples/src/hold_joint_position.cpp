@@ -9,6 +9,7 @@ using namespace barrett;
 
 const size_t DOF = 7;
 const double T_s = 0.002;
+BARRETT_UNITS_TYPEDEFS(DOF);  // declares jp_type
 
 
 void waitForEnter() {
@@ -27,7 +28,7 @@ int main() {
 
 	// instantiate Systems
 	Wam<DOF> wam(config.lookup("wam"));
-	systems::ExposedOutput<Wam<DOF>::jp_type> setPoint;
+	systems::ExposedOutput<jp_type> setPoint;
 
 
 	// start the main loop!

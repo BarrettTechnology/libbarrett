@@ -26,10 +26,7 @@ const int JIDX = 3;  // joint 4
 const double VEL = 0.5;
 
 
-typedef Wam<DOF>::jt_type jt_type;
-typedef Wam<DOF>::jp_type jp_type;
-typedef Wam<DOF>::jv_type jv_type;
-
+BARRETT_UNITS_TYPEDEFS(DOF);
 typedef math::Vector<3>::type log_type;
 
 

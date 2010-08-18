@@ -21,7 +21,12 @@
 #include <barrett/systems.h>
 #include <barrett/wam.h>
 
-//#include "btkey.h"
+
+using namespace barrett;
+
+const int DOF = 7;
+const double T_s = 0.002;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 enum btkey {
@@ -73,15 +78,6 @@ enum btkey btkey_get()
    }
 }
 
-
-using namespace barrett;
-
-const int DOF = 7;
-const double T_s = 0.002;
-
-typedef Wam<DOF>::jt_type jt_type;
-typedef Wam<DOF>::jp_type jp_type;
-typedef Wam<DOF>::jv_type jv_type;
 
 
 
