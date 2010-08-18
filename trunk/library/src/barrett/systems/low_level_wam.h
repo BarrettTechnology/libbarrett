@@ -22,8 +22,13 @@ namespace barrett {
 namespace systems {
 
 
+template<size_t DOF>
 class LowLevelWam {
-	using namespace units::typedefs;
+public:
+	typedef typename units::JointTorques<DOF>::type jt_type;
+	typedef typename units::JointPositions<DOF>::type jp_type;
+	typedef typename units::JointVelocities<DOF>::type jv_type;
+
 
 public:		System::Input<jt_type>& input;
 public:		System::Output<jp_type>& jpOutput;

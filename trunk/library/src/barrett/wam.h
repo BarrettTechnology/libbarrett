@@ -56,14 +56,18 @@
 namespace barrett {
 
 
+template<size_t DOF>
 class Wam {
-	BARRETT_UNITS_TYPEDEFS;
-
 public:
+	typedef typename units::JointTorques<DOF>::type jt_type;
+	typedef typename units::JointPositions<DOF>::type jp_type;
+	typedef typename units::JointVelocities<DOF>::type jv_type;
+
+
 	// these need to be before the IO references
-	systems::LowLevelWam wam;
-	systems::KinematicsBase kinematicsBase;
-	systems::GravityCompensator gravity;
+	systems::LowLevelWam<DOF> wam;
+	systems::KinematicsBase<DOF> kinematicsBase;
+	systems::GravityCompensator<DOF> gravity;
 	systems::FirstOrderFilter<jv_type> jvFilter;
 	systems::ToolPosition<DOF> toolPosition;
 	systems::ToolOrientation<DOF> toolOrientation;
