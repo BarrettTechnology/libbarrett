@@ -9,7 +9,6 @@
 #include <cstring>
 #include <sstream>
 
-#include <boost/type_traits/is_same.hpp>
 #include <boost/static_assert.hpp>
 #include <libconfig.h++>
 
@@ -23,26 +22,26 @@ namespace barrett {
 namespace math {
 
 
-template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix() :
-	Base(), gsl()
-{
-	initGslType(&gsl);
-}
-
-template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix(int dim) :
-	Base(dim), gsl()
-{
-	initGslType(&gsl);
-}
-
-template<int R, int C, typename Units>
-inline Matrix<R,C, Units>::Matrix(int r, int c) :
-	Base(r, c), gsl()
-{
-	initGslType(&gsl);
-}
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units>::Matrix() :
+//	Base(), gsl()
+//{
+//	initGslType(&gsl);
+//}
+//
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units>::Matrix(int dim) :
+//	Base(dim), gsl()
+//{
+//	initGslType(&gsl);
+//}
+//
+//template<int R, int C, typename Units>
+//inline Matrix<R,C, Units>::Matrix(int r, int c) :
+//	Base(r, c), gsl()
+//{
+//	initGslType(&gsl);
+//}
 
 template<int R, int C, typename Units>
 inline Matrix<R,C, Units>::Matrix(double x, double y) :
@@ -154,25 +153,27 @@ inline Matrix<R,C, Units>::~Matrix()
 }
 
 
-//template<int R, int C, typename Units>
-//inline size_t Matrix<R,C, Units>::serializedLength()
-//{
-//	return sizeof(double) * R*C;
-//}
-//
-//template<int R, int C, typename Units>
-//inline void Matrix<R,C, Units>::serialize(char* dest) const
-//{
-//	std::memcpy(dest, this->data(), serializedLength());
-//}
-//
-//template<int R, int C, typename Units>
-//inline Matrix<R,C, Units> Matrix<R,C, Units>::unserialize(char* source)
-//{
-//	Matrix<R,C, Units> a;
-//	std::memcpy(a.data(), source, serializedLength());
-//	return a;
-//}
+template<int R, int C, typename Units>
+inline size_t Matrix<R,C, Units>::serializedLength()
+{
+	// This method assumes a fixed-size Matrix.
+	BOOST_STATIC_ASSERT(R != Eigen::Dynamic  &&  C != Eigen::Dynamic);
+	return sizeof(double) * SIZE;
+}
+
+template<int R, int C, typename Units>
+inline void Matrix<R,C, Units>::serialize(char* dest) const
+{
+	std::memcpy(dest, this->data(), serializedLength());
+}
+
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units> Matrix<R,C, Units>::unserialize(char* source)
+{
+	Matrix<R,C, Units> a;
+	std::memcpy(a.data(), source, serializedLength());
+	return a;
+}
 
 
 template<int R, int C, typename Units>

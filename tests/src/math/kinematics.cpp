@@ -12,10 +12,7 @@
 
 #include <barrett/units.h>
 #include <barrett/math/kinematics.h>
-#include <barrett/systems/constant.h>
-#include <barrett/systems/tuple_grouper.h>
-#include <barrett/systems/callback.h>
-
+#include <barrett/systems.h>
 #include "../systems/exposed_io_system.h"
 
 
@@ -24,10 +21,11 @@
 
 namespace {
 using namespace barrett;
-BARRETT_UNITS_TYPEDEFS;
 
 
-const int DOF = 7;
+const size_t DOF = 7;
+typedef units::JointPositions<DOF>::type jp_type;
+typedef units::JointVelocities<DOF>::type jv_type;
 
 
 class KimematicsTest : public ::testing::Test {
@@ -37,7 +35,7 @@ public:
 	{
 		libconfig::Config config;
 		config.readFile("test.config");
-		kin = new math::Kinematics(config.lookup("wam.kinematics"));
+		kin = new math::Kinematics<DOF>(config.lookup("wam.kinematics"));
 	}
 
 	~KimematicsTest() {
@@ -46,7 +44,7 @@ public:
 	}
 
 protected:
-	math::Kinematics* kin;
+	math::Kinematics<DOF>* kin;
 };
 
 
@@ -56,8 +54,8 @@ TEST_F(KimematicsTest, Ctor) {
 }
 
 TEST_F(KimematicsTest, Eval) {
-	jp_type jp(DOF);
-	jv_type jv(DOF);
+	jp_type jp;
+	jv_type jv;
 
 	jp << 7.30467e-05, -1.96708, -0.000456121, 3.04257, -0.0461776, 1.54314, -0.0226513;
 	jv.setConstant(0.0);
@@ -66,8 +64,8 @@ TEST_F(KimematicsTest, Eval) {
 }
 
 TEST_F(KimematicsTest, Stuff) {
-	jp_type jp(DOF);
-	jv_type jv(DOF);
+	jp_type jp;
+	jv_type jv;
 
 	jp <<  0, -2, 0, 3.14, 0, 1.57, 0;
 	jv.setConstant(0.0);
@@ -79,8 +77,8 @@ TEST_F(KimematicsTest, Stuff) {
 	systems::Constant<jp_type> jpSys(jp);
 	systems::Constant<jv_type> jvSys(jv);
 	systems::TupleGrouper<jp_type, jv_type> kinTg;
-	systems::Callback<boost::tuple<jp_type, jv_type>, cp_type> kinSys(boost::ref(*kin));
-	ExposedIOSystem<cp_type> eios;
+	systems::Callback<boost::tuple<jp_type, jv_type>, units::CartesianPosition::type> kinSys(boost::ref(*kin));
+	ExposedIOSystem<units::CartesianPosition::type> eios;
 
 	systems::connect(jpSys.output, kinTg.getInput<0>());
 	systems::connect(jvSys.output, kinTg.getInput<1>());
@@ -94,6 +92,5 @@ TEST_F(KimematicsTest, Stuff) {
 }
 
 
+
 }
-#if 0
-#endif

@@ -161,7 +161,7 @@ TEST_F(PIDControllerTest, SetKd) {
 	for (i = 1; i < 10; ++i) {
 		a.setConstant(i);
 		eios.setOutputValue(a);
-		EXPECT_EQ(i_type(10), eios.getInputValue());
+		EXPECT_EQ(i_type(10.0), eios.getInputValue());
 	}
 }
 
@@ -175,7 +175,7 @@ TEST_F(PIDControllerTest, SetIntegratorState) {
 	a.setConstant(0);
 	for (size_t i = 0; i < 10; ++i) {
 		eios.setOutputValue(a);
-		EXPECT_EQ(i_type(1), eios.getInputValue());
+		EXPECT_EQ(i_type(1.0), eios.getInputValue());
 	}
 }
 
@@ -224,12 +224,12 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 	EXPECT_EQ(i_type(0.1).cwise() * a, eios.getInputValue());
 	eios.setOutputValue(i_type(2.0));
 	EXPECT_EQ(a, eios.getInputValue());
-	eios.setOutputValue(i_type(-5));
+	eios.setOutputValue(i_type(-5.0));
 	EXPECT_EQ(-a, eios.getInputValue());
 }
 
 TEST_F(PIDControllerTest, ResetIntegrator) {
-	pid.setKi(i_type(500));
+	pid.setKi(i_type(500.0));
 
 	a.setConstant(1);
 	for (size_t i = 0; i < 10; ++i) {

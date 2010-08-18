@@ -61,12 +61,13 @@
 #define BARRETT_UNITS_H_
 
 
-#define BARRETT_UNITS_TYPEDEFS  \
-typedef ::barrett::units::jt_type jt_type;  \
-typedef ::barrett::units::jp_type jp_type;  \
-typedef ::barrett::units::jv_type jv_type;  \
-typedef ::barrett::units::cf_type cf_type;  \
-typedef ::barrett::units::cp_type cp_type
+#define BARRETT_UNITS_TYPEDEFS(dimension)  \
+	typedef ::barrett::math::Vector<dimension>::type v_type;  \
+	typedef ::barrett::units::JointTorques<dimension>::type jt_type;  \
+	typedef ::barrett::units::JointPositions<dimension>::type jp_type;  \
+	typedef ::barrett::units::JointVelocities<dimension>::type jv_type;  \
+	typedef ::barrett::units::CartesianForce::type cf_type;  \
+	typedef ::barrett::units::CartesianPosition::type cp_type
 
 
 #include <libconfig.h++>
@@ -94,26 +95,6 @@ struct CartesianForce {
 struct CartesianPosition {
 	typedef math::Vector<3, CartesianPosition>::type type;
 };
-
-
-typedef JointTorques<Eigen::Dynamic>::type jt_type;
-typedef JointPositions<Eigen::Dynamic>::type jp_type;
-typedef JointVelocities<Eigen::Dynamic>::type jv_type;
-
-typedef CartesianForce::type cf_type;
-typedef CartesianPosition::type cp_type;
-
-//namespace typedefs {
-//
-//typedef JointTorques<Eigen::Dynamic>::type jt_type;
-//typedef JointPositions<Eigen::Dynamic>::type jp_type;
-//typedef JointVelocities<Eigen::Dynamic>::type jv_type;
-//
-//typedef CartesianForce::type cf_type;
-//typedef CartesianPosition::type cp_type;
-//
-//}
-//using namespace typedefs;
 
 
 }

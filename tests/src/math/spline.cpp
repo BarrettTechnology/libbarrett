@@ -56,7 +56,7 @@ TEST(SplineTest, InitialDirection) {
 	jp.setConstant(2);
 	points.push_back(jp);
 
-	units::JointVelocities<DOF>::type jv(-1);
+	units::JointVelocities<DOF>::type jv(-1.0);
 	math::Spline<jp_type> spline(points, jv);
 
 
