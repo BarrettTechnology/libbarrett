@@ -21,10 +21,9 @@ namespace barrett {
 namespace systems {
 
 
-template<size_t DOF>
 class KinematicsInput {  // not a System in order to avoid diamond inheritance
 // IO
-public:	System::Input<const math::Kinematics<DOF>*> kinInput;
+public:	System::Input<const math::Kinematics*> kinInput;
 
 
 public:
@@ -36,13 +35,12 @@ private:
 };
 
 
-template<size_t DOF>
 class KinematicsBase : public System {
 // IO
-public:		Input<typename units::JointPositions<DOF>::type> jpInput;
-public:		Input<typename units::JointVelocities<DOF>::type> jvInput;
-public:		Output<const math::Kinematics<DOF>*> kinOutput;
-protected:	typename Output<const math::Kinematics<DOF>*>::Value* kinOutputValue;
+public:		Input<units::jp_type> jpInput;
+public:		Input<units::jv_type> jvInput;
+public:		Output<const math::Kinematics*> kinOutput;
+protected:	Output<const math::Kinematics*>::Value* kinOutputValue;
 
 
 public:
@@ -57,7 +55,7 @@ protected:
 		kinOutputValue->setValue(&kin);
 	}
 
-	math::Kinematics<DOF> kin;
+	math::Kinematics kin;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(KinematicsBase);

@@ -61,6 +61,14 @@
 #define BARRETT_UNITS_H_
 
 
+#define BARRETT_UNITS_TYPEDEFS  \
+typedef ::barrett::units::jt_type jt_type;  \
+typedef ::barrett::units::jp_type jp_type;  \
+typedef ::barrett::units::jv_type jv_type;  \
+typedef ::barrett::units::cf_type cf_type;  \
+typedef ::barrett::units::cp_type cp_type
+
+
 #include <libconfig.h++>
 #include "./math/matrix.h"
 
@@ -88,8 +96,6 @@ struct CartesianPosition {
 };
 
 
-namespace typedefs {
-
 typedef JointTorques<Eigen::Dynamic>::type jt_type;
 typedef JointPositions<Eigen::Dynamic>::type jp_type;
 typedef JointVelocities<Eigen::Dynamic>::type jv_type;
@@ -97,8 +103,17 @@ typedef JointVelocities<Eigen::Dynamic>::type jv_type;
 typedef CartesianForce::type cf_type;
 typedef CartesianPosition::type cp_type;
 
-}
-using namespace typedefs;
+//namespace typedefs {
+//
+//typedef JointTorques<Eigen::Dynamic>::type jt_type;
+//typedef JointPositions<Eigen::Dynamic>::type jp_type;
+//typedef JointVelocities<Eigen::Dynamic>::type jv_type;
+//
+//typedef CartesianForce::type cf_type;
+//typedef CartesianPosition::type cp_type;
+//
+//}
+//using namespace typedefs;
 
 
 }

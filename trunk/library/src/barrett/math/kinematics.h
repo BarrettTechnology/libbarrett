@@ -19,25 +19,23 @@
 // forward declaration from <barrett/kinematics/kinematics.h>
 struct bt_kinematics;
 
-
 namespace barrett {
 namespace math {
 
 
-template<size_t DOF>
 class Kinematics {
-public:
-	typedef typename units::JointPositions<DOF>::type jp_type;
-	typedef typename units::JointVelocities<DOF>::type jv_type;
+	BARRETT_UNITS_TYPEDEFS;
 
+public:
 	explicit Kinematics(const libconfig::Setting& setting);
 	~Kinematics();
 
 	void eval(const jp_type& jp, const jv_type& jv);
 
-	typedef typename units::CartesianPosition::type result_type;  ///< For use with boost::bind().
+	typedef cp_type result_type;  ///< For use with boost::bind().
 	result_type operator() (const boost::tuple<jp_type, jv_type>& jointState);
 
+// TODO(dc): hide implementation
 //protected:
 	struct bt_kinematics* impl;
 

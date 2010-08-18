@@ -54,7 +54,7 @@
 <listOptionValue builtIn="false" value="boost_thread"/>
 <listOptionValue builtIn="false" value="gslcblas"/>
 </option>
-<option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
+<option id="gnu.cpp.link.option.paths.902974086" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1863663531" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
