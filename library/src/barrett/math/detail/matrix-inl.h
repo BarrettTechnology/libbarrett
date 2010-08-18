@@ -23,26 +23,26 @@ namespace barrett {
 namespace math {
 
 
-//template<int R, int C, typename Units>
-//inline Matrix<R,C, Units>::Matrix() :
-//	Base(), gsl()
-//{
-//	initGslType(&gsl);
-//}
-//
-//template<int R, int C, typename Units>
-//inline Matrix<R,C, Units>::Matrix(int dim) :
-//	Base(dim), gsl()
-//{
-//	initGslType(&gsl);
-//}
-//
-//template<int R, int C, typename Units>
-//inline Matrix<R,C, Units>::Matrix(int r, int c) :
-//	Base(r, c), gsl()
-//{
-//	initGslType(&gsl);
-//}
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units>::Matrix() :
+	Base(), gsl()
+{
+	initGslType(&gsl);
+}
+
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units>::Matrix(int dim) :
+	Base(dim), gsl()
+{
+	initGslType(&gsl);
+}
+
+template<int R, int C, typename Units>
+inline Matrix<R,C, Units>::Matrix(int r, int c) :
+	Base(r, c), gsl()
+{
+	initGslType(&gsl);
+}
 
 template<int R, int C, typename Units>
 inline Matrix<R,C, Units>::Matrix(double x, double y) :

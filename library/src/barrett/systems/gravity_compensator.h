@@ -24,18 +24,16 @@ namespace barrett {
 namespace systems {
 
 
-template<size_t DOF>
 class GravityCompensator : public System,
-						   public KinematicsInput<DOF>,
-						   public SingleOutput<typename units::JointTorques<DOF>::type> {
+						   public KinematicsInput,
+						   public SingleOutput<units::jt_type> {
+	BARRETT_UNITS_TYPEDEFS;
+
 public:
-	typedef typename units::JointTorques<DOF>::type jt_type;
-
-
 	explicit GravityCompensator(const libconfig::Setting& setting) :
-		KinematicsInput<DOF>(this), SingleOutput<jt_type>(this),
-		impl(NULL) {
-		bt_calgrav_create(&impl, setting.getCSetting(), DOF);
+		KinematicsInput(this), SingleOutput<jt_type>(this),
+		dof(setting.getLength()), impl(NULL) {
+		bt_calgrav_create(&impl, setting.getCSetting(), dof);
 	}
 
 	virtual ~GravityCompensator() {
@@ -50,6 +48,7 @@ protected:
 		this->outputValue->setValue(jt);
 	}
 
+	const int dof;
 	struct bt_calgrav* impl;
 
 private:

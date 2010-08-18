@@ -73,9 +73,9 @@ public:
 
 
 	// Duplicate the non-inherited parts of Eigen's interface.
-//	Matrix();
-//	explicit Matrix(int dim);
-//	Matrix(int r, int c);
+	Matrix();
+	explicit Matrix(int dim);
+	Matrix(int r, int c);
 	Matrix(double x, double y);
 	Matrix(double x, double y, double z);
 	Matrix(double x, double y, double z, double w);
@@ -123,9 +123,12 @@ public:
 	 *
 	 * @param[in] d The initial value of the Matrix's coefficients.
 	 */
-	explicit Matrix(double d = 0.0);
-	explicit Matrix(int r, double d = 0.0);
-	Matrix(int r, int c, double d = 0.0);
+	explicit Matrix(double d);
+	explicit Matrix(int r, double d);
+	Matrix(int r, int c, double d);
+//	explicit Matrix(double d = 0.0);
+//	explicit Matrix(int r, double d = 0.0);
+//	Matrix(int r, int c, double d = 0.0);
 	explicit Matrix(const gsl_type* gslType);
 	Matrix(const libconfig::Setting& setting);  // deliberately non-explicit
 	Matrix(const Matrix& a);  // TODO(dc): make sure units match in a copy construction

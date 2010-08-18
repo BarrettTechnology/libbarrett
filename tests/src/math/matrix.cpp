@@ -87,20 +87,21 @@ TYPED_TEST_CASE(VectorTypedTest, BothTypes);
 
 
 
-// uses the actual default ctor
-TYPED_TEST(FixedVectorTypedTest, DefaultCtor) {
-	for (int i = 0; i < this->a.size(); ++i) {
-		EXPECT_EQ(0.0, this->a[i]);
-	}
-}
-
-// uses the closest thing to a default ctor that a dynamic vector has
-// both types of vectors should be able to be constructed this way
-TYPED_TEST(VectorTypedTest, DefaultCtor) {
-	for (int i = 0; i < this->a.size(); ++i) {
-		EXPECT_EQ(0.0, this->a[i]);
-	}
-}
+// TODO(dc): does the default ctor need a test?
+//// uses the actual default ctor
+//TYPED_TEST(FixedVectorTypedTest, DefaultCtor) {
+//	for (int i = 0; i < this->a.size(); ++i) {
+//		EXPECT_EQ(0.0, this->a[i]);
+//	}
+//}
+//
+//// uses the closest thing to a default ctor that a dynamic vector has
+//// both types of vectors should be able to be constructed this way
+//TYPED_TEST(VectorTypedTest, DefaultCtor) {
+//	for (int i = 0; i < this->a.size(); ++i) {
+//		EXPECT_EQ(0.0, this->a[i]);
+//	}
+//}
 
 TYPED_TEST(FixedVectorTypedTest, InitialValueCtor) {
 	TypeParam a(-487.9);
