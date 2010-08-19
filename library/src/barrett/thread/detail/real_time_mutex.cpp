@@ -5,6 +5,8 @@
  *      Author: dc
  */
 
+#include <stdexcept>
+#include <syslog.h>
 
 #include <native/task.h>
 #include <native/mutex.h>
@@ -16,21 +18,27 @@ namespace barrett {
 namespace thread {
 
 
-// TODO(dc): check return codes for errors!
-
-
 RealTimeMutex::RealTimeMutex() :
 	mutex(NULL)
 {
 	mutex = new RT_MUTEX;
-	rt_mutex_create(mutex, NULL);
+	int ret = rt_mutex_create(mutex, NULL);
+	if (ret) {
+		syslog(LOG_ERR, "Could not create RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::RealTimeMutex(): Could not create RT_MUTEX.");
+	}
 }
 
 RealTimeMutex::~RealTimeMutex()
 {
-	rt_mutex_delete(mutex);
+	int ret = rt_mutex_delete(mutex);
 	delete mutex;
 	mutex = NULL;
+
+	if (ret) {
+		syslog(LOG_ERR, "Could not delete RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::~RealTimeMutex(): Could not delete RT_MUTEX.");
+	}
 }
 
 void RealTimeMutex::lock()
@@ -45,15 +53,17 @@ bool RealTimeMutex::try_lock()
 
 void RealTimeMutex::unlock()
 {
-	rt_mutex_release(mutex);
+	int ret = rt_mutex_release(mutex);
+	if (ret) {
+		syslog(LOG_ERR, "Could not release RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::unlock(): Could not release RT_MUTEX.");
+	}
 }
 
 int RealTimeMutex::acquireWrapper(RT_MUTEX* m, RTIME timeout)
 {
-	int err;
-
-	err = rt_mutex_acquire(m, timeout);
-	if (err == -EPERM) {
+	int ret = rt_mutex_acquire(m, timeout);
+	if (ret == -EPERM) {
 		// become real-time, then try again
 
 		// Allocate a new RT_TASK struct, and then forget the pointer. This
@@ -64,10 +74,10 @@ int RealTimeMutex::acquireWrapper(RT_MUTEX* m, RTIME timeout)
 		// by calling rt_task_self().
 		rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
-		err = rt_mutex_acquire(m, timeout);
+		ret = rt_mutex_acquire(m, timeout);
 	}
 
-	return err;
+	return ret;
 }
 
 
