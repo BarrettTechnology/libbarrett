@@ -1,36 +1,47 @@
 /*
  * can_terminal.cpp
  *
- *  Created on: May 3, 2010
+ *  Created on: Aug 19, 2010
  *      Author: dc
  */
 
 #include <iostream>
 #include <string>
+#include <cstdio>
 
-#include <sys/mman.h>
 #include <unistd.h>
-#include <native/task.h>
-#include <libconfig.h++>
 
-#include <barrett/cdlbt/bus/bus.h>
-#include <barrett/cdlbt/bus/bus_can.h>
+#include <boost/thread.hpp>
+#include <barrett/can_socket.h>
 
 
-using namespace std;
+using namespace barrett;
 
 
-void waitForEnter() {
-	static string line;
-	getline(cin, line);
+void readThread(const CANSocket* bus, const bool* going) {
+	int ret;
+	int id;
+	unsigned char data[CANSocket::MAX_MESSAGE_LEN];
+	size_t len;
+
+	while (*going) {
+		ret  = bus->receive(id, data, len, false);
+		if (ret == 0) {  // success
+			printf("(0x%03x)", id);
+			for (size_t i = 0; i < len; ++i) {
+				printf(" %02x", data[i]);
+			}
+			printf("\n");
+		} else if (ret != 1) {  // error other than no data
+			printf("ERROR: CANSocket::receive() returned %d.\n", ret);
+		}
+
+		usleep(100000);
+	}
 }
 
 
 int main(int argc, char** argv) {
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-	rt_task_shadow(new RT_TASK, NULL, 10, 0);
-
-
 	int port = 0;
 	switch (argc) {
 	case 1:
@@ -46,47 +57,56 @@ int main(int argc, char** argv) {
 	}
 
 	printf("Using CAN bus port %d.\n", port);
-	bt_bus_can* dev = NULL;
-	if (bt_bus_can_create(&dev, port)) {
-		printf("Couldn't open the CAN bus.\n");
-		return -1;
-	}
+	CANSocket bus(port);
 
+	bool going = true;
+	boost::thread thread(readThread, &bus, &going);
 
-	string line;
-	int id = 0;
-	int property = 0;
-	long value = 0;
-	while (true) {
-		cout << ">>> ";
-		getline(cin, line);
-		switch (line[0]) {
-		case 'i':
-			cout << "\tSet ID: ";
-			cin >> id;
-			break;
-
-		case 's':
-			cout << "\tProperty: ";
-			cin >> property;
-			cout << "\tValue: ";
-			cin >> value;
-			bt_bus_can_set_property(dev, id, property, value);
-			printf("SET %d: %d = %ld\n", id, property, value);
-			break;
-
-		case 'g':
-			cout << "\tProperty: ";
-			cin >> property;
-			bt_bus_can_get_property(dev, id, property, &value, NULL, 1);
-			printf("GET %d: %d = %ld\n", id, property, value);
-
-		default:
-			cout << "\t'i' to setactive ID\n"
-					"\t's' to set a property\n"
-					"\t'g' to get a propety\n";
+	std::string line;
+//	size_t offset;
+	int ret;
+	int id;
+	unsigned char data[CANSocket::MAX_MESSAGE_LEN];
+	size_t len;
+	while (going) {
+		printf(">> ");
+		std::getline(std::cin, line);
+		len = sscanf(line.c_str(), "%3x %2x %2x %2x %2x %2x %2x %2x %2x", &id, data+0, data+1, data+2, data+3, data+4, data+5, data+6, data+7) - 1;
+		if (len < 0  ||  len > 8) {
+			printf("ERROR: Input format. No message sent.\n");
+			continue;
 		}
+
+		ret = bus.send(id, data, len);
+		if (ret) {
+			printf("ERROR: CANSocket::send() returned %d.\n", ret);
+		}
+
+//		std::getline(std::cin, line);
+
+//		// parse ID
+//		offset = line.find(' ');
+//		if (offset == std::string::npos) {
+//			offset = line.size();
+//		} else {
+//			line[offset] = '\0';
+//		}
+//		id = atoi(line.c_str());
+//
+//		// parse data
+//		for (int i = 0; i < CANSocket::MAX_MESSAGE_LEN  &&  offset < line.size(); ++i) {
+//			offset = line.find(' ', offset+1);
+//			if (offset == std::string::npos) {
+//				offset = line.size();
+//			} else {
+//				line[offset] = '\0';
+//			}
+//			id = atoi(line.c_str());
+//		}
 	}
+
+	going = false;
+	thread.join();
 
 	return 0;
 }

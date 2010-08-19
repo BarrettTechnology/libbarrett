@@ -381,13 +381,13 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.so.debug.1896749082" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.so.debug">
 <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.so.debug.option.optimization.level.958501699" name="Optimization Level" superClass="gnu.c.compiler.so.debug.option.optimization.level" valueType="enumerated"/>
 <option id="gnu.c.compiler.so.debug.option.debugging.level.977348812" name="Debug Level" superClass="gnu.c.compiler.so.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-<option id="gnu.c.compiler.option.preprocessor.def.symbols.24898515" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.24898515" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="CANTYPE_SOCKET"/>
 <listOptionValue builtIn="false" value="HAVE_INLINE"/>
 <listOptionValue builtIn="false" value="HAS_WAM_LOCAL"/>
 <listOptionValue builtIn="false" value="RTSYS_XENOMAI"/>
 </option>
-<option id="gnu.c.compiler.option.include.paths.1539836252" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+<option id="gnu.c.compiler.option.include.paths.1539836252" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/usr/xenomai/include"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.937110900" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -401,6 +401,7 @@
 <listOptionValue builtIn="false" value="gsl"/>
 <listOptionValue builtIn="false" value="xenomai"/>
 <listOptionValue builtIn="false" value="native"/>
+<listOptionValue builtIn="false" value="rtdk"/>
 <listOptionValue builtIn="false" value="config"/>
 <listOptionValue builtIn="false" value="config++"/>
 <listOptionValue builtIn="false" value="boost_thread"/>
