@@ -28,7 +28,7 @@ public:
 	CANSocket(int port) throw(std::runtime_error);
 	~CANSocket();
 
-	thread::Mutex& getMutex() { return mutex; };
+	thread::Mutex& getMutex() const { return mutex; };
 
 	void open(int port) throw(std::logic_error, std::runtime_error);
 	void close();
