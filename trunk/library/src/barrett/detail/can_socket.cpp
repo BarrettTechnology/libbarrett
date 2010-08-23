@@ -46,7 +46,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 {
 	SCOPED_LOCK(mutex);
 
-	if (handle != NULL_HANDLE) {
+	if (isOpen()) {
 		throw std::logic_error("CANSocket::open(): This object is already associated with a CAN port.");
 	}
 
@@ -56,11 +56,9 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 	char devname[10];
 	sprintf(devname, "rtcan%d", port);
-	rt_syslog(LOG_ERR, "\tCAN device = %s", devname);
-
 	ret = rt_dev_socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "\trt_dev_socket(): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, "  rt_dev_socket(): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 	handle = ret;
@@ -70,7 +68,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 	ret = rt_dev_ioctl(handle, SIOCGIFINDEX, &ifr);
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "\trt_dev_ioctl(SIOCGIFINDEX): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, "  rt_dev_ioctl(SIOCGIFINDEX): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 
@@ -82,14 +80,14 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	ret = rt_dev_bind(handle, (struct sockaddr *) &toAddr,
 			sizeof(toAddr));
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "\trt_dev_bind(): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, "  rt_dev_bind(): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 
 	nanosecs_rel_t timeout = (nanosecs_rel_t) RTDM_TIMEOUT_INFINITE;
 	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (ret) {
-		rt_syslog(LOG_ERR, "\trt_dev_ioctl(RCV_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, "  rt_dev_ioctl(RCV_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 }
@@ -98,7 +96,7 @@ void CANSocket::close()
 {
 	SCOPED_LOCK(mutex);
 
-	if (handle != NULL_HANDLE) {
+	if (isOpen()) {
 		struct ifreq ifr;
 		can_mode_t* mode = (can_mode_t *)&ifr.ifr_ifru;
 		*mode = CAN_MODE_STOP;
@@ -139,7 +137,7 @@ int CANSocket::send(int id, const unsigned char* data, size_t len) const
 					__func__);
 			return 2;
 		default:
-			rt_syslog(LOG_ERR, "%s: rt_dev_send: (%d) %s\n", __func__, -ret, strerror(-ret));
+			rt_syslog(LOG_ERR, "%s: rt_dev_send(): (%d) %s\n", __func__, -ret, strerror(-ret));
 			return 2;
 		}
 	}
@@ -155,7 +153,7 @@ int CANSocket::receive(int& id, unsigned char* data, size_t& len, bool blocking)
 	struct can_frame frame;
 
 	if (blocking) {
-		ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), 0); // can_frame != can_frame_t, but this is how the example does it...
+		ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), 0);
 	} else {
 		ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), MSG_DONTWAIT);
 	}

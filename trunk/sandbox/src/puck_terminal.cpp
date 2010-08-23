@@ -7,17 +7,16 @@
 
 #include <iostream>
 #include <string>
+#include <cstdio>
 
-#include <sys/mman.h>
 #include <unistd.h>
-#include <native/task.h>
-#include <libconfig.h++>
 
-#include <barrett/cdlbt/bus/bus.h>
-#include <barrett/cdlbt/bus/bus_can.h>
+#include <barrett/can_socket.h>
+#include <barrett/puck.h>
 
 
 using namespace std;
+using namespace barrett;
 
 
 void waitForEnter() {
@@ -27,10 +26,6 @@ void waitForEnter() {
 
 
 int main(int argc, char** argv) {
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-	rt_task_shadow(new RT_TASK, NULL, 10, 0);
-
-
 	int port = 0;
 	switch (argc) {
 	case 1:
@@ -46,17 +41,13 @@ int main(int argc, char** argv) {
 	}
 
 	printf("Using CAN bus port %d.\n", port);
-	bt_bus_can* dev = NULL;
-	if (bt_bus_can_create(&dev, port)) {
-		printf("Couldn't open the CAN bus.\n");
-		return -1;
-	}
+	CANSocket bus(port);
 
 
 	string line;
 	int id = 0;
 	int property = 0;
-	long value = 0;
+	int value = 0;
 	while (true) {
 		cout << ">>> ";
 		getline(cin, line);
@@ -71,15 +62,15 @@ int main(int argc, char** argv) {
 			cin >> property;
 			cout << "\tValue: ";
 			cin >> value;
-			bt_bus_can_set_property(dev, id, property, value);
-			printf("SET %d: %d = %ld\n", id, property, value);
+			Puck::setProperty(bus, id, property, value);
+			printf("SET %d: %d = %d\n", id, property, value);
 			break;
 
 		case 'g':
 			cout << "\tProperty: ";
 			cin >> property;
-			bt_bus_can_get_property(dev, id, property, &value, NULL, 1);
-			printf("GET %d: %d = %ld\n", id, property, value);
+			value = Puck::getProperty(bus, id, property);
+			printf("GET %d: %d = %d\n", id, property, value);
 
 		default:
 			cout << "\t'i' to setactive ID\n"
