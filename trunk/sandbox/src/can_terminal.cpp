@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #include <boost/thread.hpp>
-#include <barrett/can_socket.h>
+#include <barrett/bus/can_socket.h>
 
 
 using namespace barrett;
@@ -63,7 +63,6 @@ int main(int argc, char** argv) {
 	boost::thread thread(readThread, &bus, &going);
 
 	std::string line;
-//	size_t offset;
 	int ret;
 	int id;
 	unsigned char data[CANSocket::MAX_MESSAGE_LEN];
@@ -81,28 +80,6 @@ int main(int argc, char** argv) {
 		if (ret) {
 			printf("ERROR: CANSocket::send() returned %d.\n", ret);
 		}
-
-//		std::getline(std::cin, line);
-
-//		// parse ID
-//		offset = line.find(' ');
-//		if (offset == std::string::npos) {
-//			offset = line.size();
-//		} else {
-//			line[offset] = '\0';
-//		}
-//		id = atoi(line.c_str());
-//
-//		// parse data
-//		for (int i = 0; i < CANSocket::MAX_MESSAGE_LEN  &&  offset < line.size(); ++i) {
-//			offset = line.find(' ', offset+1);
-//			if (offset == std::string::npos) {
-//				offset = line.size();
-//			} else {
-//				line[offset] = '\0';
-//			}
-//			id = atoi(line.c_str());
-//		}
 	}
 
 	going = false;

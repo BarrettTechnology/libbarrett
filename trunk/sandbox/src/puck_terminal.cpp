@@ -11,7 +11,7 @@
 
 #include <unistd.h>
 
-#include <barrett/can_socket.h>
+#include <barrett/bus/can_socket.h>
 #include <barrett/puck.h>
 
 
