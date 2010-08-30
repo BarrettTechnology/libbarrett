@@ -16,7 +16,8 @@
 #include <rtdm/rtcan.h>
 #include <rtdk.h>
 
-#include "../thread/real_time_mutex.h"
+#include "../../thread/real_time_mutex.h"
+#include "../../puck.h"
 #include "../can_socket.h"
 
 
@@ -54,8 +55,6 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 	int ret;
 
-	char devname[10];
-	sprintf(devname, "rtcan%d", port);
 	ret = rt_dev_socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	if (ret < 0) {
 		rt_syslog(LOG_ERR, "  rt_dev_socket(): (%d) %s\n", -ret, strerror(-ret));
@@ -64,6 +63,8 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	handle = ret;
 
 	struct ifreq ifr;
+	char devname[10];
+	sprintf(devname, "rtcan%d", port);
 	strncpy(ifr.ifr_name, devname, IFNAMSIZ);
 
 	ret = rt_dev_ioctl(handle, SIOCGIFINDEX, &ifr);
@@ -72,11 +73,15 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 		fail();
 	}
 
+	struct can_filter recvFilter[1];
+	recvFilter[0].can_id = (Puck::HOST_ID << Puck::NODE_ID_WIDTH) | CAN_INV_FILTER;
+	recvFilter[0].can_mask = Puck::FROM_MASK;
+	ret = rt_dev_setsockopt(handle, SOL_CAN_RAW, CAN_RAW_FILTER, &recvFilter, sizeof(recvFilter));
+
 	struct sockaddr_can toAddr;
 	memset(&toAddr, 0, sizeof(toAddr));
 	toAddr.can_ifindex = ifr.ifr_ifindex;
 	toAddr.can_family = AF_CAN;
-
 	ret = rt_dev_bind(handle, (struct sockaddr *) &toAddr,
 			sizeof(toAddr));
 	if (ret < 0) {
@@ -149,14 +154,8 @@ int CANSocket::receive(int& id, unsigned char* data, size_t& len, bool blocking)
 {
 	SCOPED_LOCK(mutex);
 
-	int ret;
 	struct can_frame frame;
-
-	if (blocking) {
-		ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), 0);
-	} else {
-		ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), MSG_DONTWAIT);
-	}
+	int ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), blocking ? 0 : MSG_DONTWAIT);
 
 	if (ret < 0) {
 		switch (ret) {
