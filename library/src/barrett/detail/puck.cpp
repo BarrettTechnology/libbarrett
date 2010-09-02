@@ -28,10 +28,16 @@ Puck::~Puck()
 // TODO(dc): throw exception if getProperty is called with a group ID?
 int Puck::getProperty(const CommunicationsBus& bus, int id, int property)
 {
-	sendGetPropertyRequest(bus, id, property);
-
+	int ret;
 	bool successful;
-	int ret = receiveGetPropertyReply(bus, id, property, true, &successful);
+
+	ret = sendGetPropertyRequest(bus, id, property);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
+		throw std::runtime_error("Puck::getProperty(): Failed to send request. Check /var/log/syslog for details.");
+	}
+
+	ret = receiveGetPropertyReply(bus, id, property, true, &successful);
 	if (!successful) {
 		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
@@ -54,14 +60,14 @@ void Puck::setProperty(const CommunicationsBus& bus, int id, int property, int v
 	bus.send(nodeId2BusId(id), data, MSG_LEN);
 }
 
-void Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, int property)
+int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, int property)
 {
 	static const size_t MSG_LEN = 1;
 
 	unsigned char data[MSG_LEN];
 	data[0] = property & PROPERTY_MASK;
 
-	bus.send(nodeId2BusId(id), data, MSG_LEN);
+	return bus.send(nodeId2BusId(id), data, MSG_LEN);
 }
 
 int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int property, bool blocking, bool* successful)

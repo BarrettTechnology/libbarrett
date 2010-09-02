@@ -29,7 +29,7 @@ public:
 	static const int MAX_ID = 31;
 	static const int HOST_ID = 0;  // the Node ID of the control PC
 
-	static void sendGetPropertyRequest(const CommunicationsBus& bus, int id, int property);
+	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int property);
 	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int property, bool blocking, bool* successful);
 
 protected:
