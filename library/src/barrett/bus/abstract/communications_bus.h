@@ -27,8 +27,8 @@ public:
 	virtual void close() = 0;
 	virtual bool isOpen() = 0;
 
-	virtual int send(int id, const unsigned char* data, size_t len) const = 0;
-	virtual int receive(int& id, unsigned char* data, size_t& len, bool blocking = true) const = 0;
+	virtual int send(int busId, const unsigned char* data, size_t len) const = 0;
+	virtual int receive(int& busId, unsigned char* data, size_t& len, bool blocking = true) const = 0;
 };
 
 
