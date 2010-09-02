@@ -113,14 +113,14 @@ void CANSocket::close()
 	}
 }
 
-int CANSocket::send(int id, const unsigned char* data, size_t len) const
+int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 {
 	SCOPED_LOCK(mutex);
 
 	int ret;
 
 	struct can_frame frame;
-	frame.can_id = id;
+	frame.can_id = busId;
 	frame.can_dlc = len;
 	memcpy(frame.data, data, len);
 
@@ -151,7 +151,7 @@ int CANSocket::send(int id, const unsigned char* data, size_t len) const
 	return 0;
 }
 
-int CANSocket::receive(int& id, unsigned char* data, size_t& len, bool blocking) const
+int CANSocket::receive(int& busId, unsigned char* data, size_t& len, bool blocking) const
 {
 	SCOPED_LOCK(mutex);
 
@@ -181,7 +181,7 @@ int CANSocket::receive(int& id, unsigned char* data, size_t& len, bool blocking)
 		}
 	}
 
-	id = frame.can_id;
+	busId = frame.can_id;
 	len = frame.can_dlc;
 	memcpy(data, frame.data, len);
 

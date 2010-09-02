@@ -10,6 +10,7 @@
 
 
 #include "../detail/ca_macro.h"
+#include "../thread/abstract/mutex.h"
 #include "./abstract/communications_bus.h"
 #include "./can_socket.h"
 
@@ -17,14 +18,24 @@
 namespace barrett {
 
 
-class BusManager {
+class BusManager : public CommunicationsBus {
 public:
 	BusManager(const char* configDir = "/etc/barrett/default.conf");
-	~BusManager();
+	virtual ~BusManager();
 
 	void enumerate();
 
-	const CommunicationsBus& getBus() const { return bus; }
+//	const CommunicationsBus& getBus() const { return bus; }
+
+	virtual thread::Mutex& getMutex() const { return bus.getMutex(); }
+
+	virtual void open(int port) { bus.open(port); }
+	virtual void close() { bus.close(); }
+	virtual bool isOpen() { return bus.isOpen(); }
+
+	virtual int send(int busId, const unsigned char* data, size_t len) const { return bus.send(busId, data, len); }
+	virtual int receive(int& busId, unsigned char* data, size_t& len, bool blocking = true) const { return bus.receive(busId, data, len, blocking); }
+
 
 protected:
 	CommunicationsBus& bus;
