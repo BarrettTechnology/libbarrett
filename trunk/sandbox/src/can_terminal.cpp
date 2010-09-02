@@ -25,7 +25,7 @@ void readThread(const CANSocket* bus, const bool* going) {
 	size_t len;
 
 	while (*going) {
-		ret  = bus->receive(id, data, len, false);
+		ret  = bus->receiveRaw(id, data, len, false);
 		if (ret == 0) {  // success
 			printf("(0x%03x)", id);
 			for (size_t i = 0; i < len; ++i) {

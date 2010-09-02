@@ -75,7 +75,7 @@ int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int prop
 	int busIdIn;
 	unsigned char dataIn[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t lenIn;
-	int ret = bus.receive(busIdIn, dataIn, lenIn, blocking);
+	int ret = bus.receiveRaw(busIdIn, dataIn, lenIn, blocking);
 	if (ret) {
 		*successful = false;
 		return ret;
