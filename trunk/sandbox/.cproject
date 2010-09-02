@@ -70,7 +70,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="log_sg_data.cpp|zero_torque.cpp|update_properties.cpp|teach.cpp|tactile_test.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_ft_data.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="tactile_test.cpp|log_sg_data.cpp|log_ft_data.cpp|zero_torque.cpp|update_properties.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -492,6 +492,7 @@
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cconfiguration>
 <cconfiguration id="cdt.managedbuild.config.gnu.exe.release.406675584">
 <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.exe.release.406675584" moduleId="org.eclipse.cdt.core.settings" name="Release">
@@ -957,6 +958,7 @@
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cconfiguration>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">

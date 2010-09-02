@@ -40,6 +40,7 @@ CANSocket::CANSocket(int port) throw(std::runtime_error) :
 CANSocket::~CANSocket()
 {
 	close();
+	rt_print_cleanup();
 }
 
 

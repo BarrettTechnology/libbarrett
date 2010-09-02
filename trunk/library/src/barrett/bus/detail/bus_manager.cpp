@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <libgen.h>
 
@@ -41,6 +42,7 @@ BusManager::BusManager(const char* configFile) :
 		throw std::runtime_error("Out of memory.");
 	}
 
+	// these functions require copies of the string because they sometimes modify their argument
 	char* configDir = dirname(cf1);
 	char* configBase = basename(cf2);
 
@@ -78,9 +80,14 @@ BusManager::~BusManager()
 
 void BusManager::enumerate()
 {
+	int ret;
 	bool successful;
 	for (int id = 0; id <= Puck::MAX_ID; ++id) {
-		Puck::sendGetPropertyRequest(bus, id, 5);  // TODO(dc): fix magic number once property definitions exist
+		ret = Puck::sendGetPropertyRequest(bus, id, 5);  // TODO(dc): fix magic number once property definitions exist
+		if (ret != 0) {
+			syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
+			throw std::runtime_error("BusManager::enumerate(): Failed to send request. Check /var/log/syslog for details.");
+		}
 
 		usleep(1000);
 
