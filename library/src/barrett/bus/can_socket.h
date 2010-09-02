@@ -37,7 +37,7 @@ public:
 	virtual bool isOpen() { return handle != NULL_HANDLE; }
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const;
-	virtual int receive(int& busId, unsigned char* data, size_t& len, bool blocking = true) const;
+	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const;
 
 protected:
 	void fail() throw(std::runtime_error);

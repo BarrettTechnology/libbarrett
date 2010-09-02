@@ -28,7 +28,8 @@ public:
 	virtual bool isOpen() = 0;
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const = 0;
-	virtual int receive(int& busId, unsigned char* data, size_t& len, bool blocking = true) const = 0;
+	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true) const;
+	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const = 0;
 };
 
 

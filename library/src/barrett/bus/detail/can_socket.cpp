@@ -151,7 +151,7 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 	return 0;
 }
 
-int CANSocket::receive(int& busId, unsigned char* data, size_t& len, bool blocking) const
+int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking) const
 {
 	SCOPED_LOCK(mutex);
 
