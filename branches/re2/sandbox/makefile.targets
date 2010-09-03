@@ -6,5 +6,5 @@
 	@echo ' '
 
 	
-#all: can_terminal cartesian_hold hand_feedback high_level_wam load_ft_cal log_ft_data log_ft_data_with_wam log_sg_data low_level_wam master_master read_safety_state teach tutorial update_properties zero_torque
-all: log_ft_data log_ft_data_with_wam
+#all: can_terminal cartesian_hold hand_feedback high_level_wam load_ft_cal log_ft_data log_ft_data_with_wam log_sg_data low_level_wam master_master read_safety_state tactile_test teach tutorial update_properties zero_torque
+all: log_ft_data log_ft_data_with_wam tactile_test
