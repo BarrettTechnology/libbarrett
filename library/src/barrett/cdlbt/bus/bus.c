@@ -152,7 +152,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
    /* Must use '5' for STAT*/
    bt_bus_can_set_property(bus->dev, BT_BUS_CAN_GROUPID(WAM_GRP), 5,
                            STATUS_READY);
-   bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
+   bt_os_usleep(1000000); /* Wait 1s for puck to initialize*/
    
    /* Iterate through all the pucks */
    {
@@ -216,7 +216,7 @@ int bt_bus_create(struct bt_bus ** busptr, config_setting_t * busconfig,
                /*wakePuck(bus->dev, id);*/
                /* Must use '5' for STAT*/
                bt_bus_can_set_property(bus->dev, id, 5, STATUS_READY);
-               bt_os_usleep(300000); /* Wait 300ms for puck to initialize*/
+               bt_os_usleep(1000000); /* Wait 1s for puck to initialize*/
             }
             /* Make a new puck */
             puck = (struct bt_bus_puck *) malloc(sizeof(struct bt_bus_puck));
