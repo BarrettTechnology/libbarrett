@@ -48,6 +48,7 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.352375228" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 <option id="gnu.cpp.link.option.libs.36674891" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="barrett"/>
+<listOptionValue builtIn="false" value="curses"/>
 <listOptionValue builtIn="false" value="cdlbt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1165109221" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
