@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include <boost/circular_buffer.h>
+
 #include <libconfig.h++>
 
 #include "../../puck.h"
@@ -97,6 +99,65 @@ void BusManager::enumerate()
 			printf("Found ID=%d\n", id);
 		}
 	}
+}
+
+int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking) const
+{
+	if (retrieveMessage(expectedBusId, data, len)) {
+		return 0;
+	}
+	do {
+		updateBuffers(blocking);
+		if (retrieveMessage(expectedBusId, data, len)) {
+			return 0;
+		}
+	} while (blocking);
+
+	return 1;
+}
+
+int BusManager::updateBuffers(bool blocking) const
+{
+	int busId;
+	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
+	size_t len;
+	int ret;
+
+	bool receivedMessage = false;
+
+	// empty the bus' receive buffer
+	while (true) {
+		ret = receiveRaw(busId, data, len, false);  // non-blocking read
+		if (ret == 0) {  // successfully received a message
+			storeMessage(busId, data, len);
+			receivedMessage = true;
+		} else if (ret == 1) {  // would block
+			break;
+		} else {  // error
+			return ret;
+		}
+	}
+
+	// if we're supposed to block but haven't received a message yet, block until we do
+	if (blocking  &&  !receivedMessage) {
+		ret = receiveRaw(busId, data, len, true);  // blocking read
+		if (ret != 0) {
+			return ret;
+		}
+		storeMessage(busId, data, len);
+	}
+
+	return 0;
+}
+
+void BusManager::storeMessage(int busId, unsigned char* data, size_t len) const
+{
+
+}
+
+bool BusManager::retrieveMessage(int busId, unsigned char* data, size_t& len) const
+{
+
 }
 
 
