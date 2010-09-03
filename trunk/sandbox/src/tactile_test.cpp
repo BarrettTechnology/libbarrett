@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 	for(int i = 11; i <= 14; i++) {
 		bt_bus_can_set_property(dev, i, 5, 2); // Set STAT to STATUS_READY
 	}
-	usleep((long)5e5);
+	usleep((long)1e6);
 
 	printf("Initializing tactile sensors...\n");
 	for(int i = 11; i <= 14; i++) {
@@ -159,12 +159,12 @@ int main(int argc, char** argv) {
 
 			if (value1 == 0) {
 				bt_bus_can_set_property(dev, i, 5, 2); // Set STAT to STATUS_READY
-				usleep((long)5e5);
+				usleep((long)1e6);
 			}
 
-			bt_bus_can_get_property(dev, i, 106, &value1, NULL, 1);
-			if (value1 != 0) {
-				printf("Failed to init tactile sensors on ID=%d. Reported %ld sensors.\n", i, value1);
+			bt_bus_can_get_property(dev, i, 107, &value1, NULL, 1);
+			if (value1 == -2) {
+				printf("Failed to init tactile sensors on ID=%d.\n", i);
 			}
 
 			break;
