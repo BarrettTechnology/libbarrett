@@ -70,7 +70,7 @@
 </folderInfo>
 <sourceEntries>
 <entry excluding="src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry excluding="tactile_test.cpp|log_sg_data.cpp|log_ft_data.cpp|zero_torque.cpp|update_properties.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+<entry excluding="log_sg_data.cpp|log_ft_data.cpp|zero_torque.cpp|update_properties.cpp|teach.cpp|read_safety_state.cpp|network_haptics.h|network_haptics.cpp|move_to.cpp|master_master.h|master_master.cpp|low_level_wam.cpp|log_velocity.cpp|log_ft_data_with_wam.cpp|load_ft_cal.cpp|high_level_wam.cpp|haptics.cpp|hand_feedback.cpp|friction_data.cpp|cartesian_hold.cpp|HAPI_haptics.cpp|display_tact.cpp|haptic_test.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 </sourceEntries>
 </configuration>
 </storageModule>

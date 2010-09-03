@@ -34,11 +34,15 @@ public:
 	virtual bool isOpen() { return bus.isOpen(); }
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const { return bus.send(busId, data, len); }
-	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true) const { return bus.receive(expectedBusId, data, len, blocking); }
+	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true) const;// { return bus.receive(expectedBusId, data, len, blocking); }
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const { return bus.receiveRaw(busId, data, len, blocking); }
 
 
 protected:
+	int updateBuffers(bool blocking) const;
+	void storeMessage(int busId, unsigned char* data, size_t len) const;
+	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
+
 	CommunicationsBus& bus;
 
 private:
