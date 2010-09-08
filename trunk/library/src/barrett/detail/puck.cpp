@@ -72,23 +72,17 @@ int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, int prope
 
 int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int property, bool blocking, bool* successful)
 {
-	int busIdIn;
 	unsigned char dataIn[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t lenIn;
-	int ret = bus.receiveRaw(busIdIn, dataIn, lenIn, blocking);
+	int ret = bus.receive(0x406 | (id << NODE_ID_WIDTH), dataIn, lenIn, blocking);  // TODO(dc): fix magic number and generalize
 	if (ret) {
 		*successful = false;
 		return ret;
 	} else {
 		*successful = true;
 	}
-	int idIn = busId2NodeId(busIdIn);
 
 	bool err = false;
-	if (id != idIn) {
-		syslog(LOG_ERR, "%s: expected message from NodeID = %d, got message from NodeID = %d (CANID = %d (%#X))", __func__, id, idIn, busIdIn, busIdIn);
-		err = true;
-	}
 	if (lenIn != 4  &&  lenIn != 6) {
 		syslog(LOG_ERR, "%s: expected message length of 4 or 6, got message length of %d", __func__, lenIn);
 		err = true;

@@ -14,7 +14,7 @@
 namespace barrett {
 
 
-int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking) const {
+int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const {
 	int actualBusId;
 	int ret = receiveRaw(actualBusId, data, len, blocking);
 

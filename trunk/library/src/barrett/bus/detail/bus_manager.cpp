@@ -12,13 +12,14 @@
 #include <unistd.h>
 #include <libgen.h>
 
-#include <boost/circular_buffer.h>
+#include <boost/thread/locks.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include <libconfig.h++>
 
+#include "../../thread/abstract/mutex.h"
 #include "../../puck.h"
 #include "../abstract/communications_bus.h"
-#include "../can_socket.h"
 #include "../bus_manager.h"
 
 
@@ -27,7 +28,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	bus(actualBus), actualBus()
+	bus(actualBus), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -85,8 +86,8 @@ void BusManager::enumerate()
 {
 	int ret;
 	bool successful;
-	for (int id = 0; id <= Puck::MAX_ID; ++id) {
-		ret = Puck::sendGetPropertyRequest(bus, id, 5);  // TODO(dc): fix magic number once property definitions exist
+	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
+		ret = Puck::sendGetPropertyRequest(*this, id, 5);  // TODO(dc): fix magic number once property definitions exist
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
 			throw std::runtime_error("BusManager::enumerate(): Failed to send request. Check /var/log/syslog for details.");
@@ -94,43 +95,54 @@ void BusManager::enumerate()
 
 		usleep(1000);
 
-		Puck::receiveGetPropertyReply(bus, id, 5, false, &successful);  // TODO(dc): fix magic number once property definitions exist
+		Puck::receiveGetPropertyReply(*this, id, 5, false, &successful);  // TODO(dc): fix magic number once property definitions exist
 		if (successful) {
 			printf("Found ID=%d\n", id);
 		}
 	}
 }
 
-int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking) const
+int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const
 {
+	boost::unique_lock<thread::Mutex> ul(getMutex());
+
 	if (retrieveMessage(expectedBusId, data, len)) {
 		return 0;
 	}
-	do {
+
+	while (true) {
 		updateBuffers(blocking);
 		if (retrieveMessage(expectedBusId, data, len)) {
 			return 0;
+		} else if (!blocking) {
+			return 1;
 		}
-	} while (blocking);
 
-	return 1;
+		if (!realtime) {
+			ul.unlock();
+			usleep(100);
+			ul.lock();
+		}
+	}
 }
 
 int BusManager::updateBuffers(bool blocking) const
 {
+	SCOPED_LOCK(getMutex());
+
 	int busId;
 	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t len;
 	int ret;
 
-	bool receivedMessage = false;
+	bool messageReceived = false;
 
 	// empty the bus' receive buffer
 	while (true) {
 		ret = receiveRaw(busId, data, len, false);  // non-blocking read
 		if (ret == 0) {  // successfully received a message
 			storeMessage(busId, data, len);
-			receivedMessage = true;
+			messageReceived = true;
 		} else if (ret == 1) {  // would block
 			break;
 		} else {  // error
@@ -139,7 +151,7 @@ int BusManager::updateBuffers(bool blocking) const
 	}
 
 	// if we're supposed to block but haven't received a message yet, block until we do
-	if (blocking  &&  !receivedMessage) {
+	if (blocking  &&  !messageReceived) {
 		ret = receiveRaw(busId, data, len, true);  // blocking read
 		if (ret != 0) {
 			return ret;
@@ -150,14 +162,25 @@ int BusManager::updateBuffers(bool blocking) const
 	return 0;
 }
 
-void BusManager::storeMessage(int busId, unsigned char* data, size_t len) const
+void BusManager::storeMessage(int busId, const unsigned char* data, size_t len) const
 {
-
+	if (messageBuffers[busId].full()) {
+		syslog(LOG_ERR, "BusManager::storeMessage(): Buffer overflow. ID = %d", busId);
+		throw std::runtime_error("BusManager::storeMessage(): Buffer overflow. Check /var/log/syslog for details.");
+	}
+	messageBuffers[busId].push_back(Message(data, len));
 }
 
 bool BusManager::retrieveMessage(int busId, unsigned char* data, size_t& len) const
 {
+	if (messageBuffers[busId].empty()) {
+		return false;
+	}
 
+	messageBuffers[busId].front().copyTo(data, len);
+	messageBuffers[busId].pop_front();
+
+	return true;
 }
 
 

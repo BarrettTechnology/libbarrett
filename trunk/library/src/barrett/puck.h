@@ -26,6 +26,7 @@ public:
 	static int getProperty(const CommunicationsBus& bus, int id, int property);
 	static void setProperty(const CommunicationsBus& bus, int id, int property, int value);
 
+	static const int MIN_ID = 1;
 	static const int MAX_ID = 31;
 	static const int HOST_ID = 0;  // the Node ID of the control PC
 
