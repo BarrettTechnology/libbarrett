@@ -9,6 +9,11 @@
 #define BUS_MANAGER_H_
 
 
+#include <map>
+#include <cstring>
+
+#include <boost/circular_buffer.hpp>
+
 #include "../detail/ca_macro.h"
 #include "../thread/abstract/mutex.h"
 #include "./abstract/communications_bus.h"
@@ -34,19 +39,46 @@ public:
 	virtual bool isOpen() { return bus.isOpen(); }
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const { return bus.send(busId, data, len); }
-	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true) const;// { return bus.receive(expectedBusId, data, len, blocking); }
+	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true, bool realtime = false) const;
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const { return bus.receiveRaw(busId, data, len, blocking); }
 
 
 protected:
 	int updateBuffers(bool blocking) const;
-	void storeMessage(int busId, unsigned char* data, size_t len) const;
+	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
 	CommunicationsBus& bus;
 
 private:
-	CANSocket actualBus;
+	typedef CANSocket ActualBusType;
+
+	struct Message {
+		Message(const unsigned char* d, size_t l) :
+			len(l)
+		{
+			memcpy(data, d, len);
+		}
+
+		void copyTo(unsigned char* d, size_t& l) {
+			l = len;
+			memcpy(d, data, len);
+		}
+
+		unsigned char data[ActualBusType::MAX_MESSAGE_LEN];
+		size_t len;
+	};
+
+	static const size_t MESSAGE_BUFFER_SIZE = 10;
+	class MessageBuffer : public boost::circular_buffer<Message> {
+	public:
+		MessageBuffer() :
+			boost::circular_buffer<Message>(MESSAGE_BUFFER_SIZE) {}
+	};
+
+	ActualBusType actualBus;
+	mutable std::map<int, MessageBuffer> messageBuffers;
+
 	DISALLOW_COPY_AND_ASSIGN(BusManager);
 };
 
