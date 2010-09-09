@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <numeric>
+#include <algorithm>
 #include <cstdlib>
 
 #include <sys/mman.h>
@@ -21,6 +23,8 @@
 
 
 const int HAND_DOF = 4;
+const int NUM_SENSORS = 24;
+const int THRESH = 2000;
 #define WIDTH  6
 #define HEIGHT 3
 
@@ -123,7 +127,7 @@ void board(WINDOW *win, int starty, int startx, int lines, int cols, int tile_wi
 	{	mvwaddch(win, starty, i, ACS_TTEE);
 		mvwaddch(win, endy, i, ACS_BTEE);
 	}
-	wrefresh(win);
+//	wrefresh(win);
 }
 
 void graphCell(WINDOW *win, int starty, int startx, int value) {
@@ -153,27 +157,31 @@ void graphCell(WINDOW *win, int starty, int startx, int value) {
         mvwprintw(win, starty, startx+i, "%c", c);
     }
 
-    wrefresh(win);
+//    wrefresh(win);
 }
 
-void graphMessage(WINDOW *win, int starty, int startx, unsigned char * d) {  // data is 8 bytes wide
-    int i = (d[0] >> 4) * 5;
+void decodeMessage(std::vector<int>& pressures, const unsigned char* data) {  // data is 8 bytes wide
+	int i = (data[0] >> 4) * 5;  // sequence number --> first cell index
 
-    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, (((int)d[0]&0x000F)<<8) | ((int)d[1]&0x00FF));
-    ++i;
-    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, ((int)d[2]&0x00FF)<<4 | ((int)d[3]&0x00F0)>>4);
-    ++i;
-    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, ((int)d[3]&0x000F)<<8 | (int)d[4]&0x00FF);
-    ++i;
-    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, ((int)d[5]&0x00FF)<<4 | ((int)d[6]&0x00F0)>>4);
-    ++i;
-
-    if (i < 24) {
-        graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, ((int)d[6]&0x000F)<<8 | (int)d[7]&0x00FF);
+	pressures[i++] = (((int)data[0]&0x000F)<<8) | ((int)data[1]&0x00FF);
+	pressures[i++] = ((int)data[2]&0x00FF)<<4 | ((int)data[3]&0x00F0)>>4;
+	pressures[i++] = ((int)data[3]&0x000F)<<8 | (int)data[4]&0x00FF;
+	pressures[i++] = ((int)data[5]&0x00FF)<<4 | ((int)data[6]&0x00F0)>>4;
+    if (i < NUM_SENSORS) {
+    	pressures[i] = ((int)data[6]&0x000F)<<8 | (int)data[7]&0x00FF;
     }
 }
 
+void graphPressures(WINDOW *win, int starty, int startx, const std::vector<int>& pressures) {
+	for (int i = 0; i < NUM_SENSORS; ++i) {
+	    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, pressures[i]);
+	}
+}
 
+
+int largeDiff(int a, int b) {
+	return abs(a - b) > THRESH  ?  1 : 0;
+}
 
 int main(int argc, char** argv) {
 	int osTact = 0, numPucks = 0;
@@ -255,6 +263,13 @@ int main(int argc, char** argv) {
 	waitForEnter();
 
 
+	bool firstRun = true;
+	int numBadTransitions = 0;
+	std::vector<int> pressures(NUM_SENSORS);
+	std::vector<int> pressures_1(NUM_SENSORS);
+	std::vector<int> tmp(NUM_SENSORS);
+
+
 	initscr();
 	curs_set(0);
 	noecho();
@@ -274,6 +289,7 @@ int main(int argc, char** argv) {
     size_t activeIndex = 0;
 
     drawMenu(stdscr, 5,20, title, labels, checked, activeIndex);
+    mvprintw(0,20, "Number of transitions larger than %d counts:", THRESH);
 
 	while (true) {
 		btkey c = btkey_get();
@@ -283,7 +299,7 @@ int main(int argc, char** argv) {
 			} else if (c == BTKEY_DOWN  &&  activeIndex != (numMenuItems - 1)) {
 				++activeIndex;
 			} else if (c == BTKEY_ENTER) {
-				if (activeIndex == (numMenuItems - 1)) {
+				if (activeIndex == (numMenuItems - 1)) {  // exit
 					break;
 				} else {
 					checked[activeIndex] = !checked[activeIndex];
@@ -309,8 +325,22 @@ int main(int argc, char** argv) {
 		osTact = 5;  // 5 messages are returned for full TACT data
 		while (osTact--) {
 			bt_bus_can_async_read(dev, &id, NULL, &value1, NULL, data, 0, 1);
-		    graphMessage(stdscr, 0,0, data);
+		    decodeMessage(pressures, data);
 		}
+
+		graphPressures(stdscr, 0,0, pressures);
+
+		if (firstRun) {
+			firstRun = false;
+
+			std::copy(pressures.begin(), pressures.end(), pressures_1.begin());
+		}
+		std::transform(pressures.begin(), pressures.end(), pressures_1.begin(), tmp.begin(), largeDiff);
+		numBadTransitions += std::accumulate(tmp.begin(), tmp.end(), 0);
+		mvprintw(1,23, "%d", numBadTransitions);
+		std::copy(pressures.begin(), pressures.end(), pressures_1.begin());
+
+		refresh();
 	}
 
 	endwin();
