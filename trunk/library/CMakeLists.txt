@@ -1,6 +1,6 @@
 # Listing sources explicitly allows cmake to notice when a new source file is added.
 #file(GLOB_RECURSE barrett_SOURCES "src/barrett/*.cpp" "src/barrett/*.c")
-set(libbarrett_SOURCES
+set(barrett_SOURCES
 	src/barrett/bus/abstract/detail/communications_bus.cpp
 	src/barrett/bus/detail/bus_manager.cpp
 	src/barrett/bus/detail/can_socket.cpp
@@ -29,21 +29,21 @@ set(libbarrett_SOURCES
 # Defenitions for cdlbt code
 add_definitions(-DCANTYPE_SOCKET -DHAVE_INLINE -DHAS_WAM_LOCAL -DRTSYS_XENOMAI)
 
-add_library(libbarrett ${libbarrett_SOURCES})
+add_library(barrett ${barrett_SOURCES})
 include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(libbarrett ${Boost_LIBRARIES} rtdm rtdk config config++)  #TODO(dc): libconfig finder?
-set_target_properties(libbarrett PROPERTIES
+target_link_libraries(barrett ${Boost_LIBRARIES} rtdm rtdk config config++)  #TODO(dc): libconfig finder?
+set_target_properties(barrett PROPERTIES
 	OUTPUT_NAME barrett
 	VERSION ${${PROJECT_NAME}_VERSION}
 	SOVERSION ${${PROJECT_NAME}_SOVERSION}
 	
 	COMPILE_FLAGS "${Xeno_CFLAGS} ${GSL_CFLAGS}"
 	LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
-#	COMPILE_FLAGS ${Xeno_CFLAGS}
-#	LINK_FLAGS ${Xeno_LDFLAGS}
 	
 	# Allow creating static and shared libs without conflicts
 	CLEAN_DIRECT_OUTPUT 1
+	
+	# Prevent executables from having to link with all of libbarrett's dependencies
+	LINK_INTERFACE_LIBRARIES ""
 )
 
-message("${Xeno_CFLAGS} ${Xeno_LDFLAGS} ${GSL_CFLAGS} ${GSL_LDFLAGS}")
