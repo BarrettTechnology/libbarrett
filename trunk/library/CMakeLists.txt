@@ -30,7 +30,6 @@ set(barrett_SOURCES
 add_definitions(-DCANTYPE_SOCKET -DHAVE_INLINE -DHAS_WAM_LOCAL -DRTSYS_XENOMAI)
 
 add_library(barrett ${barrett_SOURCES})
-include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(barrett ${Boost_LIBRARIES} rtdm rtdk config config++)  #TODO(dc): libconfig finder?
 set_target_properties(barrett PROPERTIES
 	OUTPUT_NAME barrett
