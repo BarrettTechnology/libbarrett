@@ -1,4 +1,7 @@
-set(programs gravitycal zerocal)
+set(programs
+	gravitycal
+	zerocal
+)
 
 foreach (prog ${programs})
 	add_executable(${prog} src/${prog}.cpp)
