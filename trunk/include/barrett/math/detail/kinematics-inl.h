@@ -7,8 +7,8 @@
 
 #include <libconfig.h++>
 
-#include "../../units.h"
-#include "../../cdlbt/kinematics/kinematics.h"
+#include <barrett/units.h>
+#include <barrett/cdlbt/kinematics.h>
 
 
 namespace barrett {

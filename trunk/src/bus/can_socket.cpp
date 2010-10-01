@@ -17,7 +17,7 @@
 #include <rtdk.h>
 
 #include <barrett/thread/real_time_mutex.h>
-#include <barrett/bus/puck.h>
+#include <barrett/puck.h>
 #include <barrett/bus/can_socket.h>
 
 

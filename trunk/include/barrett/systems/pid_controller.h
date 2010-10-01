@@ -12,7 +12,7 @@
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
-#include <barrett/systems/math/traits.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/abstract/controller.h>
 

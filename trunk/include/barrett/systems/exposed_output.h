@@ -9,7 +9,7 @@
 #define BARRETT_SYSTEMS_EXPOSED_OUTPUT_H_
 
 
-#include <barrett/systems/detail/ca_macro.h>
+#include <barrett/detail/ca_macro.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>

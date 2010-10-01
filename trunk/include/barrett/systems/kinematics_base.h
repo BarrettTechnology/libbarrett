@@ -12,8 +12,8 @@
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
-#include <barrett/systems/units.h>
-#include <barrett/systems/math/kinematics.h>
+#include <barrett/units.h>
+#include <barrett/math/kinematics.h>
 #include <barrett/systems/abstract/system.h>
 
 
