@@ -130,7 +130,7 @@ def mungeRepo(url, parseFunc, minVer = 1):
 	# parse the property list out of each of the revisions
 	print ".",
 	sys.stdout.flush()
-	subprocess.call("rm -Rf".split() + [WC_DIR])
+	subprocess.call("rm -Rf".split() + [WC_DIR])  # in case WC_DIR already containts some other working copy
 	subprocess.call("svn co".split() + [url, WC_DIR], stdout=subprocess.PIPE)
 	for v in vers:
 		print ".",
@@ -138,10 +138,12 @@ def mungeRepo(url, parseFunc, minVer = 1):
 
 		subprocess.call("svn up -r".split() + [str(v), WC_DIR], stdout=subprocess.PIPE)
 		parseFunc(WC_DIR + FILE_NAME, v)
+	subprocess.call("rm -Rf".split() + [WC_DIR])
 	print "\n"
 
 
 # collect all property informationfrom the various repositories
+print "### Collecting property information from 3 repositories..."
 mungeRepo(MAIN_URL, mainParseFunc)
 mungeRepo(MON_URL, monParseFunc)
 
@@ -167,6 +169,7 @@ props = sorted(props)
 
 
 # output C++
+print "\n### Writing output to %s ..." % OUTPUT_FILE
 f = open(OUTPUT_FILE, 'w')
 
 print >> f, "const int NUM_PROPERTIES = %d;" % len(props)
@@ -215,4 +218,6 @@ for pt in range(len(p)):
 print >> f, "\t}"
 print >> f, "\treturn -1;"
 print >> f, "}"
+
+print "### Done!"
 
