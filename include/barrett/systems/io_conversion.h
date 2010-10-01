@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef IO_CONVERSION_H_
-#define IO_CONVERSION_H_
+#ifndef BARRETT_SYSTEMS_IO_CONVERSION_H_
+#define BARRETT_SYSTEMS_IO_CONVERSION_H_
 
 
-#include "./abstract/conversion.h"
-#include "./abstract/system.h"
+#include <barrett/systems/abstract/conversion.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {
@@ -53,4 +53,4 @@ IOConversion<InputType, OutputType>* makeIOConversion(
 }
 
 
-#endif /* IO_CONVERSION_H_ */
+#endif /* BARRETT_SYSTEMS_IO_CONVERSION_H_ */

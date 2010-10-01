@@ -10,10 +10,10 @@
 #include <list>
 #include <stdexcept>
 
-#include "../../detail/stl_utils.h"
-#include "../abstract/system.h"
-#include "../helpers.h"
-#include "../abstract/conversion.h"
+#include <barrett/detail/stl_utils.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/helpers.h>
+#include <barrett/systems/abstract/conversion.h>
 
 
 // I think RTTI is useful here to keep syntax clean and support flexibility and

@@ -46,15 +46,15 @@
  * and set/get properties.
  */
 
-#ifndef BT_BUS_H
-#define BT_BUS_H
+#ifndef BARRETT_CDLBT_BUS_H_
+#define BARRETT_CDLBT_BUS_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <libconfig.h>
    
-#include "../os/os.h"
+#include <barrett/cdlbt/os.h>
 
 
 /** CAN Broadcast Groups */
@@ -495,4 +495,4 @@ struct bt_bus_properties
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_BUS_H */
+#endif /* BARRETT_CDLBT_BUS_H_ */

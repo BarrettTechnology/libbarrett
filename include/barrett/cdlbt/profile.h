@@ -31,8 +31,8 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#ifndef BT_PROFILE_H
-#define BT_PROFILE_H
+#ifndef BARRETT_CDLBT_PROFILE_H_
+#define BARRETT_CDLBT_PROFILE_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,4 +76,4 @@ int bt_profile_get( struct bt_profile * profile, double * s, double t );
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_PROFILE_H */
+#endif /* BARRETT_CDLBT_PROFILE_H_ */

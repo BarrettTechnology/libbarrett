@@ -8,9 +8,9 @@
 
 #include <vector>
 
-#include "../../../detail/stl_utils.h"
-#include "../../../thread/abstract/mutex.h"
-#include "../system.h"
+#include <barrett/detail/stl_utils.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {

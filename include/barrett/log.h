@@ -5,13 +5,13 @@
  *      Author: dc
  */
 
-#ifndef LOG_H_
-#define LOG_H_
+#ifndef BARRETT_LOG_H_
+#define BARRETT_LOG_H_
 
 
-#include "log/reader.h"
-#include "log/writer.h"
-#include "log/real_time_writer.h"
+#include <barrett/log/reader.h>
+#include <barrett/log/writer.h>
+#include <barrett/log/real_time_writer.h>
 
 
-#endif /* LOG_H_ */
+#endif /* BARRETT_LOG_H_ */

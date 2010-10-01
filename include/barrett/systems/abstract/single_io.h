@@ -5,13 +5,13 @@
  *      Author: dc
  */
 
-#ifndef SINGLE_IO_H_
-#define SINGLE_IO_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_SINGLE_IO_H_
+#define BARRETT_SYSTEMS_ABSTRACT_SINGLE_IO_H_
 
 
-#include "../../detail/ca_macro.h"
-#include "./system.h"
-#include "./conversion.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/conversion.h>
 
 
 namespace barrett {
@@ -75,4 +75,4 @@ private:
 }
 
 
-#endif /* SINGLE_IO_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_SINGLE_IO_H_ */

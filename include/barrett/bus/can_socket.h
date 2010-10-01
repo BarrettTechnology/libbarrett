@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef CAN_SOCKET_H_
-#define CAN_SOCKET_H_
+#ifndef BARRETT_BUS_CAN_SOCKET_H_
+#define BARRETT_BUS_CAN_SOCKET_H_
 
 
 #include <stdexcept>
 
-#include "../detail/ca_macro.h"
-#include "../thread/real_time_mutex.h"
-#include "./abstract/communications_bus.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/real_time_mutex.h>
+#include <barrett/bus/abstract/communications_bus.h>
 
 
 namespace barrett {
@@ -57,4 +57,4 @@ private:
 }
 
 
-#endif /* CAN_SOCKET_H_ */
+#endif /* BARRETT_BUS_CAN_SOCKET_H_ */

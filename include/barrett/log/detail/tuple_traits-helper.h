@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef TUPLE_TRAITS_HELPER_H_
-#define TUPLE_TRAITS_HELPER_H_
+#ifndef BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_
+#define BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_
 
 
 #include <boost/tuple/tuple.hpp>
@@ -77,4 +77,4 @@ struct TupleTraitsHelper<0, TraitsType> {
 }
 
 
-#endif /* TUPLE_TRAITS_HELPER_H_ */
+#endif /* BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_ */

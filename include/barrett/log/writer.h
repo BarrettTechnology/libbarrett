@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef WRITER_H_
-#define WRITER_H_
+#ifndef BARRETT_LOG_WRITER_H_
+#define BARRETT_LOG_WRITER_H_
 
 
 #include <fstream>
 
-#include "../detail/ca_macro.h"
-#include "./traits.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/log/traits.h>
 
 
 namespace barrett {
@@ -45,7 +45,7 @@ private:
 
 
 // include template definitions
-#include "./detail/writer-inl.h"
+#include <barrett/log/detail/writer-inl.h>
 
 
-#endif /* WRITER_H_ */
+#endif /* BARRETT_LOG_WRITER_H_ */

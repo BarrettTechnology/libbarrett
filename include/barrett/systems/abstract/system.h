@@ -28,16 +28,16 @@
  */
 
 
-#ifndef BARRETT_SYSTEMS_SYSTEM_H_
-#define BARRETT_SYSTEMS_SYSTEM_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_
+#define BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_
 
 
 #include <stdexcept>
 #include <list>
 #include <vector>
 
-#include "../../detail/ca_macro.h"
-#include "../../thread/abstract/mutex.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
 
 
 namespace barrett {
@@ -516,10 +516,10 @@ private:
 
 
 // include template definitions
-#include "./detail/system-inl.h"
-#include "./detail/system-input-inl.h"
-#include "./detail/system-output-inl.h"
-#include "./detail/system-output-value-inl.h"
+#include <barrett/systems/abstract/detail/system-inl.h>
+#include <barrett/systems/abstract/detail/system-input-inl.h>
+#include <barrett/systems/abstract/detail/system-output-inl.h>
+#include <barrett/systems/abstract/detail/system-output-value-inl.h>
 
 
-#endif /* BARRETT_SYSTEMS_SYSTEM_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_ */

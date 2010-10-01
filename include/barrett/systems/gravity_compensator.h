@@ -5,19 +5,20 @@
  *      Author: dc
  */
 
-#ifndef GRAVITY_COMPENSATOR_H_
-#define GRAVITY_COMPENSATOR_H_
+#ifndef BARRETT_SYSTEMS_GRAVITY_COMPENSATOR_H_
+#define BARRETT_SYSTEMS_GRAVITY_COMPENSATOR_H_
 
 
 #include <libconfig.h++>
 
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
-#include "./kinematics_base.h"
-#include "../cdlbt/calgrav/calgrav.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
+#include <barrett/cdlbt/calgrav.h>
+
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
+#include <barrett/systems/kinematics_base.h>
 
 
 namespace barrett {
@@ -61,4 +62,4 @@ private:
 }
 
 
-#endif /* GRAVITY_COMPENSATOR_H_ */
+#endif /* BARRETT_SYSTEMS_GRAVITY_COMPENSATOR_H_ */

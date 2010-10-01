@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef KINEMATICS_H_
-#define KINEMATICS_H_
+#ifndef BARRETT_MATH_KINEMATICS_H_
+#define BARRETT_MATH_KINEMATICS_H_
 
 
 #include <libconfig.h++>
 #include <boost/tuple/tuple.hpp>
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
 
 
 // forward declaration from <barrett/kinematics/kinematics.h>
@@ -50,7 +50,7 @@ private:
 
 
 // include template definitions
-#include "./detail/kinematics-inl.h"
+#include <barrett/math/detail/kinematics-inl.h>
 
 
-#endif /* KINEMATICS_H_ */
+#endif /* BARRETT_MATH_KINEMATICS_H_ */

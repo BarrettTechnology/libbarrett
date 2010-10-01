@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef STL_UTILS_H_
-#define STL_UTILS_H_
+#ifndef BARRETT_DETAIL_STL_UTILS_H_
+#define BARRETT_DETAIL_STL_UTILS_H_
 
 
 #include <algorithm>
@@ -49,4 +49,4 @@ template<class InpIt> void purge(InpIt begin, InpIt end) {
 }
 
 
-#endif /* STL_UTILS_H_ */
+#endif /* BARRETT_DETAIL_STL_UTILS_H_ */

@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef TUPLE_GROUPER_H_
-#define TUPLE_GROUPER_H_
+#ifndef BARRETT_SYSTEMS_TUPLE_GROUPER_H_
+#define BARRETT_SYSTEMS_TUPLE_GROUPER_H_
 
 
 #include <boost/tuple/tuple.hpp>
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
-#include "./detail/tuple_grouper-helper.h"
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
+#include <barrett/systems/detail/tuple_grouper-helper.h>
 
 
 namespace barrett {
@@ -64,4 +64,4 @@ protected:
 }
 
 
-#endif /* TUPLE_GROUPER_H_ */
+#endif /* BARRETT_SYSTEMS_TUPLE_GROUPER_H_ */

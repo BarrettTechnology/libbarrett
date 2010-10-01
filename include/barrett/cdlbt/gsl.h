@@ -29,8 +29,8 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#ifndef BT_GSL_H
-#define BT_GSL_H
+#ifndef BARRETT_CDLBT_GSL_H_
+#define BARRETT_CDLBT_GSL_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -135,4 +135,4 @@ int bt_gsl_fill_matrix(gsl_matrix * mat, config_setting_t * parent,
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_GSL_H */
+#endif /* BARRETT_CDLBT_GSL_H_ */

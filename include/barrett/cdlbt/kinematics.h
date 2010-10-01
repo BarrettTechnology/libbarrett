@@ -97,8 +97,8 @@ kinematics:
 \endverbatim
  */
 
-#ifndef BT_KINEMATICS_H
-#define BT_KINEMATICS_H
+#ifndef BARRETT_CDLBT_KINEMATICS_H_
+#define BARRETT_CDLBT_KINEMATICS_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -245,4 +245,4 @@ int bt_kinematics_eval_jacobian(struct bt_kinematics * kin, int jlimit,
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_KINEMATICS_H */
+#endif /* BARRETT_CDLBT_KINEMATICS_H_ */

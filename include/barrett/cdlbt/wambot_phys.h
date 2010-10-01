@@ -38,8 +38,8 @@ extern "C" {
 #include <gsl/gsl_matrix.h>
 #include <libconfig.h>
 
-#include "wambot.h"
-#include "../bus/bus.h"
+#include <barrett/cdlbt/wambot.h>
+#include <barrett/cdlbt/bus.h>
 
 /** A physical WAM robot, which consists of a series of motor controllers on
  *  a bus.

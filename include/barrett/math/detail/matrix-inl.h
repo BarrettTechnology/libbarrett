@@ -15,7 +15,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "../../detail/libconfig_utils.h"
+#include <barrett/detail/libconfig_utils.h>
 
 
 namespace barrett {

@@ -49,8 +49,8 @@
  * setting the slope at either endpoint.
  */
 
-#ifndef BT_INTERP_H
-#define BT_INTERP_H
+#ifndef BARRETT_CDLBT_INTERP_H_
+#define BARRETT_CDLBT_INTERP_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,4 +93,4 @@ int bt_interp_set_slopes(gsl_interp * interp, double lslope, double rslope);
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_INTERP_H */
+#endif /* BARRETT_CDLBT_INTERP_H_ */

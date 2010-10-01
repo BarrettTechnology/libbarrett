@@ -5,17 +5,18 @@
  *      Author: dc
  */
 
-#ifndef LOW_LEVEL_WAM_H_
-#define LOW_LEVEL_WAM_H_
+#ifndef BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_
+#define BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_
 
 
 #include <libconfig.h++>
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
-#include "../cdlbt/wambot/wambot_phys.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
+#include <barrett/cdlbt/wambot_phys.h>
+
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -100,7 +101,7 @@ private:
 
 
 // include template definitions
-#include "./detail/low_level_wam-inl.h"
+#include <barrett/systems/detail/low_level_wam-inl.h>
 
 
-#endif /* LOW_LEVEL_WAM_H_ */
+#endif /* BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_ */

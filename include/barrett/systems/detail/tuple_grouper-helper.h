@@ -8,7 +8,8 @@
 
 #include <boost/static_assert.hpp>
 #include <boost/tuple/tuple.hpp>
-#include "../abstract/system.h"
+
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {

@@ -79,7 +79,7 @@
 
 
 #include <libconfig.h++>
-#include "./math/matrix.h"
+#include <barrett/math/matrix.h>
 
 
 namespace barrett {

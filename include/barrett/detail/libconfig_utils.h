@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef LIBCONFIG_UTILS_H_
-#define LIBCONFIG_UTILS_H_
+#ifndef BARRETT_DETAIL_LIBCONFIG_UTILS_H_
+#define BARRETT_DETAIL_LIBCONFIG_UTILS_H_
 
 
 #include <libconfig.h++>
@@ -39,4 +39,4 @@ inline double numericToDouble(const libconfig::Setting& setting)
 }
 
 
-#endif /* LIBCONFIG_UTILS_H_ */
+#endif /* BARRETT_DETAIL_LIBCONFIG_UTILS_H_ */

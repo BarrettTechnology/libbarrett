@@ -5,13 +5,13 @@
  *      Author: dc
  */
 
-#ifndef CALLBACK_H_
-#define CALLBACK_H_
+#ifndef BARRETT_SYSTEMS_CALLBACK_H_
+#define BARRETT_SYSTEMS_CALLBACK_H_
 
 
 #include <boost/function.hpp>
-#include "../detail/ca_macro.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -43,4 +43,4 @@ private:
 }
 
 
-#endif /* CALLBACK_H_ */
+#endif /* BARRETT_SYSTEMS_CALLBACK_H_ */

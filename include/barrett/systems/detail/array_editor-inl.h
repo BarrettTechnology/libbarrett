@@ -6,8 +6,8 @@
  */
 
 
-#include "../../detail/stl_utils.h"
-#include "../abstract/system.h"
+#include <barrett/detail/stl_utils.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {

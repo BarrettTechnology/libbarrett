@@ -41,8 +41,8 @@
  * to multiple nodes, and iterating over nodes.
  */
 
-#ifndef BT_BUS_CAN_H
-#define BT_BUS_CAN_H
+#ifndef BARRETT_CDLBT_BUS_CAN_H_
+#define BARRETT_CDLBT_BUS_CAN_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -216,4 +216,4 @@ int bt_bus_can_set_torques(struct bt_bus_can * dev, int group, int * values,
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_BUS_CAN_H */
+#endif /* BT_BUS_CAN_H_ */

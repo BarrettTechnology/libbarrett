@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef MANUAL_EXECUTION_MANAGER_H_
-#define MANUAL_EXECUTION_MANAGER_H_
+#ifndef BARRETT_SYSTEMS_MANUAL_EXECUTION_MANAGER_H_
+#define BARRETT_SYSTEMS_MANUAL_EXECUTION_MANAGER_H_
 
 
 #include <libconfig.h++>
 
-#include "../detail/ca_macro.h"
-#include "./abstract/execution_manager.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/execution_manager.h>
 
 
 namespace barrett {
@@ -41,4 +41,4 @@ private:
 }
 
 
-#endif /* MANUAL_EXECUTION_MANAGER_H_ */
+#endif /* BARRETT_SYSTEMS_MANUAL_EXECUTION_MANAGER_H_ */

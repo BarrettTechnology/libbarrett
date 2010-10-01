@@ -38,8 +38,8 @@
  * The spline can be parameterized by arclength or by an external parameter.
  */
 
-#ifndef BT_SPLINE_H
-#define BT_SPLINE_H
+#ifndef BARRETT_CDLBT_SPLINE_H_
+#define BARRETT_CDLBT_SPLINE_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -166,4 +166,4 @@ int bt_spline_get(struct bt_spline * spline, gsl_vector * result, double s);
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_SPLINE_H */
+#endif /* BARRETT_CDLBT_SPLINE_H_ */

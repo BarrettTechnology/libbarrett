@@ -34,8 +34,9 @@
 
 
 #include <stdexcept>
-#include "../thread/abstract/mutex.h"
-#include "./abstract/system.h"
+
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {

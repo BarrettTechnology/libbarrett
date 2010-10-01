@@ -5,13 +5,13 @@
  *      Author: dc
  */
 
-#ifndef READER_H_
-#define READER_H_
+#ifndef BARRETT_LOG_READER_H_
+#define BARRETT_LOG_READER_H_
 
 
 #include <fstream>
-#include "../detail/ca_macro.h"
-#include "./traits.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/log/traits.h>
 
 
 namespace barrett {
@@ -49,7 +49,7 @@ private:
 
 
 // include template definitions
-#include "./detail/reader-inl.h"
+#include <barrett/log/detail/reader-inl.h>
 
 
-#endif /* READER_H_ */
+#endif /* BARRETT_LOG_READER_H_ */

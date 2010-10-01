@@ -7,7 +7,7 @@
 
 
 #include <iostream>
-#include "../../cdlbt/spline/spline.h"
+#include <barrett/cdlbt/spline.h>
 
 
 namespace barrett {

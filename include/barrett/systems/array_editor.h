@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef ARRAY_EDITOR_H_
-#define ARRAY_EDITOR_H_
+#ifndef BARRETT_SYSTEMS_ARRAY_EDITOR_H_
+#define BARRETT_SYSTEMS_ARRAY_EDITOR_H_
 
 
 #include <boost/array.hpp>
 
-#include "../detail/ca_macro.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -51,7 +51,7 @@ private:
 
 
 // include template definitions
-#include "./detail/array_editor-inl.h"
+#include <barrett/systems/detail/array_editor-inl.h>
 
 
-#endif /* ARRAY_EDITOR_H_ */
+#endif /* BARRETT_SYSTEMS_ARRAY_EDITOR_H_ */

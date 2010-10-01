@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef REAL_TIME_WRITER_H_
-#define REAL_TIME_WRITER_H_
+#ifndef BARRETT_LOG_REAL_TIME_WRITER_H_
+#define BARRETT_LOG_REAL_TIME_WRITER_H_
 
 
 #include <boost/thread.hpp>
 
-#include "../detail/ca_macro.h"
-#include "./traits.h"
-#include "./writer.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/log/traits.h>
+#include <barrett/log/writer.h>
 
 
 namespace barrett {
@@ -68,7 +68,7 @@ private:
 
 
 // include template definitions
-#include "./detail/real_time_writer-inl.h"
+#include <barrett/log/detail/real_time_writer-inl.h>
 
 
-#endif /* REAL_TIME_WRITER_H_ */
+#endif /* BARRETT_LOG_REAL_TIME_WRITER_H_ */

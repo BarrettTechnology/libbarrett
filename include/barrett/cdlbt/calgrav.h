@@ -55,15 +55,15 @@ calgrav:
 \endverbatim
  */
 
-#ifndef BT_CALGRAV_H
-#define BT_CALGRAV_H
+#ifndef BARRETT_CDLBT_CALGRAV_H_
+#define BARRETT_CDLBT_CALGRAV_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <gsl/gsl_vector.h>
    
-#include "../kinematics/kinematics.h"
+#include <barrett/cdlbt/kinematics.h>
 
 
 /* gravity compensation
@@ -138,4 +138,4 @@ int bt_calgrav_eval(struct bt_calgrav * grav,
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_CALGRAV_H */
+#endif /* BARRETT_CDLBT_CALGRAV_H_ */

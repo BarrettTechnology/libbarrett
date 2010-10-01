@@ -11,9 +11,9 @@
 
 #include <libconfig.h++>
 
-#include "../detail/ca_macro.h"
-#include "../math/first_order_filter.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/math/first_order_filter.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -47,7 +47,7 @@ private:
 
 
 // include template definitions
-#include "./detail/first_order_filter-inl.h"
+#include <barrett/systems/detail/first_order_filter-inl.h>
 
 
 #endif /* BARRETT_SYSTEMS_FIRST_ORDER_FILTER_H_ */

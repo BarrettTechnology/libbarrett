@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef BARRETT_DETAIL_DEBUG_H_
+#define BARRETT_DETAIL_DEBUG_H_
 
 
 #include <iostream>
@@ -15,4 +15,4 @@
 		std::cerr << "DEBUG:" __FILE__ ":" << __LINE__ << std::endl
 
 
-#endif /* DEBUG_H_ */
+#endif /* BARRETT_DETAIL_DEBUG_H_ */

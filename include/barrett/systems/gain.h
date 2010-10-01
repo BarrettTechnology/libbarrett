@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef GAIN_H_
-#define GAIN_H_
+#ifndef BARRETT_SYSTEMS_GAIN_H_
+#define BARRETT_SYSTEMS_GAIN_H_
 
 
-#include "../detail/ca_macro.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -43,4 +43,4 @@ private:
 }
 
 
-#endif /* GAIN_H_ */
+#endif /* BARRETT_SYSTEMS_GAIN_H_ */
