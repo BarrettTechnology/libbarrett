@@ -12,8 +12,8 @@
 #include <native/timer.h>
 #include <libconfig.h++>
 
-#include <barrett/cdlbt/bus/bus.h>
-#include <barrett/cdlbt/bus/bus_can.h>
+#include <barrett/cdlbt/bus.h>
+#include <barrett/cdlbt/bus_can.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
 #include <barrett/wam.h>

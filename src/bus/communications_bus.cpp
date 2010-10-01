@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <syslog.h>
 
-#include "../communications_bus.h"
+#include <barrett/bus/abstract/communications_bus.h>
 
 
 namespace barrett {

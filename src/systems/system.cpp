@@ -7,8 +7,8 @@
 
 
 #include <vector>
-#include "../execution_manager.h"
-#include "../system.h"
+#include <barrett/systems/abstract/execution_manager.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {

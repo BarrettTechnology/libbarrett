@@ -9,9 +9,9 @@
 #include <vector>
 #include <algorithm>
 
-#include "../../../thread/abstract/mutex.h"
-#include "../system.h"
-#include "../execution_manager.h"
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/execution_manager.h>
 
 
 namespace barrett {

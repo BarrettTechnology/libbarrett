@@ -6,7 +6,7 @@
  */
 
 
-#include "../null_mutex.h"
+#include <barrett/thread/null_mutex.h>
 
 
 namespace barrett {

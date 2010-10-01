@@ -35,11 +35,11 @@
 #include <gsl/gsl_linalg.h> /* For matrix inverse operations, etc */
 #include <gsl/gsl_blas.h> /* For fast matrix multiplication */
 
-#include "wambot.h"
-#include "wambot_phys.h"
-#include "../bus/bus.h"
-#include "../bus/bus_can.h"  // for bt_bus_can_get_property()
-#include "../gsl/gsl.h"
+#include <barrett/cdlbt/wambot.h>
+#include <barrett/cdlbt/wambot_phys.h>
+#include <barrett/cdlbt/bus.h>
+#include <barrett/cdlbt/bus_can.h>  // for bt_bus_can_get_property()
+#include <barrett/cdlbt/gsl.h>
 
 /** Implementation of bt_wambot::update for bt_wambot_phys. */
 static int update( struct bt_wambot * base );

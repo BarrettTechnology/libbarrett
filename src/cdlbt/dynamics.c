@@ -34,8 +34,8 @@
 #include <libconfig.h>
 #include <gsl/gsl_blas.h>
 
-#include "dynamics.h"
-#include "../gsl/gsl.h"
+#include <barrett/cdlbt/dynamics.h>
+#include <barrett/cdlbt/gsl.h>
 
 
 /** \name Private functions

@@ -35,8 +35,8 @@
 
 
 #include <exception>
-#include "./stacktrace.h"
-#include "../exception.h"
+#include <barrett/stacktrace.h>
+#include <barrett/exception.h>
 
 
 namespace barrett {

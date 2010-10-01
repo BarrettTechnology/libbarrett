@@ -13,8 +13,8 @@
 #include <unistd.h>
 #include <native/task.h>
 
-#include <barrett/cdlbt/bus/bus.h>
-#include <barrett/cdlbt/bus/bus_can.h>
+#include <barrett/cdlbt/bus.h>
+#include <barrett/cdlbt/bus_can.h>
 
 
 void waitForEnter() {

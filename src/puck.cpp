@@ -9,8 +9,8 @@
 
 #include <syslog.h>
 
-#include "../bus/abstract/communications_bus.h"
-#include "../puck.h"
+#include <barrett/bus/abstract/communications_bus.h>
+#include <barrett/puck.h>
 
 
 namespace barrett {

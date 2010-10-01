@@ -11,7 +11,7 @@
 #include <native/task.h>
 #include <native/mutex.h>
 
-#include "../real_time_mutex.h"
+#include <barrett/thread/real_time_mutex.h>
 
 
 namespace barrett {

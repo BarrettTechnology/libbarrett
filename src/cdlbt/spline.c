@@ -33,8 +33,8 @@
 
 #include <gsl/gsl_blas.h>
 
-#include "spline.h"
-#include "../interp/interp.h"
+#include <barrett/cdlbt/spline.h>
+#include <barrett/cdlbt/interp.h>
 
 
 int bt_spline_create(struct bt_spline ** splineptr, const gsl_vector * start,

@@ -35,9 +35,9 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 
-#include "../kinematics/kinematics.h"
-#include "calgrav.h"
-#include "../gsl/gsl.h"
+#include <barrett/cdlbt/kinematics.h>
+#include <barrett/cdlbt/calgrav.h>
+#include <barrett/cdlbt/gsl.h>
 
 
 int bt_calgrav_create(struct bt_calgrav ** gravptr,

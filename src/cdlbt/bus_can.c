@@ -56,9 +56,9 @@ typedef int HANDLE;
 #endif
 
 
-#include "bus_can.h"
-#include "bus.h"
-#include "../os/os.h"
+#include <barrett/cdlbt/bus_can.h>
+#include <barrett/cdlbt/bus.h>
+#include <barrett/cdlbt/os.h>
 
 #ifdef CANTYPE_ESD
 # define TX_QUEUE_SIZE       (32)
