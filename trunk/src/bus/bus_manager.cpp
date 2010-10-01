@@ -50,6 +50,7 @@ BusManager::BusManager(const char* configFile) :
 	char* configDir = dirname(cf1);
 	char* configBase = basename(cf2);
 
+	// make @include paths in configFile relative to the containing directory
 	chdir(configDir);
 
 	try {
