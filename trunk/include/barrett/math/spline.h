@@ -6,14 +6,14 @@
  */
 
 
-#ifndef SPLINE_H_
-#define SPLINE_H_
+#ifndef BARRETT_MATH_SPLINE_H_
+#define BARRETT_MATH_SPLINE_H_
 
 
 #include <vector>
 #include <boost/tuple/tuple.hpp>
 
-#include "../detail/ca_macro.h"
+#include <barrett/detail/ca_macro.h>
 
 
 // forward declaration from <barrett/spline/spline.h>
@@ -65,7 +65,7 @@ private:
 
 
 // include template definitions
-#include "./detail/spline-inl.h"
+#include <barrett/math/detail/spline-inl.h>
 
 
-#endif /* SPLINE_H_ */
+#endif /* BARRETT_MATH_SPLINE_H_ */

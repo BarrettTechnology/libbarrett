@@ -10,8 +10,8 @@
 
 
 #include <libconfig.h++>
-#include "../detail/ca_macro.h"
-#include "./traits.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 
 
 namespace barrett {
@@ -62,7 +62,7 @@ private:
 
 
 // include template definitions
-#include "./detail/first_order_filter-inl.h"
+#include <barrett/math/detail/first_order_filter-inl.h>
 
 
 #endif /* BARRETT_MATH_FIRST_ORDER_FILTER_H_ */

@@ -5,17 +5,17 @@
  *      Author: dc
  */
 
-#ifndef CONVERTER_H_
-#define CONVERTER_H_
+#ifndef BARRETT_SYSTEMS_CONVERTER_H_
+#define BARRETT_SYSTEMS_CONVERTER_H_
 
 
 #include <list>
 #include <utility>
 
-#include "../detail/ca_macro.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
-#include "./abstract/conversion.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
+#include <barrett/systems/abstract/conversion.h>
 
 
 namespace barrett {
@@ -57,7 +57,7 @@ private:
 
 
 // include template definitions
-#include "./detail/converter-inl.h"
+#include <barrett/systems/detail/converter-inl.h>
 
 
-#endif /* CONVERTER_H_ */
+#endif /* BARRETT_SYSTEMS_CONVERTER_H_ */

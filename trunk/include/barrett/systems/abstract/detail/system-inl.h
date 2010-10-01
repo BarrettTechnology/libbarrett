@@ -8,8 +8,8 @@
 
 #include <vector>
 
-#include "../../../thread/null_mutex.h"
-#include "../execution_manager.h"
+#include <barrett/thread/null_mutex.h>
+#include <barrett/systems/abstract/execution_manager.h>
 
 
 namespace barrett {

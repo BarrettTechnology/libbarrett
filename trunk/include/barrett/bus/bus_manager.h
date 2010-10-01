@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef BUS_MANAGER_H_
-#define BUS_MANAGER_H_
+#ifndef BARRETT_BUS_BUS_MANAGER_H_
+#define BARRETT_BUS_BUS_MANAGER_H_
 
 
 #include <map>
@@ -14,10 +14,10 @@
 
 #include <boost/circular_buffer.hpp>
 
-#include "../detail/ca_macro.h"
-#include "../thread/abstract/mutex.h"
-#include "./abstract/communications_bus.h"
-#include "./can_socket.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/bus/abstract/communications_bus.h>
+#include <barrett/bus/can_socket.h>
 
 
 namespace barrett {
@@ -86,4 +86,4 @@ private:
 }
 
 
-#endif /* BUS_MANAGER_H_ */
+#endif /* BARRETT_BUS_BUS_MANAGER_H_ */

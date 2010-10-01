@@ -5,17 +5,17 @@
  *      Author: dc
  */
 
-#ifndef SUMMER_H_
-#define SUMMER_H_
+#ifndef BARRETT_SYSTEMS_SUMMER_H_
+#define BARRETT_SYSTEMS_SUMMER_H_
 
 #include <boost/array.hpp>
 #include <bitset>
 #include <string>
 #include <stdexcept>
 
-#include "../detail/ca_macro.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -77,8 +77,8 @@ private:
 
 
 // include template definitions
-#include "detail/summer-inl.h"
-#include "detail/summer-polarity-inl.h"
+#include <barrett/systems/detail/summer-inl.h>
+#include <barrett/systems/detail/summer-polarity-inl.h>
 
 
-#endif /* SUMMER_H_ */
+#endif /* BARRETT_SYSTEMS_SUMMER_H_ */

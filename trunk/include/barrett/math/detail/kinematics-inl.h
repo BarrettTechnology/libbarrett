@@ -5,10 +5,6 @@
  *      Author: dc
  */
 
-#ifndef KINEMATICSINL_H_
-#define KINEMATICSINL_H_
-
-
 #include <libconfig.h++>
 
 #include "../../units.h"
@@ -49,6 +45,3 @@ units::CartesianPosition::type Kinematics<DOF>::operator() (const boost::tuple<j
 
 }
 }
-
-
-#endif /* KINEMATICSINL_H_ */

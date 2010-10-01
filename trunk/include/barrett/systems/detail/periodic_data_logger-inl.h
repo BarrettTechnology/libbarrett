@@ -6,7 +6,7 @@
  */
 
 
-#include "../../thread/abstract/mutex.h"
+#include <barrett/thread/abstract/mutex.h>
 
 
 namespace barrett {

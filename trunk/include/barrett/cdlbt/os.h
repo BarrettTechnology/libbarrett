@@ -44,8 +44,8 @@
  * mutexes.
  */
 
-#ifndef BT_OS_H
-#define BT_OS_H
+#ifndef BARRETT_CDLBT_OS_H_
+#define BARRETT_CDLBT_OS_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -334,4 +334,4 @@ int bt_os_timestat_get(struct bt_os_timestat * ts,
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_OS_H */
+#endif /* BARRETT_CDLBT_OS_H_ */

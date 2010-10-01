@@ -44,12 +44,12 @@
 
 #include <libconfig.h>
 
-#include "../units.h"
-#include "../thread/abstract/mutex.h"
-#include "../math/spline.h"
-#include "../math/trapezoidal_velocity_profile.h"
-#include "../systems/abstract/system.h"
-#include "../systems/io_conversion.h"
+#include <barrett/units.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/math/spline.h>
+#include <barrett/math/trapezoidal_velocity_profile.h>
+#include <barrett/systems/abstract/systemh">
+#include <barrett/systems/io_conversion.h>
 
 
 namespace barrett {

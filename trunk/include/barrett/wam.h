@@ -34,23 +34,23 @@
 
 #include <libconfig.h++>
 
-#include "./detail/ca_macro.h"
-#include "./units.h"
-#include "./systems/abstract/system.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
+#include <barrett/systems/abstract/system.h>
 
-#include "./systems/low_level_wam.h"
-#include "./systems/first_order_filter.h"
-#include "./systems/converter.h"
-#include "./systems/summer.h"
+#include <barrett/systems/low_level_wam.h>
+#include <barrett/systems/first_order_filter.h>
+#include <barrett/systems/converter.h>
+#include <barrett/systems/summer.h>
 
-#include "./systems/kinematics_base.h"
-#include "./systems/gravity_compensator.h"
-#include "./systems/tool_position.h"
-#include "./systems/tool_orientation.h"
+#include <barrett/systems/kinematics_base.h>
+#include <barrett/systems/gravity_compensator.h>
+#include <barrett/systems/tool_position.h>
+#include <barrett/systems/tool_orientation.h>
 
-#include "./systems/pid_controller.h"
-#include "./systems/tool_orientation_controller.h"
-#include "./systems/tool_force_to_joint_torques.h"
+#include <barrett/systems/pid_controller.h>
+#include <barrett/systems/tool_orientation_controller.h>
+#include <barrett/systems/tool_force_to_joint_torques.h>
 
 
 namespace barrett {
@@ -124,7 +124,7 @@ private:
 
 
 // include template definitions
-#include "./detail/wam-inl.h"
+#include <barrett/detail/wam-inl.h>
 
 
 #endif /* BARRETT_WAM_H_ */

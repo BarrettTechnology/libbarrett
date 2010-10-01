@@ -186,7 +186,7 @@ double deadband(double x, double cutoff);
 
 
 // include template definitions
-#include "./detail/utils-inl.h"
+#include <barrett/math/detail/utils-inl.h>
 
 
 #endif /* BARRETT_MATH_UTILS_H_ */

@@ -5,17 +5,17 @@
  *      Author: dc
  */
 
-#ifndef TOOL_ORIENTATION_CONTROLLER_H_
-#define TOOL_ORIENTATION_CONTROLLER_H_
+#ifndef BARRETT_SYSTEMS_TOOL_ORIENTATION_CONTROLLER_H_
+#define BARRETT_SYSTEMS_TOOL_ORIENTATION_CONTROLLER_H_
 
 
 #include <Eigen/Geometry>
 
-#include "../detail/ca_macro.h"
-#include "../math/utils.h"
-#include "../units.h"
-#include "./abstract/controller.h"
-#include "./kinematics_base.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/math/utils.h>
+#include <barrett/units.h>
+#include <barrett/systems/abstract/controller.h>
+#include <barrett/systems/kinematics_base.h>
 
 
 #include <iostream>
@@ -132,4 +132,4 @@ private:
 }
 
 
-#endif /* TOOL_ORIENTATION_CONTROLLER_H_ */
+#endif /* BARRETT_SYSTEMS_TOOL_ORIENTATION_CONTROLLER_H_ */

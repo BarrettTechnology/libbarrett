@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef NULL_MUTEX_H_
-#define NULL_MUTEX_H_
+#ifndef BARRETT_THREAD_NULL_MUTEX_H_
+#define BARRETT_THREAD_NULL_MUTEX_H_
 
 
-#include "../detail/ca_macro.h"
-#include "./abstract/mutex.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
 
 
 namespace barrett {
@@ -39,4 +39,4 @@ private:
 }
 
 
-#endif /* NULL_MUTEX_H_ */
+#endif /* BARRETT_THREAD_NULL_MUTEX_H_ */

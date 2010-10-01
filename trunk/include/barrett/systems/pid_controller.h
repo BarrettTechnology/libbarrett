@@ -5,16 +5,16 @@
  *      Author: dc
  */
 
-#ifndef PID_CONTROLLER_H_
-#define PID_CONTROLLER_H_
+#ifndef BARRETT_SYSTEMS_PID_CONTROLLER_H_
+#define BARRETT_SYSTEMS_PID_CONTROLLER_H_
 
 
 #include <libconfig.h++>
 
-#include "../detail/ca_macro.h"
-#include "../math/traits.h"
-#include "./abstract/execution_manager.h"
-#include "./abstract/controller.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/math/traits.h>
+#include <barrett/systems/abstract/execution_manager.h>
+#include <barrett/systems/abstract/controller.h>
 
 
 namespace barrett {
@@ -77,7 +77,7 @@ private:
 
 
 // include template definitions
-#include "./detail/pid_controller-inl.h"
+#include <barrett/systems/detail/pid_controller-inl.h>
 
 
-#endif /* PID_CONTROLLER_H_ */
+#endif /* BARRETT_SYSTEMS_PID_CONTROLLER_H_ */

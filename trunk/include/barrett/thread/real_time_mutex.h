@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef REAL_TIME_MUTEX_H_
-#define REAL_TIME_MUTEX_H_
+#ifndef BARRETT_THREAD_REAL_TIME_MUTEX_H_
+#define BARRETT_THREAD_REAL_TIME_MUTEX_H_
 
 
-#include "../detail/ca_macro.h"
-#include "./abstract/mutex.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
 
 
 // forward declarations from Xenomai's <native/mutex.h>
@@ -47,4 +47,4 @@ private:
 }
 
 
-#endif /* REAL_TIME_MUTEX_H_ */
+#endif /* BARRETT_THREAD_REAL_TIME_MUTEX_H_ */

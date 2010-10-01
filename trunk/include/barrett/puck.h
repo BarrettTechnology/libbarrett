@@ -5,11 +5,11 @@
  *      Author: dc
  */
 
-#ifndef PUCK_H_
-#define PUCK_H_
+#ifndef BARRETT_PUCK_H_
+#define BARRETT_PUCK_H_
 
 
-#include "./bus/abstract/communications_bus.h"
+#include <barrett/bus/abstract/communications_bus.h>
 
 
 namespace barrett {
@@ -56,4 +56,4 @@ private:
 }
 
 
-#endif /* PUCK_H_ */
+#endif /* BARRETT_PUCK_H_ */

@@ -34,42 +34,42 @@
 
 
 // other -- these operate on Systems, but are not Systems themselves
-#include "systems/helpers.h"
-#include "systems/manual_execution_manager.h"
-#include "systems/real_time_execution_manager.h"
-#include "systems/converter.h"
-#include "systems/io_conversion.h"
+#include <barrett/systems/helpers.h>
+#include <barrett/systems/manual_execution_manager.h>
+#include <barrett/systems/real_time_execution_manager.h>
+#include <barrett/systems/converter.h>
+#include <barrett/systems/io_conversion.h>
 
 // sources
-#include "systems/constant.h"
-#include "systems/exposed_output.h"
+#include <barrett/systems/constant.h>
+#include <barrett/systems/exposed_output.h>
 
-#include "systems/ramp.h"
+#include <barrett/systems/ramp.h>
 
 // sinks
-#include "systems/print_to_stream.h"
-#include "systems/periodic_data_logger.h"
-#include "systems/triggered_data_logger.h"
+#include <barrett/systems/print_to_stream.h>
+#include <barrett/systems/periodic_data_logger.h>
+#include <barrett/systems/triggered_data_logger.h>
 
 // operators
-#include "systems/kinematics_base.h"
-#include "systems/gravity_compensator.h"
-#include "systems/tool_position.h"
-#include "systems/tool_orientation.h"
-#include "systems/tool_force_to_joint_torques.h"
-#include "systems/tool_orientation_controller.h"
+#include <barrett/systems/kinematics_base.h>
+#include <barrett/systems/gravity_compensator.h>
+#include <barrett/systems/tool_position.h>
+#include <barrett/systems/tool_orientation.h>
+#include <barrett/systems/tool_force_to_joint_torques.h>
+#include <barrett/systems/tool_orientation_controller.h>
 
-#include "systems/summer.h"
-#include "systems/gain.h"
+#include <barrett/systems/summer.h>
+#include <barrett/systems/gain.h>
 
-#include "systems/pid_controller.h"
-#include "systems/first_order_filter.h"
+#include <barrett/systems/pid_controller.h>
+#include <barrett/systems/first_order_filter.h>
 
-#include "systems/callback.h"
+#include <barrett/systems/callback.h>
 
-#include "systems/array_splitter.h"
-#include "systems/array_editor.h"
-#include "systems/tuple_grouper.h"
+#include <barrett/systems/array_splitter.h>
+#include <barrett/systems/array_editor.h>
+#include <barrett/systems/tuple_grouper.h>
 
 
 #endif /* BARRETT_SYSTEMS_H_ */

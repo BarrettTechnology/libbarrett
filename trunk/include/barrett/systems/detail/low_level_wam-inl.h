@@ -14,7 +14,7 @@
 #include <libconfig.h++>
 #include <gsl/gsl_vector.h>
 
-#include "../../cdlbt/wambot/wambot_phys.h"
+#include <barrett/cdlbt/wambot_phys.h>
 
 
 namespace barrett {

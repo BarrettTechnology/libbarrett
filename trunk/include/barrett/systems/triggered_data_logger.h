@@ -9,9 +9,9 @@
 #define TRIGGERED_DATA_LOGGER_H_
 
 
-#include "../detail/ca_macro.h"
-#include "../log/real_time_writer.h"
-#include "./periodic_data_logger.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/log/real_time_writer.h>
+#include <barrett/systems/periodic_data_logger.h>
 
 
 namespace barrett {

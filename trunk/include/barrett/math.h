@@ -5,19 +5,19 @@
  *      Author: dc
  */
 
-#ifndef MATH_H_
-#define MATH_H_
+#ifndef BARRETT_MATH_H_
+#define BARRETT_MATH_H_
 
 
-#include "math/matrix.h"
-#include "math/utils.h"
+#include <barrett/math/matrix.h>
+#include <barrett/math/utils.h>
 
-#include "math/first_order_filter.h"
+#include <barrett/math/first_order_filter.h>
 
-#include "math/spline.h"
-#include "math/trapezoidal_velocity_profile.h"
+#include <barrett/math/spline.h>
+#include <barrett/math/trapezoidal_velocity_profile.h>
 
-#include "math/kinematics.h"
+#include <barrett/math/kinematics.h>
 
 
-#endif /* MATH_H_ */
+#endif /* BARRETT_MATH_H_ */

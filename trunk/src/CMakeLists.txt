@@ -4,7 +4,6 @@ set(barrett_SOURCES
 	bus/bus_manager.cpp
 	bus/can_socket.cpp
 	bus/communications_bus.cpp
-	c_stacktrace.cpp
 	cdlbt/bus.c
 	cdlbt/bus_can.c
 	cdlbt/calgrav.c

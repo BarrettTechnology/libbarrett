@@ -5,14 +5,15 @@
  *      Author: dc
  */
 
-#ifndef PERIODIC_DATA_LOGGER_H_
-#define PERIODIC_DATA_LOGGER_H_
+#ifndef BARRETT_SYSTEMS_PERIODIC_DATA_LOGGER_H_
+#define BARRETT_SYSTEMS_PERIODIC_DATA_LOGGER_H_
 
 
-#include "../detail/ca_macro.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
-#include "../log/real_time_writer.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/log/real_time_writer.h>
+
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -52,7 +53,7 @@ private:
 
 
 // include template definitions
-#include "./detail/periodic_data_logger-inl.h"
+#include <barrett/systems/detail/periodic_data_logger-inl.h>
 
 
-#endif /* PERIODIC_DATA_LOGGER_H_ */
+#endif /* BARRETT_SYSTEMS_PERIODIC_DATA_LOGGER_H_ */

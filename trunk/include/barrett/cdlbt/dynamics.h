@@ -87,8 +87,8 @@ dynamics:
 \endverbatim
  */
 
-#ifndef BT_DYNAMICS_H
-#define BT_DYNAMICS_H
+#ifndef BARRETT_CDLBT_DYNAMICS_H_
+#define BARRETT_CDLBT_DYNAMICS_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -97,7 +97,7 @@ extern "C" {
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "../kinematics/kinematics.h"
+#include <barrett/cdlbt/kinematics.h>
 
 
 /** Link-specific data, including mass and inertial parameters,
@@ -254,4 +254,4 @@ int bt_dynamics_eval_jsim( struct bt_dynamics * dyn );
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_DYNAMICS_H */
+#endif /* BARRETT_CDLBT_DYNAMICS_H_ */

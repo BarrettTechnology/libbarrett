@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef EXPOSED_OUTPUT_H_
-#define EXPOSED_OUTPUT_H_
+#ifndef BARRETT_SYSTEMS_EXPOSED_OUTPUT_H_
+#define BARRETT_SYSTEMS_EXPOSED_OUTPUT_H_
 
 
-#include "../detail/ca_macro.h"
-#include "../thread/abstract/mutex.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
+#include <barrett/systems/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -53,4 +53,6 @@ private:
 
 }
 }
-#endif /* EXPOSED_OUTPUT_H_ */
+
+
+#endif /* BARRETT_SYSTEMS_EXPOSED_OUTPUT_H_ */

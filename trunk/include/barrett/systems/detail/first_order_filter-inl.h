@@ -6,7 +6,7 @@
  */
 
 
-#include "../abstract/single_io.h"
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {

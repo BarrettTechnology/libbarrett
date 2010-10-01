@@ -30,7 +30,7 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#ifndef BT_WAMBOT_H
+#ifndef BARRETT_CDLBT_WAMBOT_H_
 #define BT_WAMBOT_H
 #ifdef __cplusplus
 extern "C" {
@@ -84,4 +84,4 @@ struct bt_wambot
 #ifdef __cplusplus
 }
 #endif
-#endif /* BT_WAMBOT_H */
+#endif /* BARRETT_CDLBT_WAMBOT_H_ */

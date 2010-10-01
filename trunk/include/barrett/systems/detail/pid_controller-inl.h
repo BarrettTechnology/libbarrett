@@ -8,8 +8,8 @@
 
 #include <libconfig.h++>
 
-#include "../../math/utils.h"
-#include "../../thread/abstract/mutex.h"
+#include <barrett/math/utils.h>
+#include <barrett/thread/abstract/mutex.h>
 
 
 namespace barrett {

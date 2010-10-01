@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef HAPTIC_OBJECT_H_
-#define HAPTIC_OBJECT_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_HAPTIC_OBJECT_H_
+#define BARRETT_SYSTEMS_ABSTRACT_HAPTIC_OBJECT_H_
 
 
-#include "../../detail/ca_macro.h"
+#include <barrett/detail/ca_macro.h>
 
-#include "../../units.h"
-#include "./system.h"
-#include "./single_io.h"
+#include <barrett/units.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -43,4 +43,4 @@ private:
 }
 
 
-#endif /* HAPTIC_OBJECT_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_HAPTIC_OBJECT_H_ */

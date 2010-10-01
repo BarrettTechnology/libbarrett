@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef CONVERSION_H_
-#define CONVERSION_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_CONVERSION_H_
+#define BARRETT_SYSTEMS_ABSTRACT_CONVERSION_H_
 
 
-#include "../../detail/ca_macro.h"
-#include "./system.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {
@@ -37,4 +37,4 @@ private:
 }
 
 
-#endif /* CONVERSION_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_CONVERSION_H_ */

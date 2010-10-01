@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef HAPTIC_BALL_H_
-#define HAPTIC_BALL_H_
+#ifndef BARRETT_SYSTEMS_HAPTIC_BALL_H_
+#define BARRETT_SYSTEMS_HAPTIC_BALL_H_
 
 
 #include <cmath>
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
-#include "./abstract/haptic_object.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
+#include <barrett/systems/abstract/haptic_object.h>
 
 
 namespace barrett {
@@ -56,4 +56,4 @@ private:
 }
 
 
-#endif /* HAPTIC_BALL_H_ */
+#endif /* BARRETT_SYSTEMS_HAPTIC_BALL_H_ */

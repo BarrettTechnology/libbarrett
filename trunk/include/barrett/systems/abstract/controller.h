@@ -5,15 +5,15 @@
  *      Author: dc
  */
 
-#ifndef CONTROLLER_H_
-#define CONTROLLER_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_CONTROLLER_H_
+#define BARRETT_SYSTEMS_ABSTRACT_CONTROLLER_H_
 
 
 #include <list>
 
-#include "../../detail/ca_macro.h"
-#include "./system.h"
-#include "./conversion.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/conversion.h>
 
 
 namespace barrett {
@@ -53,4 +53,4 @@ private:
 }
 
 
-#endif /* CONTROLLER_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_CONTROLLER_H_ */

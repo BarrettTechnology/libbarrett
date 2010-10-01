@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef RAMP_H_
-#define RAMP_H_
+#ifndef BARRETT_SYSTEMS_RAMP_H_
+#define BARRETT_SYSTEMS_RAMP_H_
 
 
-#include "../detail/ca_macro.h"
-#include "../thread/abstract/mutex.h"
-#include "./abstract/system.h"
-#include "./abstract/single_io.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 
 
 namespace barrett {
@@ -64,4 +64,4 @@ private:
 }
 
 
-#endif /* RAMP_H_ */
+#endif /* BARRETT_SYSTEMS_RAMP_H_ */

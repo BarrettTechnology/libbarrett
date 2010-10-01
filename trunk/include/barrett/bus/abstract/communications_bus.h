@@ -5,11 +5,11 @@
  *      Author: dc
  */
 
-#ifndef COMMUNICATIONS_BUS_H_
-#define COMMUNICATIONS_BUS_H_
+#ifndef BARRETT_BUS_ABSTRACT_COMMUNICATIONS_BUS_H_
+#define BARRETT_BUS_ABSTRACT_COMMUNICATIONS_BUS_H_
 
 
-#include "../../thread/abstract/mutex.h"
+#include <barrett/thread/abstract/mutex.h>
 
 
 namespace barrett {
@@ -36,4 +36,4 @@ public:
 }
 
 
-#endif /* COMMUNICATIONS_BUS_H_ */
+#endif /* BARRETT_BUS_ABSTRACT_COMMUNICATIONS_BUS_H_ */

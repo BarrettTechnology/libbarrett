@@ -5,17 +5,17 @@
  *      Author: dc
  */
 
-#ifndef TOOL_FORCE_TO_JOINT_TORQUES_H_
-#define TOOL_FORCE_TO_JOINT_TORQUES_H_
+#ifndef BARRETT_SYSTEMS_TOOL_FORCE_TO_JOINT_TORQUES_H_
+#define BARRETT_SYSTEMS_TOOL_FORCE_TO_JOINT_TORQUES_H_
 
 
 #include <gsl/gsl_blas.h>
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
-#include "../math/kinematics.h"
-#include "./abstract/single_io.h"
-#include "./kinematics_base.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/units.h>
+#include <barrett/math/kinematics.h>
+#include <barrett/systems/abstract/single_io.h>
+#include <barrett/systems/kinematics_base.h>
 
 
 namespace barrett {
@@ -49,4 +49,4 @@ private:
 }
 
 
-#endif /* TOOL_FORCE_TO_JOINT_TORQUES_H_ */
+#endif /* BARRETT_SYSTEMS_TOOL_FORCE_TO_JOINT_TORQUES_H_ */

@@ -5,17 +5,17 @@
  *      Author: dc
  */
 
-#ifndef EXECUTION_MANAGER_H_
-#define EXECUTION_MANAGER_H_
+#ifndef BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_
+#define BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_
 
 
 #include <vector>
 #include <libconfig.h++>
 
-#include "../../detail/ca_macro.h"
-#include "../../detail/libconfig_utils.h"
-#include "../../thread/abstract/mutex.h"
-#include "../../thread/null_mutex.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/detail/libconfig_utils.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/thread/null_mutex.h>
 
 
 namespace barrett {
@@ -76,7 +76,7 @@ private:
 
 
 // include template definitions
-#include "./detail/execution_manager-inl.h"
+#include <barrett/systems/abstract/detail/execution_manager-inl.h>
 
 
-#endif /* EXECUTION_MANAGER_H_ */
+#endif /* BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_ */

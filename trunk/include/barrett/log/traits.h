@@ -13,8 +13,8 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include "../math/matrix.h"
-#include "./detail/tuple_traits-helper.h"
+#include <barrett/math/matrix.h>
+#include <barrett/log/detail/tuple_traits-helper.h>
 
 
 namespace barrett {

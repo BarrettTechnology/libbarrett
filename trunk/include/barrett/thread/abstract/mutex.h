@@ -5,12 +5,12 @@
  *      Author: dc
  */
 
-#ifndef MUTEX_H_
-#define MUTEX_H_
+#ifndef BARRETT_THREAD_ABSTRACT_MUTEX_H_
+#define BARRETT_THREAD_ABSTRACT_MUTEX_H_
 
 
 #include <boost/thread.hpp>
-#include "../../detail/ca_macro.h"
+#include <barrett/detail/ca_macro.h>
 
 
 #define SCOPED_LOCK(mutex)  \
@@ -39,4 +39,5 @@ private:
 }
 }
 
-#endif /* MUTEX_H_ */
+
+#endif /* BARRETT_THREAD_ABSTRACT_MUTEX_H_ */

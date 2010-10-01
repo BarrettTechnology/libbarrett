@@ -5,11 +5,11 @@
  *      Author: dc
  */
 
-#ifndef TRAPEZOIDAL_VELOCITY_PROFILE_H_
-#define TRAPEZOIDAL_VELOCITY_PROFILE_H_
+#ifndef BARRETT_MATH_TRAPEZOIDAL_VELOCITY_PROFILE_H_
+#define BARRETT_MATH_TRAPEZOIDAL_VELOCITY_PROFILE_H_
 
 
-#include "../detail/ca_macro.h"
+#include <barrett/detail/ca_macro.h>
 
 
 // forward declaration from <barrett/profile/profile.h>
@@ -48,4 +48,4 @@ private:
 }
 
 
-#endif /* TRAPEZOIDAL_VELOCITY_PROFILE_H_ */
+#endif /* BARRETT_MATH_TRAPEZOIDAL_VELOCITY_PROFILE_H_ */

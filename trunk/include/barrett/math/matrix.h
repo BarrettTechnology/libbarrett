@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef MATRIX_H_
-#define MATRIX_H_
+#ifndef BARRETT_MATH_MATRIX_H_
+#define BARRETT_MATH_MATRIX_H_
 
 
 #include <iostream>
@@ -24,7 +24,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "./traits.h"
+#include <barrett/math/traits.h>
 
 
 namespace barrett {
@@ -333,7 +333,7 @@ template<int R, int C, typename Units> struct Traits<Matrix<R,C, Units> > :
 
 
 // include template definitions
-#include "./detail/matrix-inl.h"
+#include <barrett/math/detail/matrix-inl.h>
 
 
-#endif /* MATRIX_H_ */
+#endif /* BARRETT_MATH_MATRIX_H_ */

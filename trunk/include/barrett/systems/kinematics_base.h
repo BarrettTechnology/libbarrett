@@ -5,16 +5,16 @@
  *      Author: dc
  */
 
-#ifndef KINEMATICS_BASE_H_
-#define KINEMATICS_BASE_H_
+#ifndef BARRETT_SYSTEMS_KINEMATICS_BASE_H_
+#define BARRETT_SYSTEMS_KINEMATICS_BASE_H_
 
 
 #include <libconfig.h++>
 
-#include "../detail/ca_macro.h"
-#include "../units.h"
-#include "../math/kinematics.h"
-#include "./abstract/system.h"
+#include <barrett/detail/ca_macro.h>
+#include <barrett/systems/units.h>
+#include <barrett/systems/math/kinematics.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {
@@ -68,4 +68,4 @@ private:
 }
 
 
-#endif /* KINEMATICS_BASE_H_ */
+#endif /* BARRETT_SYSTEMS_KINEMATICS_BASE_H_ */
