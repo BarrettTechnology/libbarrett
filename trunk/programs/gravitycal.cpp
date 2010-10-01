@@ -15,10 +15,10 @@
 #include <gsl/gsl_linalg.h>
 #include <boost/tuple/tuple.hpp>
 
-#include <barrett/cdlbt/os/os.h>
-#include <barrett/cdlbt/gsl/gsl.h>
-#include <barrett/cdlbt/kinematics/kinematics.h>
-#include <barrett/cdlbt/calgrav/calgrav.h>
+#include <barrett/cdlbt/os.h>
+#include <barrett/cdlbt/gsl.h>
+#include <barrett/cdlbt/kinematics.h>
+#include <barrett/cdlbt/calgrav.h>
 
 #include <barrett/systems.h>
 #include <barrett/wam.h>

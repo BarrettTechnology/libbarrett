@@ -13,10 +13,10 @@
 #include <sys/mman.h>
 #include <native/task.h>
 
-#include "../../detail/stacktrace.h"
-#include "../../thread/real_time_mutex.h"
-#include "../abstract/execution_manager.h"
-#include "../real_time_execution_manager.h"
+#include <barrett/detail/stacktrace.h>
+#include <barrett/thread/real_time_mutex.h>
+#include <barrett/systems/abstract/execution_manager.h>
+#include <barrett/systems/real_time_execution_manager.h>
 
 
 namespace barrett {

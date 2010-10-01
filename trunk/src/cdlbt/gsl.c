@@ -35,8 +35,9 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include "gsl.h"
-#include "libconfig.h"
+#include <libconfig.h>
+
+#include <barrett/cdlbt/gsl.h>
 
 
 int bt_gsl_cross( gsl_vector * a, gsl_vector * b, gsl_vector * res )

@@ -17,10 +17,10 @@
 
 #include <libconfig.h++>
 
-#include "../../thread/abstract/mutex.h"
-#include "../../puck.h"
-#include "../abstract/communications_bus.h"
-#include "../bus_manager.h"
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/puck.h>
+#include <barrett/bus/abstract/communications_bus.h>
+#include <barrett/bus/bus_manager.h>
 
 
 #include <cstdio>

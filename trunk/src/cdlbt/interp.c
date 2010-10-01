@@ -33,7 +33,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_linalg.h>
 
-#include "interp.h"
+#include <barrett/cdlbt/interp.h>
 
 /* Implementation notes:
  * OK, here's the way this works.

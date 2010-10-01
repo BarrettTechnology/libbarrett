@@ -36,9 +36,9 @@
 #include <syslog.h>
 #include <string.h>
 
-#include "bus.h"
-#include "bus_can.h"
-#include "../os/os.h"
+#include <barrett/cdlbt/bus.h>
+#include <barrett/cdlbt/bus_can.h>
+#include <barrett/cdlbt/os.h>
 
 #define MAXPUCKID (20)
 #define TWOPI (2*3.141592653589793238462643383)

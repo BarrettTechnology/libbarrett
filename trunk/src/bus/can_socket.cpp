@@ -16,9 +16,9 @@
 #include <rtdm/rtcan.h>
 #include <rtdk.h>
 
-#include "../../thread/real_time_mutex.h"
-#include "../../puck.h"
-#include "../can_socket.h"
+#include <barrett/thread/real_time_mutex.h>
+#include <barrett/bus/puck.h>
+#include <barrett/bus/can_socket.h>
 
 
 namespace barrett {

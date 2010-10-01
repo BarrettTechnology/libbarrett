@@ -38,8 +38,8 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
-#include "kinematics.h"
-#include "../gsl/gsl.h"
+#include <barrett/cdlbt/kinematics.h>
+#include <barrett/cdlbt/gsl.h>
 
 /** \name Private functions
  *  \{ */

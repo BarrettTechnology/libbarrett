@@ -6,8 +6,8 @@
  */
 
 
-#include "../../cdlbt/profile/profile.h"
-#include "../trapezoidal_velocity_profile.h"
+#include <barrett/cdlbt/profile.h>
+#include <barrett/math/trapezoidal_velocity_profile.h>
 
 
 namespace barrett {

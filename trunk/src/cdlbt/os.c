@@ -53,7 +53,7 @@
 #endif
 #undef _GNU_SOURCE
 
-#include "os.h"
+#include <barrett/cdlbt/os.h>
 
 
 int bt_os_rt_allow_nonroot()
