@@ -8,7 +8,8 @@ MON_URL = "http://web.barrett.com/svn/puck2mon/source/"
 FT_URL = "http://web.barrett.com/svn/forcetorque/trunk/source/"
 
 WC_DIR = "__property_list_tmp_dir/"
-OUTPUT_FILE = "property_list.cpp"
+OUTPUT_H_FILE = "../include/barrett/detail/property_list.h"
+OUTPUT_CPP_FILE = "property_list.cpp"
 
 # puck types
 PT_MONITOR = 0
@@ -168,14 +169,18 @@ props.discard(None)  # remove the 32-bit property placeholder, if any
 props = sorted(props)
 
 
-# output C++
-print "\n### Writing output to %s ..." % OUTPUT_FILE
-f = open(OUTPUT_FILE, 'w')
+print "\n### Writing output to %s and %s ..." % (OUTPUT_H_FILE, OUTPUT_CPP_FILE)
 
+# output header file
+f = open(OUTPUT_H_FILE, 'w')
 print >> f, "const int NUM_PROPERTIES = %d;" % len(props)
 print >> f, "enum Property {\n%s\n};" % str(props).translate(None, "'[]")
 print >> f, "enum PuckType {\n%s\n};" % str(PUCK_TYPE_NAMES).translate(None, "'[]")
 print >> f, "\n"
+f.close()
+
+# output source file
+f = open(OUTPUT_CPP_FILE, 'w')
 
 for pt in range(len(p)):
 	vers = sorted(p[pt].keys())
@@ -218,6 +223,8 @@ for pt in range(len(p)):
 print >> f, "\t}"
 print >> f, "\treturn -1;"
 print >> f, "}"
+
+f.close()
 
 print "### Done!"
 
