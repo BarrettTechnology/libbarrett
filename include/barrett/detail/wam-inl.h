@@ -48,7 +48,7 @@
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/math/spline.h>
 #include <barrett/math/trapezoidal_velocity_profile.h>
-#include <barrett/systems/abstract/systemh">
+#include <barrett/systems/abstract/system.h>
 #include <barrett/systems/io_conversion.h>
 
 

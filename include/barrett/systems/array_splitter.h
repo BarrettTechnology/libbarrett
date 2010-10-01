@@ -11,7 +11,7 @@
 
 #include <boost/array.hpp>
 
-#include <barrett/systems/detail/ca_macro.h>
+#include <barrett/detail/ca_macro.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 

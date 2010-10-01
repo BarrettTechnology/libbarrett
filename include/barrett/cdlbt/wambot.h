@@ -31,7 +31,7 @@
  */
 
 #ifndef BARRETT_CDLBT_WAMBOT_H_
-#define BT_WAMBOT_H
+#define BARRETT_CDLBT_WAMBOT_H_
 #ifdef __cplusplus
 extern "C" {
 #endif

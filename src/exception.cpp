@@ -35,7 +35,7 @@
 
 
 #include <exception>
-#include <barrett/stacktrace.h>
+#include <barrett/detail/stacktrace.h>
 #include <barrett/exception.h>
 
 
