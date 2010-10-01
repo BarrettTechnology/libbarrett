@@ -4,7 +4,7 @@ set(programs
 )
 
 foreach (prog ${programs})
-	add_executable(${prog} src/${prog}.cpp)
+	add_executable(${prog} ${prog}.cpp)
 	target_link_libraries(${prog} barrett ${CURSES_LIBRARIES})
 	set_target_properties(${prog} PROPERTIES
 		PREFIX "bt-wam-"

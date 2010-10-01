@@ -14,7 +14,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 
 # Put libbarrett headers in the include path
-include_directories("${PROJECT_SOURCE_DIR}/library/src/")
+include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 
 
@@ -30,7 +30,7 @@ option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 set(Xeno_TARGETVERSION "2.5")
 
 find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
-if (${Xeno_CONFIGEXE})
+if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
 	message(FATAL_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
 endif()
 
@@ -54,7 +54,7 @@ message(STATUS "Xeonmai version: ${Xeno_VERSION} (${Xeno_CONFIGEXE})")
 set(GSL_MINVERSION "1.14")
 
 find_program(GSL_CONFIGEXE "gsl-config")
-if (${GSL_CONFIGEXE})
+if (${GSL_CONFIGEXE} STREQUAL "GSL_CONFIGEXE-NOTFOUND")
 	message(FATAL_ERROR "Could not find GSL installation with version ${GSL_MINVERSION}. (http://www.gnu.org/software/gsl/)")
 endif()
 
@@ -93,7 +93,7 @@ include_directories(${EIGEN2_INCLUDE_DIR})
 
 
 # Targets
-add_subdirectory(library)
+add_subdirectory(src)
 add_subdirectory(programs)
 
 add_subdirectory(examples EXCLUDE_FROM_ALL)

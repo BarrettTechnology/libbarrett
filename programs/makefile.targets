@@ -1,9 +1,0 @@
-%: ./src/%.o $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/home/robot/libbarrett/library/Debug -Xlinker -rpath /usr/xenomai/lib -obt-wam-"$@" ./src/$@.o $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
-	@echo ' '
-
-	
-all: zerocal gravitycal
