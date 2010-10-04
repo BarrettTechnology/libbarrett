@@ -74,7 +74,7 @@ int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int prop
 {
 	unsigned char dataIn[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t lenIn;
-	int ret = bus.receive(0x406 | (id << NODE_ID_WIDTH), dataIn, lenIn, blocking);  // TODO(dc): fix magic number and generalize
+	int ret = bus.receive(encodeBusId(id, 0x406), dataIn, lenIn, blocking);  // TODO(dc): fix magic number and generalize
 	if (ret) {
 		*successful = false;
 		return ret;
