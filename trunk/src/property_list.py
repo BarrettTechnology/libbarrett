@@ -230,7 +230,7 @@ def binarySearchHelper(pt, vers, indentation, low, high):
 		binarySearchHelper(pt, vers, indentation + 1, low, mid-1)
 		print >> f, prefix + "}"
 	
-print >> f, "int Puck::getPropertyId(enum Property prop, enum PuckType pt, int fwVers) {"
+print >> f, "int Puck::getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers) {"
 print >> f, "\tif (prop < 0  ||  prop >= NUM_PROPERTIES) {"
 print >> f, "\t\treturn -1;"
 print >> f, "\t}"
