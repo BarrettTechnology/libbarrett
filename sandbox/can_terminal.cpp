@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 	while (going) {
 		printf(">> ");
 		std::getline(std::cin, line);
-		len = sscanf(line.c_str(), "%3x %2x %2x %2x %2x %2x %2x %2x %2x", &id, data+0, data+1, data+2, data+3, data+4, data+5, data+6, data+7) - 1;
+		len = sscanf(line.c_str(), "%3x %2x %2x %2x %2x %2x %2x %2x %2x", &id, (unsigned int*)data+0, (unsigned int*)data+1, (unsigned int*)data+2, (unsigned int*)data+3, (unsigned int*)data+4, (unsigned int*)data+5, (unsigned int*)data+6, (unsigned int*)data+7) - 1;
 		if (len < 0  ||  len > 8) {
 			printf("ERROR: Input format. No message sent.\n");
 			continue;

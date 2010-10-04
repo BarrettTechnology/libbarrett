@@ -31,7 +31,8 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#define _GNU_SOURCE
+// TODO(dc): is this define necessary?
+//#define _GNU_SOURCE
 #include <stdlib.h>
 #include <unistd.h> /* For usleep() */
 #include <syslog.h>
@@ -51,7 +52,7 @@
 #ifdef RTSYS_NONE
 #include <sys/time.h>
 #endif
-#undef _GNU_SOURCE
+//#undef _GNU_SOURCE
 
 #include <barrett/cdlbt/os.h>
 
