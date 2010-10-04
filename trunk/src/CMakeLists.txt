@@ -4,6 +4,7 @@ set(barrett_SOURCES
 	bus/bus_manager.cpp
 	bus/can_socket.cpp
 	bus/communications_bus.cpp
+	
 	cdlbt/bus.c
 	cdlbt/bus_can.c
 	cdlbt/calgrav.c
@@ -15,14 +16,19 @@ set(barrett_SOURCES
 	cdlbt/profile.c
 	cdlbt/spline.c
 	cdlbt/wambot_phys.c
-	exception.cpp
+	
 	math/trapezoidal_velocity_profile.cpp
-	puck.cpp
+
 	systems/execution_manager.cpp
 	systems/real_time_execution_manager.cpp
 	systems/system.cpp
+
 	thread/null_mutex.cpp
 	thread/real_time_mutex.cpp
+
+	exception.cpp
+	property_list.cpp
+	puck.cpp
 )
 
 # Defenitions for cdlbt code

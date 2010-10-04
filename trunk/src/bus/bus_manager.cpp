@@ -87,8 +87,10 @@ void BusManager::enumerate()
 {
 	int ret;
 	bool successful;
+	int propId = Puck::getPropertyId(Puck::STAT, Puck::PT_Unknown, 0);
+
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
-		ret = Puck::sendGetPropertyRequest(*this, id, 5);  // TODO(dc): fix magic number once property definitions exist
+		ret = Puck::sendGetPropertyRequest(*this, id, propId);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
 			throw std::runtime_error("BusManager::enumerate(): Failed to send request. Check /var/log/syslog for details.");
@@ -96,7 +98,7 @@ void BusManager::enumerate()
 
 		usleep(1000);
 
-		Puck::receiveGetPropertyReply(*this, id, 5, false, &successful);  // TODO(dc): fix magic number once property definitions exist
+		Puck::receiveGetPropertyReply(*this, id, propId, false, &successful);
 		if (successful) {
 			printf("Found ID=%d\n", id);
 		}
