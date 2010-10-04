@@ -164,11 +164,11 @@ void decodeMessage(std::vector<int>& pressures, const unsigned char* data) {  //
 	int i = (data[0] >> 4) * 5;  // sequence number --> first cell index
 
 	pressures[i++] = (((int)data[0]&0x000F)<<8) | ((int)data[1]&0x00FF);
-	pressures[i++] = ((int)data[2]&0x00FF)<<4 | ((int)data[3]&0x00F0)>>4;
-	pressures[i++] = ((int)data[3]&0x000F)<<8 | (int)data[4]&0x00FF;
-	pressures[i++] = ((int)data[5]&0x00FF)<<4 | ((int)data[6]&0x00F0)>>4;
+	pressures[i++] = (((int)data[2]&0x00FF)<<4) | (((int)data[3]&0x00F0)>>4);
+	pressures[i++] = (((int)data[3]&0x000F)<<8) | ((int)data[4]&0x00FF);
+	pressures[i++] = (((int)data[5]&0x00FF)<<4) | (((int)data[6]&0x00F0)>>4);
     if (i < NUM_SENSORS) {
-    	pressures[i] = ((int)data[6]&0x000F)<<8 | (int)data[7]&0x00FF;
+    	pressures[i] = (((int)data[6]&0x000F)<<8) | ((int)data[7]&0x00FF);
     }
 }
 

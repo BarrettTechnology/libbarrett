@@ -52,13 +52,13 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 		throw std::logic_error("CANSocket::open(): This object is already associated with a CAN port.");
 	}
 
-	rt_syslog(LOG_ERR, "CANSocket::open(%d)", port);
+	rt_syslog(LOG_ERR, (char*)"CANSocket::open(%d)", port);
 
 	int ret;
 
 	ret = rt_dev_socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "  rt_dev_socket(): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, (char*)"  rt_dev_socket(): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 	handle = ret;
@@ -70,7 +70,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 	ret = rt_dev_ioctl(handle, SIOCGIFINDEX, &ifr);
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "  rt_dev_ioctl(SIOCGIFINDEX): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, (char*)"  rt_dev_ioctl(SIOCGIFINDEX): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 
@@ -79,7 +79,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	recvFilter[0].can_mask = Puck::FROM_MASK;
 	ret = rt_dev_setsockopt(handle, SOL_CAN_RAW, CAN_RAW_FILTER, &recvFilter, sizeof(recvFilter));
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "  rt_dev_setsockopt(CAN_RAW_FILTER): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, (char*)"  rt_dev_setsockopt(CAN_RAW_FILTER): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 
@@ -90,14 +90,14 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	ret = rt_dev_bind(handle, (struct sockaddr *) &toAddr,
 			sizeof(toAddr));
 	if (ret < 0) {
-		rt_syslog(LOG_ERR, "  rt_dev_bind(): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, (char*)"  rt_dev_bind(): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 
 	nanosecs_rel_t timeout = (nanosecs_rel_t) RTDM_TIMEOUT_INFINITE;
 	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (ret) {
-		rt_syslog(LOG_ERR, "  rt_dev_ioctl(RCV_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
+		rt_syslog(LOG_ERR, (char*)"  rt_dev_ioctl(RCV_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 }
@@ -133,21 +133,21 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 		switch (ret) {
 		case -EAGAIN: // -EWOULDBLOCK
 			rt_syslog(LOG_ERR,
-					"%s: rt_dev_send(): data would block during non-blocking send (output buffer full)",
+					(char*)"%s: rt_dev_send(): data would block during non-blocking send (output buffer full)",
 					__func__);
 			return 1;
 			break;
 		case -ETIMEDOUT:
-			rt_syslog(LOG_ERR, "%s: rt_dev_send(): timed out", __func__);
+			rt_syslog(LOG_ERR, (char*)"%s: rt_dev_send(): timed out", __func__);
 			return 2;
 			break;
 		case -EBADF:
 			rt_syslog(LOG_ERR,
-					"%s: rt_dev_send(): aborted because socket was closed",
+					(char*)"%s: rt_dev_send(): aborted because socket was closed",
 					__func__);
 			return 2;
 		default:
-			rt_syslog(LOG_ERR, "%s: rt_dev_send(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			rt_syslog(LOG_ERR, (char*)"%s: rt_dev_send(): (%d) %s\n", __func__, -ret, strerror(-ret));
 			return 2;
 		}
 	}
@@ -165,21 +165,21 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 	if (ret < 0) {
 		switch (ret) {
 		case -EAGAIN: // -EWOULDBLOCK
-			//rt_syslog(LOG_ERR, "%s: rt_dev_recv(): no data available during non-blocking read", __func__);
+			//rt_syslog(LOG_ERR, (char*)"%s: rt_dev_recv(): no data available during non-blocking read", __func__);
 			return 1;
 			break;
 		case -ETIMEDOUT:
-			rt_syslog(LOG_ERR, "%s: rt_dev_recv(): timed out", __func__);
+			rt_syslog(LOG_ERR, (char*)"%s: rt_dev_recv(): timed out", __func__);
 			return 2;
 			break;
 		case -EBADF:
 			rt_syslog(LOG_ERR,
-					"%s: rt_dev_recv(): aborted because socket was closed",
+					(char*)"%s: rt_dev_recv(): aborted because socket was closed",
 					__func__);
 			return 2;
 			break;
 		default:
-			rt_syslog(LOG_ERR, "%s: rt_dev_recv(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			rt_syslog(LOG_ERR, (char*)"%s: rt_dev_recv(): (%d) %s\n", __func__, -ret, strerror(-ret));
 			return 2;
 			break;
 		}
@@ -191,10 +191,10 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 
 	if (frame.can_id & CAN_ERR_FLAG) {
 		if (frame.can_id & CAN_ERR_BUSOFF) {
-			rt_syslog(LOG_ERR, "%s: bus-off", __func__);
+			rt_syslog(LOG_ERR, (char*)"%s: bus-off", __func__);
 		}
 		if (frame.can_id & CAN_ERR_CRTL) {
-			rt_syslog(LOG_ERR, "%s: controller problem", __func__);
+			rt_syslog(LOG_ERR, (char*)"%s: controller problem", __func__);
 		}
 		return 2;
 	}
@@ -205,7 +205,7 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 void CANSocket::fail() throw(std::runtime_error)
 {
 	close();
-	rt_syslog(LOG_ERR, "CANSocket::open() failed.");
+	rt_syslog(LOG_ERR, (char*)"CANSocket::open() failed.");
 	throw std::runtime_error("CANSocket::open(): Could not open CAN port. Check /var/log/syslog for details.");
 }
 
