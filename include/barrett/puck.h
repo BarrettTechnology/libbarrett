@@ -16,22 +16,34 @@ namespace barrett {
 
 
 class Puck {
+
 public:
-	Puck(const CommunicationsBus& bus, int id);
+	enum PuckType {
+		PT_Monitor, PT_Safety, PT_Motor, PT_ForceTorque, PT_Unknown
+	};
+
+// include the generated file containing the list of available properties
+#	include <barrett/detail/property_list.h>
+
+public:
+	Puck(const CommunicationsBus& bus, int id, enum PuckType type = PT_Unknown);
 	~Puck();
 
-	int getProperty(int property) { return getProperty(bus, id, property); }
-	void setProperty(int property, int value) { setProperty(bus, id, property, value); }
+	int getProperty(enum Property prop) { return getProperty(bus, id, getPropertyId(prop)); }
+	void setProperty(enum Property prop, int value) { setProperty(bus, id, getPropertyId(prop), value); }
 
-	static int getProperty(const CommunicationsBus& bus, int id, int property);
-	static void setProperty(const CommunicationsBus& bus, int id, int property, int value);
+	int getPropertyId(enum Property prop) { return getPropertyId(prop, effectiveType, vers); }
+	static int getPropertyId(enum Property prop, enum PuckType pt, int fwVers);
+
+	static int getProperty(const CommunicationsBus& bus, int id, int propId);
+	static void setProperty(const CommunicationsBus& bus, int id, int propId, int value);
 
 	static const int MIN_ID = 1;
 	static const int MAX_ID = 31;
 	static const int HOST_ID = 0;  // the Node ID of the control PC
 
-	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int property);
-	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int property, bool blocking, bool* successful);
+	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId);
+	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool* successful);
 
 protected:
 	static int nodeId2BusId(int id) { return (id & TO_MASK) | (HOST_ID << NODE_ID_WIDTH); }
@@ -47,6 +59,8 @@ protected:
 
 	const CommunicationsBus& bus;
 	int id;
+	enum PuckType type, effectiveType;
+	int vers;
 
 private:
 	friend class CANSocket;
