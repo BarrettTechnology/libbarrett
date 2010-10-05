@@ -41,7 +41,7 @@ void testSummer(systems::Summer<T,N>& summer, const std::vector<T>& inputs, T ex
 	systems::connect(summer.output, eios.input);
 	EXPECT_EQ(expected, eios.getInputValue());
 
-	purge(constants);
+	detail::purge(constants);
 }
 
 

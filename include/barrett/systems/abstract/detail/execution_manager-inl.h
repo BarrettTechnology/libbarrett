@@ -42,8 +42,8 @@ inline void ExecutionManager::stopManaging(System* sys) {
 
 	sys->executionManager = NULL;
 
-	replaceWithNull(managedSystems, sys);
-	replaceWithNull(alwaysUpdatedSystems, sys);
+	detail::replaceWithNull(managedSystems, sys);
+	detail::replaceWithNull(alwaysUpdatedSystems, sys);
 }
 
 

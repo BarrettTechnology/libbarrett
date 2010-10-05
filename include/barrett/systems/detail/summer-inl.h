@@ -56,7 +56,7 @@ Summer<T, numInputs>::Summer(bool undefinedIsZero) :
 template<typename T, size_t numInputs>
 inline Summer<T, numInputs>::~Summer()
 {
-	purge(inputs);
+	barrett::detail::purge(inputs);
 }
 
 template<typename T, size_t numInputs>

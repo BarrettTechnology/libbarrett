@@ -24,7 +24,7 @@ ArraySplitter<T>::ArraySplitter() :
 template <typename T>
 inline ArraySplitter<T>::~ArraySplitter()
 {
-	purge(outputs);
+	barrett::detail::purge(outputs);
 }
 
 
