@@ -24,7 +24,7 @@ Spline<T>::Spline(const Container<tuple_type>& samples) :
 	bt_spline_create(&impl, boost::get<1>(samples[0]).asGslType(), BT_SPLINE_MODE_EXTERNAL);
 
 	typename Container<tuple_type>::const_iterator i;
-	for (i = ++(samples.begin()); i != samples.end(); ++i) {
+	for (i = ++(samples.begin()); i != samples.end(); ++i) {  // start with the 2nd sample
 		bt_spline_add(impl, boost::get<1>(*i).asGslType(), boost::get<0>(*i) - x_0);
 	}
 
@@ -39,7 +39,7 @@ Spline<T>::Spline(const Container<T>& points, const typename T::unitless_type& i
 	bt_spline_create(&impl, points[0].asGslType(), BT_SPLINE_MODE_ARCLEN);
 
 	typename Container<T>::const_iterator i;
-	for (i = ++(points.begin()); i != points.end(); ++i) {
+	for (i = ++(points.begin()); i != points.end(); ++i) {  // start with the 2nd sample
 		bt_spline_add(impl, (*i).asGslType(), 0);
 	}
 
