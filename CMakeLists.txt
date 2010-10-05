@@ -7,6 +7,11 @@ set(libbarrett_VERSION_PATCH 0)
 set(libbarrett_VERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${libbarrett_VERSION_PATCH}")
 set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}")
 
+# debug build by default
+if (NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 # Fail to link if there are undefined symbols in a shared library
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 
