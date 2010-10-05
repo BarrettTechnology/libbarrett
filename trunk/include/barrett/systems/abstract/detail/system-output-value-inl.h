@@ -27,7 +27,7 @@ inline System::AbstractOutput::AbstractValue::~AbstractValue()
 	SCOPED_LOCK(getEmMutex());
 
 	if (parentSystem != NULL) {
-		replaceWithNull(parentSystem->outputValues, this);
+		detail::replaceWithNull(parentSystem->outputValues, this);
 	}
 }
 

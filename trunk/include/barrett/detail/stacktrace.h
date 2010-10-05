@@ -2,7 +2,7 @@
 // published under the WTFPL v2.0
 
 #ifndef BARRETT_DETAIL_STACKTRACE_H_
-#define BARRETT_DETAIL__STACKTRACE_H_
+#define BARRETT_DETAIL_STACKTRACE_H_
 
 
 #include <stdio.h>
@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <execinfo.h>
 #include <cxxabi.h>
+
+
+namespace barrett {
+namespace detail {
 
 
 /* Print a demangled stack backtrace of the caller function to FILE* out. */
@@ -168,6 +172,10 @@ static inline void syslog_stacktrace(int pri = LOG_ERR,
 
     free(funcname);
     free(symbollist);
+}
+
+
+}
 }
 
 

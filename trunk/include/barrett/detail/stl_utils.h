@@ -13,6 +13,7 @@
 
 
 namespace barrett {
+namespace detail {
 
 
 template<typename Container>
@@ -46,6 +47,7 @@ template<class InpIt> void purge(InpIt begin, InpIt end) {
 }
 
 
+}
 }
 
 

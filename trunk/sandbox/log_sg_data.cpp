@@ -25,6 +25,8 @@
 #include <barrett/log.h>
 #include <barrett/detail/stacktrace.h>
 
+using namespace barrett;
+
 
 void waitForEnter() {
 	static std::string line;
@@ -34,7 +36,7 @@ void waitForEnter() {
 void warnOnSwitchToSecondaryMode(int)
 {
 	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
-	syslog_stacktrace();
+	detail::syslog_stacktrace();
 	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
 }
 
@@ -43,8 +45,6 @@ RTIME secondsToRTIME(double s) {
 }
 
 void canThread();
-
-using namespace barrett;
 
 double T_s = 0.002;
 const int ID = BT_BUS_PUCK_ID_FT;

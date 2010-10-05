@@ -28,7 +28,7 @@ namespace systems {
 template<typename OutputType>
 inline Converter<OutputType>::~Converter()
 {
-	purge(conversions);
+	barrett::detail::purge(conversions);
 }
 
 template<typename OutputType>

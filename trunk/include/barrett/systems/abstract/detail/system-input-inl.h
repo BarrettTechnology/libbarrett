@@ -31,7 +31,7 @@ inline System::AbstractInput::~AbstractInput()
 	SCOPED_LOCK(getEmMutex());
 
 	if (parentSystem != NULL) {
-		replaceWithNull(parentSystem->inputs, this);
+		detail::replaceWithNull(parentSystem->inputs, this);
 	}
 }
 

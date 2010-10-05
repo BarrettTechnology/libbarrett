@@ -59,7 +59,7 @@ void rtemEntryPoint(void* cookie)
 void warnOnSwitchToSecondaryMode(int)
 {
 	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
-	syslog_stacktrace();
+	barrett::detail::syslog_stacktrace();
 	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
 }
 

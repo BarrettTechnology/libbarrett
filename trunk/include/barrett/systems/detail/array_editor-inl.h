@@ -31,7 +31,7 @@ ArrayEditor<T>::ArrayEditor(const T& initialOutputValue) :
 template <typename T>
 inline ArrayEditor<T>::~ArrayEditor()
 {
-	purge(elementInputs);
+	barrett::detail::purge(elementInputs);
 }
 
 
