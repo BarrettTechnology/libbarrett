@@ -27,7 +27,7 @@ namespace barrett {
 
 class BusManager : public CommunicationsBus {
 public:
-	BusManager(const char* configDir = "/etc/barrett/default.conf");
+	BusManager(const char* configFile = "/etc/barrett/default.conf");
 	virtual ~BusManager();
 
 	void enumerate();

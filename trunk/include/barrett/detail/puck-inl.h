@@ -44,9 +44,10 @@ void Puck::wake(Container<Puck*> pucks)
 			if (*i == NULL) {
 				continue;
 			}
-
 			allPucksAwake = false;
-			stat = (*i)->tryGetProperty(STAT, &successful);
+
+			// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
+			stat = (*i)->tryGetProperty(STAT, &successful, 50000);
 			if (successful) {
 				if (stat == STATUS_READY) {
 					(*i)->updateStatus();

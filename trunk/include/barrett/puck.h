@@ -26,12 +26,16 @@ public:
 	enum PuckType {
 		PT_Monitor, PT_Safety, PT_Motor, PT_ForceTorque, PT_Unknown
 	};
+	static const char* getPuckTypeStr(enum PuckType pt) {
+		return puckTypeStrs[pt];
+	}
 
 // include the generated file containing the list of available properties
 #	include <barrett/detail/property_list.h>
 
+
 public:
-	Puck(const CommunicationsBus& bus, int id, enum PuckType pt = PT_Unknown);
+	Puck(const CommunicationsBus& bus, int id);
 	~Puck();
 
 	void wake();// { wake(bus, id); }
@@ -41,12 +45,16 @@ public:
 	}
 	int tryGetProperty(enum Property prop, bool* successful,
 			int timeout_us = 1000) const {
-		return tryGetProperty(bus, id, getPropertyId(prop), successful, timeout_us);
+		return tryGetProperty(bus, id, getPropertyId(prop),
+				successful, timeout_us);
 	}
 	void setProperty(enum Property prop, int value) const {
 		setProperty(bus, id, getPropertyId(prop), value);
 	}
 
+	bool respondsToProperty(enum Property prop) const {
+		return respondsToProperty(prop, effectiveType, vers);
+	}
 	int getPropertyId(enum Property prop) const throw(std::runtime_error) {
 		return getPropertyId(prop, effectiveType, vers);
 	}
@@ -54,16 +62,15 @@ public:
 		return getPropertyIdNoThrow(prop, effectiveType, vers);
 	}
 
+	void updateRole();
 	void updateStatus();
 
+	const CommunicationsBus& getBus() const { return bus; }
 	int getId() const { return id; }
+	int getVers() const { return vers; }
+	int getRole() const { return role; }
 	enum PuckType getType() const { return type; }
 	enum PuckType getEffectiveType() const { return effectiveType; }
-	void setType(enum PuckType pt) {
-		if (effectiveType == type) { effectiveType = pt; }
-		type = pt;
-	}
-	int getVers() const { return vers; }
 
 
 	template<template<typename U, typename = std::allocator<U> > class Container>
@@ -79,6 +86,9 @@ public:
 	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
 			bool blocking, bool* successful);
 
+	static bool respondsToProperty(enum Property prop, enum PuckType pt, int fwVers) {
+		return getPropertyIdNoThrow(prop, pt, fwVers) != -1;
+	}
 	static int getPropertyId(enum Property prop, enum PuckType pt, int fwVers)
 			throw(std::runtime_error);
 	static int getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers);
@@ -102,7 +112,6 @@ protected:
 		*toId = busId & TO_MASK;
 	}
 
-	enum Status { STATUS_RESET = 0, STATUS_ERR = 1, STATUS_READY = 2 };
 
 	static const int NODE_ID_WIDTH = 5;
 	static const int NODE_ID_MASK = 0x1f;
@@ -113,14 +122,33 @@ protected:
 	static const int SET_MASK = 0x80;
 	static const int PROPERTY_MASK = 0x7f;
 
+	static const int ROLE_MASK = 0x1f;
+
+	// From puck2:PARSE.H
+	enum {
+		STATUS_RESET, STATUS_ERR, STATUS_READY
+	};
+	enum {
+		ROLE_TATER,
+		ROLE_GIMBALS,
+		ROLE_SAFETY,
+		ROLE_WRAPTOR,
+		ROLE_TRIGGER,
+		ROLE_BHAND,
+		ROLE_FORCE
+	};
+
+
 	const CommunicationsBus& bus;
 	int id;
+	int vers, role;
 	enum PuckType type, effectiveType;
-	int vers;
 
 private:
 	static int getPropertyHelper(const CommunicationsBus& bus, int id, int propId,
 			bool blocking, bool* successful, int timeout_us);
+
+	static const char puckTypeStrs[][12];
 
 	friend class CANSocket;
 };

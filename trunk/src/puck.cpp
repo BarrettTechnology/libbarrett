@@ -18,9 +18,10 @@
 namespace barrett {
 
 
-Puck::Puck(const CommunicationsBus& _bus, int _id, enum PuckType pt) :
-	bus(_bus), id(_id), type(pt), effectiveType(PT_Unknown), vers(-1)
+Puck::Puck(const CommunicationsBus& _bus, int _id) :
+	bus(_bus), id(_id), vers(-1), role(-1), type(PT_Unknown), effectiveType(PT_Unknown)
 {
+	updateRole();
 	updateStatus();
 }
 
@@ -50,7 +51,29 @@ void Puck::wake()
 	}
 }
 
-void Puck::updateStatus() {
+void Puck::updateRole()
+{
+	role = getProperty(ROLE);
+	switch (role & ROLE_MASK) {
+	case ROLE_SAFETY:
+		type = PT_Safety;
+		break;
+	case ROLE_TATER:
+	case ROLE_BHAND:
+	case ROLE_WRAPTOR:
+		type = PT_Motor;
+		break;
+	case ROLE_FORCE:
+		type = PT_ForceTorque;
+		break;
+	default:
+		type = PT_Unknown;
+		break;
+	}
+}
+
+void Puck::updateStatus()
+{
 	vers = getProperty(VERS);
 	int stat = getProperty(STAT);
 	switch (stat) {
@@ -63,6 +86,7 @@ void Puck::updateStatus() {
 	default:
 		syslog(LOG_ERR, "%s: unexpected value from ID=%d: STAT=%d.", __func__, id, stat);
 		throw std::runtime_error("Puck::updateStatus(): Bad STAT value. Check /var/log/syslog for details.");
+		break;
 	}
 }
 
@@ -169,6 +193,8 @@ int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int prop
 	}
 	return value;
 }
+
+const char Puck::puckTypeStrs[][12] = { "Monitor", "Safety", "Motor", "ForceTorque", "Unknown" };
 
 
 }
