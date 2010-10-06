@@ -6,8 +6,10 @@
  */
 
 #include <stdexcept>
+#include <vector>
 
 #include <syslog.h>
+#include <unistd.h>
 
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/puck.h>
@@ -16,33 +18,89 @@
 namespace barrett {
 
 
-Puck::Puck(const CommunicationsBus& bus, int id, enum PuckType type) :
-	bus(bus), id(id), type(type), effectiveType(PT_Unknown), vers(-1)
+Puck::Puck(const CommunicationsBus& _bus, int _id, enum PuckType pt) :
+	bus(_bus), id(_id), type(pt), effectiveType(PT_Unknown), vers(-1)
 {
+	updateStatus();
 }
 
 Puck::~Puck()
 {
 }
 
+void Puck::wake()
+{
+	updateStatus();
+	if (effectiveType == PT_Monitor) {
+		setProperty(STAT, STATUS_READY);
+		usleep(300000);
+
+		int stat;
+		bool successful;
+		do {
+			usleep(100000);
+			stat = tryGetProperty(STAT, &successful);
+		} while (!successful);
+
+		if (stat != STATUS_READY) {
+			syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, id, stat);
+			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
+		}
+		updateStatus();
+	}
+}
+
+void Puck::updateStatus() {
+	vers = getProperty(VERS);
+	int stat = getProperty(STAT);
+	switch (stat) {
+	case STATUS_RESET:
+		effectiveType = PT_Monitor;
+		break;
+	case STATUS_READY:
+		effectiveType = type;
+		break;
+	default:
+		syslog(LOG_ERR, "%s: unexpected value from ID=%d: STAT=%d.", __func__, id, stat);
+		throw std::runtime_error("Puck::updateStatus(): Bad STAT value. Check /var/log/syslog for details.");
+	}
+}
+
 // TODO(dc): throw exception if getProperty is called with a group ID?
 int Puck::getProperty(const CommunicationsBus& bus, int id, int propId)
 {
-	int ret;
 	bool successful;
-
-	ret = sendGetPropertyRequest(bus, id, propId);
-	if (ret != 0) {
-		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
-		throw std::runtime_error("Puck::getProperty(): Failed to send request. Check /var/log/syslog for details.");
-	}
-
-	ret = receiveGetPropertyReply(bus, id, propId, true, &successful);
+	int ret = getPropertyHelper(bus, id, propId, true, &successful, 0);
 	if (!successful) {
 		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
 	}
 	return ret;
+}
+
+int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, bool* successful, int timeout_us)
+{
+	int ret = getPropertyHelper(bus, id, propId, false, successful, timeout_us);
+	if (!(*successful)  &&  ret != 1) {  // some error other than "would block" occurred
+		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, ret);
+		throw std::runtime_error("Puck::tryGetProperty(): Receive error. Check /var/log/syslog for details.");
+	}
+	return ret;
+}
+
+int Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId,	bool blocking, bool* successful, int timeout_us)
+{
+	int ret = sendGetPropertyRequest(bus, id, propId);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
+		throw std::runtime_error("Puck::getPropertyHelper(): Failed to send request. Check /var/log/syslog for details.");
+	}
+
+	if (timeout_us != 0) {
+		usleep(timeout_us);
+	}
+
+	return receiveGetPropertyReply(bus, id, propId, blocking, successful);
 }
 
 void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, int value)
