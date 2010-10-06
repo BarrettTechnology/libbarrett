@@ -6,6 +6,7 @@
  */
 
 #include <stdexcept>
+#include <vector>
 
 #include <string.h>
 #include <syslog.h>
@@ -17,6 +18,7 @@
 
 #include <libconfig.h++>
 
+#include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/puck.h>
 #include <barrett/bus/abstract/communications_bus.h>
@@ -28,7 +30,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	bus(actualBus), actualBus(), messageBuffers()
+	bus(actualBus), pucks(), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -81,6 +83,7 @@ BusManager::BusManager(const char* configFile) :
 
 BusManager::~BusManager()
 {
+	detail::purge(pucks);
 }
 
 void BusManager::enumerate()
@@ -88,19 +91,15 @@ void BusManager::enumerate()
 	int ret;
 	bool successful;
 	int propId = Puck::getPropertyId(Puck::STAT, Puck::PT_Unknown, 0);
+	Puck* p = NULL;
 
+	syslog(LOG_ERR, "BusManager::enumerate()");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
-		ret = Puck::sendGetPropertyRequest(*this, id, propId);
-		if (ret != 0) {
-			syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
-			throw std::runtime_error("BusManager::enumerate(): Failed to send request. Check /var/log/syslog for details.");
-		}
-
-		usleep(1000);
-
-		Puck::receiveGetPropertyReply(*this, id, propId, false, &successful);
+		ret = Puck::tryGetProperty(bus, id, propId, &successful);
 		if (successful) {
-			printf("Found ID=%d\n", id);
+			p = new Puck(bus, id);
+			pucks.push_back(p);
+			syslog(LOG_ERR, "  ID=%2d,VERS=%3d,TYPE=%d", p->getId(), p->getVers(), p->getEffectiveType());
 		}
 	}
 }

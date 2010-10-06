@@ -10,6 +10,7 @@
 
 
 #include <map>
+#include <vector>
 #include <cstring>
 
 #include <boost/circular_buffer.hpp>
@@ -18,6 +19,7 @@
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/can_socket.h>
+#include <barrett/puck.h>
 
 
 namespace barrett {
@@ -29,6 +31,7 @@ public:
 	virtual ~BusManager();
 
 	void enumerate();
+	const std::vector<Puck*>& getPucks() { return pucks; }
 
 //	const CommunicationsBus& getBus() const { return bus; }
 
@@ -53,6 +56,7 @@ protected:
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
 	CommunicationsBus& bus;
+	std::vector<Puck*> pucks;
 
 private:
 	typedef CANSocket ActualBusType;
