@@ -25,7 +25,6 @@
 #include <barrett/bus/bus_manager.h>
 
 
-#include <cstdio>
 namespace barrett {
 
 
@@ -88,18 +87,26 @@ BusManager::~BusManager()
 
 void BusManager::enumerate()
 {
-	int ret;
 	bool successful;
 	int propId = Puck::getPropertyId(Puck::STAT, Puck::PT_Unknown, 0);
 	Puck* p = NULL;
+	int lastId = -1;
 
 	syslog(LOG_ERR, "BusManager::enumerate()");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
-		ret = Puck::tryGetProperty(bus, id, propId, &successful);
+		Puck::tryGetProperty(*this, id, propId, &successful);
 		if (successful) {
-			p = new Puck(bus, id);
+			p = new Puck(*this, id);
 			pucks.push_back(p);
-			syslog(LOG_ERR, "  ID=%2d,VERS=%3d,TYPE=%d", p->getId(), p->getVers(), p->getEffectiveType());
+
+			if (lastId != id - 1  &&  lastId != -1) {
+				syslog(LOG_ERR, "  --");  // marker to indicate that the listed IDs are not contiguous
+			}
+			syslog(LOG_ERR, "  ID=%2d,VERS=%3d,ROLE=0x%04x,TYPE=%s%s",
+					p->getId(), p->getVers(), p->getRole(),
+					Puck::getPuckTypeStr(p->getType()),
+					(p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
+			lastId = id;
 		}
 	}
 }
