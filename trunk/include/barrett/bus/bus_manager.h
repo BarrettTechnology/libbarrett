@@ -51,7 +51,7 @@ public:
 
 
 protected:
-	int updateBuffers(bool blocking) const;
+	void updateBuffers(bool blocking) const;
 	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
