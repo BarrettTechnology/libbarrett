@@ -135,7 +135,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	}
 }
 
-int BusManager::updateBuffers(bool blocking) const
+void BusManager::updateBuffers(bool blocking) const
 {
 	SCOPED_LOCK(getMutex());
 
@@ -155,7 +155,8 @@ int BusManager::updateBuffers(bool blocking) const
 		} else if (ret == 1) {  // would block
 			break;
 		} else {  // error
-			return ret;
+			syslog(LOG_ERR, "%s: BusManager::receiveRaw(): %d", __func__, ret);
+			throw std::runtime_error("BusManager::updateBuffers(): receiveRaw() failed. Check /var/log/syslog for details.");
 		}
 	}
 
@@ -163,12 +164,11 @@ int BusManager::updateBuffers(bool blocking) const
 	if (blocking  &&  !messageReceived) {
 		ret = receiveRaw(busId, data, len, true);  // blocking read
 		if (ret != 0) {
-			return ret;
+			syslog(LOG_ERR, "%s: BusManager::receiveRaw(): %d", __func__, ret);
+			throw std::runtime_error("BusManager::updateBuffers(): receiveRaw() failed. Check /var/log/syslog for details.");
 		}
 		storeMessage(busId, data, len);
 	}
-
-	return 0;
 }
 
 void BusManager::storeMessage(int busId, const unsigned char* data, size_t len) const

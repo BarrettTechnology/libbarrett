@@ -92,10 +92,15 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 		fail();
 	}
 
-	nanosecs_rel_t timeout = (nanosecs_rel_t) RTDM_TIMEOUT_INFINITE;
+	nanosecs_rel_t timeout = (nanosecs_rel_t) 1000000000LL;  // 1 second timeout
 	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (ret) {
 		syslog(LOG_ERR, "  rt_dev_ioctl(RCV_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
+		fail();
+	}
+	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_SND_TIMEOUT, &timeout);
+	if (ret) {
+		syslog(LOG_ERR, "  rt_dev_ioctl(SND_TIMEOUT): (%d) %s\n", -ret, strerror(-ret));
 		fail();
 	}
 }
