@@ -31,7 +31,9 @@ public:
 	virtual ~BusManager();
 
 	void enumerate();
-	const std::vector<Puck*>& getPucks() { return pucks; }
+	const std::vector<Puck*>& getPucks() const { return pucks; }
+	Puck* getPuck(int id);
+	void deletePuck(Puck* p);
 
 //	const CommunicationsBus& getBus() const { return bus; }
 
@@ -48,7 +50,6 @@ public:
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len,
 			bool blocking = true) const
 		{ return bus.receiveRaw(busId, data, len, blocking); }
-
 
 protected:
 	void updateBuffers(bool blocking) const;

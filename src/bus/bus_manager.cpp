@@ -7,6 +7,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 #include <string.h>
 #include <syslog.h>
@@ -95,9 +96,18 @@ void BusManager::enumerate()
 	syslog(LOG_ERR, "BusManager::enumerate()");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
 		Puck::tryGetProperty(*this, id, propId, &successful);
+		p = getPuck(id);
+
 		if (successful) {
-			p = new Puck(*this, id);
-			pucks.push_back(p);
+			// if the Puck doesn't exist, make it
+			if (p == NULL) {
+				p = new Puck(*this, id);
+				pucks.push_back(p);
+			} else {
+				// if the Puck already exists (from a previous enumeration), update it
+				p->updateRole();
+				p->updateStatus();
+			}
 
 			if (lastId != id - 1  &&  lastId != -1) {
 				syslog(LOG_ERR, "  --");  // marker to indicate that the listed IDs are not contiguous
@@ -107,8 +117,36 @@ void BusManager::enumerate()
 					Puck::getPuckTypeStr(p->getType()),
 					(p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
 			lastId = id;
+		} else if (p != NULL) {
+			// if the Puck has disappeared since the last enumeration, remove it
+			deletePuck(p);
 		}
 	}
+}
+
+Puck* BusManager::getPuck(int id)
+{
+	for (size_t i = 0; i < pucks.size(); ++i) {
+		if (pucks[i]->getId() == id) {
+			return pucks[i];
+		}
+	}
+	return NULL;
+}
+
+void BusManager::deletePuck(Puck* p)
+{
+	std::vector<Puck*>::iterator i;
+	i = std::find(pucks.begin(), pucks.end(), p);
+
+	if (i == pucks.end()) {
+		throw std::invalid_argument("BusManager::deletePuck(): Puck is not being managed by this BusManager.");
+	}
+
+	*i = pucks.back();
+	pucks.pop_back();
+
+	delete p;
 }
 
 int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const
