@@ -10,6 +10,8 @@
 
 
 #include <vector>
+
+#include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/puck.h>
 
 
@@ -24,7 +26,17 @@ public:
 	int getId() const { return id; }
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 
-	bool verifyProperty(enum Puck::Property prop);
+	bool verifyProperty(enum Puck::Property prop) const;
+
+	int getProperty(enum Puck::Property prop) const;
+	void setProperty(enum Puck::Property prop, int value) const;
+
+	int getPropertyId(enum Puck::Property prop) const {
+		return pucks[0]->getPropertyId(prop);
+	}
+	int getPropertyIdNoThrow(enum Puck::Property prop) const {
+		return pucks[0]->getPropertyIdNoThrow(prop);
+	}
 
 
 	enum BroadcastGroup {
@@ -57,6 +69,7 @@ public:
 protected:
 	int id;
 	std::vector<Puck*> pucks;
+	const CommunicationsBus& bus;
 };
 
 
