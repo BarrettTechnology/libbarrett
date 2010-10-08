@@ -151,6 +151,7 @@ private:
 	static const char puckTypeStrs[][12];
 
 	friend class CANSocket;
+	friend class PuckGroup;
 };
 
 

@@ -29,6 +29,7 @@ set(barrett_SOURCES
 	exception.cpp
 	property_list.cpp
 	puck.cpp
+	puck_group.cpp
 )
 
 # Defenitions for cdlbt code

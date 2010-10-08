@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include <barrett/bus/abstract/communications_bus.h>
+#include <barrett/puck_group.h>
 #include <barrett/puck.h>
 
 
@@ -21,6 +22,10 @@ namespace barrett {
 Puck::Puck(const CommunicationsBus& _bus, int _id) :
 	bus(_bus), id(_id), vers(-1), role(-1), type(PT_Unknown), effectiveType(PT_Unknown)
 {
+	if ((id & NODE_ID_MASK) != id) {
+		throw std::invalid_argument("Puck::Puck(): Invalid Node ID.");
+	}
+
 	updateRole();
 	updateStatus();
 }
@@ -156,7 +161,8 @@ int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int prop
 {
 	unsigned char dataIn[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t lenIn;
-	int ret = bus.receive(encodeBusId(id, 0x406), dataIn, lenIn, blocking);  // TODO(dc): fix magic number and generalize
+	// TODO(dc): generalize for properties that respond to special groups?
+	int ret = bus.receive(encodeBusId(id, PuckGroup::FGRP_OTHER), dataIn, lenIn, blocking);
 	if (ret) {
 		*successful = false;
 		return ret;
