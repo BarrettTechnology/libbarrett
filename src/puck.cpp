@@ -144,7 +144,11 @@ void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, int val
 	data[4] = (value & 0x00ff0000) >> 16;
 	data[5] = (value & 0xff000000) >> 24;
 
-	bus.send(nodeId2BusId(id), data, MSG_LEN);
+	int ret = bus.send(nodeId2BusId(id), data, MSG_LEN);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::setProperty() returned error %d.", __func__, ret);
+		throw std::runtime_error("Puck::setProperty(): Failed to send SET message. Check /var/log/syslog for details.");
+	}
 }
 
 int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId)
