@@ -124,6 +124,8 @@ protected:
 
 	static const int ROLE_MASK = 0x1f;
 
+	static const int WAKE_UP_TIME = 1000000;  // microseconds
+
 	// From puck2:PARSE.H
 	enum {
 		STATUS_RESET, STATUS_ERR, STATUS_READY

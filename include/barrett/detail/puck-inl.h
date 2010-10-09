@@ -14,15 +14,15 @@ void Puck::wake(Container<Puck*> pucks)
 	typename Container<Puck*>::iterator i;
 	bool allPucksAwake;
 
+	// Find the Pucks that to be woken up
 	allPucksAwake = true;
 	for (i = pucks.begin(); i != pucks.end(); ++i) {
 		if (*i == NULL) {
 			continue;
 		}
-		(*i)->updateStatus();
+//		(*i)->updateStatus();
 		if ((*i)->getEffectiveType() == PT_Monitor) {
 			allPucksAwake = false;
-			(*i)->setProperty(STAT, STATUS_READY);
 		} else {
 			*i = NULL;
 		}
@@ -32,31 +32,37 @@ void Puck::wake(Container<Puck*> pucks)
 		return;
 	}
 
-	usleep(300000);
+	// Wake the Pucks. This is a separate step because taking on the CANbus
+	// while the Pucks transceivers come online can cause the host to go
+	// bus-off.
+	// TODO(dc): lock the bus mutex when waking Pucks?
+	for (i = pucks.begin(); i != pucks.end(); ++i) {
+		if (*i == NULL) {
+			continue;
+		}
+		(*i)->setProperty(STAT, STATUS_READY);
+	}
+
+	usleep(WAKE_UP_TIME);
 
 	int stat;
 	bool successful;
-	while (!allPucksAwake) {
-		allPucksAwake = true;
+	for (i = pucks.begin(); i != pucks.end(); ++i) {
+		if (*i == NULL) {
+			continue;
+		}
 
-		usleep(100000);
-		for (i = pucks.begin(); i != pucks.end(); ++i) {
-			if (*i == NULL) {
-				continue;
-			}
-			allPucksAwake = false;
-
-			// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
-			stat = (*i)->tryGetProperty(STAT, &successful, 50000);
+		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
+		stat = (*i)->tryGetProperty(STAT, &successful, 50000);
+		if (successful  &&  stat == STATUS_READY) {
+			(*i)->updateStatus();
+		} else {
 			if (successful) {
-				if (stat == STATUS_READY) {
-					(*i)->updateStatus();
-					*i = NULL;
-				} else {
-					syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
-					throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
-				}
+				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
+			} else {
+				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e6);
 			}
+			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
 		}
 	}
 }
