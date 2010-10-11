@@ -247,6 +247,14 @@ print >> f, "\t\tbreak;"
 print >> f, "\t}"
 print >> f, "\treturn -1;"
 print >> f, "}\n"
+
+maxStrLen = max(map(len, props)) + 1  # need an extra character for the '\0'
+print >> f, "const char propertyStrs[Puck::NUM_PROPERTIES][%d] = {\n%s\n};\n"  \
+				% (maxStrLen, str(props).translate(string.maketrans("'", "\""), "[]"))
+print >> f, "const char* Puck::getPropertyStr(enum Property prop) {"
+print >> f, "\treturn propertyStrs[prop];"
+print >> f, "}\n"
+
 print >> f, "}"
 
 f.close()
