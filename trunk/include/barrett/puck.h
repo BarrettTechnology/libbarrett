@@ -152,9 +152,6 @@ private:
 			bool blocking, bool* successful, int timeout_us);
 
 	static const char puckTypeStrs[][12];
-
-	friend class CANSocket;
-	friend class PuckGroup;
 };
 
 
