@@ -32,8 +32,8 @@ void Puck::wake(Container<Puck*> pucks)
 		return;
 	}
 
-	// Wake the Pucks. This is a separate step because taking on the CANbus
-	// while the Pucks transceivers come online can cause the host to go
+	// Wake the Pucks. This is a separate step because talking on the CANbus
+	// while the Pucks' transceivers come online can cause the host to go
 	// bus-off.
 	// TODO(dc): lock the bus mutex when waking Pucks?
 	for (i = pucks.begin(); i != pucks.end(); ++i) {
@@ -72,7 +72,7 @@ inline int Puck::getPropertyId(enum Property prop, enum PuckType pt, int fwVers)
 {
 	int propId = getPropertyIdNoThrow(prop, pt, fwVers);
 	if (propId == -1) {
-		syslog(LOG_ERR, "Puck::getPropertyId(): Pucks with type %d and firmware version %d do not respond to property %d.", pt, fwVers, prop);
+		syslog(LOG_ERR, "Puck::getPropertyId(): Pucks with type %s and firmware version %d do not respond to property %s.", getPuckTypeStr(pt), fwVers, getPropertyStr(prop));
 		throw std::runtime_error("Puck::getPropertyId(): Invalid property. Check /var/log/syslog for details.");
 	}
 	return propId;

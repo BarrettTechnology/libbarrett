@@ -32,6 +32,7 @@ public:
 
 // include the generated file containing the list of available properties
 #	include <barrett/detail/property_list.h>
+	static const char* getPropertyStr(enum Property prop);
 
 
 public:
@@ -93,11 +94,13 @@ public:
 			throw(std::runtime_error);
 	static int getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers);
 
+
 	static const int MIN_ID = 1;
 	static const int MAX_ID = 31;
 	static const int HOST_ID = 0;  // the Node ID of the control PC
+	static const int NODE_ID_WIDTH = 5;
+	static const int NODE_ID_MASK = 0x1f;
 
-protected:
 	static int nodeId2BusId(int id) {
 		return (id & TO_MASK) | (HOST_ID << NODE_ID_WIDTH);
 	}
@@ -112,9 +115,6 @@ protected:
 		*toId = busId & TO_MASK;
 	}
 
-
-	static const int NODE_ID_WIDTH = 5;
-	static const int NODE_ID_MASK = 0x1f;
 	static const int GROUP_MASK = 0x400;
 	static const int FROM_MASK = 0x3e0;
 	static const int TO_MASK = 0x41f;
@@ -126,6 +126,7 @@ protected:
 
 	static const int WAKE_UP_TIME = 1000000;  // microseconds
 
+protected:
 	// From puck2:PARSE.H
 	enum {
 		STATUS_RESET, STATUS_ERR, STATUS_READY
