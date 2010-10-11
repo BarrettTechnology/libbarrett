@@ -24,11 +24,13 @@ public:
 	~PuckGroup();
 
 	int getId() const { return id; }
+	size_t numPucks() const { return pucks.size(); }
+	int getPuckId(size_t i) { return pucks.at(i)->getId(); }
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 
 	bool verifyProperty(enum Puck::Property prop) const;
 
-	int getProperty(enum Puck::Property prop) const;
+	std::vector<int> getProperty(enum Puck::Property prop) const;
 	void setProperty(enum Puck::Property prop, int value) const;
 
 	int getPropertyId(enum Puck::Property prop) const {
