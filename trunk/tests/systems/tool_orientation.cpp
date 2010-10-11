@@ -17,8 +17,8 @@
 #include <barrett/systems/kinematics_base.h>
 #include <barrett/systems/tool_orientation.h>
 #include <barrett/systems/tool_orientation_controller.h>
-#include <barrett/dynamics/dynamics.h>
-#include <barrett/control/control_cartesian_xyz_q.h>
+#include <barrett/cdlbt/dynamics.h>
+#include <barrett/cdlbt/control_cartesian_xyz_q.h>
 #include "exposed_io_system.h"
 
 
