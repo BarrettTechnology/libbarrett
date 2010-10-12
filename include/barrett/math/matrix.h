@@ -146,6 +146,12 @@ protected:
 	void resizeToMatchIfDynamic(const gsl_vector* g);
 	void resizeToMatchIfDynamic(const gsl_matrix* g);
 
+	void checkSize(const gsl_vector* g) const;
+	void checkSize(const gsl_matrix* g) const;
+
+	void copyToHelper(gsl_vector* g) const;
+	void copyToHelper(gsl_matrix* g) const;
+
 	void copyFromHelper(const gsl_vector* g);
 	void copyFromHelper(const gsl_matrix* g);
 

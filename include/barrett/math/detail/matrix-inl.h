@@ -180,23 +180,15 @@ template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyTo(gsl_type* gslType) const
 throw(std::logic_error)
 {
-	if (gslType->size != static_cast<size_t>(this->size())) {
-		std::stringstream ss;
-		ss << "(math::Matrix<>::copyTo(gsl_type*)): The size of the "
-				"gsl_type must match the size of the Matrix. Expected size "
-				<< this->size() << ", got size " << gslType->size;
-		throw std::logic_error(ss.str());
-	}
-
-	for (int i = 0; i < this->size(); ++i) {
-		gsl_vector_set(gslType, i, (*this)[i]);
-	}
+	checkSize(gslType);
+	copyToHelper(gslType);
 }
 
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyFrom(const gsl_type* gslType)
 throw(std::logic_error)
 {
+	checkSize(gslType);
 	copyFromHelper(gslType);
 }
 
@@ -300,16 +292,50 @@ inline void Matrix<R,C, Units>::resizeToMatchIfDynamic(const gsl_matrix* g)
 }
 
 template<int R, int C, typename Units>
-void Matrix<R,C, Units>::copyFromHelper(const gsl_vector* g)
+void Matrix<R,C, Units>::checkSize(const gsl_vector* g) const
 {
 	if (g->size != static_cast<size_t>(this->size())) {
 		std::stringstream ss;
-		ss << "(math::Matrix<>::copyFrom(gsl_vector*)): The size of the "
+		ss << "(math::Matrix<>::checkSize(gsl_vector*)): The size of the "
 				"gsl_vector must match the size of the Matrix. Expected size "
 				<< this->size() << ", got size " << g->size;
 		throw std::logic_error(ss.str());
 	}
+}
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::checkSize(const gsl_matrix* g) const
+{
+	if (g->size1 != static_cast<size_t>(this->rows())
+			||  g->size2 != static_cast<size_t>(this->cols())) {
+		std::stringstream ss;
+		ss << "(math::Matrix<>::checkSize(gsl_matrix*)): The size of the "
+				"gsl_matrix must match the size of the Matrix. Expected size "
+				<< this->rows() << "x" << this->cols() << ", got size "
+				<< g->size1 << "x" << g->size2;
+		throw std::logic_error(ss.str());
+	}
+}
 
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::copyToHelper(gsl_vector* g) const
+{
+	for (int i = 0; i < this->size(); ++i) {
+		gsl_vector_set(g, i, (*this)[i]);
+	}
+}
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::copyToHelper(gsl_matrix* g) const
+{
+	for (int i = 0; i < this->rows(); ++i) {
+		for (int j = 0; j < this->cols(); ++j) {
+			gsl_matrix_set(g, i,j, (*this)(i,j));
+		}
+	}
+}
+
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::copyFromHelper(const gsl_vector* g)
+{
 	for (int i = 0; i < this->size(); ++i) {
 		(*this)[i] = gsl_vector_get(g, i);
 	}
@@ -317,16 +343,6 @@ void Matrix<R,C, Units>::copyFromHelper(const gsl_vector* g)
 template<int R, int C, typename Units>
 void Matrix<R,C, Units>::copyFromHelper(const gsl_matrix* g)
 {
-	if (g->size1 != static_cast<size_t>(this->rows())
-			||  g->size2 != static_cast<size_t>(this->cols())) {
-		std::stringstream ss;
-		ss << "(math::Matrix<>::copyFrom(gsl_matrix*)): The size of the "
-				"gsl_matrix must match the size of the Matrix. Expected size "
-				<< this->rows() << "x" << this->cols() << ", got size "
-				<< g->size1 << "x" << g->size2;
-		throw std::logic_error(ss.str());
-	}
-
 	for (int i = 0; i < this->rows(); ++i) {
 		for (int j = 0; j < this->cols(); ++j) {
 			(*this)(i,j) = gsl_matrix_get(g, i,j);

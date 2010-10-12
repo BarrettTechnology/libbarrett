@@ -266,7 +266,7 @@ TYPED_TEST(VectorTypedTest, CopyFromConfigThrows) {
 TYPED_TEST(VectorTypedTest, AsGslVector) {
 	gsl_vector* gslVec = this->a.asGslType();
 
-	EXPECT_EQ(DIM, gslVec->size);
+	EXPECT_EQ(this->a.size(), gslVec->size);
 	EXPECT_EQ(NULL, gslVec->block);
 	EXPECT_EQ(0, gslVec->owner);
 
