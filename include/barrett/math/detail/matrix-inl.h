@@ -133,7 +133,7 @@ template<int R, int C, typename Units>
 inline Matrix<R,C, Units>::Matrix(const libconfig::Setting& setting) :
 	Base(), gsl()
 {
-	resizeIfDynamic(setting.getLength());  // TODO(dc): add support for Matrix settings
+	resizeIfDynamic(setting.getLength(), setting[0].isNumber() ? 1 : setting[0].getLength());
 	initGslType(&gsl);
 	copyFrom(setting);
 }
@@ -203,18 +203,48 @@ throw(std::logic_error)
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyFrom(const libconfig::Setting& setting)
 {
-	if (setting.getLength() != this->size()) {
-		std::stringstream ss;
-		ss << "(math::Matrix<>::copyFrom(libconfig::Setting)): The size of "
-				"the configuration list must match the size of the Matrix. "
-				"Expected size " << this->size() << ", got size " << setting.getLength() <<
-				". Path: \"" << setting.getPath() << "\", Line: " <<
-				setting.getSourceLine();
-		throw std::runtime_error(ss.str());
+	// special case: both column and row vectors can be initialized by a config row vector
+	if (this->isVector()) {
+		if (setting.getLength() != this->size()) {
+			std::stringstream ss;
+			ss << "(math::Matrix<>::copyFrom(libconfig::Setting)): The size of "
+					"the configuration list must match the size of the Matrix. "
+					"Expected size " << this->size() << ", got size " << setting.getLength() <<
+					". Path: \"" << setting.getPath() << "\", Line: " <<
+					setting.getSourceLine();
+			throw std::runtime_error(ss.str());
+		}
+
+		if (setting[0].isNumber()) {  // if setting is a row vector
+			for (int i = 0; i < this->size(); ++i) {
+				(*this)[i] = detail::numericToDouble(setting[i]);
+			}
+			return;
+		}  // else setting is a column vector or a matrix
 	}
 
-	for (int i = 0; i < this->size(); ++i) {
-		(*this)[i] = detail::numericToDouble(setting[i]);
+
+	// column vectors and matrices
+	if (setting.getLength() != this->rows()) {
+		std::stringstream ss;
+		ss << "(math::Matrix<>::copyFrom(libconfig::Setting)): Wrong number of "
+				"rows. Expected " << this->rows() << ", got " <<
+				setting.getLength() << ". Path: \"" <<
+				setting.getPath() << "\", Line: " << setting.getSourceLine();
+		throw std::runtime_error(ss.str());
+	}
+	for (int i = 0; i < this->rows(); ++i) {
+		if (setting[i].getLength() != this->cols()) {
+			std::stringstream ss;
+			ss << "(math::Matrix<>::copyFrom(libconfig::Setting)): Wrong number of "
+					"columns. Expected " << this->cols() << ", got " <<
+					setting[i].getLength() << ". Path: \"" <<
+					setting[i].getPath() << "\", Line: " << setting[i].getSourceLine();
+			throw std::runtime_error(ss.str());
+		}
+		for (int j = 0; j < this->cols(); ++j) {
+			(*this)(i,j) = detail::numericToDouble(setting[i][j]);
+		}
 	}
 }
 

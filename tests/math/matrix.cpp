@@ -1,17 +1,13 @@
 /*
- * units.cpp
+ * matrix.cpp
  *
- *  Created on: Oct 27, 2009
+ *  Created on: Oct 12, 2010
  *      Author: dc
  */
 
-
-#include <sstream>
-#include <stdexcept>
-#include <gsl/gsl_vector.h>
-#include <libconfig.h++>
-
 #include <gtest/gtest.h>
+#include <gsl/gsl_matrix.h>
+
 #include <barrett/math/matrix.h>
 #include <barrett/units.h>
 
@@ -20,173 +16,296 @@ namespace {
 using namespace barrett;
 
 
-// TODO(dc): test matrix functionality, not just vector stuff
-
-template<int R> struct LocalUnits {
-	typedef typename math::Vector<R, LocalUnits<R> >::type type;
+template<int R, int C> struct LocalUnits {
+	typedef typename math::Matrix<R,C, LocalUnits<R,C> >::type type;
 };
 
-const int DIM = 5;
+const int ROWS = 3;
+const int COLS = 2;
 
 
-// tests for fixed sized vectors
+// tests for fixed sized matrices
 template<typename T>
-class FixedVectorTypedTest : public ::testing::Test {
+class FixedMatrixTypedTest : public ::testing::Test {
 public:
-	FixedVectorTypedTest() :
+	FixedMatrixTypedTest() :
 		a() {}
 protected:
 	T a;
 };
 
 typedef ::testing::Types<
-			math::Vector<DIM>::type,
-			units::JointTorques<DIM>::type,
-			LocalUnits<DIM>::type
+			math::Matrix<ROWS,COLS>,
+			LocalUnits<ROWS,COLS>::type
 		> FixedTypes;
-TYPED_TEST_CASE(FixedVectorTypedTest, FixedTypes);
+TYPED_TEST_CASE(FixedMatrixTypedTest, FixedTypes);
 
 
-// tests for dynamically sized vectors
+// tests for dynamically sized matrices
 template<typename T>
-class DynamicVectorTypedTest : public ::testing::Test {
+class DynamicMatrixTypedTest : public ::testing::Test {
 public:
-	DynamicVectorTypedTest() :
-		a(DIM) {}
+	DynamicMatrixTypedTest() :
+		a(ROWS,COLS) {}
 protected:
 	T a;
 };
 
 typedef ::testing::Types<
-			math::Vector<Eigen::Dynamic>::type,
-			units::JointTorques<Eigen::Dynamic>::type,
-			LocalUnits<Eigen::Dynamic>::type
+			math::Matrix<Eigen::Dynamic,Eigen::Dynamic>,
+			LocalUnits<Eigen::Dynamic,Eigen::Dynamic>::type
 		> DynamicTypes;
-TYPED_TEST_CASE(DynamicVectorTypedTest, DynamicTypes);
+TYPED_TEST_CASE(DynamicMatrixTypedTest, DynamicTypes);
 
 
 // common tests
 template<typename T>
-class VectorTypedTest : public ::testing::Test {
+class MatrixTypedTest : public ::testing::Test {
 public:
-	VectorTypedTest() :
-		a(DIM) {}
+	MatrixTypedTest() :
+		a(ROWS,COLS) {}
 protected:
 	T a;
 };
 
 typedef ::testing::Types<
-			math::Vector<DIM>::type,
-			units::JointTorques<DIM>::type,
-			LocalUnits<DIM>::type,
-			math::Vector<Eigen::Dynamic>::type,
-			units::JointTorques<Eigen::Dynamic>::type,
-			LocalUnits<Eigen::Dynamic>::type
+			math::Matrix<ROWS,COLS>,
+			LocalUnits<ROWS,COLS>::type,
+			math::Matrix<Eigen::Dynamic,Eigen::Dynamic>,
+			LocalUnits<Eigen::Dynamic,Eigen::Dynamic>::type
 		> BothTypes;
-TYPED_TEST_CASE(VectorTypedTest, BothTypes);
+TYPED_TEST_CASE(MatrixTypedTest, BothTypes);
 
 
 
 // uses the actual default ctor
-TYPED_TEST(FixedVectorTypedTest, DefaultCtor) {
-	for (int i = 0; i < this->a.size(); ++i) {
-		EXPECT_EQ(0.0, this->a[i]);
+TYPED_TEST(FixedMatrixTypedTest, DefaultCtor) {
+	for (int i = 0; i < this->a.rows(); ++i) {
+		for (int j = 0; j < this->a.cols(); ++j) {
+			EXPECT_EQ(0.0, this->a(i,j));
+		}
 	}
 }
 
 // uses the closest thing to a default ctor that a dynamic vector has
 // both types of vectors should be able to be constructed this way
-TYPED_TEST(VectorTypedTest, DefaultCtor) {
-	for (int i = 0; i < this->a.size(); ++i) {
-		EXPECT_EQ(0.0, this->a[i]);
+TYPED_TEST(MatrixTypedTest, DefaultCtor) {
+	for (int i = 0; i < this->a.rows(); ++i) {
+		for (int j = 0; j < this->a.cols(); ++j) {
+			EXPECT_EQ(0.0, this->a(i,j));
+		}
 	}
 }
 
-TYPED_TEST(FixedVectorTypedTest, InitialValueCtor) {
+TYPED_TEST(FixedMatrixTypedTest, InitialValueCtor) {
 	TypeParam a(-487.9);
 
-	for (int i = 0; i < a.size(); ++i) {
-		EXPECT_EQ(-487.9, a[i]);
+	for (int i = 0; i < a.rows(); ++i) {
+		for (int j = 0; j < a.cols(); ++j) {
+			EXPECT_EQ(-487.9, a(i,j));
+		}
 	}
 }
 
 // both types of vectors should be able to be constructed this way
-TYPED_TEST(VectorTypedTest, InitialValueCtor) {
-	TypeParam a(DIM, -487.9);
+TYPED_TEST(MatrixTypedTest, InitialValueCtor) {
+	TypeParam a(ROWS,COLS, -487.9);
 
-	for (int i = 0; i < a.size(); ++i) {
-		EXPECT_EQ(-487.9, a[i]);
+	for (int i = 0; i < a.rows(); ++i) {
+		for (int j = 0; j < a.cols(); ++j) {
+			EXPECT_EQ(-487.9, a(i,j));
+		}
 	}
 }
 
-TYPED_TEST(VectorTypedTest, GslVectorCtor) {
-	gsl_vector* gslVec = gsl_vector_calloc(this->a.size());
-	for (int i = 0; i < this->a.size(); ++i) {
-		gsl_vector_set(gslVec, i, i*0.1);
+TYPED_TEST(MatrixTypedTest, GslMatrixCtor) {
+	gsl_matrix* gslMat = gsl_matrix_calloc(this->a.rows(), this->a.cols());
+	for (int i = 0; i < this->a.rows(); ++i) {
+		for (int j = 0; j < this->a.cols(); ++j) {
+			gsl_matrix_set(gslMat, i,j, i*0.1 + i-j);
+		}
 	}
 
-	TypeParam a(gslVec);
+	TypeParam a(gslMat);
 
-	for (int i = 0; i < a.size(); ++i) {
-		EXPECT_EQ(i*0.1, a[i]);
+	for (int i = 0; i < this->a.rows(); ++i) {
+		for (int j = 0; j < this->a.cols(); ++j) {
+			EXPECT_EQ(i*0.1 + i-j, a(i,j));
+		}
 	}
 
-	gsl_vector_free(gslVec);
+	gsl_matrix_free(gslMat);
 }
 
-TYPED_TEST(FixedVectorTypedTest, GslVectorCtorThrows) {
-	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
-	EXPECT_THROW(TypeParam a(gslVec), std::logic_error);
-	gsl_vector_free(gslVec);
+TYPED_TEST(FixedMatrixTypedTest, GslMatrixCtorThrows) {
+	gsl_matrix* gslMat;
 
-	gslVec = gsl_vector_calloc(this->a.size() - 1);
-	EXPECT_THROW(TypeParam a(gslVec), std::logic_error);
-	gsl_vector_free(gslVec);
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()+1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()+0);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()-1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+0, this->a.cols()+1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+0, this->a.cols()-1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()+1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()+0);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()-1);
+	EXPECT_THROW(TypeParam a(gslMat), std::logic_error);
+	gsl_matrix_free(gslMat);
 }
 
-TYPED_TEST(DynamicVectorTypedTest, GslVectorCtorResizes) {
-	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
-	EXPECT_NO_THROW(TypeParam a(gslVec));
-	EXPECT_EQ(gslVec->size, TypeParam(gslVec).size());
-	gsl_vector_free(gslVec);
+TYPED_TEST(DynamicMatrixTypedTest, GslMatrixCtorResizes) {
+	gsl_matrix* gslMat;
 
-	gslVec = gsl_vector_calloc(this->a.size() - 1);
-	EXPECT_NO_THROW(TypeParam a(gslVec));
-	EXPECT_EQ(gslVec->size, TypeParam(gslVec).size());
-	gsl_vector_free(gslVec);
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()+1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()+0);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+1, this->a.cols()-1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+0, this->a.cols()+1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()+0, this->a.cols()-1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()+1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()+0);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
+
+	gslMat = gsl_matrix_calloc(this->a.rows()-1, this->a.cols()-1);
+	EXPECT_NO_THROW(TypeParam a(gslMat));
+	EXPECT_EQ(gslMat->size1, TypeParam(gslMat).rows());
+	EXPECT_EQ(gslMat->size2, TypeParam(gslMat).cols());
+	gsl_matrix_free(gslMat);
 }
 
-TYPED_TEST(VectorTypedTest, ConfigCtor) {
-	this->a << -20, -.5, 0, 38.2, 2.3e4;
+TYPED_TEST(MatrixTypedTest, ConfigCtor) {
+	this->a << -20, -.5, 0, 38.2, 2.3e4, 209;
 
 	libconfig::Config config;
 	config.readFile("test.config");
-	TypeParam b(config.lookup("vector_test.five"));
+	TypeParam b(config.lookup("matrix_test.three_two"));
 
 	EXPECT_EQ(this->a, b);
 }
 
-TYPED_TEST(FixedVectorTypedTest, ConfigCtorThrows) {
+TYPED_TEST(FixedMatrixTypedTest, ConfigCtorThrows) {
 	libconfig::Config config;
 	config.readFile("test.config");
 
-	EXPECT_THROW(TypeParam(config.lookup("vector_test.four")), std::runtime_error);
-	EXPECT_THROW(TypeParam(config.lookup("vector_test.six")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.two_one")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.two_two")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.two_three")), std::runtime_error);
+
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.three_one")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.three_three")), std::runtime_error);
+
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.four_one")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.four_two")), std::runtime_error);
+	EXPECT_THROW(TypeParam(config.lookup("matrix_test.four_three")), std::runtime_error);
 }
 
-TYPED_TEST(DynamicVectorTypedTest, ConfigCtorThrows) {
+TYPED_TEST(DynamicMatrixTypedTest, ConfigCtorResizes) {
 	libconfig::Config config;
 	config.readFile("test.config");
+	libconfig::Setting* setting;
 
-	EXPECT_NO_THROW(TypeParam(config.lookup("vector_test.four")));
-	EXPECT_EQ(4, TypeParam(config.lookup("vector_test.four")).size());
+	setting = &config.lookup("matrix_test.two_one");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(2, TypeParam(*setting).rows());
+	EXPECT_EQ(1, TypeParam(*setting).cols());
 
-	EXPECT_NO_THROW(TypeParam(config.lookup("vector_test.six")));
-	EXPECT_EQ(6, TypeParam(config.lookup("vector_test.six")).size());
+	setting = &config.lookup("matrix_test.two_one");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(2, TypeParam(*setting).rows());
+	EXPECT_EQ(1, TypeParam(*setting).cols());
+
+	setting = &config.lookup("matrix_test.two_one");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(2, TypeParam(*setting).rows());
+	EXPECT_EQ(1, TypeParam(*setting).cols());
+
+
+	setting = &config.lookup("matrix_test.three_two");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(3, TypeParam(*setting).rows());
+	EXPECT_EQ(2, TypeParam(*setting).cols());
+
+	setting = &config.lookup("matrix_test.three_two");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(3, TypeParam(*setting).rows());
+	EXPECT_EQ(2, TypeParam(*setting).cols());
+
+
+	setting = &config.lookup("matrix_test.four_three");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(4, TypeParam(*setting).rows());
+	EXPECT_EQ(3, TypeParam(*setting).cols());
+
+	setting = &config.lookup("matrix_test.four_three");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(4, TypeParam(*setting).rows());
+	EXPECT_EQ(3, TypeParam(*setting).cols());
+
+	setting = &config.lookup("matrix_test.four_three");
+	EXPECT_NO_THROW(TypeParam(*setting));
+	EXPECT_EQ(4, TypeParam(*setting).rows());
+	EXPECT_EQ(3, TypeParam(*setting).cols());
 }
 
-TYPED_TEST(VectorTypedTest, CopyCtor) {
-	TypeParam a(DIM, -487.9);
+/*
+TYPED_TEST(MatrixTypedTest, CopyCtor) {
+	TypeParam a(ROWS,COLS, -487.9);
 	TypeParam b(a);
 
 	a.setConstant(2.0);
@@ -198,7 +317,7 @@ TYPED_TEST(VectorTypedTest, CopyCtor) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, CopyToGslVector) {
+TYPED_TEST(MatrixTypedTest, CopyToGslVector) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size());
 	this->a << 5, 42.8, 37, -12, 1.4;
 
@@ -211,7 +330,7 @@ TYPED_TEST(VectorTypedTest, CopyToGslVector) {
 	gsl_vector_free(gslVec);
 }
 
-TYPED_TEST(VectorTypedTest, CopyToGslVectorThrows) {
+TYPED_TEST(MatrixTypedTest, CopyToGslVectorThrows) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
 	EXPECT_THROW(this->a.copyTo(gslVec), std::logic_error);
 	gsl_vector_free(gslVec);
@@ -221,7 +340,7 @@ TYPED_TEST(VectorTypedTest, CopyToGslVectorThrows) {
 	gsl_vector_free(gslVec);
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromGslVector) {
+TYPED_TEST(MatrixTypedTest, CopyFromGslVector) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size());
 	for (int i = 0; i < this->a.size(); ++i) {
 		gsl_vector_set(gslVec, i, i*0.1);
@@ -236,7 +355,7 @@ TYPED_TEST(VectorTypedTest, CopyFromGslVector) {
 	gsl_vector_free(gslVec);
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromGslVectorThrows) {
+TYPED_TEST(MatrixTypedTest, CopyFromGslVectorThrows) {
 	gsl_vector* gslVec = gsl_vector_calloc(this->a.size() + 1);
 	EXPECT_THROW(this->a.copyFrom(gslVec), std::logic_error);
 	gsl_vector_free(gslVec);
@@ -246,18 +365,18 @@ TYPED_TEST(VectorTypedTest, CopyFromGslVectorThrows) {
 	gsl_vector_free(gslVec);
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromConfig) {
+TYPED_TEST(MatrixTypedTest, CopyFromConfig) {
 	this->a << -20, -.5, 0, 38.2, 2.3e4;
 
 	libconfig::Config config;
 	config.readFile("test.config");
-	TypeParam b(DIM);
+	TypeParam b(ROWS,COLS);
 	b.copyFrom(config.lookup("vector_test.five"));
 
 	EXPECT_EQ(this->a, b);
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromConfigThrows) {
+TYPED_TEST(MatrixTypedTest, CopyFromConfigThrows) {
 	libconfig::Config config;
 	config.readFile("test.config");
 
@@ -265,7 +384,7 @@ TYPED_TEST(VectorTypedTest, CopyFromConfigThrows) {
 	EXPECT_THROW(this->a.copyFrom(config.lookup("vector_test.six")), std::runtime_error);
 }
 
-TYPED_TEST(VectorTypedTest, AsGslVector) {
+TYPED_TEST(MatrixTypedTest, AsGslVector) {
 	gsl_vector* gslVec = this->a.asGslType();
 
 	EXPECT_EQ(DIM, gslVec->size);
@@ -284,7 +403,7 @@ TYPED_TEST(VectorTypedTest, AsGslVector) {
 	EXPECT_EQ(-3.2, gsl_vector_get(gslVec, 4));
 }
 
-TYPED_TEST(VectorTypedTest, IsZero) {
+TYPED_TEST(MatrixTypedTest, IsZero) {
 	this->a.setConstant(0.0);
 	EXPECT_TRUE(this->a.isZero());
 
@@ -295,7 +414,7 @@ TYPED_TEST(VectorTypedTest, IsZero) {
 	EXPECT_FALSE(this->a.isZero());
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromTypeParam) {
+TYPED_TEST(MatrixTypedTest, CopyFromTypeParam) {
 	this->a << 5, 42.8, 37, -12, 1.4;
 	TypeParam a_copy = this->a;  // uses copy constructor
 
@@ -307,9 +426,9 @@ TYPED_TEST(VectorTypedTest, CopyFromTypeParam) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, AssignFromTypeParam) {
+TYPED_TEST(MatrixTypedTest, AssignFromTypeParam) {
 	this->a << 5, 42.8, 37, -12, 1.4;
-	TypeParam a_copy(DIM);
+	TypeParam a_copy(ROWS,COLS);
 	a_copy = this->a;  // uses assignment operator
 
 	EXPECT_EQ(this->a, a_copy);
@@ -320,7 +439,7 @@ TYPED_TEST(VectorTypedTest, AssignFromTypeParam) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, CopyFromVector) {
+TYPED_TEST(MatrixTypedTest, CopyFromVector) {
 	math::Vector<DIM>::type vec;
 	vec << 5, 42.8, 37, -12, 1.4;
 	TypeParam vec_copy = vec;  // uses copy constructor
@@ -333,10 +452,10 @@ TYPED_TEST(VectorTypedTest, CopyFromVector) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, AssignFromVector) {
+TYPED_TEST(MatrixTypedTest, AssignFromVector) {
 	math::Vector<DIM>::type vec;
 	vec << 5, 42.8, 37, -12, 1.4;
-	TypeParam vec_copy(DIM);
+	TypeParam vec_copy(ROWS,COLS);
 	vec_copy = vec;  // uses assignment operator
 
 	EXPECT_EQ(vec, vec_copy);
@@ -347,7 +466,7 @@ TYPED_TEST(VectorTypedTest, AssignFromVector) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, ExplicitAssignment) {
+TYPED_TEST(MatrixTypedTest, ExplicitAssignment) {
 	this->a << 5, 42.8, 37, -12, 1.4;
 
 	double expected[] = { 5, 42.8, 37, -12, 1.4 };
@@ -356,38 +475,38 @@ TYPED_TEST(VectorTypedTest, ExplicitAssignment) {
 	}
 }
 
-TYPED_TEST(VectorTypedTest, AccessAndModifyMembersByIndex) {
+TYPED_TEST(MatrixTypedTest, AccessAndModifyMembersByIndex) {
 	for (int i = 0; i < this->a.size(); ++i) {
 		this->a[i] = i/10.0 - 1;
 		EXPECT_EQ(i/10.0 - 1, this->a[i]);
 	}
 }
 
-TYPED_TEST(VectorTypedTest, TraitsAssignZero) {
+TYPED_TEST(MatrixTypedTest, TraitsAssignZero) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam result(DIM);
+	TypeParam result(ROWS,COLS);
 	result.setConstant(7);
 
 	T::zero(result);
-	EXPECT_EQ(TypeParam::Zero(DIM), result);
+	EXPECT_EQ(TypeParam::Zero(ROWS,COLS), result);
 }
 
-TYPED_TEST(FixedVectorTypedTest, TraitsInstantiateZero) {
+TYPED_TEST(FixedMatrixTypedTest, TraitsInstantiateZero) {
 	typedef math::Traits<TypeParam> T;
 	EXPECT_EQ(TypeParam::Zero(), T::zero());
 }
 
 // both types of vectors should be able to be instantiated this way
-TYPED_TEST(VectorTypedTest, TraitsInstantiateZero) {
+TYPED_TEST(MatrixTypedTest, TraitsInstantiateZero) {
 	typedef math::Traits<TypeParam> T;
-	EXPECT_EQ(TypeParam::Zero(DIM), T::zero(DIM));
+	EXPECT_EQ(TypeParam::Zero(ROWS,COLS), T::zero(ROWS,COLS));
 }
 
-TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
+TYPED_TEST(MatrixTypedTest, VectorVectorTraitsArithmetic) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam a1(DIM), a2(DIM), expected(DIM), result(DIM);
+	TypeParam a1(ROWS,COLS), a2(ROWS,COLS), expected(ROWS,COLS), result(ROWS,COLS);
 
 	a1 << 1, 2, 3, 4, 5;
 	a2 << 5, 4, 3, 2, 1;
@@ -418,10 +537,10 @@ TYPED_TEST(VectorTypedTest, VectorVectorTraitsArithmetic) {
 	EXPECT_EQ(expected, result);
 }
 
-TYPED_TEST(VectorTypedTest, VectorScalarTraitsArithmetic) {
+TYPED_TEST(MatrixTypedTest, VectorScalarTraitsArithmetic) {
 	typedef math::Traits<TypeParam> T;
 
-	TypeParam a(DIM), expected(DIM), result(DIM);
+	TypeParam a(ROWS,COLS), expected(ROWS,COLS), result(ROWS,COLS);
 
 	a << 1, 2, 3, 4, 5;
 
@@ -463,12 +582,12 @@ TYPED_TEST(VectorTypedTest, VectorScalarTraitsArithmetic) {
 	EXPECT_TRUE(expected.isApprox(result));
 }
 
-TYPED_TEST(VectorTypedTest, OstreamOperator) {
+TYPED_TEST(MatrixTypedTest, OstreamOperator) {
 	this->a.setConstant(0);
 	std::stringstream ss;
 	ss << this->a;
 	EXPECT_EQ("[0, 0, 0, 0, 0]", ss.str());
 }
-
+*/
 
 }

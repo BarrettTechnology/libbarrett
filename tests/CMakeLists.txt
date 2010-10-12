@@ -16,6 +16,7 @@ set(tests_SOURCES
 	math/spline.cpp
 	math/traits.cpp
 	math/utils.cpp
+	math/vector.cpp
 
 	systems/abstract/controller.cpp
 	systems/abstract/execution_manager.cpp
