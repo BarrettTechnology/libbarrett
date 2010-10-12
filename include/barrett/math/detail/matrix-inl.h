@@ -197,17 +197,7 @@ template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyFrom(const gsl_type* gslType)
 throw(std::logic_error)
 {
-	if (gslType->size != static_cast<size_t>(this->size())) {
-		std::stringstream ss;
-		ss << "(math::Matrix<>::copyFrom(gsl_type*)): The size of the "
-				"gsl_type must match the size of the Matrix. Expected size "
-				<< this->size() << ", got size " << gslType->size;
-		throw std::logic_error(ss.str());
-	}
-
-	for (int i = 0; i < this->size(); ++i) {
-		(*this)[i] = gsl_vector_get(gslType, i);
-	}
+	copyFromHelper(gslType);
 }
 
 template<int R, int C, typename Units>
@@ -268,7 +258,6 @@ inline void Matrix<R,C, Units>::initGslType(gsl_matrix* g)
 	g->owner = 0;
 }
 
-
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::resizeToMatchIfDynamic(const gsl_vector* g)
 {
@@ -279,6 +268,42 @@ inline void Matrix<R,C, Units>::resizeToMatchIfDynamic(const gsl_matrix* g)
 {
 	resizeIfDynamic(g->size1, g->size2);
 }
+
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::copyFromHelper(const gsl_vector* g)
+{
+	if (g->size != static_cast<size_t>(this->size())) {
+		std::stringstream ss;
+		ss << "(math::Matrix<>::copyFrom(gsl_vector*)): The size of the "
+				"gsl_vector must match the size of the Matrix. Expected size "
+				<< this->size() << ", got size " << g->size;
+		throw std::logic_error(ss.str());
+	}
+
+	for (int i = 0; i < this->size(); ++i) {
+		(*this)[i] = gsl_vector_get(g, i);
+	}
+}
+template<int R, int C, typename Units>
+void Matrix<R,C, Units>::copyFromHelper(const gsl_matrix* g)
+{
+	if (g->size1 != static_cast<size_t>(this->rows())
+			||  g->size2 != static_cast<size_t>(this->cols())) {
+		std::stringstream ss;
+		ss << "(math::Matrix<>::copyFrom(gsl_matrix*)): The size of the "
+				"gsl_matrix must match the size of the Matrix. Expected size "
+				<< this->rows() << "x" << this->cols() << ", got size "
+				<< g->size1 << "x" << g->size2;
+		throw std::logic_error(ss.str());
+	}
+
+	for (int i = 0; i < this->rows(); ++i) {
+		for (int j = 0; j < this->cols(); ++j) {
+			(*this)(i,j) = gsl_matrix_get(g, i,j);
+		}
+	}
+}
+
 
 template<int R, int C, typename Units>
 std::ostream& operator<< (std::ostream& os, const Matrix<R,C, Units>& a) {
