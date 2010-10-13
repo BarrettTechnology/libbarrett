@@ -205,6 +205,7 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 #ifdef CANTYPE_SOCKET
    char devname[10];
    struct ifreq ifr;
+   struct can_filter recvFilter[1];
    struct sockaddr_can to_addr;
    nanosecs_rel_t timeout;
 
@@ -229,6 +230,15 @@ int bt_bus_can_create(struct bt_bus_can ** devptr, int port)
 		bt_bus_can_destroy(dev);
 		return -1;
    }
+
+	recvFilter[0].can_id =  0 | CAN_INV_FILTER;
+	recvFilter[0].can_mask = 0x3e0;
+	err = rt_dev_setsockopt(dev->dev->handle, SOL_CAN_RAW, CAN_RAW_FILTER, &recvFilter, sizeof(recvFilter));
+	if (err < 0) {
+		syslog(LOG_ERR, "rt_dev_setsockopt(CAN_RAW_FILTER): %s\n", strerror(-err));
+	    bt_bus_can_destroy(dev);
+	    return -1;
+	}
 
    memset(&to_addr, 0, sizeof(to_addr));
    to_addr.can_ifindex = ifr.ifr_ifindex;
