@@ -14,6 +14,7 @@
 #include <cstring>
 
 #include <boost/circular_buffer.hpp>
+#include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/thread/abstract/mutex.h>
@@ -36,6 +37,7 @@ public:
 	void deletePuck(Puck* p);
 
 //	const CommunicationsBus& getBus() const { return bus; }
+	libconfig::Config& getConfig() { return config; }
 
 	virtual thread::Mutex& getMutex() const { return bus.getMutex(); }
 
@@ -56,6 +58,7 @@ protected:
 	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
+	libconfig::Config config;
 	CommunicationsBus& bus;
 	std::vector<Puck*> pucks;
 

@@ -30,7 +30,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	bus(actualBus), pucks(), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -56,7 +56,6 @@ BusManager::BusManager(const char* configFile) :
 	chdir(configDir);
 
 	try {
-		libconfig::Config config;
 		config.readFile(configBase);
 		bus.open(config.lookup("bus.port"));
 	} catch (libconfig::ParseException pe) {
@@ -112,7 +111,7 @@ void BusManager::enumerate()
 			if (lastId != id - 1  &&  lastId != -1) {
 				syslog(LOG_ERR, "  --");  // marker to indicate that the listed IDs are not contiguous
 			}
-			syslog(LOG_ERR, "  ID=%2d,VERS=%3d,ROLE=0x%04x,TYPE=%s%s",
+			syslog(LOG_ERR, "  ID=%2d VERS=%3d ROLE=0x%04x TYPE=%s%s",
 					p->getId(), p->getVers(), p->getRole(),
 					Puck::getPuckTypeStr(p->getType()),
 					(p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
