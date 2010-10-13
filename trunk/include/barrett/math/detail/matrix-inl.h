@@ -353,18 +353,24 @@ void Matrix<R,C, Units>::copyFromHelper(const gsl_matrix* g)
 
 template<int R, int C, typename Units>
 std::ostream& operator<< (std::ostream& os, const Matrix<R,C, Units>& a) {
-	os << "[";
+	bool isVector = a.isVector();
+	int maxRowIndex = a.rows() - 1;
+	int maxColIndex = a.cols() - 1;
 
-	// TODO(dc): Make separate vector/matrix formats.
-	int maxIndex = a.size() - 1;
-	for (int i = 0; i <= maxIndex; ++i) {
-		os << a[i];
-		if (i != maxIndex) {
-			os << ", ";
+	os << "[";
+	for (int i = 0; i < a.rows(); ++i) {
+		for (int j = 0; j < a.cols(); ++j) {
+			os << a(i,j);
+			if ((isVector && i != maxRowIndex)  ||  j != maxColIndex) {
+				os << ", ";
+			}
+		}
+		if (!isVector  &&  i != maxRowIndex) {
+			os << "\n ";
 		}
 	}
-
 	os << "]";
+
 	return os;
 }
 
