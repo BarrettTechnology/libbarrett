@@ -62,6 +62,7 @@
 
 
 #define BARRETT_UNITS_TYPEDEFS(dimension)  \
+	typedef ::barrett::math::Matrix<dimension,dimension> sqm_type;  \
 	typedef ::barrett::math::Vector<dimension>::type v_type;  \
 	typedef ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef ::barrett::units::JointPositions<dimension>::type jp_type;  \
@@ -70,6 +71,7 @@
 	typedef ::barrett::units::CartesianPosition::type cp_type
 
 #define BARRETT_UNITS_TEMPLATE_TYPEDEFS(dimension)  \
+	typedef ::barrett::math::Matrix<dimension,dimension> sqm_type;  \
 	typedef typename ::barrett::math::Vector<dimension>::type v_type;  \
 	typedef typename ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef typename ::barrett::units::JointPositions<dimension>::type jp_type;  \
