@@ -67,6 +67,9 @@ public:
 	double counts2rad(int counts) const { return radsPerCount * counts; }
 	int rad2counts(double rad) const { return floor(countsPerRad * rad); }
 
+
+	static const int PUCKS_PER_TORQUE_GROUP = 4;
+
 protected:
 	Puck* p;
 
@@ -80,13 +83,14 @@ class LLW {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	LLW(const std::vector<Puck*>& normalPucks, Puck* _safetyPuck, const libconfig::Setting& setting) :
-		pucks(DOF), safetyPuck(_safetyPuck), home(setting["home"]), j2mp(setting["j2mp"]), m2jp(), j2mt()
+	// normalPucks must be ordered by joint and must break into torque groups as arranged
+	LLW(const std::vector<Puck*>& genericPucks, Puck* _safetyPuck, const libconfig::Setting& setting, const std::vector<int>& torqueGroupIds = std::vector<int>()) :
+		pucks(DOF), groups(), safetyPuck(_safetyPuck), home(setting["home"]), j2mp(setting["j2mp"])
 	{
 		syslog(LOG_ERR, "LLW::LLW(%s => \"%s\")", setting.getSourceFile(), setting.getPath().c_str());
 
 		// Check number of Pucks
-		if (normalPucks.size() != DOF) {
+		if (genericPucks.size() != DOF) {
 			syslog(LOG_ERR, "  Expected a vector of %d Pucks, got %d", DOF, pucks.size());
 			throw std::invalid_argument("LLW::LLW(): Wrong number of Pucks. Check /var/log/syslog for details.");
 		}
@@ -108,9 +112,21 @@ public:
 
 
 		// Initialize WamPucks
-		Puck::wake(normalPucks);  // Make sure Pucks are awake
+		Puck::wake(genericPucks);  // Make sure Pucks are awake
 		for (size_t i = 0; i < DOF; ++i) {
-			pucks[i].setPuck(normalPucks[i]);
+			pucks[i].setPuck(genericPucks[i]);
+		}
+
+		// Setup PuckGroups
+		// If no IDs are provided, use the defaults
+		if (torqueGroupIds.size() == 0) {
+			torqueGroupIds.push_back(PuckGroup::BGRP_LOWER_WAM);
+			torqueGroupIds.push_back(PuckGroup::BGRP_UPPER_WAM);
+		}
+		int numTorqueGroups = ceil(static_cast<double>(DOF)/WamPuck::PUCKS_PER_TORQUE_GROUP);
+		if (numTorqueGroups > torqueGroupIds.size()) {
+			syslog(LOG_ERR, "  Need %d torque groups, only %d IDs provided", numTorqueGroups, torqueGroupIds.size());
+			throw std::logic_error("LLW::LLW(): Too few torque group IDs provided. Check /var/log/syslog for details.");
 		}
 
 		// Zero the WAM?
@@ -172,7 +188,7 @@ public:
 	~LLW() {}
 
 	// TODO(dc): test
-	void definePosition(jp_type jp) {
+	void definePosition(const jp_type& jp) {
 		v_type mp = j2mp * jp;  // Convert from joint space to motor space
 
 		// Tell the safety logic to ignore the next several faults
@@ -192,12 +208,24 @@ public:
 		}
 	}
 
+	void update() {
+
+	}
+
+	void setTorques(const jt_type& jt) {
+
+	}
+
 protected:
 	std::vector<WamPuck> pucks;
+	std::vector<PuckGroup*> groups;
 	Puck* safetyPuck;
 
 	jp_type home;
 	sqm_type j2mp, m2jp, j2mt;
+
+	jp_type jp, jp_1;
+	jv_type jv;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(LLW);

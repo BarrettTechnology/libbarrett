@@ -5,33 +5,59 @@
  *      Author: dc
  */
 
+#include <iostream>
 #include <cstdio>
 #include <vector>
 
+#include <barrett/exception.h>
 #include <barrett/bus/bus_manager.h>
+#include <barrett/puck.h>
+#include <barrett/puck_group.h>
+
+#include "llw.h"
 
 
 using namespace barrett;
 
 
 int main() {
+	installExceptionHandler();
+
 	BusManager bm;
-	bm.enumerate();
+//	bm.enumerate();
 
-	printf("Pucks found on bus:\n");
-	const std::vector<Puck*>& pucks = bm.getPucks();
-	for (size_t i = 0; i < pucks.size(); ++i) {
-		if (i > 0  &&  pucks[i]->getId() - 1 != pucks[i-1]->getId()) {
-			printf("  --\n");
-		}
-		printf("  ID=%2d,VERS=%3d,ROLE=0x%04x,TYPE=%s%s\n",
-				pucks[i]->getId(), pucks[i]->getVers(), pucks[i]->getRole(),
-				Puck::getPuckTypeStr(pucks[i]->getType()),
-				(pucks[i]->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
-	}
+//	printf("Pucks found on bus:\n");
+//	const std::vector<Puck*>& pucks = bm.getPucks();
+//	for (size_t i = 0; i < pucks.size(); ++i) {
+//		if (i > 0  &&  pucks[i]->getId() - 1 != pucks[i-1]->getId()) {
+//			printf("  --\n");
+//		}
+//		printf("  ID=%2d,VERS=%3d,ROLE=0x%04x,TYPE=%s%s\n",
+//				pucks[i]->getId(), pucks[i]->getVers(), pucks[i]->getRole(),
+//				Puck::getPuckTypeStr(pucks[i]->getType()),
+//				(pucks[i]->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
+//		printf("  %d, %d, %d, %d\n", pucks[i]->getProperty(Puck::GRPA), pucks[i]->getProperty(Puck::GRPB), pucks[i]->getProperty(Puck::GRPC), pucks[i]->getProperty(Puck::TSTOP));
+//	}
 
-//	pucks[0]->wake();
-	Puck::wake(pucks);
+//	Puck::wake(pucks);
+
+//	PuckGroup pg(PuckGroup::BGRP_BHAND, pucks);
+//	printf("%d\n", pg.verifyProperty(Puck::TSTOP));
+//	pg.setProperty(Puck::TSTOP, pucks[0]->getProperty(Puck::TSTOP) + 1);
+//	usleep(1000);
+//	pg.getProperty(Puck::TSTOP);
+////	Puck::sendGetPropertyRequest(bm, PuckGroup::BGRP_BHAND, pucks[0]->getPropertyId(Puck::TSTOP));
+//	sleep(2);
+
+
+	std::vector<Puck*> wamPucks;
+	wamPucks.push_back(bm.getPuck(1));
+	wamPucks.push_back(bm.getPuck(2));
+	wamPucks.push_back(bm.getPuck(3));
+	wamPucks.push_back(bm.getPuck(4));
+
+	LLW<4> wam(wamPucks, NULL, bm.getConfig().lookup("wam4.low_level"));
+
 
 	return 0;
 }
