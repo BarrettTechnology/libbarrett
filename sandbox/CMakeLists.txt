@@ -17,6 +17,7 @@ set(programs
 	cartesian_hold
 	friction_data
 	hand_feedback
+	hand_motor_control_stress_test
 	haptics
 	high_level_wam
 	load_ft_cal
