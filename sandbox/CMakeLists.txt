@@ -16,6 +16,7 @@ set(programs
 	can_terminal
 	cartesian_hold
 	friction_data
+	gimbals_hand_controller
 	hand_feedback
 	hand_motor_control_stress_test
 	haptics
