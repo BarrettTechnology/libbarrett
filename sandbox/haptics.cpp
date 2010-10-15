@@ -27,6 +27,7 @@
 #include <barrett/systems/haptic_ball.h>
 #include <barrett/systems/haptic_box.h>
 #include <barrett/wam.h>
+#include <barrett/cdlbt/bus.h>
 
 #include "network_haptics.h"
 
@@ -135,12 +136,12 @@ int main(int argc, char** argv) {
 	systems::Callback<boost::tuple<units::CartesianForce::type, double>, units::CartesianForce::type> mult(scale);
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 
-	jt_type jtLimits(25);
+	jt_type jtLimits(35.0);
 //	jtLimits << 25, 25, 25, 25;
 	systems::Callback<jt_type> jtSat(bind(saturateJt, _1, jtLimits));
 
 
-	cvFilt.setLowPass(units::CartesianPosition::type(30), units::CartesianPosition::type(1));
+	cvFilt.setLowPass(units::CartesianPosition::type(30.0), units::CartesianPosition::type(1.0));
 	comp.setKp(3e3);
 	comp.setKd(3e1);
 
@@ -174,6 +175,7 @@ int main(int argc, char** argv) {
 
 
 	// start the main loop!
+	bt_bus_set_property(wam.wam.wambot->bus, BT_BUS_PUCK_ID_WAMSAFETY, wam.wam.wambot->bus->p->VL2, (int)(1.5*0x1000));
 	rtem.start();
 
 	std::cout << "Press [Enter] to compensate for gravity.\n";
