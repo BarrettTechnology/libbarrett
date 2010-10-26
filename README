@@ -23,5 +23,7 @@ libbarrett is documented using in-code doxygen comments. doxygen (http://www.sta
 
 **** Eclipse projects ****
 
-It is possible to use CMake to generate several output formats, including Eclipse CTD4 project files. See http://www.paraview.org/Wiki/Eclipse_CDT4_Generator for details.
+It is possible to use CMake to generate several output formats, including Eclipse CTD4 project files. (See http://www.paraview.org/Wiki/Eclipse_CDT4_Generator for details.) From this directory, run:
+	cmake . -G"Eclipse CDT4 - Unix Makefiles"
+Then import the generated project into your Eclipse workspace using File -> Import -> General -> "Existing Projects into Workspace".
 

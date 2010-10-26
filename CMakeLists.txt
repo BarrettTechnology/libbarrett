@@ -25,33 +25,38 @@ include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 ### Options
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
+option(NON_REALTIME "Set to on to avoid building code that depends on a real-time operating system (NOT FULLY IMPLEMENTED YET)" OFF)
 
 
 
 ### Dependencies
 
-## Xenomai
-# TODO(dc): make into a finder?
-set(Xeno_TARGETVERSION "2.5")
+if (NON_REALTIME)
+	message(STATUS "NON_REALTIME: Not using Xeonmai")
+else()
+	## Xenomai
+	# TODO(dc): make into a finder?
+	set(Xeno_TARGETVERSION "2.5")
 
-find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
-if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
-	message(FATAL_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
+	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
+	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
+		message(FATAL_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
+	endif()
+
+	execute_process(COMMAND ${Xeno_CONFIGEXE} --version OUTPUT_VARIABLE Xeno_VERSION)
+	string(STRIP ${Xeno_VERSION} Xeno_VERSION)
+	string(SUBSTRING ${Xeno_VERSION} 0 4 Xeno_SHORTVERSION)
+	if (NOT (${Xeno_SHORTVERSION} VERSION_EQUAL ${Xeno_TARGETVERSION}))
+		message(FATAL_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
+	endif()
+
+	execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --cflags OUTPUT_VARIABLE Xeno_CFLAGS)
+	string(STRIP ${Xeno_CFLAGS} Xeno_CFLAGS)
+	execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --ldflags OUTPUT_VARIABLE Xeno_LDFLAGS)
+	string(STRIP ${Xeno_LDFLAGS} Xeno_LDFLAGS)
+
+	message(STATUS "Xeonmai version: ${Xeno_VERSION} (${Xeno_CONFIGEXE})")
 endif()
-
-execute_process(COMMAND ${Xeno_CONFIGEXE} --version OUTPUT_VARIABLE Xeno_VERSION)
-string(STRIP ${Xeno_VERSION} Xeno_VERSION)
-string(SUBSTRING ${Xeno_VERSION} 0 4 Xeno_SHORTVERSION)
-if (NOT (${Xeno_SHORTVERSION} VERSION_EQUAL ${Xeno_TARGETVERSION}))
-	message(FATAL_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
-endif()
-
-execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --cflags OUTPUT_VARIABLE Xeno_CFLAGS)
-string(STRIP ${Xeno_CFLAGS} Xeno_CFLAGS)
-execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --ldflags OUTPUT_VARIABLE Xeno_LDFLAGS)
-string(STRIP ${Xeno_LDFLAGS} Xeno_LDFLAGS)
-
-message(STATUS "Xeonmai version: ${Xeno_VERSION} (${Xeno_CONFIGEXE})")
 
 
 ## GSL
