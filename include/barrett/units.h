@@ -21,7 +21,7 @@
 	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
 */
 
-/** Master header for the barrett::units module.
+/** Includes all members of the barrett::units namespace.
  *
  * @file units.h
  * @date Oct 16, 2009
