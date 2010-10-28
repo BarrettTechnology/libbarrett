@@ -36,24 +36,7 @@ Puck::~Puck()
 
 void Puck::wake()
 {
-	updateStatus();
-	if (effectiveType == PT_Monitor) {
-		setProperty(STAT, STATUS_READY);
-		usleep(300000);
-
-		int stat;
-		bool successful;
-		do {
-			usleep(100000);
-			stat = tryGetProperty(STAT, &successful);
-		} while (!successful);
-
-		if (stat != STATUS_READY) {
-			syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, id, stat);
-			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
-		}
-		updateStatus();
-	}
+	wake(std::vector<Puck*>(1, this));
 }
 
 void Puck::updateRole()
