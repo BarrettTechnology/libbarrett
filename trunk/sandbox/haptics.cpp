@@ -122,10 +122,10 @@ int main(int argc, char** argv) {
 	systems::Callback<units::CartesianPosition::type, units::CartesianForce::type> cvLimit(limitCv);
 	systems::Summer<units::CartesianForce::type> tfSum;
 
-	center << 0.5,-.3,0;
+	center << 0.4,-.3,0;
 	systems::HapticBall ball(center, 0.2);
-	center << 0.5,0.4,0;
-	systems::HapticBox box(center, .4,.4,.4);
+	center << 0.35,0.4,0;
+	systems::HapticBox box(center, .3,.3,.3);
 
 	systems::Summer<units::CartesianForce::type> dirSum;
 	systems::Summer<double> depthSum;
