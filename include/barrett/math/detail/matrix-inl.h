@@ -209,7 +209,7 @@ inline void Matrix<R,C, Units>::copyFrom(const libconfig::Setting& setting)
 
 		if (setting[0].isNumber()) {  // if setting is a row vector
 			for (int i = 0; i < this->size(); ++i) {
-				(*this)[i] = detail::numericToDouble(setting[i]);
+				(*this)[i] = barrett::detail::numericToDouble(setting[i]);
 			}
 			return;
 		}  // else setting is a column vector or a matrix
@@ -235,7 +235,7 @@ inline void Matrix<R,C, Units>::copyFrom(const libconfig::Setting& setting)
 			throw std::runtime_error(ss.str());
 		}
 		for (int j = 0; j < this->cols(); ++j) {
-			(*this)(i,j) = detail::numericToDouble(setting[i][j]);
+			(*this)(i,j) = barrett::detail::numericToDouble(setting[i][j]);
 		}
 	}
 }
