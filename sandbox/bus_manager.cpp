@@ -17,14 +17,17 @@
 #include "llw.h"
 
 
+const size_t DOF = 4;
+
 using namespace barrett;
+BARRETT_UNITS_TYPEDEFS(DOF);
 
 
 int main() {
 	installExceptionHandler();
 
 	BusManager bm;
-//	bm.enumerate();
+	bm.enumerate();
 
 //	printf("Pucks found on bus:\n");
 //	const std::vector<Puck*>& pucks = bm.getPucks();
@@ -56,8 +59,15 @@ int main() {
 	wamPucks.push_back(bm.getPuck(3));
 	wamPucks.push_back(bm.getPuck(4));
 
-	LLW<4> wam(wamPucks, NULL, bm.getConfig().lookup("wam4.low_level"));
+	LLW<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam.low_level"));
 
+	jt_type jt;
+
+	jt << 1, 0, 0, 0;
+	wam.setTorques(jt);
+	sleep(1);
+	jt << 0, 0, 0, 0;
+	wam.setTorques(jt);
 
 	return 0;
 }
