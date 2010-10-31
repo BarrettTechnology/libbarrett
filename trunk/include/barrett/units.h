@@ -39,7 +39,7 @@
  * particular WAM) 7-element arrays of \c doubles, they represent two different quantities. They are not interchangeable. They have different %units. A
  * user might want to design a joint-space position
  * controller and a joint-space velocity controller for the WAM. If the joint position output of the barrett::Wam were to be connected to the velocity
- * controller's feedback input, it would almost certainly be a programmer error. If such a program were run, the robot would not behave as intendend and
+ * controller's feedback input, it would almost certainly be a programmer error. If such a program were run, the robot would not behave as intended and
  * finding the bug could be difficult and time-consuming.
  *
  * Adding a notion of %units to our vectors (units::JointPositions::type, units::JointVelocities::type, etc.) allows us to:
