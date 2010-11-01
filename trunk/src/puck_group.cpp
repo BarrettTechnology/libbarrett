@@ -29,12 +29,12 @@ PuckGroup::~PuckGroup()
 
 bool PuckGroup::verifyProperty(enum Puck::Property prop) const
 {
-	int propId = getPropertyIdNoThrow(prop);
+	int propId = getPropertyIdNoThrow(prop);  // Checks the 1st Puck
 
 	if (propId == -1) {
 		return false;
 	}
-	for (size_t i = 1; i < numPucks(); ++i) {
+	for (size_t i = 1; i < numPucks(); ++i) {  // Checks the rest of the Pucks
 		if (pucks[i]->getPropertyIdNoThrow(prop) != propId) {
 			return false;
 		}
