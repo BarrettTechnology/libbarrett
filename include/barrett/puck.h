@@ -39,16 +39,16 @@ public:
 	Puck(const CommunicationsBus& bus, int id);
 	~Puck();
 
-	void wake();// { wake(bus, id); }
+	void wake();
 
-	int getProperty(enum Property prop) const {
-		return getProperty(bus, id, getPropertyId(prop));
-	}
-	int tryGetProperty(enum Property prop, bool* successful,
-			int timeout_us = 1000) const {
-		return tryGetProperty(bus, id, getPropertyId(prop),
-				successful, timeout_us);
-	}
+	int getProperty(enum Property prop) const;
+	int tryGetProperty(enum Property prop, bool* successful, int timeout_us = 1000) const;
+
+	template<typename Parser> typename Parser::result_type
+		getProperty(enum Property prop) const;
+	template<typename Parser> typename Parser::result_type
+		tryGetProperty(enum Property prop, bool* successful, int timeout_us = 1000) const;
+
 	void setProperty(enum Property prop, int value) const {
 		setProperty(bus, id, getPropertyId(prop), value);
 	}
@@ -78,14 +78,21 @@ public:
 	static void wake(Container<Puck*> pucks);
 
 	static int getProperty(const CommunicationsBus& bus, int id, int propId);
+	template<typename Parser> static typename Parser::result_type getProperty(
+			const CommunicationsBus& bus, int id, int propId);
 	static int tryGetProperty(const CommunicationsBus& bus, int id, int propId,
 			bool* successful, int timeout_us = 1000);
+	template<typename Parser> static typename Parser::result_type tryGetProperty(
+			const CommunicationsBus& bus, int id, int propId, bool* successful,
+			int timeout_us = 1000);
 	static void setProperty(const CommunicationsBus& bus, int id, int propId,
 			int value);
 
 	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId);
-	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
-			bool blocking, bool* successful);
+//	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
+//			bool blocking, int* retCode);
+	template<typename Parser> static typename Parser::result_type receiveGetPropertyReply(
+			const CommunicationsBus& bus, int id, int propId, bool blocking, int* retCode);
 
 	static bool respondsToProperty(enum Property prop, enum PuckType pt, int fwVers) {
 		return getPropertyIdNoThrow(prop, pt, fwVers) != -1;
@@ -126,6 +133,15 @@ public:
 
 	static const int WAKE_UP_TIME = 1000000;  // microseconds
 
+
+	struct StandardParser {
+		static int busId(int id, int propId);
+
+		typedef int result_type;
+		static result_type parse(int id, int propId, const unsigned char* data, size_t len);
+	};
+
+
 protected:
 	// From puck2:PARSE.H
 	enum {
@@ -148,8 +164,9 @@ protected:
 	enum PuckType type, effectiveType;
 
 private:
-	static int getPropertyHelper(const CommunicationsBus& bus, int id, int propId,
-			bool blocking, bool* successful, int timeout_us);
+	template<typename Parser>
+	static typename Parser::result_type getPropertyHelper(const CommunicationsBus& bus,
+			int id, int propId, bool blocking, int* retCode, int timeout_us);
 
 	static const char puckTypeStrs[][12];
 };

@@ -31,6 +31,9 @@ public:
 	bool verifyProperty(enum Puck::Property prop) const;
 
 	std::vector<int> getProperty(enum Puck::Property prop) const;
+	template<typename Parser> std::vector<typename Parser::result_type>
+			getProperty(enum Puck::Property prop) const;
+
 	void setProperty(enum Puck::Property prop, int value) const;
 
 	int getPropertyId(enum Puck::Property prop) const {
@@ -76,6 +79,10 @@ protected:
 
 
 }
+
+
+// include template definitions
+#include <barrett/detail/puck_group-inl.h>
 
 
 #endif /* BARRETT_PUCK_GROUP_H_ */
