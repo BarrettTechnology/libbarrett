@@ -247,6 +247,7 @@ public:
 
 
 		// Compute puck/joint transforms
+		// (See DC notebook 1p25)
 		v_type cpr;
 		for (size_t i = 0; i < DOF; ++i) {
 			cpr[i] = pucks[i].getCountsPerRad();
@@ -257,7 +258,7 @@ public:
 		for (size_t i = 0; i < DOF; ++i) {
 			rpc[i] = pucks[i].getRadsPerCount();
 		}
-		p2jp = rpc.asDiagonal() * m2jp;
+		p2jp = m2jp * rpc.asDiagonal();
 
 		v_type ipnm;
 		for (size_t i = 0; i < DOF; ++i) {
