@@ -29,7 +29,7 @@ PuckGroup::~PuckGroup()
 
 bool PuckGroup::verifyProperty(enum Puck::Property prop) const
 {
-	int propId = getPropertyIdNoThrow(prop);  // Checks the 1st Puck
+	int propId = getPropertyIdNoThrow(prop);  // Checks the first Puck
 
 	if (propId == -1) {
 		return false;

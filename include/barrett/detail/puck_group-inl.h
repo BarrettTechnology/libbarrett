@@ -8,12 +8,11 @@
 namespace barrett {
 
 
-inline std::vector<int> PuckGroup::getProperty(enum Puck::Property prop) const
+inline void PuckGroup::getProperty(enum Puck::Property prop, int* values) const
 {
-	return getProperty<Puck::StandardParser>(prop);
+	getProperty<Puck::StandardParser>(prop, values);
 }
-template<typename Parser> std::vector<typename Parser::result_type>
-		PuckGroup::getProperty(enum Puck::Property prop) const
+template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type* values) const
 {
 	int ret;
 	int propId = getPropertyId(prop);
@@ -24,7 +23,6 @@ template<typename Parser> std::vector<typename Parser::result_type>
 		throw std::runtime_error("PuckGroup::getProperty(): Failed to send request. Check /var/log/syslog for details.");
 	}
 
-	std::vector<typename Parser::result_type> values(numPucks());
 	for (size_t i = 0; i < numPucks(); ++i) {
 		values[i] = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, true, &ret);
 		if (ret != 0) {
@@ -33,8 +31,6 @@ template<typename Parser> std::vector<typename Parser::result_type>
 			throw std::runtime_error("PuckGroup::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
 		}
 	}
-
-	return values;
 }
 
 inline void PuckGroup::setProperty(enum Puck::Property prop, int value) const
