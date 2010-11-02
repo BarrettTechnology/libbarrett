@@ -111,6 +111,49 @@ public:
 	static const size_t PUCKS_PER_TORQUE_GROUP = 4;
 	static const int MAX_PUCK_TORQUE = 8191;
 
+
+	struct PositionParser {
+		static int busId(int id, int propId) {
+			return Puck::encodeBusId(id, PuckGroup::FGRP_POSITION);
+		}
+
+		typedef double result_type;
+		static result_type parse(int id, int propId, const unsigned char* data, size_t len) {
+			bool err = false;
+			if (len != 3 && len != 6) {
+				syslog(
+						LOG_ERR,
+						"%s: expected message length of 3 or 6, got message length of %d",
+						__func__, len);
+				err = true;
+			}
+
+			// TODO(dc): Check with BZ about this formatting condition
+//			if ((data[0] & 0xc0) != 0) {
+//				syslog(LOG_ERR, "%s: expected the 2 MSBs of the first byte to be 0", __func__);
+//				err = true;
+//			}
+
+			if (err) {
+				throw std::runtime_error("WamPuck::PackedPositionParser::parse(): Unexpected "
+					"message. Check /var/log/syslog for details.");
+			}
+
+
+			int value = 0;
+			value |= ((long) data[0] << 16) & 0x003F0000;
+			value |= ((long) data[1] << 8) & 0x0000FF00;
+			value |= ((long) data[2]) & 0x000000FF;
+
+			if (value & 0x00200000) {  // If negative...
+				value |= 0xFFC00000; // sign-extend
+			}
+
+			return value;
+		}
+	};
+
+
 protected:
 	Puck* p;
 
@@ -128,7 +171,7 @@ class LLW {
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
 	LLW(const std::vector<Puck*>& genericPucks, Puck* _safetyPuck, const libconfig::Setting& setting, std::vector<int> torqueGroupIds = std::vector<int>()) :
-		bus(genericPucks[0]->getBus()), pucks(DOF), safetyPuck(_safetyPuck), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), torquePropId(-1)
+		bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyPuck(_safetyPuck), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), torquePropId(-1)
 	{
 		syslog(LOG_ERR, "LLW::LLW(%s => \"%s\")", setting.getSourceFile(), setting.getPath().c_str());
 
@@ -183,11 +226,24 @@ public:
 		}
 
 		// Verify properties
-		if (wamGroup.verifyProperty(Puck::T)) {
-			torquePropId = wamGroup.getPropertyId(Puck::T);
-		} else {
-			throw std::runtime_error("LLW::LLW(): WAM Pucks do not do not all have the same propId for the T property. Some Pucks might be a) in Monitor, b) have incompatible firmware versions, or c) have incompatible ROLEs.");
+		bool err = false;
+		std::vector<enum Puck::Property> props;
+		props.push_back(Puck::P);
+		props.push_back(Puck::T);
+		for (size_t i = 0; i < props.size(); ++i) {
+			if ( !wamGroup.verifyProperty(props[i]) ) {
+				err = true;
+				syslog(LOG_ERR, "  Incompatible property: %s", Puck::getPropertyStr(props[i]));
+			}
 		}
+		if (err) {
+			syslog(LOG_ERR, "  Some Pucks might...");
+			syslog(LOG_ERR, "    a) still be in Monitor");
+			syslog(LOG_ERR, "    b) have incompatible firmware versions");
+			syslog(LOG_ERR, "    c) have incompatible ROLEs");
+			throw std::runtime_error("LLW::LLW(): WAM Pucks have incompatible property lists. Check /var/log/syslog for details.");
+		}
+		torquePropId = wamGroup.getPropertyId(Puck::T);
 
 
 		// Compute puck/joint transforms
@@ -196,6 +252,12 @@ public:
 			cpr[i] = pucks[i].getCountsPerRad();
 		}
 		j2pp = cpr.asDiagonal() * j2mp;
+
+		v_type rpc;
+		for (size_t i = 0; i < DOF; ++i) {
+			rpc[i] = pucks[i].getRadsPerCount();
+		}
+		p2jp = rpc.asDiagonal() * m2jp;
 
 		v_type ipnm;
 		for (size_t i = 0; i < DOF; ++i) {
@@ -270,7 +332,7 @@ public:
 			safetyPuck->setProperty(Puck::IFAULT, 8);  // TODO(dc): Why 8?
 		}
 
-		v_type pp = j2pp * jp;  // Convert from joint positions to Puck positions
+		pp = j2pp * jp;  // Convert from joint positions to Puck positions
 		for (size_t i = 0; i < DOF; ++i) {
 			pucks[i].setProperty(Puck::P, floor(pp[i]));
 			usleep(1000);  // TODO(dc): necessary?
@@ -283,7 +345,9 @@ public:
 	}
 
 	void update() {
-
+		wamGroup.getProperty<WamPuck::PositionParser>(Puck::P, pp.data());
+		jp = p2jp * pp;  // Convert from Puck positions to join positions
+		std::cout << pp << jp << home << "\n";
 	}
 
 	void setTorques(const jt_type& jt) {
@@ -308,9 +372,10 @@ protected:
 
 	jp_type home;
 	sqm_type j2mp, m2jp, j2mt;
-	sqm_type j2pp, j2pt;
+	sqm_type j2pp, p2jp, j2pt;
 
-//	jp_type jp, jp_1;
+	v_type pp;
+	jp_type jp, jp_1;
 //	jv_type jv;
 
 	v_type pt;
