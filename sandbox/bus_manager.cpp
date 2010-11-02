@@ -64,9 +64,11 @@ int main() {
 	jt_type jt;
 
 	jt << 1, 0, 0, 0;
+	wam.update();
 	wam.setTorques(jt);
 	sleep(1);
 	jt << 0, 0, 0, 0;
+	wam.update();
 	wam.setTorques(jt);
 
 	return 0;
