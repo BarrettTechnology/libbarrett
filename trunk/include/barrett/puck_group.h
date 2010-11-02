@@ -30,9 +30,9 @@ public:
 
 	bool verifyProperty(enum Puck::Property prop) const;
 
-	std::vector<int> getProperty(enum Puck::Property prop) const;
-	template<typename Parser> std::vector<typename Parser::result_type>
-			getProperty(enum Puck::Property prop) const;
+	void getProperty(enum Puck::Property prop, int* values) const;
+	template<typename Parser> void getProperty(enum Puck::Property prop,
+			typename Parser::result_type* values) const;
 
 	void setProperty(enum Puck::Property prop, int value) const;
 

@@ -236,8 +236,8 @@ inline Puck::StandardParser::result_type Puck::StandardParser::parse(int id,
 	}
 
 	if (err) {
-		throw std::runtime_error("Puck::receiveGetPropertyReply(): Unexpected "
-				"message. Check /var/log/syslog for details.");
+		throw std::runtime_error("Puck::StandardParser::parse(): Unexpected "
+			"message. Check /var/log/syslog for details.");
 	}
 
 	int value = (data[len - 1] & 0x80) ? -1 : 0;
