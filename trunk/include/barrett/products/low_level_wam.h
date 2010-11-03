@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#include <native/timer.h>
+
 #include <libconfig.h++>
 
 #include <barrett/units.h>
@@ -34,9 +36,11 @@ public:
 			std::vector<int> torqueGroupIds = std::vector<int>());
 	~LowLevelWam();
 
+	const jp_type& getJointPositions() const { return jp; }
+	const jv_type& getJointVelocities() const { return jv; }
+
 	void update();
 	void setTorques(const jt_type& jt);
-
 	void definePosition(const jp_type& jp);
 
 protected:
