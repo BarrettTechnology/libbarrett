@@ -61,8 +61,10 @@ namespace systems {
 // TODO(dc): some of these members should be inline
 
 template<size_t DOF>
-Wam<DOF>::Wam(const libconfig::Setting& setting) :
-	wam(setting["low_level"]),
+Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+		const libconfig::Setting& setting,
+		std::vector<int> torqueGroupIds) :
+	llww(genericPucks, safetyPuck, setting["low_level"], torqueGroupIds),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),
@@ -80,11 +82,11 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 
 	jtSum(true),
 
-	input(jtSum.getInput(JT_INPUT)), jpOutput(wam.jpOutput), jvOutput(jvFilter.output),
+	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(jvFilter.output),
 
 	doneMoving(true)
 {
-	connect(wam.jpOutput, kinematicsBase.jpInput);
+	connect(llww.jpOutput, kinematicsBase.jpInput);
 	connect(jvOutput, kinematicsBase.jvInput);
 
 	connect(kinematicsBase.kinOutput, gravity.kinInput);
@@ -95,12 +97,12 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);
 
-	connect(wam.jvOutput, jvFilter.input);
+	connect(llww.jvOutput, jvFilter.input);
 
 	supervisoryController.registerConversion(makeIOConversion(
 			jtPassthrough.input, jtPassthrough.output));
 
-	connect(wam.jpOutput, jpController.feedbackInput);
+	connect(llww.jpOutput, jpController.feedbackInput);
 	supervisoryController.registerConversion(makeIOConversion(
 			jpController.referenceInput, jpController.controlOutput));
 
@@ -120,7 +122,7 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 			toController.referenceInput, toController.controlOutput));
 
 	connect(supervisoryController.output, jtSum.getInput(SC_INPUT));
-	connect(jtSum.output, wam.input);
+	connect(jtSum.output, llww.input);
 }
 
 template<size_t DOF>
@@ -136,35 +138,39 @@ void Wam<DOF>::trackReferenceSignal(System::Output<T>& referenceSignal)
 }
 
 template<size_t DOF>
-typename units::JointTorques<DOF>::type Wam<DOF>::getJointTorques()
+inline const typename Wam<DOF>::jp_type& Wam<DOF>::getHomePosition() const
 {
-	SCOPED_LOCK(gravity.getEmMutex());
-	return wam.input.getValue();
+	return llww.getLowLevelWam().getHomePosition();
 }
 
 template<size_t DOF>
-typename units::JointPositions<DOF>::type Wam<DOF>::getJointPositions()
+typename Wam<DOF>::jt_type Wam<DOF>::getJointTorques() const
 {
 	SCOPED_LOCK(gravity.getEmMutex());
-	return kinematicsBase.jpInput.getValue();
+	return llww.input.getValue();
 }
 
 template<size_t DOF>
-typename units::JointVelocities<DOF>::type Wam<DOF>::getJointVelocities()
+inline typename Wam<DOF>::jp_type Wam<DOF>::getJointPositions() const
 {
-	SCOPED_LOCK(gravity.getEmMutex());
-	return kinematicsBase.jvInput.getValue();
+	return llww.getLowLevelWam().getJointPositions();
 }
 
 template<size_t DOF>
-units::CartesianPosition::type Wam<DOF>::getToolPosition()
+inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
+{
+	return llww.getLowLevelWam().getJointVelocities();
+}
+
+template<size_t DOF>
+typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 {
 	SCOPED_LOCK(gravity.getEmMutex());
 	return tpController.feedbackInput.getValue();
 }
 
 template<size_t DOF>
-Eigen::Quaterniond Wam<DOF>::getToolOrientation()
+Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
 	SCOPED_LOCK(gravity.getEmMutex());
 	return toController.feedbackInput.getValue();
@@ -184,7 +190,7 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 template<size_t DOF>
 void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
-	moveTo(jp_type(wam.wambot->base.home), blocking, velocity, acceleration);
+	moveTo(getHomePosition(), blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
@@ -214,7 +220,7 @@ void Wam<DOF>::moveTo(const T& currentPos, const typename T::unitless_type& curr
 }
 
 template<size_t DOF>
-bool Wam<DOF>::moveIsDone()
+bool Wam<DOF>::moveIsDone() const
 {
 	return doneMoving;
 }
