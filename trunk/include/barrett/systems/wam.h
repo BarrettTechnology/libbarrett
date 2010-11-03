@@ -28,8 +28,8 @@
  */
 
 
-#ifndef BARRETT_WAM_H_
-#define BARRETT_WAM_H_
+#ifndef BARRETT_SYSTEMS_WAM_H_
+#define BARRETT_SYSTEMS_WAM_H_
 
 
 #include <libconfig.h++>
@@ -42,6 +42,7 @@
 #include <barrett/systems/first_order_filter.h>
 #include <barrett/systems/converter.h>
 #include <barrett/systems/summer.h>
+#include <barrett/systems/gain.h>
 
 #include <barrett/systems/kinematics_base.h>
 #include <barrett/systems/gravity_compensator.h>
@@ -54,6 +55,7 @@
 
 
 namespace barrett {
+namespace systems {
 
 
 template<size_t DOF>
@@ -63,30 +65,30 @@ class Wam {
 public:
 
 	// these need to be before the IO references
-	systems::LowLevelWam<DOF> wam;
-	systems::KinematicsBase<DOF> kinematicsBase;
-	systems::GravityCompensator<DOF> gravity;
-	systems::FirstOrderFilter<jv_type> jvFilter;
-	systems::ToolPosition<DOF> toolPosition;
-	systems::ToolOrientation<DOF> toolOrientation;
+	LowLevelWam<DOF> wam;
+	KinematicsBase<DOF> kinematicsBase;
+	GravityCompensator<DOF> gravity;
+	FirstOrderFilter<jv_type> jvFilter;
+	ToolPosition<DOF> toolPosition;
+	ToolOrientation<DOF> toolOrientation;
 
-	systems::Converter<jt_type> supervisoryController;
-	systems::Gain<jt_type, double> jtPassthrough;
-	systems::PIDController<jp_type, jt_type> jpController;
-	systems::PIDController<jv_type, jt_type> jvController1;
-	systems::FirstOrderFilter<jt_type> jvController2;
-	systems::PIDController<units::CartesianPosition::type, units::CartesianForce::type> tpController;
-	systems::ToolForceToJointTorques<DOF> tf2jt;
-	systems::ToolOrientationController<DOF> toController;
+	Converter<jt_type> supervisoryController;
+	Gain<jt_type, double> jtPassthrough;
+	PIDController<jp_type, jt_type> jpController;
+	PIDController<jv_type, jt_type> jvController1;
+	FirstOrderFilter<jt_type> jvController2;
+	PIDController<units::CartesianPosition::type, units::CartesianForce::type> tpController;
+	ToolForceToJointTorques<DOF> tf2jt;
+	ToolOrientationController<DOF> toController;
 
-	systems::Summer<jt_type, 3> jtSum;
+	Summer<jt_type, 3> jtSum;
 	enum {JT_INPUT = 0, GRAVITY_INPUT, SC_INPUT};
 
 
 // IO
-public:		systems::System::Input<jt_type>& input;
-public:		systems::System::Output<jp_type>& jpOutput;
-public:		systems::System::Output<jv_type>& jvOutput;
+public:		System::Input<jt_type>& input;
+public:		System::Output<jp_type>& jpOutput;
+public:		System::Output<jv_type>& jvOutput;
 
 
 public:
@@ -94,7 +96,7 @@ public:
 	virtual ~Wam();
 
 	template<typename T>
-	void trackReferenceSignal(systems::System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
+	void trackReferenceSignal(System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
 
 	jt_type getJointTorques();
 	jp_type getJointPositions();
@@ -121,10 +123,11 @@ private:
 
 
 }
+}
 
 
 // include template definitions
-#include <barrett/detail/wam-inl.h>
+#include <barrett/systems/detail/wam-inl.h>
 
 
-#endif /* BARRETT_WAM_H_ */
+#endif /* BARRETT_SYSTEMS_WAM_H_ */

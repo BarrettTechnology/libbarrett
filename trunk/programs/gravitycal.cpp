@@ -21,7 +21,6 @@
 #include <barrett/cdlbt/calgrav.h>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
@@ -246,12 +245,12 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/barrett/wam7.conf");
+	config.readFile("/etc/barrett/wamg.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	systems::TupleGrouper<jt_type, jp_type> tg;
 	systems::Callback<boost::tuple<jt_type, jp_type>, int> muCallback(mu_callback, true);
 

@@ -11,10 +11,10 @@
 
 #include <barrett/exception.h>
 #include <barrett/bus/bus_manager.h>
-#include <barrett/puck.h>
-#include <barrett/puck_group.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/puck_group.h>
 
-#include "llw.h"
+#include <barrett/products/low_level_wam.h>
 #include <signal.h>
 #include <native/task.h>
 #include <boost/thread.hpp>
@@ -35,7 +35,7 @@ void warnOnSwitchToSecondaryMode(int)
 }
 
 
-void wamControl(LLW<DOF>* wam) {
+void wamControl(LowLevelWam<DOF>* wam) {
 	jt_type jt(0.0);
 
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
@@ -89,7 +89,7 @@ int main() {
 	wamPucks.push_back(bm.getPuck(3));
 	wamPucks.push_back(bm.getPuck(4));
 
-	LLW<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam.low_level"));
+	LowLevelWam<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam.low_level"));
 	boost::thread t(wamControl, &wam);
 
 	while (true) {

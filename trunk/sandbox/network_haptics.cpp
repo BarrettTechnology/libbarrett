@@ -9,7 +9,6 @@
 #include <string>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 #include "network_haptics.h"
 
@@ -43,7 +42,7 @@ int main(int argc, char** argv) {
 
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 	NetworkHaptics nh(argv[1]);
 

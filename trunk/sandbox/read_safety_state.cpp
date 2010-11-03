@@ -13,7 +13,6 @@
 #include <libconfig.h++>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 #include <barrett/cdlbt/bus.h>
 #include <barrett/cdlbt/bus_can.h>
 
@@ -86,7 +85,7 @@ int main() {
 
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 
 
 	// start the main loop!

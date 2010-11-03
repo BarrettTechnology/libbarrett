@@ -16,14 +16,12 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 //namespace log = barrett::log;
 namespace math = barrett::math;
 namespace systems = barrett::systems;
 namespace units = barrett::units;
-using barrett::Wam;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -51,7 +49,7 @@ int main(int argc, char** argv) {
 	systems::System::defaultExecutionManager = &rtem;
 
 
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 
 
 	// start the main loop!

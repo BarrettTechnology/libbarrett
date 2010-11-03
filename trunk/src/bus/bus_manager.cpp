@@ -21,7 +21,7 @@
 
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
-#include <barrett/puck.h>
+#include <barrett/products/puck.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/bus_manager.h>
 

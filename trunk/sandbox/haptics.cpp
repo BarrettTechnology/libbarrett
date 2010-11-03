@@ -24,9 +24,6 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/systems/haptic_ball.h>
-#include <barrett/systems/haptic_box.h>
-#include <barrett/wam.h>
 #include <barrett/cdlbt/bus.h>
 
 #include "network_haptics.h"
@@ -36,7 +33,6 @@
 namespace math = barrett::math;
 namespace systems = barrett::systems;
 namespace units = barrett::units;
-using barrett::Wam;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -117,7 +113,7 @@ int main(int argc, char** argv) {
 	units::CartesianPosition::type center;
 
     // instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	NetworkHaptics nh(argv[1]);
 	systems::Callback<units::CartesianPosition::type, units::CartesianForce::type> cvLimit(limitCv);
 	systems::Summer<units::CartesianForce::type> tfSum;

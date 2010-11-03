@@ -10,7 +10,6 @@
 #include <libconfig.h++>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
@@ -28,7 +27,7 @@ int main() {
 
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 
 
 	// start the main loop!

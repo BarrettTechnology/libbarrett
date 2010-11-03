@@ -16,7 +16,6 @@
 #include <barrett/cdlbt/bus_can.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 #include <barrett/detail/stacktrace.h>
 
 
@@ -71,7 +70,7 @@ int main() {
 
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	dev = wam.wam.wambot->bus->dev;
 
 

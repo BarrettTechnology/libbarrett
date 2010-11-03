@@ -40,6 +40,9 @@
 #define BARRETT_SYSTEMS_H_
 
 
+#include <barrett/systems/wam.h>
+#include <barrett/systems/low_level_wam.h>
+
 // other -- these operate on Systems, but are not Systems themselves
 #include <barrett/systems/helpers.h>
 #include <barrett/systems/manual_execution_manager.h>
@@ -65,6 +68,9 @@
 #include <barrett/systems/tool_orientation.h>
 #include <barrett/systems/tool_force_to_joint_torques.h>
 #include <barrett/systems/tool_orientation_controller.h>
+
+#include <barrett/systems/haptic_ball.h>
+#include <barrett/systems/haptic_box.h>
 
 #include <barrett/systems/summer.h>
 #include <barrett/systems/gain.h>

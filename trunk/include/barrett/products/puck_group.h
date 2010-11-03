@@ -5,14 +5,14 @@
  *      Author: dc
  */
 
-#ifndef BARRETT_PUCK_GROUP_H_
-#define BARRETT_PUCK_GROUP_H_
+#ifndef BARRETT_PRODUCTS_PUCK_GROUP_H_
+#define BARRETT_PRODUCTS_PUCK_GROUP_H_
 
 
 #include <vector>
 
 #include <barrett/bus/abstract/communications_bus.h>
-#include <barrett/puck.h>
+#include <barrett/products/puck.h>
 
 
 namespace barrett {
@@ -82,7 +82,7 @@ protected:
 
 
 // include template definitions
-#include <barrett/detail/puck_group-inl.h>
+#include <barrett/products/detail/puck_group-inl.h>
 
 
-#endif /* BARRETT_PUCK_GROUP_H_ */
+#endif /* BARRETT_PRODUCTS_PUCK_GROUP_H_ */

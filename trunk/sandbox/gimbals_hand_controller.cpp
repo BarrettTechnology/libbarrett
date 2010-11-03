@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #include <barrett/bus/bus_manager.h>
-#include <barrett/puck.h>
+#include <barrett/products/puck.h>
 
 
 using namespace barrett;
