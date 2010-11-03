@@ -6,15 +6,13 @@
  */
 
 
+#include <vector>
 #include <stdexcept>
-#include <sstream>
-
-#include <syslog.h>
 
 #include <libconfig.h++>
-#include <gsl/gsl_vector.h>
 
-#include <barrett/cdlbt/wambot_phys.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/low_level_wam.h>
 
 
 namespace barrett {
@@ -22,50 +20,30 @@ namespace systems {
 
 
 template<size_t DOF>
-LowLevelWam<DOF>::LowLevelWam(const libconfig::Setting& setting) :
+LowLevelWam<DOF>::LowLevelWam(
+		const std::vector<Puck*>& genericPucks,
+		Puck* safetyPuck,
+		const libconfig::Setting& setting,
+		std::vector<int> torqueGroupIds) :
+	barrett::LowLevelWam<DOF>(genericPucks, safetyPuck, setting, torqueGroupIds),
 	input(sink.input),
 	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
-	sink(this), source(this), wambot(NULL)
+	sink(this), source(this)
 {
-	// open the WAM
-	bt_wambot_phys_create(&wambot, setting.getCSetting(), 0 /* do zeroangle compensation */);
-	if (wambot == NULL) {
-		// TODO(dc): make better error messages
-		throw std::runtime_error(
-				"(systems::LowLevelWam::LowLevelWam()): Couldn't make WAM. "
-				"Check /var/log/syslog for more info.");
-	}
-	if (wambot->base.dof != DOF) {
-		bt_wambot_phys_destroy(wambot);
-
-		std::stringstream ss;
-		ss << "(systems::LowLevelWam::LowLevelWam()): Configuration doesn't "
-				"match. The code expects " << DOF << " DOF, configuration "
-				"specifies " << wambot->base.dof << " DOF.";
-		throw std::runtime_error(ss.str());
-	}
-}
-
-template<size_t DOF>
-LowLevelWam<DOF>::~LowLevelWam()
-{
-	bt_wambot_phys_destroy(wambot);
-	wambot = NULL;
 }
 
 template<size_t DOF>
 void LowLevelWam<DOF>::Sink::operate()
 {
-	this->input.getValue().copyTo(parent->wambot->base.jtorque);
-	bt_wambot_setjtor(&parent->wambot->base);
+	parent->setTorques(this->input.getValue());
 }
 
 template<size_t DOF>
 void LowLevelWam<DOF>::Source::operate()
 {
-	bt_wambot_update(&parent->wambot->base);
-	this->jpOutputValue->setValue(jp_type(parent->wambot->base.jposition));
-	this->jvOutputValue->setValue(jv_type(parent->wambot->base.jvelocity));
+	parent->update();
+	this->jpOutputValue->setValue(parent->getJointPositions());
+	this->jvOutputValue->setValue(parent->getJointVelocities());
 }
 
 

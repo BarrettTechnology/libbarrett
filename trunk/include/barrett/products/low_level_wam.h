@@ -36,6 +36,7 @@ public:
 			std::vector<int> torqueGroupIds = std::vector<int>());
 	~LowLevelWam();
 
+
 	const jp_type& getJointPositions() const { return jp; }
 	const jv_type& getJointVelocities() const { return jv; }
 

@@ -5,17 +5,13 @@ set(barrett_SOURCES
 	bus/can_socket.cpp
 	bus/communications_bus.cpp
 	
-	cdlbt/bus.c
-	cdlbt/bus_can.c
 	cdlbt/calgrav.c
 	cdlbt/dynamics.c
 	cdlbt/gsl.c
 	cdlbt/interp.c
 	cdlbt/kinematics.c
-	cdlbt/os.c
 	cdlbt/profile.c
 	cdlbt/spline.c
-	cdlbt/wambot_phys.c
 	
 	math/trapezoidal_velocity_profile.cpp
 
