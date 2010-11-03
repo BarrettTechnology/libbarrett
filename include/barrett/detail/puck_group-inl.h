@@ -8,11 +8,11 @@
 namespace barrett {
 
 
-inline void PuckGroup::getProperty(enum Puck::Property prop, int* values) const
+inline void PuckGroup::getProperty(enum Puck::Property prop, int* values, bool realtime) const
 {
-	getProperty<Puck::StandardParser>(prop, values);
+	getProperty<Puck::StandardParser>(prop, values, realtime);
 }
-template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type* values) const
+template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type* values, bool realtime) const
 {
 	int ret;
 	int propId = getPropertyId(prop);
@@ -24,7 +24,7 @@ template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, 
 	}
 
 	for (size_t i = 0; i < numPucks(); ++i) {
-		values[i] = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, true, &ret);
+		values[i] = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, true, realtime, &ret);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving message %d of %d for ID=%d.",
 					__func__, ret, i, numPucks(), pucks[i]->getId());
