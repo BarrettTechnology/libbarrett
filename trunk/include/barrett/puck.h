@@ -41,11 +41,11 @@ public:
 
 	void wake();
 
-	int getProperty(enum Property prop) const;
+	int getProperty(enum Property prop, bool realtime = false) const;
 	int tryGetProperty(enum Property prop, bool* successful, int timeout_us = 1000) const;
 
 	template<typename Parser> typename Parser::result_type
-		getProperty(enum Property prop) const;
+		getProperty(enum Property prop, bool realtime = false) const;
 	template<typename Parser> typename Parser::result_type
 		tryGetProperty(enum Property prop, bool* successful, int timeout_us = 1000) const;
 
@@ -77,9 +77,9 @@ public:
 	template<template<typename U, typename = std::allocator<U> > class Container>
 	static void wake(Container<Puck*> pucks);
 
-	static int getProperty(const CommunicationsBus& bus, int id, int propId);
+	static int getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime = false);
 	template<typename Parser> static typename Parser::result_type getProperty(
-			const CommunicationsBus& bus, int id, int propId);
+			const CommunicationsBus& bus, int id, int propId, bool realtime = false);
 	static int tryGetProperty(const CommunicationsBus& bus, int id, int propId,
 			bool* successful, int timeout_us = 1000);
 	template<typename Parser> static typename Parser::result_type tryGetProperty(
@@ -90,9 +90,9 @@ public:
 
 	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId);
 //	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
-//			bool blocking, int* retCode);
+//			bool blocking, bool realtime, int* retCode);
 	template<typename Parser> static typename Parser::result_type receiveGetPropertyReply(
-			const CommunicationsBus& bus, int id, int propId, bool blocking, int* retCode);
+			const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode);
 
 	static bool respondsToProperty(enum Property prop, enum PuckType pt, int fwVers) {
 		return getPropertyIdNoThrow(prop, pt, fwVers) != -1;
@@ -166,7 +166,7 @@ protected:
 private:
 	template<typename Parser>
 	static typename Parser::result_type getPropertyHelper(const CommunicationsBus& bus,
-			int id, int propId, bool blocking, int* retCode, int timeout_us);
+			int id, int propId, bool blocking, bool realtime, int* retCode, int timeout_us);
 
 	static const char puckTypeStrs[][12];
 };

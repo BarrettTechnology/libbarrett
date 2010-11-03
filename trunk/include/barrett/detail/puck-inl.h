@@ -11,16 +11,16 @@
 namespace barrett {
 
 
-inline int Puck::getProperty(enum Property prop) const {
-	return getProperty(bus, id, getPropertyId(prop));
+inline int Puck::getProperty(enum Property prop, bool realtime) const {
+	return getProperty(bus, id, getPropertyId(prop), realtime);
 }
 inline int Puck::tryGetProperty(enum Property prop, bool* successful, int timeout_us) const {
 	return tryGetProperty(bus, id, getPropertyId(prop), successful, timeout_us);
 }
 
 template<typename Parser>
-inline typename Parser::result_type Puck::getProperty(enum Property prop) const {
-	return getProperty<Parser> (bus, id, getPropertyId(prop));
+inline typename Parser::result_type Puck::getProperty(enum Property prop, bool realtime) const {
+	return getProperty<Parser> (bus, id, getPropertyId(prop), realtime);
 }
 template<typename Parser>
 inline typename Parser::result_type Puck::tryGetProperty(enum Property prop, bool* successful, int timeout_us) const {
@@ -92,16 +92,16 @@ void Puck::wake(Container<Puck*> pucks)
 	}
 }
 
-inline int Puck::getProperty(const CommunicationsBus& bus, int id, int propId)
+inline int Puck::getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime)
 {
-	return getProperty<StandardParser>(bus, id, propId);
+	return getProperty<StandardParser>(bus, id, propId, realtime);
 }
 // TODO(dc): throw exception if getProperty is called with a group ID?
 template<typename Parser>
-typename Parser::result_type Puck::getProperty(const CommunicationsBus& bus, int id, int propId)
+typename Parser::result_type Puck::getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime)
 {
 	int retCode;
-	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, true, &retCode, 0);
+	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, true, realtime, &retCode, 0);
 	if (retCode != 0) {
 		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, retCode);
 		throw std::runtime_error("Puck::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
@@ -117,7 +117,7 @@ template<typename Parser>
 typename Parser::result_type Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, bool* successful, int timeout_us)
 {
 	int retCode;
-	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, false, &retCode, timeout_us);
+	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, false, false, &retCode, timeout_us);
 	if (retCode == 0) {
 		*successful = true;
 	} else {
@@ -132,7 +132,7 @@ typename Parser::result_type Puck::tryGetProperty(const CommunicationsBus& bus, 
 }
 
 template<typename Parser>
-typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, bool blocking, int* retCode, int timeout_us)
+typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode, int timeout_us)
 {
 	*retCode = sendGetPropertyRequest(bus, id, propId);
 	if (*retCode != 0) {
@@ -144,7 +144,7 @@ typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bu
 		usleep(timeout_us);
 	}
 
-	return receiveGetPropertyReply<Parser>(bus, id, propId, blocking, retCode);
+	return receiveGetPropertyReply<Parser>(bus, id, propId, blocking, realtime, retCode);
 }
 
 inline void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, int value)
@@ -177,12 +177,12 @@ inline int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, in
 }
 
 template<typename Parser>
-typename Parser::result_type Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, int* retCode)
+typename Parser::result_type Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode)
 {
 	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t len;
 
-	*retCode = bus.receive(Parser::busId(id, propId), data, len, blocking);
+	*retCode = bus.receive(Parser::busId(id, propId), data, len, blocking, realtime);
 	if (*retCode) {
 		return typename Parser::result_type();
 	}
