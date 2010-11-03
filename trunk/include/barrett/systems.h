@@ -41,7 +41,7 @@
 
 
 #include <barrett/systems/wam.h>
-#include <barrett/systems/low_level_wam.h>
+#include <barrett/systems/low_level_wam_wrapper.h>
 
 // other -- these operate on Systems, but are not Systems themselves
 #include <barrett/systems/helpers.h>
