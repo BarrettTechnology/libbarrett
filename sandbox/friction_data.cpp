@@ -11,7 +11,6 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
@@ -44,7 +43,7 @@ int main() {
 	systems::System::defaultExecutionManager = &rtem;
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	systems::ArraySplitter<jp_type> jpS;
 	systems::ArraySplitter<jv_type> jvS;
 	systems::ArraySplitter<jt_type> jtS;

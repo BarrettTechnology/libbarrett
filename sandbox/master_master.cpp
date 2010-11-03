@@ -34,7 +34,6 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 #include "master_master.h"
 
@@ -43,7 +42,6 @@
 namespace math = barrett::math;
 namespace systems = barrett::systems;
 namespace units = barrett::units;
-using barrett::Wam;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -81,7 +79,7 @@ void waitForEnter() {
 }
 
 void handleHandCommands(struct bt_bus *bus, bool* going);
-
+void handleGimbalsHandControllerCommands(struct bt_bus *bus, const char* remoteHost, bool* going);
 
 int main(int argc, char** argv) {
 	// check arguments
@@ -102,14 +100,14 @@ int main(int argc, char** argv) {
 
 
 	libconfig::Config config;
-	config.readFile("/etc/barrett/wam7.conf");
+	config.readFile("/etc/barrett/wamg.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s, false);
 	systems::System::defaultExecutionManager = &rtem;
 
 
     // instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 
 	systems::MasterMaster<DOF> mm(argv[1]);
 
@@ -132,8 +130,8 @@ int main(int argc, char** argv) {
 	systems::Gain<jp_type, double, jp_type> half(0.5);
 
 
-	lpf1.setLowPass(jp_type(300), jp_type(1));
-	lpf2.setLowPass(jp_type(300), jp_type(1));
+	lpf1.setLowPass(jp_type(300.0), jp_type(1.0));
+	lpf2.setLowPass(jp_type(300.0), jp_type(1.0));
 
 
 	// connect systems
@@ -196,6 +194,9 @@ int main(int argc, char** argv) {
 	boost::thread handThread;
 	bool handThreadGoing = false;
 
+	boost::thread gimbalsThread;
+	bool gimbalsThreadGoing = false;
+
 	math::Vector<DOF>::type gainTmp;
 
 
@@ -211,6 +212,16 @@ int main(int argc, char** argv) {
 			} else {
 				boost::thread tmpThread(handleHandCommands, wam.wam.wambot->bus, &handThreadGoing);
 				handThread.swap(tmpThread);
+			}
+			break;
+
+		case 'g':
+			if (gimbalsThreadGoing) {
+				gimbalsThreadGoing = false;
+				gimbalsThread.join();
+			} else {
+				boost::thread tmpThread(handleGimbalsHandControllerCommands, wam.wam.wambot->bus, argv[1], &gimbalsThreadGoing);
+				gimbalsThread.swap(tmpThread);
 			}
 			break;
 
@@ -501,22 +512,40 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 		 }
 
 		 /* Finger 1 */
-		 if      (  b3(bits) && !b4(bits) ) bt_bus_set_property(bus, 12, 44, -speed); // Open
-		 else if ( !b3(bits) &&  b4(bits) ) bt_bus_set_property(bus, 12, 44,  speed); // Close
-		 else                               bt_bus_set_property(bus, 12, 44,      0); // Stop
-		 bt_bus_set_property(bus, 12, 8, 4);
+		 if      (  b3(bits) && !b4(bits) ) {
+			 bt_bus_set_property(bus, 12, 44, -speed); // Open
+			 bt_bus_set_property(bus, 12, 8, 4);
+		 } else if ( !b3(bits) &&  b4(bits) ) {
+			 bt_bus_set_property(bus, 12, 44,  speed); // Close
+			 bt_bus_set_property(bus, 12, 8, 4);
+		 } else {
+//			 bt_bus_set_property(bus, 12, 44,      0); // Stop
+			 bt_bus_set_property(bus, 12, 8, 0);
+		 }
 
 		 /* Finger 2 */
-		 if      (  b5(bits) && !b6(bits) ) bt_bus_set_property(bus, 13, 44, -speed); // Open
-		  else if ( !b5(bits) &&  b6(bits) ) bt_bus_set_property(bus, 13, 44,  speed); // Close
-		  else                               bt_bus_set_property(bus, 13, 44,      0); // Stop
-		  bt_bus_set_property(bus, 13, 8, 4);
+		 if      (  b5(bits) && !b6(bits) ) {
+			 bt_bus_set_property(bus, 13, 44, -speed); // Open
+			  bt_bus_set_property(bus, 13, 8, 4);
+		 } else if ( !b5(bits) &&  b6(bits) ) {
+			 bt_bus_set_property(bus, 13, 44,  speed); // Close
+			  bt_bus_set_property(bus, 13, 8, 4);
+		 } else {
+//			 bt_bus_set_property(bus, 13, 44,      0); // Stop
+			  bt_bus_set_property(bus, 13, 8, 0);
+		 }
 
 		 /* Finger 3 */
-		  if      (  b7(bits) && !b8(bits) ) bt_bus_set_property(bus, 11, 44, -speed); // Open
-		   else if ( !b7(bits) &&  b8(bits) ) bt_bus_set_property(bus, 11, 44,  speed); // Close
-		   else                               bt_bus_set_property(bus, 11, 44,      0); // Stop
-		   bt_bus_set_property(bus, 11, 8, 4);
+		  if      (  b7(bits) && !b8(bits) ) {
+			  bt_bus_set_property(bus, 11, 44, -speed); // Open
+			  bt_bus_set_property(bus, 11, 8, 4);
+		  } else if ( !b7(bits) &&  b8(bits) ) {
+			  bt_bus_set_property(bus, 11, 44,  speed); // Close
+			  bt_bus_set_property(bus, 11, 8, 4);
+		  } else {
+//			  bt_bus_set_property(bus, 11, 44,      0); // Stop
+			  bt_bus_set_property(bus, 11, 8, 0);
+		  }
 
 		 //bhand_RTUpdate(bhand,1,1);
 	  }
@@ -537,4 +566,104 @@ void handleHandCommands(struct bt_bus *bus, bool* going) {
 
 
    printf(" ... done.\n");
+}
+
+void handleGimbalsHandControllerCommands(struct bt_bus *bus, const char* remoteHost, bool* going) {
+//	int sock = -1;
+//	int err;
+//	long flags;
+//	int buflen;
+//	int buflenlen;
+//	struct sockaddr_in their_addr;
+//	struct sockaddr_in bind_addr;
+//
+//	// open socket
+//	sock = socket(PF_INET, SOCK_DGRAM, 0);
+//	if (sock == -1)
+//	{
+//		syslog(LOG_ERR,"%s: Could not create socket.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//	/* Set socket to non-blocking, set flag associated with open file */
+//	flags = fcntl(sock, F_GETFL, 0);
+//	if (flags < 0)
+//	{
+//		syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//	flags |= O_NONBLOCK;
+//	err = fcntl(sock, F_SETFL, flags);
+//	if (err < 0)
+//	{
+//		syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//	/* Maybe set UDP buffer size? */
+//	buflenlen = sizeof(buflen);
+//	err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
+//	if (err)
+//	{
+//		syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//	syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
+//
+//	buflenlen = sizeof(buflen);
+//	buflen = 5 * SIZE_OF_MSG;
+//	err = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, buflenlen);
+//	if (err)
+//	{
+//		syslog(LOG_ERR,"%s: Could not set output buffer size.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//	buflenlen = sizeof(buflen);
+//	err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
+//	if (err)
+//	{
+//		syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//	syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
+//
+//	/* Set up the bind address */
+//	bind_addr.sin_family = AF_INET;
+//	bind_addr.sin_port = htons(port);
+//	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+//	err = bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
+//	if (err == -1)
+//	{
+//		syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//	/* Set up the other guy's address */
+//	their_addr.sin_family = AF_INET;
+//	their_addr.sin_port = htons(port);
+//	err = ! inet_pton(AF_INET, remoteHost, &their_addr.sin_addr);
+//	if (err)
+//	{
+//		syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//	/* Call "connect" to set datagram destination */
+//	err = connect(sock, (struct sockaddr *)&their_addr, sizeof(struct sockaddr));
+//	if (err)
+//	{
+//		syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
+//		throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+//	}
+//
+//
+//	// send commands
+//	while (*going) {
+//		usleep(10000);
+//	}
+//
+//
+//	//close socket
+//	close(sock);
 }

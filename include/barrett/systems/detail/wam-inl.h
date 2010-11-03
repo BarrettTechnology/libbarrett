@@ -50,9 +50,13 @@
 #include <barrett/math/trapezoidal_velocity_profile.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/io_conversion.h>
+#include <barrett/systems/ramp.h>
+#include <barrett/systems/callback.h>
 
 
 namespace barrett {
+namespace systems {
+
 
 // TODO(dc): some of these members should be inline
 
@@ -80,9 +84,6 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 
 	doneMoving(true)
 {
-	using systems::connect;
-	using systems::makeIOConversion;
-
 	connect(wam.jpOutput, kinematicsBase.jpInput);
 	connect(jvOutput, kinematicsBase.jvInput);
 
@@ -95,9 +96,6 @@ Wam<DOF>::Wam(const libconfig::Setting& setting) :
 	connect(kinematicsBase.kinOutput, toController.kinInput);
 
 	connect(wam.jvOutput, jvFilter.input);
-//	jv_type corners;
-//	corners.setConstant(180.0);
-//	jvFilter.setLowPass(corners);
 
 	supervisoryController.registerConversion(makeIOConversion(
 			jtPassthrough.input, jtPassthrough.output));
@@ -132,7 +130,7 @@ Wam<DOF>::~Wam()
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::trackReferenceSignal(systems::System::Output<T>& referenceSignal)
+void Wam<DOF>::trackReferenceSignal(System::Output<T>& referenceSignal)
 {
 	supervisoryController.connectInputTo(referenceSignal);
 }
@@ -177,9 +175,9 @@ template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
 {
 	if (compensate) {
-		systems::forceConnect(gravity.output, jtSum.getInput(GRAVITY_INPUT));
+		forceConnect(gravity.output, jtSum.getInput(GRAVITY_INPUT));
 	} else {
-		systems::disconnect(jtSum.getInput(GRAVITY_INPUT));
+		disconnect(jtSum.getInput(GRAVITY_INPUT));
 	}
 }
 
@@ -240,13 +238,13 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInX());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
 
-	systems::Ramp time(1.0, false);
-	systems::Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+	Ramp time(1.0, false);
+	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
 
 	// TODO(dc): Ramp should get this from the EM itself
 	time.setSamplePeriod(tf2jt.getExecutionManager()->getPeriod());  // get the EM from one of the Wam's Systems...
 
-	systems::connect(time.output, trajectory.input);
+	connect(time.output, trajectory.input);
 	trackReferenceSignal(trajectory.output);
 	time.start();
 
@@ -269,4 +267,5 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 }
 
 
+}
 }

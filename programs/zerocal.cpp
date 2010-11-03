@@ -19,7 +19,6 @@
 #include <barrett/cdlbt/os.h>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
@@ -178,7 +177,7 @@ int main()
 
    /* Open the WAM */
 	libconfig::Config config;
-	config.readFile("/etc/barrett/wam7.conf");
+	config.readFile("/etc/barrett/wamg.conf");
 
 	// remove existing zerocal information, if present
 	libconfig::Setting& llSetting = config.lookup("wam.low_level");
@@ -191,7 +190,7 @@ int main()
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
 	bus = wam.wam.wambot->bus;
 

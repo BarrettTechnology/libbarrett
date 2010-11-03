@@ -8,8 +8,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include <barrett/puck.h>
-#include <barrett/puck_group.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/puck_group.h>
 
 
 namespace barrett {

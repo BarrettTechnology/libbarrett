@@ -18,7 +18,6 @@
 #include <barrett/cdlbt/bus_can.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 void waitForEnter() {
@@ -54,7 +53,7 @@ int main() {
 
 
 	// instantiate Systems
-	Wam<WAM_DOF> wam(config.lookup("wam"));
+	systems::Wam<WAM_DOF> wam(config.lookup("wam"));
 	bus = wam.wam.wambot->bus;
 
 

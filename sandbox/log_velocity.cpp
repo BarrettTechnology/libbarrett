@@ -11,7 +11,6 @@
 #include <barrett/units.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
@@ -38,7 +37,7 @@ int main() {
 	systems::System::defaultExecutionManager = &rtem;
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	systems::PeriodicDataLogger<units::JointVelocities<DOF>::type> dl(
 			new log::RealTimeWriter<units::JointVelocities<DOF>::type>(BIN_FILE, T_s),
 			1);

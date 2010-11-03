@@ -5,8 +5,8 @@
  *      Author: dc
  */
 
-#ifndef BARRETT_PUCK_H_
-#define BARRETT_PUCK_H_
+#ifndef BARRETT_PRODUCTS_PUCK_H_
+#define BARRETT_PRODUCTS_PUCK_H_
 
 
 #include <stdexcept>
@@ -31,7 +31,7 @@ public:
 	}
 
 // include the generated file containing the list of available properties
-#	include <barrett/detail/property_list.h>
+#	include <barrett/products/detail/property_list.h>
 	static const char* getPropertyStr(enum Property prop);
 
 
@@ -176,7 +176,7 @@ private:
 
 
 // include template definitions
-#include <barrett/detail/puck-inl.h>
+#include <barrett/products/detail/puck-inl.h>
 
 
-#endif /* BARRETT_PUCK_H_ */
+#endif /* BARRETT_PRODUCTS_PUCK_H_ */

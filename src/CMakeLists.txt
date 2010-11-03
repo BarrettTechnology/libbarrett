@@ -19,6 +19,11 @@ set(barrett_SOURCES
 	
 	math/trapezoidal_velocity_profile.cpp
 
+	products/motor_puck.cpp
+	products/property_list.cpp
+	products/puck.cpp
+	products/puck_group.cpp
+
 	systems/execution_manager.cpp
 	systems/real_time_execution_manager.cpp
 	systems/system.cpp
@@ -27,9 +32,6 @@ set(barrett_SOURCES
 	thread/real_time_mutex.cpp
 
 	exception.cpp
-	property_list.cpp
-	puck.cpp
-	puck_group.cpp
 )
 
 # Defenitions for cdlbt code

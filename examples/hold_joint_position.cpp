@@ -2,12 +2,11 @@
 #include <string>
 
 #include <barrett/systems.h>
-#include <barrett/wam.h>
 
 
 using namespace barrett;
 
-const size_t DOF = 7;
+const size_t DOF = 4;
 const double T_s = 0.002;
 BARRETT_UNITS_TYPEDEFS(DOF);  // declares jp_type
 
@@ -20,14 +19,14 @@ void waitForEnter() {
 
 int main() {
 	libconfig::Config config;
-	config.readFile("/etc/barrett/wam7.conf");
+	config.readFile("/etc/barrett/wam4.conf");
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
 
 	// instantiate Systems
-	Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(config.lookup("wam"));
 	systems::ExposedOutput<jp_type> setPoint;
 
 

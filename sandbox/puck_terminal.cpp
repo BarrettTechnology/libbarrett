@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #include <barrett/bus/can_socket.h>
-#include <barrett/puck.h>
+#include <barrett/products/puck.h>
 
 
 using namespace std;
