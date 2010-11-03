@@ -43,6 +43,7 @@ public:
 	~LowLevelWamWrapper() {}
 
 	LowLevelWam<DOF>& getLowLevelWam() { return llw; }
+	const LowLevelWam<DOF>& getLowLevelWam() const { return llw; }
 
 protected:
 	class Sink : public System, public SingleInput<jt_type> {

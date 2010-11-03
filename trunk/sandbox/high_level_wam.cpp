@@ -7,39 +7,25 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
-#include <unistd.h>  // usleep
-
-#include <boost/ref.hpp>
-#include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_io.hpp>
 #include <libconfig.h++>
 #include <Eigen/Geometry>
 
 #include <barrett/exception.h>
-#include <barrett/detail/debug.h>
-#include <barrett/thread/abstract/mutex.h>
 #include <barrett/math.h>
 #include <barrett/units.h>
-#include <barrett/log.h>
 #include <barrett/systems.h>
+#include <barrett/bus/bus_manager.h>
 
 
-//namespace log = barrett::log;
-namespace math = barrett::math;
-namespace systems = barrett::systems;
-namespace units = barrett::units;
+using namespace barrett;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
 
 
-using boost::bind;
-using boost::ref;
-
-
-const size_t DOF = 7;
+const size_t DOF = 4;
 const double T_s = 0.002;
 BARRETT_UNITS_TYPEDEFS(DOF);
 
@@ -53,20 +39,26 @@ void waitForEnter() {
 int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
-	libconfig::Config config;
-	config.readFile("/etc/barrett/wam7.conf");
+	BusManager bm;
+	bm.enumerate();
+	std::vector<Puck*> wamPucks;
+	wamPucks.push_back(bm.getPuck(1));
+	wamPucks.push_back(bm.getPuck(2));
+	wamPucks.push_back(bm.getPuck(3));
+	wamPucks.push_back(bm.getPuck(4));
+	const libconfig::Config& config = bm.getConfig();
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
 
 
     // instantiate Systems
-	systems::Wam<DOF> wam(config.lookup("wam"));
+	systems::Wam<DOF> wam(wamPucks, bm.getPuck(10), config.lookup("wam"));
 
-	systems::Constant<jp_type> jpPoint(config.lookup("wam.low_level.home"));
+	systems::Constant<jp_type> jpPoint(wam.getHomePosition());
 
 	math::Kinematics<DOF> kin(config.lookup("wam.kinematics"));
-	kin.eval(config.lookup("wam.low_level.home"), jv_type());
+	kin.eval(wam.getHomePosition(), jv_type(0.0));
 	systems::Constant<units::CartesianPosition::type> tpPoint(
 			units::CartesianPosition::type(kin.impl->tool->origin_pos));
 

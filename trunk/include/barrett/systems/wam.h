@@ -32,13 +32,15 @@
 #define BARRETT_SYSTEMS_WAM_H_
 
 
+#include <vector>
+
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/systems/abstract/system.h>
 
-#include <barrett/systems/low_level_wam.h>
+#include <barrett/systems/low_level_wam_wrapper.h>
 #include <barrett/systems/first_order_filter.h>
 #include <barrett/systems/converter.h>
 #include <barrett/systems/summer.h>
@@ -65,7 +67,7 @@ class Wam {
 public:
 
 	// these need to be before the IO references
-	LowLevelWam<DOF> wam;
+	LowLevelWamWrapper<DOF> llww;
 	KinematicsBase<DOF> kinematicsBase;
 	GravityCompensator<DOF> gravity;
 	FirstOrderFilter<jv_type> jvFilter;
@@ -77,7 +79,7 @@ public:
 	PIDController<jp_type, jt_type> jpController;
 	PIDController<jv_type, jt_type> jvController1;
 	FirstOrderFilter<jt_type> jvController2;
-	PIDController<units::CartesianPosition::type, units::CartesianForce::type> tpController;
+	PIDController<cp_type, cf_type> tpController;
 	ToolForceToJointTorques<DOF> tf2jt;
 	ToolOrientationController<DOF> toController;
 
@@ -92,24 +94,28 @@ public:		System::Output<jv_type>& jvOutput;
 
 
 public:
-	Wam(const libconfig::Setting& setting);
-	virtual ~Wam();
+	// genericPucks must be ordered by joint and must break into torque groups as arranged
+	Wam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+			const libconfig::Setting& setting,
+			std::vector<int> torqueGroupIds = std::vector<int>());
+	~Wam();
 
 	template<typename T>
 	void trackReferenceSignal(System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
 
-	jt_type getJointTorques();
-	jp_type getJointPositions();
-	jv_type getJointVelocities();
-	units::CartesianPosition::type getToolPosition();
-	Eigen::Quaterniond getToolOrientation();
+	const jp_type& getHomePosition() const;
+	jt_type getJointTorques() const;
+	jp_type getJointPositions() const;
+	jv_type getJointVelocities() const;
+	cp_type getToolPosition() const;
+	Eigen::Quaterniond getToolOrientation() const;
 
 
 	void gravityCompensate(bool compensate = true);
 	void moveHome(bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	template<typename T> void moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration);
-	bool moveIsDone();
+	bool moveIsDone() const;
 	void idle();
 
 protected:
