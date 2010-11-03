@@ -54,7 +54,7 @@ public:
 		{ return bus.receiveRaw(busId, data, len, blocking); }
 
 protected:
-	void updateBuffers(bool blocking) const;
+	void updateBuffers() const;
 	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
