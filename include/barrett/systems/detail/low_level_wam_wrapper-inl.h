@@ -1,5 +1,5 @@
 /*
- * low_level_wam-inl.h
+ * low_level_wam_wrapper-inl.h
  *
  *  Created on: Feb 2, 2010
  *      Author: dc
@@ -20,30 +20,30 @@ namespace systems {
 
 
 template<size_t DOF>
-LowLevelWam<DOF>::LowLevelWam(
+LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
 		const std::vector<Puck*>& genericPucks,
 		Puck* safetyPuck,
 		const libconfig::Setting& setting,
 		std::vector<int> torqueGroupIds) :
-	barrett::LowLevelWam<DOF>(genericPucks, safetyPuck, setting, torqueGroupIds),
 	input(sink.input),
 	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
+	llw(genericPucks, safetyPuck, setting, torqueGroupIds),
 	sink(this), source(this)
 {
 }
 
 template<size_t DOF>
-void LowLevelWam<DOF>::Sink::operate()
+void LowLevelWamWrapper<DOF>::Sink::operate()
 {
-	parent->setTorques(this->input.getValue());
+	parent->llw.setTorques(this->input.getValue());
 }
 
 template<size_t DOF>
-void LowLevelWam<DOF>::Source::operate()
+void LowLevelWamWrapper<DOF>::Source::operate()
 {
-	parent->update();
-	this->jpOutputValue->setValue(parent->getJointPositions());
-	this->jvOutputValue->setValue(parent->getJointVelocities());
+	parent->llw.update();
+	this->jpOutputValue->setValue(parent->llw.getJointPositions());
+	this->jvOutputValue->setValue(parent->llw.getJointVelocities());
 }
 
 

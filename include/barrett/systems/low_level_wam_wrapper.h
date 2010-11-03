@@ -1,12 +1,12 @@
 /*
- * low_level_wam.h
+ * low_level_wam_wrapper.h
  *
  *  Created on: Feb 2, 2010
  *      Author: dc
  */
 
-#ifndef BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_
-#define BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_
+#ifndef BARRETT_SYSTEMS_LOW_LEVEL_WAM_WRAPPER_H_
+#define BARRETT_SYSTEMS_LOW_LEVEL_WAM_WRAPPER_H_
 
 
 #include <vector>
@@ -27,7 +27,7 @@ namespace systems {
 
 
 template<size_t DOF>
-class LowLevelWam : public barrett::LowLevelWam<DOF> {
+class LowLevelWamWrapper {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:		System::Input<jt_type>& input;
@@ -37,15 +37,17 @@ public:		System::Output<jv_type>& jvOutput;
 
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	LowLevelWam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+	LowLevelWamWrapper(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
 			const libconfig::Setting& setting,
 			std::vector<int> torqueGroupIds = std::vector<int>());
-	~LowLevelWam() {}
+	~LowLevelWamWrapper() {}
+
+	LowLevelWam<DOF>& getLowLevelWam() { return llw; }
 
 protected:
 	class Sink : public System, public SingleInput<jt_type> {
 	public:
-		Sink(LowLevelWam* parent) :
+		Sink(LowLevelWamWrapper* parent) :
 			System(true),  // Update every execution cycle because this is a sink.
 			SingleInput<jt_type>(this),
 			parent(parent) {}
@@ -54,7 +56,7 @@ protected:
 	protected:
 		virtual void operate();
 
-		LowLevelWam* parent;
+		LowLevelWamWrapper* parent;
 
 	private:
 		DISALLOW_COPY_AND_ASSIGN(Sink);
@@ -70,7 +72,7 @@ protected:
 
 
 	public:
-		Source(LowLevelWam* parent) :
+		Source(LowLevelWamWrapper* parent) :
 			System(true),  // Update every execution cycle to prevent heartbeat
 						   // faults. Depending on connections, this System
 						   // might not be called for a period of time. In this
@@ -84,18 +86,20 @@ protected:
 	protected:
 		virtual void operate();
 
-		LowLevelWam* parent;
+		LowLevelWamWrapper* parent;
 
 	private:
 		DISALLOW_COPY_AND_ASSIGN(Source);
 	};
 
 
+	LowLevelWam<DOF> llw;
+
 	Sink sink;
 	Source source;
 
 private:
-	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
+	DISALLOW_COPY_AND_ASSIGN(LowLevelWamWrapper);
 };
 
 
@@ -104,7 +108,7 @@ private:
 
 
 // include template definitions
-#include <barrett/systems/detail/low_level_wam-inl.h>
+#include <barrett/systems/detail/low_level_wam_wrapper-inl.h>
 
 
-#endif /* BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_ */
+#endif /* BARRETT_SYSTEMS_LOW_LEVEL_WAM_WRAPPER_H_ */

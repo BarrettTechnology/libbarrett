@@ -49,7 +49,7 @@ int main() {
 
 
     // instantiate Systems
-	systems::LowLevelWam<DOF> llw(wamPucks, bm.getPuck(10), config.lookup("wam.low_level"));
+	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getPuck(10), config.lookup("wam.low_level"));
 	systems::PIDController<jp_type, jt_type> jpController(
 			config.lookup("wam.joint_position_control"));
 	systems::Constant<jp_type> point(
@@ -57,11 +57,11 @@ int main() {
 
 
 	// make connections between Systems
-	connect(llw.jpOutput, jpController.feedbackInput);
-	connect(jpController.controlOutput, llw.input);
+	connect(llww.jpOutput, jpController.feedbackInput);
+	connect(jpController.controlOutput, llww.input);
 
 	// initially, tie inputs together for zero torque
-	connect(llw.jpOutput, jpController.referenceInput);
+	connect(llww.jpOutput, jpController.referenceInput);
 
 
 	// start the main loop!
@@ -73,7 +73,8 @@ int main() {
 
 	std::cout << "Press [Enter] to idle.\n";
 	waitForEnter();
-	reconnect(llw.jpOutput, jpController.referenceInput);
+	reconnect(llww.jpOutput, jpController.referenceInput);
+	jpController.resetIntegrator();
 
 	std::cout << "Shift-idle, then press [Enter].\n";
 	waitForEnter();
