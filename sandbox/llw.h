@@ -15,6 +15,8 @@
 
 #include <syslog.h>
 
+#include <native/timer.h>
+
 #include <Eigen/LU>
 #include <libconfig.h++>
 
@@ -171,7 +173,7 @@ class LLW {
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
 	LLW(const std::vector<Puck*>& genericPucks, Puck* _safetyPuck, const libconfig::Setting& setting, std::vector<int> torqueGroupIds = std::vector<int>()) :
-		bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyPuck(_safetyPuck), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), torquePropId(-1)
+		bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyPuck(_safetyPuck), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(-1)
 	{
 		syslog(LOG_ERR, "LLW::LLW(%s => \"%s\")", setting.getSourceFile(), setting.getPath().c_str());
 
@@ -320,6 +322,11 @@ public:
 			definePosition(home);
 			syslog(LOG_ERR, "  WAM zeroed without zero-compensation");
 		}
+
+
+		// Get good initial values for jp_1 and lastUpdate
+		update();
+		jv.setZero();
 	}
 
 	~LLW() {
@@ -346,9 +353,15 @@ public:
 	}
 
 	void update() {
-		wamGroup.getProperty<WamPuck::PositionParser>(Puck::P, pp.data());
-		jp = p2jp * pp;  // Convert from Puck positions to join positions
-		std::cout << pp << jp << home << "\n";
+		RTIME now = rt_timer_read();
+		wamGroup.getProperty<WamPuck::PositionParser>(Puck::P, pp.data(), true);
+
+		jp = p2jp * pp;  // Convert from Puck positions to joint positions
+		jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
+		// TODO(dc): Detect unreasonably large velocities
+
+		jp_1 = jp;
+		lastUpdate = now;
 	}
 
 	void setTorques(const jt_type& jt) {
@@ -375,9 +388,10 @@ protected:
 	sqm_type j2mp, m2jp, j2mt;
 	sqm_type j2pp, p2jp, j2pt;
 
+	RTIME lastUpdate;
 	v_type pp;
 	jp_type jp, jp_1;
-//	jv_type jv;
+	jv_type jv;
 
 	v_type pt;
 	int torquePropId;

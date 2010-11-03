@@ -15,6 +15,10 @@
 #include <barrett/puck_group.h>
 
 #include "llw.h"
+#include <signal.h>
+#include <native/task.h>
+#include <boost/thread.hpp>
+#include <barrett/detail/stacktrace.h>
 
 
 const size_t DOF = 4;
@@ -23,8 +27,34 @@ using namespace barrett;
 BARRETT_UNITS_TYPEDEFS(DOF);
 
 
+void warnOnSwitchToSecondaryMode(int)
+{
+	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
+	detail::syslog_stacktrace();
+	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
+}
+
+
+void wamControl(LLW<DOF>* wam) {
+	jt_type jt(0.0);
+
+	rt_task_shadow(new RT_TASK, NULL, 10, 0);
+	rt_task_set_mode(0, T_PRIMARY | T_WARNSW, NULL);
+	rt_task_set_periodic(NULL, TM_NOW, 2000000);
+
+	while (true) {
+		rt_task_wait_period(NULL);
+
+		wam->update();
+		wam->setTorques(jt);
+
+//		std::cout << jt << "\n";
+	}
+}
+
 int main() {
 	installExceptionHandler();
+	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 
 	BusManager bm;
 	bm.enumerate();
@@ -60,16 +90,18 @@ int main() {
 	wamPucks.push_back(bm.getPuck(4));
 
 	LLW<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam.low_level"));
+	boost::thread t(wamControl, &wam);
 
-	jt_type jt;
+	while (true) {
+//		usleep(10000);
 
-	jt << 1, 0, 0, 0;
-	wam.update();
-	wam.setTorques(jt);
-	sleep(1);
-	jt << 0, 0, 0, 0;
-	wam.update();
-	wam.setTorques(jt);
+		wamPucks[0]->getProperty(Puck::TEMP);
+		wamPucks[1]->getProperty(Puck::TEMP);
+		wamPucks[2]->getProperty(Puck::TEMP);
+		wamPucks[3]->getProperty(Puck::TEMP);
+
+//		printf("%d %d %d %d\n", wamPucks[0]->getProperty(Puck::TEMP), wamPucks[1]->getProperty(Puck::TEMP), wamPucks[2]->getProperty(Puck::TEMP), wamPucks[3]->getProperty(Puck::TEMP));
+	}
 
 	return 0;
 }
