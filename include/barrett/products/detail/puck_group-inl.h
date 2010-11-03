@@ -5,6 +5,9 @@
  *      Author: dc
  */
 
+#include <boost/thread/locks.hpp>
+
+
 namespace barrett {
 
 
@@ -14,6 +17,11 @@ inline void PuckGroup::getProperty(enum Puck::Property prop, int* values, bool r
 }
 template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type* values, bool realtime) const
 {
+	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
+	if (realtime) {
+		ul.lock();
+	}
+
 	int ret;
 	int propId = getPropertyId(prop);
 

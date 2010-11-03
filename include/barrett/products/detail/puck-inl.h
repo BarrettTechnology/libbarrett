@@ -5,6 +5,8 @@
  *      Author: dc
  */
 
+#include <boost/thread/locks.hpp>
+
 #include <barrett/products/puck_group.h>
 
 
@@ -134,6 +136,11 @@ typename Parser::result_type Puck::tryGetProperty(const CommunicationsBus& bus, 
 template<typename Parser>
 typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode, int timeout_us)
 {
+	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
+	if (realtime) {
+		ul.lock();
+	}
+
 	*retCode = sendGetPropertyRequest(bus, id, propId);
 	if (*retCode != 0) {
 		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, *retCode);
@@ -176,6 +183,10 @@ inline int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, in
 	return bus.send(nodeId2BusId(id), data, MSG_LEN);
 }
 
+inline int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode)
+{
+	return receiveGetPropertyReply<StandardParser>(bus, id, propId, blocking, realtime, retCode);
+}
 template<typename Parser>
 typename Parser::result_type Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode)
 {

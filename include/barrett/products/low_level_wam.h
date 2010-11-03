@@ -39,6 +39,19 @@ public:
 	const jp_type& getJointPositions() const { return jp; }
 	const jv_type& getJointVelocities() const { return jv; }
 
+
+	const std::vector<MotorPuck>& getPucks() const { return pucks; }
+	const jp_type& getHomePosition() const { return home; }
+
+	const sqm_type& getJointToMotorPositionTransform() const { return j2mp; }
+	const sqm_type& getMotorToJointPositionTransform() const { return m2jp; }
+	const sqm_type& getJointToMotorTorqueTransform() const { return j2mt; }
+
+	const sqm_type& getJointToPuckPositionTransform() const { return j2pp; }
+	const sqm_type& getPuckToJointPositionTransform() const { return p2jp; }
+	const sqm_type& getJointToPuckTorqueTransform() const { return j2pt; }
+
+
 	void update();
 	void setTorques(const jt_type& jt);
 	void definePosition(const jp_type& jp);
