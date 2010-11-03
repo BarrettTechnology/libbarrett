@@ -89,8 +89,8 @@ public:
 			int value);
 
 	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId);
-//	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
-//			bool blocking, bool realtime, int* retCode);
+	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
+			bool blocking, bool realtime, int* retCode);
 	template<typename Parser> static typename Parser::result_type receiveGetPropertyReply(
 			const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode);
 
