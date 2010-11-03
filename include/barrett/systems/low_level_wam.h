@@ -9,11 +9,14 @@
 #define BARRETT_SYSTEMS_LOW_LEVEL_WAM_H_
 
 
+#include <vector>
+
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
-#include <barrett/cdlbt/wambot_phys.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/low_level_wam.h>
 
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
@@ -24,7 +27,7 @@ namespace systems {
 
 
 template<size_t DOF>
-class LowLevelWam {
+class LowLevelWam : public barrett::LowLevelWam<DOF> {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:		System::Input<jt_type>& input;
@@ -33,8 +36,11 @@ public:		System::Output<jv_type>& jvOutput;
 
 
 public:
-	explicit LowLevelWam(const libconfig::Setting& setting);
-	~LowLevelWam();
+	// genericPucks must be ordered by joint and must break into torque groups as arranged
+	LowLevelWam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+			const libconfig::Setting& setting,
+			std::vector<int> torqueGroupIds = std::vector<int>());
+	~LowLevelWam() {}
 
 protected:
 	class Sink : public System, public SingleInput<jt_type> {
@@ -87,9 +93,6 @@ protected:
 
 	Sink sink;
 	Source source;
-
-public:
-	struct bt_wambot_phys* wambot;  // TODO(dc): hack to quickly let other entities talk on the CAN bus (e.g. BH8-280).
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
