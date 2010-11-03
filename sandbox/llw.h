@@ -30,9 +30,9 @@
 namespace barrett {
 
 
-class WamPuck {
+class MotorPuck {
 public:
-	WamPuck(Puck* puck = NULL) :
+	MotorPuck(Puck* puck = NULL) :
 		cts(0), rpc(0.0), cpr(0.0), ipnm(0)
 	{
 		setPuck(puck);
@@ -101,7 +101,7 @@ public:
 			break;
 
 		default:
-			throw std::logic_error("WamPuck::sendPackedTorques(): numTorques must be >= 1 and <= PUCKS_PER_TORQUE_GROUP.");
+			throw std::logic_error("MotorPuck::sendPackedTorques(): numTorques must be >= 1 and <= PUCKS_PER_TORQUE_GROUP.");
 			break;
 		}
 		data[0] = propId | Puck::SET_MASK;
@@ -137,7 +137,7 @@ public:
 //			}
 
 			if (err) {
-				throw std::runtime_error("WamPuck::PackedPositionParser::parse(): Unexpected "
+				throw std::runtime_error("MotorPuck::PackedPositionParser::parse(): Unexpected "
 					"message. Check /var/log/syslog for details.");
 			}
 
@@ -199,7 +199,7 @@ public:
 		j2mt = m2jp.transpose();
 
 
-		// Initialize WamPucks
+		// Initialize MotorPucks
 		Puck::wake(genericPucks);  // Make sure Pucks are awake
 		for (size_t i = 0; i < DOF; ++i) {
 			pucks[i].setPuck(genericPucks[i]);
@@ -211,7 +211,7 @@ public:
 			torqueGroupIds.push_back(PuckGroup::BGRP_LOWER_WAM);
 			torqueGroupIds.push_back(PuckGroup::BGRP_UPPER_WAM);
 		}
-		size_t numTorqueGroups = ceil(static_cast<double>(DOF)/WamPuck::PUCKS_PER_TORQUE_GROUP);
+		size_t numTorqueGroups = ceil(static_cast<double>(DOF)/MotorPuck::PUCKS_PER_TORQUE_GROUP);
 		if (numTorqueGroups > torqueGroupIds.size()) {
 			syslog(LOG_ERR, "  Need %d torque groups, only %d IDs provided", numTorqueGroups, torqueGroupIds.size());
 			throw std::logic_error("LLW::LLW(): Too few torque group IDs provided. Check /var/log/syslog for details.");
@@ -354,7 +354,7 @@ public:
 
 	void update() {
 		RTIME now = rt_timer_read();
-		wamGroup.getProperty<WamPuck::PositionParser>(Puck::P, pp.data(), true);
+		wamGroup.getProperty<MotorPuck::PositionParser>(Puck::P, pp.data(), true);
 
 		jp = p2jp * pp;  // Convert from Puck positions to joint positions
 		jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
@@ -366,20 +366,20 @@ public:
 
 	void setTorques(const jt_type& jt) {
 		// Get around C++ address-of-static-member weirdness...
-		static const size_t PUCKS_PER_TORQUE_GROUP = WamPuck::PUCKS_PER_TORQUE_GROUP;
+		static const size_t PUCKS_PER_TORQUE_GROUP = MotorPuck::PUCKS_PER_TORQUE_GROUP;
 
 		pt = j2pt * jt;  // Convert from joint torques to Puck torques
 
 		size_t i = 0;
 		for (size_t g = 0; g < torqueGroups.size(); ++g) {
-			WamPuck::sendPackedTorques(bus, torqueGroups[g]->getId(), torquePropId, pt.data()+i, std::min(PUCKS_PER_TORQUE_GROUP, DOF-i));
+			MotorPuck::sendPackedTorques(bus, torqueGroups[g]->getId(), torquePropId, pt.data()+i, std::min(PUCKS_PER_TORQUE_GROUP, DOF-i));
 			i += PUCKS_PER_TORQUE_GROUP;
 		}
 	}
 
 protected:
 	const CommunicationsBus& bus;
-	std::vector<WamPuck> pucks;
+	std::vector<MotorPuck> pucks;
 	Puck* safetyPuck;
 	PuckGroup wamGroup;
 	std::vector<PuckGroup*> torqueGroups;
