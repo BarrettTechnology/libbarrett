@@ -157,7 +157,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	}
 
 	while (true) {
-		updateBuffers(blocking);
+		updateBuffers();
 		if (retrieveMessage(expectedBusId, data, len)) {
 			return 0;
 		} else if (!blocking) {
@@ -172,7 +172,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	}
 }
 
-void BusManager::updateBuffers(bool blocking) const
+void BusManager::updateBuffers() const
 {
 	SCOPED_LOCK(getMutex());
 
@@ -181,30 +181,17 @@ void BusManager::updateBuffers(bool blocking) const
 	size_t len;
 	int ret;
 
-	bool messageReceived = false;
-
 	// empty the bus' receive buffer
 	while (true) {
 		ret = receiveRaw(busId, data, len, false);  // non-blocking read
 		if (ret == 0) {  // successfully received a message
 			storeMessage(busId, data, len);
-			messageReceived = true;
 		} else if (ret == 1) {  // would block
-			break;
+			return;
 		} else {  // error
 			syslog(LOG_ERR, "%s: BusManager::receiveRaw(): %d", __func__, ret);
 			throw std::runtime_error("BusManager::updateBuffers(): receiveRaw() failed. Check /var/log/syslog for details.");
 		}
-	}
-
-	// if we're supposed to block but haven't received a message yet, block until we do
-	if (blocking  &&  !messageReceived) {
-		ret = receiveRaw(busId, data, len, true);  // blocking read
-		if (ret != 0) {
-			syslog(LOG_ERR, "%s: BusManager::receiveRaw(): %d", __func__, ret);
-			throw std::runtime_error("BusManager::updateBuffers(): receiveRaw() failed. Check /var/log/syslog for details.");
-		}
-		storeMessage(busId, data, len);
 	}
 }
 
