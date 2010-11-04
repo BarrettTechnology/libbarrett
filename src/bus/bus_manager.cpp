@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include <native/timer.h>
+
 #include <boost/thread/locks.hpp>
 #include <boost/circular_buffer.hpp>
 
@@ -246,17 +248,26 @@ void BusManager::deletePuck(Puck* p)
 int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const
 {
 	boost::unique_lock<thread::Mutex> ul(getMutex());
+	RTIME start = rt_timer_read();
 
 	if (retrieveMessage(expectedBusId, data, len)) {
 		return 0;
 	}
 
+	int ret;
 	while (true) {
-		updateBuffers();
-		if (retrieveMessage(expectedBusId, data, len)) {
+		ret = updateBuffers();
+		if (ret != 0) {
+			return ret;
+		} else if (retrieveMessage(expectedBusId, data, len)) {
 			return 0;
 		} else if (!blocking) {
 			return 1;
+		}
+
+		if ((rt_timer_read() - start) > CommunicationsBus::TIMEOUT) {
+			syslog(LOG_ERR, "BusManager::receive(): timed out");
+			return 2;
 		}
 
 		if (!realtime) {
@@ -267,7 +278,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	}
 }
 
-void BusManager::updateBuffers() const
+int BusManager::updateBuffers() const
 {
 	SCOPED_LOCK(getMutex());
 
@@ -282,10 +293,9 @@ void BusManager::updateBuffers() const
 		if (ret == 0) {  // successfully received a message
 			storeMessage(busId, data, len);
 		} else if (ret == 1) {  // would block
-			return;
+			return 0;
 		} else {  // error
-			syslog(LOG_ERR, "%s: BusManager::receiveRaw(): %d", __func__, ret);
-			throw std::runtime_error("BusManager::updateBuffers(): receiveRaw() failed. Check /var/log/syslog for details.");
+			return ret;
 		}
 	}
 }

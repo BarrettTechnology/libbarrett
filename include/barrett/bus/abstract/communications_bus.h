@@ -18,6 +18,7 @@ namespace barrett {
 class CommunicationsBus {
 public:
 	static const size_t MAX_MESSAGE_LEN = 8;  //< The maximum of any of the available communications buses
+	static const unsigned long long TIMEOUT = 1000000000ULL;  // nanoseconds
 
 	virtual ~CommunicationsBus() {}
 
