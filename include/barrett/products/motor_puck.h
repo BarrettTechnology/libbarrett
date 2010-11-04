@@ -13,29 +13,19 @@
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/math/utils.h>
 #include <barrett/products/puck.h>
+#include <barrett/products/abstract/special_puck.h>
 
 
 namespace barrett {
 
 
-class MotorPuck {
+class MotorPuck : public SpecialPuck {
 public:
-	MotorPuck(Puck* puck = NULL);
+	MotorPuck(Puck* puck = NULL) :
+		SpecialPuck(puck, Puck::PT_Motor), cts(0), rpc(0.0), cpr(0.0), ipnm(0) {}
+	virtual ~MotorPuck() {}
 
-	void setPuck(Puck* puck, bool autoUpdate = true);
-	Puck* getPuck() const { return p; }
-	void update();
-
-	int getProperty(enum Puck::Property prop) const {
-		return p->getProperty(prop);
-	}
-	void setProperty(enum Puck::Property prop, int value) const {
-		p->setProperty(prop, value);
-	}
-
-	int getId() const { return p->getId(); }
-	int getVers() const { return p->getRole(); }
-	int getRole() const { return p->getRole(); }
+	virtual void update();
 
 	int getCts() const { return cts; }
 	double getRadsPerCount() const { return rpc; }
@@ -66,8 +56,6 @@ public:
 
 
 protected:
-	Puck* p;
-
 	int cts;
 	double rpc, cpr;
 	int ipnm;

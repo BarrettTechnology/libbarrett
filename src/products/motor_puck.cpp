@@ -2,6 +2,7 @@
  * motor_puck.cpp
  *
  *  Created on: Nov 2, 2010
+ *      Author: cd
  *      Author: dc
  */
 
@@ -18,20 +19,6 @@
 
 namespace barrett {
 
-
-MotorPuck::MotorPuck(Puck* puck) :
-	cts(0), rpc(0.0), cpr(0.0), ipnm(0)
-{
-	setPuck(puck);
-}
-
-void MotorPuck::setPuck(Puck* puck, bool autoUpdate)
-{
-	p = puck;
-	if (p != NULL  &&  autoUpdate) {
-		update();
-	}
-}
 
 void MotorPuck::update()
 {
