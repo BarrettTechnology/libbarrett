@@ -19,6 +19,7 @@ set(barrett_SOURCES
 	products/property_list.cpp
 	products/puck.cpp
 	products/puck_group.cpp
+	products/safety_module.cpp
 
 	systems/execution_manager.cpp
 	systems/real_time_execution_manager.cpp

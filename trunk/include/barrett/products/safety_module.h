@@ -9,10 +9,6 @@
 #define BARRETT_PRODUCTS_SAFETY_MODULE_H_
 
 
-#include <stdexcept>
-
-#include <syslog.h>
-
 #include <barrett/products/puck.h>
 #include <barrett/products/abstract/special_puck.h>
 
@@ -32,17 +28,18 @@ public:
 
 	virtual void update() {}
 
-	enum SafetyMode getMode() const {
-		int s = getProperty(Puck::MODE);
-		if (s < 0  ||  s > 2) {
-			syslog(LOG_ERR, "SafetyModule::getMode(): Expected MODE value of 0, 1, or 2. Got value of %d.", s);
-			throw std::runtime_error("SafetyModule::getMode(): Bad MODE value. Check /var/log/syslog for details.");
-		}
-		return static_cast<enum SafetyMode>(s);
-	}
-
+	enum SafetyMode getSafetyMode() const;
 	bool wamIsZeroed() const { return getProperty(Puck::ZERO) == 1; }
 	void setWamZeroed(bool zeroed = true) const { setProperty(Puck::ZERO, zeroed); }
+
+	void waitForMode(enum SafetyMode mode, bool printMessage = true, int pollingPeriod_us = 250000);
+	void waitForModeChange(int pollingPeriod_us = 250000);
+
+
+	static const char* getSafetyModeStr(enum SafetyMode mode) { return safetyModeStrs[mode]; }
+
+private:
+	static const char safetyModeStrs[][15];
 };
 
 
