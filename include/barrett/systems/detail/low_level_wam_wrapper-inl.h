@@ -13,6 +13,7 @@
 
 #include <barrett/products/puck.h>
 #include <barrett/products/low_level_wam.h>
+#include <barrett/products/safety_module.h>
 
 
 namespace barrett {
@@ -22,12 +23,12 @@ namespace systems {
 template<size_t DOF>
 LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
 		const std::vector<Puck*>& genericPucks,
-		Puck* safetyPuck,
+		SafetyModule* safetyModule,
 		const libconfig::Setting& setting,
 		std::vector<int> torqueGroupIds) :
 	input(sink.input),
 	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
-	llw(genericPucks, safetyPuck, setting, torqueGroupIds),
+	llw(genericPucks, safetyModule, setting, torqueGroupIds),
 	sink(this), source(this)
 {
 }

@@ -38,6 +38,8 @@
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/safety_module.h>
 #include <barrett/systems/abstract/system.h>
 
 #include <barrett/systems/low_level_wam_wrapper.h>
@@ -95,7 +97,7 @@ public:		System::Output<jv_type>& jvOutput;
 
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	Wam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+	Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
 			const libconfig::Setting& setting,
 			std::vector<int> torqueGroupIds = std::vector<int>());
 	~Wam();

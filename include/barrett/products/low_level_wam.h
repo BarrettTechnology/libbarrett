@@ -19,6 +19,7 @@
 #include <barrett/units.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/motor_puck.h>
+#include <barrett/products/safety_module.h>
 #include <barrett/products/puck_group.h>
 
 
@@ -31,7 +32,7 @@ class LowLevelWam {
 
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	LowLevelWam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+	LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
 			const libconfig::Setting& setting,
 			std::vector<int> torqueGroupIds = std::vector<int>());
 	~LowLevelWam();
@@ -60,7 +61,7 @@ public:
 protected:
 	const CommunicationsBus& bus;
 	std::vector<MotorPuck> pucks;
-	Puck* safetyPuck;
+	SafetyModule* safetyModule;
 	PuckGroup wamGroup;
 	std::vector<PuckGroup*> torqueGroups;
 

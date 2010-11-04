@@ -21,6 +21,7 @@
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/can_socket.h>
 #include <barrett/products/puck.h>
+#include <barrett/products/safety_module.h>
 
 
 namespace barrett {
@@ -41,6 +42,9 @@ public:
 	virtual ~BusManager();
 
 	void enumerate();
+
+	bool safetyModuleFound();
+	SafetyModule* getSafetyModule();
 
 	const std::vector<Puck*>& getWamPucks() const;
 	bool wam4Found() const;
@@ -89,6 +93,7 @@ protected:
 	std::vector<Puck*> pucks;
 	std::vector<Puck*> wamPucks;
 
+	SafetyModule* safetyModule;
 	systems::RealTimeExecutionManager* rtem;
 	systems::Wam<4>* wam4;
 

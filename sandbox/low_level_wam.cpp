@@ -43,7 +43,7 @@ int main() {
     // instantiate Systems
 	std::vector<Puck*> wamPucks = bm.getWamPucks();
 	wamPucks.resize(DOF);
-	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getPuck(10), setting["low_level"]);
+	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getSafetyModule(), setting["low_level"]);
 	systems::PIDController<jp_type, jt_type> jpController(setting["joint_position_control"]);
 	systems::Constant<jp_type> point(llww.getLowLevelWam().getHomePosition());
 

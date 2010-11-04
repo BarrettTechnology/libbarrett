@@ -21,6 +21,7 @@
 #include <barrett/units.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/motor_puck.h>
+#include <barrett/products/safety_module.h>
 #include <barrett/products/puck_group.h>
 
 #include <barrett/products/low_level_wam.h>
@@ -30,8 +31,8 @@ namespace barrett {
 
 
 template<size_t DOF>
-LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, Puck* _safetyPuck, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
-	bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyPuck(_safetyPuck), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(-1)
+LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
+	bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyModule(_safetyModule), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(-1)
 {
 	syslog(LOG_ERR, "LowLevelWam::LowLevelWam(%s => \"%s\")", setting.getSourceFile(), setting.getPath().c_str());
 
@@ -128,9 +129,9 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, Puck* _saf
 
 
 	// Zero the WAM?
-	if (safetyPuck == NULL) {
-		syslog(LOG_ERR, "  No safetyPuck: WAM may not be zeroed");
-	} else if (safetyPuck->getProperty(Puck::ZERO)) {
+	if (safetyModule == NULL) {
+		syslog(LOG_ERR, "  No safetyModule: WAM may not be zeroed");
+	} else if (safetyModule->wamIsZeroed()) {
 		syslog(LOG_ERR, "  WAM was already zeroed");
 	} else if (zeroCompensation) {
 		v_type zeroAngle(setting["zeroangle"]);
@@ -227,8 +228,8 @@ void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 {
 	// Tell the safety logic to ignore the next several faults
 	// (the position will appear to be changing rapidly)
-	if (safetyPuck != NULL) {
-		safetyPuck->setProperty(Puck::IFAULT, 8);  // TODO(dc): Why 8?
+	if (safetyModule != NULL) {
+		safetyModule->setProperty(Puck::IFAULT, 8);  // TODO(dc): Why 8?
 	}
 
 	pp = j2pp * jp;  // Convert from joint positions to Puck positions
@@ -238,8 +239,8 @@ void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 	}
 
 	// Record the fact that the WAM has been zeroed
-	if (safetyPuck != NULL) {
-		safetyPuck->setProperty(Puck::ZERO, 1);
+	if (safetyModule != NULL) {
+		safetyModule->setWamZeroed();
 	}
 }
 

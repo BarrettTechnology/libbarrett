@@ -27,7 +27,7 @@ public:
 	};
 
 
-	SafetyModule(Puck* puck = NULL) : SpecialPuck(puck, Puck::PT_Safety) {}
+	SafetyModule(Puck* puck = NULL) : SpecialPuck(Puck::PT_Safety) { setPuck(puck); }
 	virtual ~SafetyModule() {}
 
 	virtual void update() {}
@@ -42,7 +42,7 @@ public:
 	}
 
 	bool wamIsZeroed() const { return getProperty(Puck::ZERO) == 1; }
-	void setWamZeroed(bool zeroed) const { setProperty(Puck::ZERO, zeroed); }
+	void setWamZeroed(bool zeroed = true) const { setProperty(Puck::ZERO, zeroed); }
 };
 
 
