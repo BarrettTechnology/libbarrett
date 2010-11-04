@@ -24,6 +24,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/products/puck.h>
+#include <barrett/products/safety_module.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/real_time_execution_manager.h>
 #include <barrett/systems/wam.h>
@@ -35,7 +36,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), rtem(NULL), wam4(NULL), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -96,6 +97,7 @@ BusManager::~BusManager()
 		delete rtem;
 	}
 	delete wam4;
+	delete safetyModule;
 	detail::purge(pucks);
 }
 
@@ -147,18 +149,42 @@ void BusManager::enumerate()
 
 	syslog(LOG_ERR, "  Products:");
 	bool noProductsFound = true;
+	bool wamFound = false;
 	if (wam4Found()) {
 		noProductsFound = false;
-		syslog(LOG_ERR, "    WAM4");
+		wamFound = true;
+		syslog(LOG_ERR, "    4-DOF WAM");
 	}
 	if (wam7Found()) {
 		noProductsFound = false;
-		syslog(LOG_ERR, "    WAM7%s%s", wam7WristFound() ? " (Wrist)" : "", wam7GimbalsFound() ? " (Gimbals)" : "");
+		wamFound = true;
+		syslog(LOG_ERR, "    7-DOF WAM%s%s", wam7WristFound() ? " (Wrist)" : "", wam7GimbalsFound() ? " (Gimbals)" : "");
 	}
+	if (wamFound) {
+		if (safetyModuleFound()) {
+			syslog(LOG_ERR, "    Safety Module");
+		} else {
+			syslog(LOG_ERR, "    *** NO SAFETY MODULE ***");
+		}
+	}
+
 	if (noProductsFound) {
 		syslog(LOG_ERR, "    (none)");
 	}
 }
+
+bool BusManager::safetyModuleFound()
+{
+	return getPuck(SAFETY_PUCK_ID) != NULL;
+}
+SafetyModule* BusManager::getSafetyModule()
+{
+	if (safetyModule == NULL  &&  safetyModuleFound()) {
+		safetyModule = new SafetyModule(getPuck(SAFETY_PUCK_ID));
+	}
+	return safetyModule;
+}
+
 
 const std::vector<Puck*>& BusManager::getWamPucks() const
 {
@@ -196,7 +222,7 @@ systems::Wam<4>* BusManager::getWam4(const char* configPath)
 		if (configPath == NULL) {
 			configPath = "wam4";
 		}
-		wam4 = new systems::Wam<4>(wam4Pucks, getPuck(SAFETY_PUCK_ID), getConfig().lookup(configPath));
+		wam4 = new systems::Wam<4>(wam4Pucks, getSafetyModule(), getConfig().lookup(configPath));
 		if (rtem != NULL  &&  !rtem->isRunning()) {
 			rtem->start();
 		}

@@ -45,6 +45,8 @@
 #include <libconfig.h>
 
 #include <barrett/units.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/safety_module.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/math/spline.h>
 #include <barrett/math/trapezoidal_velocity_profile.h>
@@ -61,10 +63,10 @@ namespace systems {
 // TODO(dc): some of these members should be inline
 
 template<size_t DOF>
-Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, Puck* safetyPuck,
+Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
 		const libconfig::Setting& setting,
 		std::vector<int> torqueGroupIds) :
-	llww(genericPucks, safetyPuck, setting["low_level"], torqueGroupIds),
+	llww(genericPucks, safetyModule, setting["low_level"], torqueGroupIds),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),

@@ -22,7 +22,7 @@ namespace barrett {
 class MotorPuck : public SpecialPuck {
 public:
 	MotorPuck(Puck* puck = NULL) :
-		SpecialPuck(puck, Puck::PT_Motor), cts(0), rpc(0.0), cpr(0.0), ipnm(0) {}
+		SpecialPuck(Puck::PT_Motor), cts(0), rpc(0.0), cpr(0.0), ipnm(0) { setPuck(puck); }
 	virtual ~MotorPuck() {}
 
 	virtual void update();

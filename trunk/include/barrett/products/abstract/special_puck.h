@@ -20,11 +20,8 @@ namespace barrett {
 
 class SpecialPuck {
 public:
-	SpecialPuck(Puck* puck = NULL, enum Puck::PuckType _type = Puck::PT_Unknown) :
-		type(_type)
-	{
-		setPuck(puck);
-	}
+	SpecialPuck(enum Puck::PuckType _type = Puck::PT_Unknown) :
+		type(_type) {}
 	virtual ~SpecialPuck() {}
 
 	void setPuck(Puck* puck, bool autoUpdate = true) {
