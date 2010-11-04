@@ -57,7 +57,6 @@ int main() {
 	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 
 	BusManager bm;
-	bm.enumerate();
 
 //	printf("Pucks found on bus:\n");
 //	const std::vector<Puck*>& pucks = bm.getPucks();
@@ -83,13 +82,9 @@ int main() {
 //	sleep(2);
 
 
-	std::vector<Puck*> wamPucks;
-	wamPucks.push_back(bm.getPuck(1));
-	wamPucks.push_back(bm.getPuck(2));
-	wamPucks.push_back(bm.getPuck(3));
-	wamPucks.push_back(bm.getPuck(4));
-
-	LowLevelWam<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam.low_level"));
+	std::vector<Puck*> wamPucks = bm.getWamPucks();
+	wamPucks.resize(DOF);
+	LowLevelWam<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam4.low_level"));
 	boost::thread t(wamControl, &wam);
 
 	while (true) {

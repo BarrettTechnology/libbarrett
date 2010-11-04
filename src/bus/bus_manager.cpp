@@ -22,6 +22,9 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/products/puck.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/real_time_execution_manager.h>
+#include <barrett/systems/wam.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/bus_manager.h>
 
@@ -30,7 +33,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), rtem(NULL), wam4(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -78,10 +81,19 @@ BusManager::BusManager(const char* configFile) :
 	free(cf1);
 	free(cf2);
 	free(origWd);
+
+	enumerate();
 }
 
 BusManager::~BusManager()
 {
+	if (rtem != NULL) {
+		if (rtem->isRunning()) {
+			rtem->stop();
+		}
+		delete rtem;
+	}
+	delete wam4;
 	detail::purge(pucks);
 }
 
@@ -93,6 +105,8 @@ void BusManager::enumerate()
 	int lastId = -1;
 
 	syslog(LOG_ERR, "BusManager::enumerate()");
+
+	syslog(LOG_ERR, "  Pucks:");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
 		Puck::tryGetProperty(*this, id, propId, &successful);
 		p = getPuck(id);
@@ -109,9 +123,9 @@ void BusManager::enumerate()
 			}
 
 			if (lastId != id - 1  &&  lastId != -1) {
-				syslog(LOG_ERR, "  --");  // marker to indicate that the listed IDs are not contiguous
+				syslog(LOG_ERR, "    --");  // marker to indicate that the listed IDs are not contiguous
 			}
-			syslog(LOG_ERR, "  ID=%2d VERS=%3d ROLE=0x%04x TYPE=%s%s",
+			syslog(LOG_ERR, "    ID=%2d VERS=%3d ROLE=0x%04x TYPE=%s%s",
 					p->getId(), p->getVers(), p->getRole(),
 					Puck::getPuckTypeStr(p->getType()),
 					(p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
@@ -121,6 +135,83 @@ void BusManager::enumerate()
 			deletePuck(p);
 		}
 	}
+
+
+	// update wamPucks
+	for (size_t i = 0; i < MAX_WAM_DOF; ++i) {
+		wamPucks[i] = getPuck(i+1);
+	}
+
+
+	syslog(LOG_ERR, "  Products:");
+	bool noProductsFound = true;
+	if (wam4Found()) {
+		noProductsFound = false;
+		syslog(LOG_ERR, "    WAM4");
+	}
+	if (wam7Found()) {
+		noProductsFound = false;
+		syslog(LOG_ERR, "    WAM7%s%s", wam7WristFound() ? " (Wrist)" : "", wam7GimbalsFound() ? " (Gimbals)" : "");
+	}
+	if (noProductsFound) {
+		syslog(LOG_ERR, "    (none)");
+	}
+}
+
+const std::vector<Puck*>& BusManager::getWamPucks() const
+{
+	return wamPucks;
+}
+
+bool BusManager::wam4Found() const
+{
+	return verifyWamPucks(4);
+}
+bool BusManager::wam7Found() const
+{
+	return verifyWamPucks(7);
+}
+bool BusManager::wam7WristFound() const
+{
+	return wam7Found()  &&  getPuck(7)->getProperty(Puck::POLES) == 6;
+}
+bool BusManager::wam7GimbalsFound() const
+{
+	return wam7Found()  &&  getPuck(7)->getProperty(Puck::POLES) == 8;
+}
+
+systems::Wam<4>* BusManager::getWam4(const char* configPath)
+{
+	if ( !wam4Found() ) {
+		throw std::logic_error("BusManager::getWam4(): No WAM4 was found on the bus.");
+	}
+
+	getExecutionManager();  // Make an RTEM if one doesn't already exist
+	if (wam4 == NULL) {
+		std::vector<Puck*> wam4Pucks = wamPucks;
+		wam4Pucks.resize(4);  // Discard all but the first 4 elements
+
+		if (configPath == NULL) {
+			configPath = "wam4";
+		}
+		wam4 = new systems::Wam<4>(wam4Pucks, getPuck(SAFETY_PUCK_ID), getConfig().lookup(configPath));
+		if (rtem != NULL  &&  !rtem->isRunning()) {
+			rtem->start();
+		}
+	}
+
+	return wam4;
+}
+
+systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
+{
+	if (systems::System::defaultExecutionManager == NULL) {
+		if (rtem == NULL) {
+			rtem = new systems::RealTimeExecutionManager(T_s);
+		}
+		systems::System::defaultExecutionManager = rtem;
+	}
+	return rtem;
 }
 
 Puck* BusManager::getPuck(int id)
@@ -131,6 +222,10 @@ Puck* BusManager::getPuck(int id)
 		}
 	}
 	return NULL;
+}
+const Puck* BusManager::getPuck(int id) const
+{
+	return const_cast<const Puck*>(getPuck(id));
 }
 
 void BusManager::deletePuck(Puck* p)
@@ -212,6 +307,21 @@ bool BusManager::retrieveMessage(int busId, unsigned char* data, size_t& len) co
 
 	messageBuffers[busId].front().copyTo(data, len);
 	messageBuffers[busId].pop_front();
+
+	return true;
+}
+
+bool BusManager::verifyWamPucks(const size_t dof) const
+{
+	if (dof > MAX_WAM_DOF) {
+		return false;
+	}
+
+	for (size_t i = 0; i < MAX_WAM_DOF; ++i) {
+		if ( (i < dof)  ^  (wamPucks[i] != NULL) ) {
+			return false;
+		}
+	}
 
 	return true;
 }
