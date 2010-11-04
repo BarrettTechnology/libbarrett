@@ -194,7 +194,7 @@ typename Parser::result_type Puck::receiveGetPropertyReply(const CommunicationsB
 	size_t len;
 
 	*retCode = bus.receive(Parser::busId(id, propId), data, len, blocking, realtime);
-	if (*retCode) {
+	if (*retCode != 0) {
 		return typename Parser::result_type();
 	}
 
