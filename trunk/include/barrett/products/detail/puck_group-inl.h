@@ -35,7 +35,7 @@ template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, 
 		values[i] = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, true, realtime, &ret);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving message %d of %d for ID=%d.",
-					__func__, ret, i, numPucks(), pucks[i]->getId());
+					__func__, ret, i+1, numPucks(), pucks[i]->getId());
 			throw std::runtime_error("PuckGroup::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
 		}
 	}
