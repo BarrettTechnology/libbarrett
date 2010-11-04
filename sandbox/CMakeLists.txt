@@ -31,7 +31,7 @@ set(programs
 	move_to
 	network_haptics
 	puck_terminal
-	read_safety_state
+	safety_module
 	tactile_test
 	teach
 	update_properties
