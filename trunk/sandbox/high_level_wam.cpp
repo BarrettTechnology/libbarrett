@@ -40,24 +40,14 @@ int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	BusManager bm;
-	bm.enumerate();
-	std::vector<Puck*> wamPucks;
-	wamPucks.push_back(bm.getPuck(1));
-	wamPucks.push_back(bm.getPuck(2));
-	wamPucks.push_back(bm.getPuck(3));
-	wamPucks.push_back(bm.getPuck(4));
-	const libconfig::Config& config = bm.getConfig();
-
-	systems::RealTimeExecutionManager rtem(T_s);
-	systems::System::defaultExecutionManager = &rtem;
+	systems::Wam<DOF>& wam = *bm.getWam4();
+	const libconfig::Setting& setting = bm.getConfig().lookup("wam4");
 
 
     // instantiate Systems
-	systems::Wam<DOF> wam(wamPucks, bm.getPuck(10), config.lookup("wam"));
-
 	systems::Constant<jp_type> jpPoint(wam.getHomePosition());
 
-	math::Kinematics<DOF> kin(config.lookup("wam.kinematics"));
+	math::Kinematics<DOF> kin(setting["kinematics"]);
 	kin.eval(wam.getHomePosition(), jv_type(0.0));
 	systems::Constant<units::CartesianPosition::type> tpPoint(
 			units::CartesianPosition::type(kin.impl->tool->origin_pos));
@@ -73,7 +63,6 @@ int main() {
 
 
 	// start the main loop!
-	rtem.start();
 
 	std::cout << "Press [Enter] to compensate for gravity.\n";
 	waitForEnter();
@@ -98,7 +87,6 @@ int main() {
 
 	std::cout << "Shift-idle, then press [Enter].\n";
 	waitForEnter();
-	rtem.stop();
 
 	return 0;
 }

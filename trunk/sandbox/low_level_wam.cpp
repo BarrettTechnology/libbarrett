@@ -36,24 +36,16 @@ int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	BusManager bm;
-	bm.enumerate();
-	std::vector<Puck*> wamPucks;
-	wamPucks.push_back(bm.getPuck(1));
-	wamPucks.push_back(bm.getPuck(2));
-	wamPucks.push_back(bm.getPuck(3));
-	wamPucks.push_back(bm.getPuck(4));
-	const libconfig::Config& config = bm.getConfig();
-
-	systems::RealTimeExecutionManager rtem(T_s);
-	systems::System::defaultExecutionManager = &rtem;
+	const libconfig::Setting& setting = bm.getConfig().lookup("wam4");
+	systems::RealTimeExecutionManager& rtem = *bm.getExecutionManager();
 
 
     // instantiate Systems
-	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getPuck(10), config.lookup("wam.low_level"));
-	systems::PIDController<jp_type, jt_type> jpController(
-			config.lookup("wam.joint_position_control"));
-	systems::Constant<jp_type> point(
-			config.lookup("wam.low_level.home"));
+	std::vector<Puck*> wamPucks = bm.getWamPucks();
+	wamPucks.resize(DOF);
+	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getPuck(10), setting["low_level"]);
+	systems::PIDController<jp_type, jt_type> jpController(setting["joint_position_control"]);
+	systems::Constant<jp_type> point(llww.getLowLevelWam().getHomePosition());
 
 
 	// make connections between Systems

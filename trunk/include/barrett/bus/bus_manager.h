@@ -25,6 +25,15 @@
 
 namespace barrett {
 
+// Forward declarations
+namespace systems{
+
+template<size_t DOF> class Wam;
+class ExecutionManager;
+class RealTimeExecutionManager;
+
+}
+
 
 class BusManager : public CommunicationsBus {
 public:
@@ -32,8 +41,19 @@ public:
 	virtual ~BusManager();
 
 	void enumerate();
+
+	const std::vector<Puck*>& getWamPucks() const;
+	bool wam4Found() const;
+	bool wam7Found() const;
+	bool wam7WristFound() const;
+	bool wam7GimbalsFound() const;
+
+	systems::Wam<4>* getWam4(const char* configPath = NULL);
+	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
+
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 	Puck* getPuck(int id);
+	const Puck* getPuck(int id) const;
 	void deletePuck(Puck* p);
 
 //	const CommunicationsBus& getBus() const { return bus; }
@@ -58,9 +78,19 @@ protected:
 	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
+	bool verifyWamPucks(const size_t dof) const;
+
+	static const size_t MAX_WAM_DOF = 7;
+	static const double DEFAULT_LOOP_PERIOD = 0.002;
+	static const int SAFETY_PUCK_ID = 10;
+
 	libconfig::Config config;
 	CommunicationsBus& bus;
 	std::vector<Puck*> pucks;
+	std::vector<Puck*> wamPucks;
+
+	systems::RealTimeExecutionManager* rtem;
+	systems::Wam<4>* wam4;
 
 private:
 	typedef CANSocket ActualBusType;
