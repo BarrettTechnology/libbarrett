@@ -47,6 +47,7 @@ public:
 	SafetyModule* getSafetyModule();
 
 	const std::vector<Puck*>& getWamPucks() const;
+	bool wamFound() const { return wam4Found() || wam7Found(); }
 	bool wam4Found() const;
 	bool wam7Found() const;
 	bool wam7WristFound() const;
