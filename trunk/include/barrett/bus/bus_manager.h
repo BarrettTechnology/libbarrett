@@ -43,7 +43,7 @@ public:
 
 	void enumerate();
 
-	bool safetyModuleFound();
+	bool safetyModuleFound() const;
 	SafetyModule* getSafetyModule();
 
 	const std::vector<Puck*>& getWamPucks() const;
@@ -53,7 +53,8 @@ public:
 	bool wam7WristFound() const;
 	bool wam7GimbalsFound() const;
 
-	systems::Wam<4>* getWam4(const char* configPath = NULL);
+	void waitForWam(bool promptOnZeroing = true);
+	systems::Wam<4>* getWam4(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
 
 	const std::vector<Puck*>& getPucks() const { return pucks; }

@@ -10,12 +10,14 @@
 #include <libconfig.h++>
 
 #include <barrett/exception.h>
+#include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/bus/bus_manager.h>
 
 
 using namespace barrett;
+using detail::waitForEnter;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -24,12 +26,6 @@ using systems::disconnect;
 const size_t DOF = 4;
 const double T_s = 0.002;
 BARRETT_UNITS_TYPEDEFS(DOF);
-
-
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
 
 
 int main() {
@@ -41,6 +37,7 @@ int main() {
 
 
     // instantiate Systems
+	bm.waitForWam();
 	std::vector<Puck*> wamPucks = bm.getWamPucks();
 	wamPucks.resize(DOF);
 	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getSafetyModule(), setting["low_level"]);
@@ -58,6 +55,7 @@ int main() {
 
 	// start the main loop!
 	rtem.start();
+	bm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
 
 	std::cout << "Press [Enter] to move to home position.\n";
 	waitForEnter();
@@ -68,8 +66,7 @@ int main() {
 	reconnect(llww.jpOutput, jpController.referenceInput);
 	jpController.resetIntegrator();
 
-	std::cout << "Shift-idle, then press [Enter].\n";
-	waitForEnter();
+	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	rtem.stop();
 
 	return 0;
