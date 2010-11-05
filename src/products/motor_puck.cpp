@@ -34,36 +34,35 @@ void MotorPuck::sendPackedTorques(const CommunicationsBus& bus, int groupId, int
 		const double* pt, int numTorques)
 {
 	unsigned char data[8];
-	int tmp1, tmp2;
+	int tmp0, tmp1;
+
+	if (numTorques < 0  ||  numTorques > 4) {
+		throw std::logic_error("MotorPuck::sendPackedTorques(): numTorques must be >= 0 and <= PUCKS_PER_TORQUE_GROUP.");
+		return;
+	}
 
 	// Special value-packing compilation: Packs (4) 14-bit values into 8 bytes
 	//     0        1        2        3        4        5        6        7
 	// ATPPPPPP AAAAAAaa aaaaaaBB BBBBbbbb bbbbCCCC CCcccccc ccDDDDDD dddddddd
-	switch (numTorques) {
-	case 4:
-		tmp1 = floor(math::saturate(pt[3], MAX_PUCK_TORQUE));
-		data[7] = static_cast<unsigned char>(tmp1 & 0x00FF);
-	case 3:
-		tmp2 = floor(math::saturate(pt[2], MAX_PUCK_TORQUE));
-		data[6] = static_cast<unsigned char>( ((tmp2 << 6) & 0x00C0) | ((tmp1 >> 8) & 0x003F) );
-		data[5] = static_cast<unsigned char>( ( tmp2 >> 2) & 0x00FF );
-	case 2:
-		tmp1 = floor(math::saturate(pt[1], MAX_PUCK_TORQUE));
-		data[4] = static_cast<unsigned char>( ((tmp1 << 4) & 0x00F0) | ((tmp2 >> 10) & 0x000F) );
-		data[3] = static_cast<unsigned char>( ( tmp1 >> 4) & 0x00FF );
-	case 1:
-		tmp2 = floor(math::saturate(pt[0], MAX_PUCK_TORQUE));
-		data[2] = static_cast<unsigned char>( ((tmp2 << 2) & 0x00FC) | ((tmp1 >> 12) & 0x0003) );
-		data[1] = static_cast<unsigned char>( ( tmp2 >> 6) & 0x00FF );
-		break;
-
-	default:
-		throw std::logic_error("MotorPuck::sendPackedTorques(): numTorques must be >= 1 and <= PUCKS_PER_TORQUE_GROUP.");
-		break;
-	}
 	data[0] = propId | Puck::SET_MASK;
 
-	bus.send(Puck::nodeId2BusId(groupId), data, (numTorques == 4) ? 8 : (1 + numTorques*2));
+	tmp0 = (numTorques < 1) ? 0 : floor(math::saturate(pt[0], MAX_PUCK_TORQUE));
+	data[1] = static_cast<unsigned char>( ( tmp0 >> 6) & 0x00FF );
+
+	tmp1 = (numTorques < 2) ? 0 : floor(math::saturate(pt[1], MAX_PUCK_TORQUE));
+	data[2] = static_cast<unsigned char>( ((tmp0 << 2) & 0x00FC) | ((tmp1 >> 12) & 0x0003) );
+	data[3] = static_cast<unsigned char>( ( tmp1 >> 4) & 0x00FF );
+
+	tmp0 = (numTorques < 3) ? 0 : floor(math::saturate(pt[2], MAX_PUCK_TORQUE));
+	data[4] = static_cast<unsigned char>( ((tmp1 << 4) & 0x00F0) | ((tmp0 >> 10) & 0x000F) );
+	data[5] = static_cast<unsigned char>( ( tmp0 >> 2) & 0x00FF );
+
+	tmp1 = (numTorques < 4) ? 0 : floor(math::saturate(pt[3], MAX_PUCK_TORQUE));
+	data[6] = static_cast<unsigned char>( ((tmp0 << 6) & 0x00C0) | ((tmp1 >> 8) & 0x003F) );
+	data[7] = static_cast<unsigned char>(tmp1 & 0x00FF);
+
+
+	bus.send(Puck::nodeId2BusId(groupId), data, 8);
 }
 
 
