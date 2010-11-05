@@ -67,7 +67,7 @@ void Puck::wake(Container<Puck*> pucks)
 		// bus-off. Wait until this Puck drops off the bus before trying to
 		// wake the next one.
 		// TODO(dc): is there a more robust way of doing this?
-		usleep(2000);
+		usleep(10000);
 	}
 
 	usleep(WAKE_UP_TIME);
