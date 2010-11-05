@@ -258,6 +258,9 @@ systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* conf
 		if ( !safetyModuleFound() ) {
 			throw std::logic_error("BusManager::getWam4(): No SafetyModule was found on the bus.");
 		}
+
+		// Check rapidly in case the user wants to perform some action (like
+		// enabling gravity compensation) immediately after Shift-activate.
 		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 50000);
 	}
 
