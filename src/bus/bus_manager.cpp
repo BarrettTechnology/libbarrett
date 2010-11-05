@@ -173,7 +173,7 @@ void BusManager::enumerate()
 	}
 }
 
-bool BusManager::safetyModuleFound()
+bool BusManager::safetyModuleFound() const
 {
 	return getPuck(SAFETY_PUCK_ID) != NULL;
 }
@@ -208,7 +208,33 @@ bool BusManager::wam7GimbalsFound() const
 	return wam7Found()  &&  getPuck(7)->getProperty(Puck::POLES) == 8;
 }
 
-systems::Wam<4>* BusManager::getWam4(const char* configPath)
+void BusManager::waitForWam(bool promptOnZeroing)
+{
+	if ( !safetyModuleFound() ) {
+		printf("ERROR: No SafetyModule was found.\n");
+		exit(1);
+	}
+	SafetyModule* sm = getSafetyModule();
+
+	sm->waitForMode(SafetyModule::IDLE);
+	if ( !wamFound() ) {
+		enumerate();
+		if ( !wamFound() ) {
+			printf("ERROR: No WAM was found.\n");
+			exit(1);
+		}
+	}
+
+	if (promptOnZeroing) {
+		if ( !sm->wamIsZeroed() ) {
+			printf("The WAM needs to be zeroed. Please move it to its home position, then press [Enter].");
+			detail::waitForEnter();
+		}
+	}
+
+}
+
+systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* configPath)
 {
 	if ( !wam4Found() ) {
 		throw std::logic_error("BusManager::getWam4(): No WAM4 was found on the bus.");
@@ -228,6 +254,13 @@ systems::Wam<4>* BusManager::getWam4(const char* configPath)
 		}
 	}
 
+	if (waitForShiftActivate) {
+		if ( !safetyModuleFound() ) {
+			throw std::logic_error("BusManager::getWam4(): No SafetyModule was found on the bus.");
+		}
+		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 50000);
+	}
+
 	return wam4;
 }
 
@@ -242,6 +275,7 @@ systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
 	return rtem;
 }
 
+// TODO(dc): There has to be a better way of making both const/non-const versions of a member function.
 Puck* BusManager::getPuck(int id)
 {
 	for (size_t i = 0; i < pucks.size(); ++i) {
@@ -253,7 +287,12 @@ Puck* BusManager::getPuck(int id)
 }
 const Puck* BusManager::getPuck(int id) const
 {
-	return const_cast<const Puck*>(getPuck(id));
+	for (size_t i = 0; i < pucks.size(); ++i) {
+		if (pucks[i]->getId() == id) {
+			return pucks[i];
+		}
+	}
+	return NULL;
 }
 
 void BusManager::deletePuck(Puck* p)

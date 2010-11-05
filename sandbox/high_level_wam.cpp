@@ -6,13 +6,13 @@
  */
 
 #include <iostream>
-#include <string>
 #include <vector>
 
 #include <libconfig.h++>
 #include <Eigen/Geometry>
 
 #include <barrett/exception.h>
+#include <barrett/detail/stl_utils.h>
 #include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
@@ -20,6 +20,7 @@
 
 
 using namespace barrett;
+using detail::waitForEnter;
 using systems::connect;
 using systems::reconnect;
 using systems::disconnect;
@@ -30,24 +31,19 @@ const double T_s = 0.002;
 BARRETT_UNITS_TYPEDEFS(DOF);
 
 
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
-
-
 int main() {
 	barrett::installExceptionHandler();  // give us pretty stack traces when things die
 
 	BusManager bm;
+	bm.waitForWam();
 	systems::Wam<DOF>& wam = *bm.getWam4();
-	const libconfig::Setting& setting = bm.getConfig().lookup("wam4");
+	wam.gravityCompensate();
 
 
     // instantiate Systems
 	systems::Constant<jp_type> jpPoint(wam.getHomePosition());
 
-	math::Kinematics<DOF> kin(setting["kinematics"]);
+	math::Kinematics<DOF> kin(bm.getConfig().lookup("wam4.kinematics"));
 	kin.eval(wam.getHomePosition(), jv_type(0.0));
 	systems::Constant<units::CartesianPosition::type> tpPoint(
 			units::CartesianPosition::type(kin.impl->tool->origin_pos));
@@ -62,12 +58,7 @@ int main() {
 	systems::Constant<Eigen::Quaterniond> toPoint(q);
 
 
-	// start the main loop!
-
-	std::cout << "Press [Enter] to compensate for gravity.\n";
-	waitForEnter();
-	wam.gravityCompensate();
-
+	// interact with user
 	std::cout << "Press [Enter] to move to joint-space home position.\n";
 	waitForEnter();
 	wam.trackReferenceSignal(jpPoint.output);
@@ -85,8 +76,6 @@ int main() {
 	wam.idle();
 	wam.gravityCompensate(false);
 
-	std::cout << "Shift-idle, then press [Enter].\n";
-	waitForEnter();
-
+	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }
