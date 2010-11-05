@@ -11,12 +11,13 @@
 #include <libconfig.h++>
 #include <Eigen/Geometry>
 
-#include <barrett/exception.h>
-#include <barrett/detail/stl_utils.h>
+#include <barrett/detail/stl_utils.h>  // waitForEnter()
 #include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/bus/bus_manager.h>
+
+#include <barrett/standard_main_function.h>
 
 
 using namespace barrett;
@@ -26,19 +27,12 @@ using systems::reconnect;
 using systems::disconnect;
 
 
-const size_t DOF = 4;
-const double T_s = 0.002;
-BARRETT_UNITS_TYPEDEFS(DOF);
+template<size_t DOF>
+int wam_main(BusManager& bm, systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 
-int main() {
-	barrett::installExceptionHandler();  // give us pretty stack traces when things die
-
-	BusManager bm;
-	bm.waitForWam();
-	systems::Wam<DOF>& wam = *bm.getWam4();
 	wam.gravityCompensate();
-
 
     // instantiate Systems
 	systems::Constant<jp_type> jpPoint(wam.getHomePosition());
