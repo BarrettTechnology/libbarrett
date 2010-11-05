@@ -29,6 +29,7 @@ set(barrett_SOURCES
 	thread/real_time_mutex.cpp
 
 	exception.cpp
+	stl_utils.cpp
 )
 
 # Defenitions for cdlbt code

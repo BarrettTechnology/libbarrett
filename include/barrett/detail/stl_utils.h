@@ -16,6 +16,8 @@ namespace barrett {
 namespace detail {
 
 
+void waitForEnter();
+
 template<typename Container>
 inline void replaceWithNull(Container& container, typename Container::const_reference value)
 {
