@@ -211,7 +211,7 @@ bool BusManager::wam7GimbalsFound() const
 void BusManager::waitForWam(bool promptOnZeroing)
 {
 	if ( !safetyModuleFound() ) {
-		printf("ERROR: No SafetyModule was found.\n");
+		printf(">>> ERROR: No SafetyModule was found.\n");
 		exit(1);
 	}
 	SafetyModule* sm = getSafetyModule();
@@ -220,14 +220,14 @@ void BusManager::waitForWam(bool promptOnZeroing)
 	if ( !wamFound() ) {
 		enumerate();
 		if ( !wamFound() ) {
-			printf("ERROR: No WAM was found.\n");
+			printf(">>> ERROR: No WAM was found.\n");
 			exit(1);
 		}
 	}
 
 	if (promptOnZeroing) {
 		if ( !sm->wamIsZeroed() ) {
-			printf("The WAM needs to be zeroed. Please move it to its home position, then press [Enter].");
+			printf(">>> The WAM needs to be zeroed. Please move it to its home position, then press [Enter].");
 			detail::waitForEnter();
 		}
 	}

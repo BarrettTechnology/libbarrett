@@ -34,7 +34,7 @@ void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int poll
 	}
 
 	if (printMessage) {
-		printf("Please %s the WAM.\n", SafetyModule::getSafetyModeStr(mode));
+		printf(">>> Please %s the WAM.\n", SafetyModule::getSafetyModeStr(mode));
 	}
 	do {
 		usleep(pollingPeriod_us);
