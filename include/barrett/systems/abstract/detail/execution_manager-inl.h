@@ -34,6 +34,9 @@ inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
 	if (alwaysUpdate) {
 		alwaysUpdatedSystems.push_back(sys);
 	}
+
+	// Prevent a possible malloc() in ExecutionManager::updateNeeded()
+	updatedSystems.reserve(managedSystems.size());
 }
 
 // this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
