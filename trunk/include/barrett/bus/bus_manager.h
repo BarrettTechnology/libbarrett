@@ -55,11 +55,11 @@ public:
 
 	void waitForWam(bool promptOnZeroing = true);
 	systems::Wam<4>* getWam4(bool waitForShiftActivate = true, const char* configPath = NULL);
+	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
 
 	const std::vector<Puck*>& getPucks() const { return pucks; }
-	Puck* getPuck(int id);
-	const Puck* getPuck(int id) const;
+	Puck* getPuck(int id) const;
 	void deletePuck(Puck* p);
 
 //	const CommunicationsBus& getBus() const { return bus; }
@@ -98,9 +98,12 @@ protected:
 	SafetyModule* safetyModule;
 	systems::RealTimeExecutionManager* rtem;
 	systems::Wam<4>* wam4;
+	systems::Wam<7>* wam7;
 
 private:
 	typedef CANSocket ActualBusType;
+
+	bool wam7FoundHelper(int poles) const;
 
 	struct Message {
 		Message(const unsigned char* d, size_t l) :
