@@ -28,8 +28,11 @@ int main() {
 
 	if (bm.wam4Found()) {
 		return wam_main(bm, *bm.getWam4());
-//	} else {
-//		return wam_main(bm, bm.getWam7());
+	} else if (bm.wam7Found()) {
+		return wam_main(bm, *bm.getWam7());
+	} else {
+		printf(">>> ERROR: No WAM was found. Perhaps you have found a bug in BusManager::waitForWam().\n");
+		return 1;
 	}
 }
 
