@@ -36,7 +36,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), wam7(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -97,6 +97,7 @@ BusManager::~BusManager()
 		delete rtem;
 	}
 	delete wam4;
+	delete wam7;
 	delete safetyModule;
 	detail::purge(pucks);
 }
@@ -201,11 +202,21 @@ bool BusManager::wam7Found() const
 }
 bool BusManager::wam7WristFound() const
 {
-	return wam7Found()  &&  getPuck(7)->getProperty(Puck::POLES) == 6;
+	return wam7FoundHelper(6);
 }
 bool BusManager::wam7GimbalsFound() const
 {
-	return wam7Found()  &&  getPuck(7)->getProperty(Puck::POLES) == 8;
+	return wam7FoundHelper(8);
+}
+bool BusManager::wam7FoundHelper(int poles) const
+{
+	if (wam7Found()) {
+		Puck* p7 = getPuck(7);
+		p7->wake();
+		return p7->getProperty(Puck::POLES) == poles;
+	} else {
+		return false;
+	}
 }
 
 void BusManager::waitForWam(bool promptOnZeroing)
@@ -233,6 +244,18 @@ void BusManager::waitForWam(bool promptOnZeroing)
 	}
 
 }
+const char* BusManager::getWamDefaultConfigPath()
+{
+	if (wam4Found()) {
+		return "wam4";
+	} else if (wam7WristFound()) {
+		return "wam7";
+	} else if (wam7GimbalsFound()) {
+		return "wamg";
+	} else {
+		throw std::logic_error("BusManager::getWamDefaultConfigPath(): No WAM found.");
+	}
+}
 
 systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* configPath)
 {
@@ -246,7 +269,7 @@ systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* conf
 		wam4Pucks.resize(4);  // Discard all but the first 4 elements
 
 		if (configPath == NULL) {
-			configPath = "wam4";
+			configPath = getWamDefaultConfigPath();
 		}
 		wam4 = new systems::Wam<4>(wam4Pucks, getSafetyModule(), getConfig().lookup(configPath));
 		if (rtem != NULL  &&  !rtem->isRunning()) {
@@ -267,6 +290,39 @@ systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* conf
 	return wam4;
 }
 
+systems::Wam<7>* BusManager::getWam7(bool waitForShiftActivate, const char* configPath)
+{
+	if ( !wam7Found() ) {
+		throw std::logic_error("BusManager::getWam7(): No WAM7 was found on the bus.");
+	}
+
+	getExecutionManager();  // Make an RTEM if one doesn't already exist
+	if (wam7 == NULL) {
+		std::vector<Puck*> wam7Pucks = wamPucks;
+		wam7Pucks.resize(7);  // Discard all but the first 7 elements
+
+		if (configPath == NULL) {
+			configPath = getWamDefaultConfigPath();
+		}
+		wam7 = new systems::Wam<7>(wam7Pucks, getSafetyModule(), getConfig().lookup(configPath));
+		if (rtem != NULL  &&  !rtem->isRunning()) {
+			rtem->start();
+		}
+	}
+
+	if (waitForShiftActivate) {
+		if ( !safetyModuleFound() ) {
+			throw std::logic_error("BusManager::getWam7(): No SafetyModule was found on the bus.");
+		}
+
+		// Check rapidly in case the user wants to perform some action (like
+		// enabling gravity compensation) immediately after Shift-activate.
+		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 50000);
+	}
+
+	return wam7;
+}
+
 systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
 {
 	if (systems::System::defaultExecutionManager == NULL) {
@@ -278,17 +334,7 @@ systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
 	return rtem;
 }
 
-// TODO(dc): There has to be a better way of making both const/non-const versions of a member function.
-Puck* BusManager::getPuck(int id)
-{
-	for (size_t i = 0; i < pucks.size(); ++i) {
-		if (pucks[i]->getId() == id) {
-			return pucks[i];
-		}
-	}
-	return NULL;
-}
-const Puck* BusManager::getPuck(int id) const
+Puck* BusManager::getPuck(int id) const
 {
 	for (size_t i = 0; i < pucks.size(); ++i) {
 		if (pucks[i]->getId() == id) {

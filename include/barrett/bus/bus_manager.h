@@ -54,6 +54,7 @@ public:
 	bool wam7GimbalsFound() const;
 
 	void waitForWam(bool promptOnZeroing = true);
+	const char* getWamDefaultConfigPath();
 	systems::Wam<4>* getWam4(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
