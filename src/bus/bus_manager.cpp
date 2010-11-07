@@ -249,9 +249,9 @@ const char* BusManager::getWamDefaultConfigPath()
 	if (wam4Found()) {
 		return "wam4";
 	} else if (wam7WristFound()) {
-		return "wam7";
+		return "wam7w";
 	} else if (wam7GimbalsFound()) {
-		return "wamg";
+		return "wam7g";
 	} else {
 		throw std::logic_error("BusManager::getWamDefaultConfigPath(): No WAM found.");
 	}
