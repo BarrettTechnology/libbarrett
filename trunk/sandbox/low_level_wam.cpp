@@ -23,21 +23,29 @@ using systems::reconnect;
 using systems::disconnect;
 
 
-const size_t DOF = 4;
-const double T_s = 0.002;
-BARRETT_UNITS_TYPEDEFS(DOF);
-
-
+template<size_t DOF> int wam_main(BusManager& bm);
 int main() {
-	barrett::installExceptionHandler();  // give us pretty stack traces when things die
+	// Give us pretty stack traces when things die
+	barrett::installExceptionHandler();
 
 	BusManager bm;
-	const libconfig::Setting& setting = bm.getConfig().lookup("wam4");
+	bm.waitForWam();
+
+	if (bm.wam4Found()) {
+		return wam_main<4>(bm);
+	} else if (bm.wam7Found()) {
+		return wam_main<7>(bm);
+	}
+}
+
+template<size_t DOF> int wam_main(BusManager& bm) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+
+	const libconfig::Setting& setting = bm.getConfig().lookup(bm.getWamDefaultConfigPath());
 	systems::RealTimeExecutionManager& rtem = *bm.getExecutionManager();
 
-
     // instantiate Systems
-	bm.waitForWam();
 	std::vector<Puck*> wamPucks = bm.getWamPucks();
 	wamPucks.resize(DOF);
 	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getSafetyModule(), setting["low_level"]);
