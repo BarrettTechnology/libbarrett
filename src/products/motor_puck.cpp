@@ -66,7 +66,7 @@ void MotorPuck::sendPackedTorques(const CommunicationsBus& bus, int groupId, int
 }
 
 
-MotorPuck::PositionParser::result_type MotorPuck::PositionParser::parse(int id, int propId, const unsigned char* data, size_t len) {
+int MotorPuck::PositionParser::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
 	bool err = false;
 	if (len != 3 && len != 6) {
 		syslog(
@@ -83,21 +83,21 @@ MotorPuck::PositionParser::result_type MotorPuck::PositionParser::parse(int id, 
 //			}
 
 	if (err) {
-		throw std::runtime_error("MotorPuck::PackedPositionParser::parse(): Unexpected "
-			"message. Check /var/log/syslog for details.");
+		return 1;
 	}
 
 
-	int value = 0;
-	value |= ((long) data[0] << 16) & 0x003F0000;
-	value |= ((long) data[1] << 8) & 0x0000FF00;
-	value |= ((long) data[2]) & 0x000000FF;
+	int intResult = 0;
+	intResult |= ((long) data[0] << 16) & 0x003F0000;
+	intResult |= ((long) data[1] << 8) & 0x0000FF00;
+	intResult |= ((long) data[2]) & 0x000000FF;
 
-	if (value & 0x00200000) {  // If negative...
-		value |= 0xFFC00000; // sign-extend
+	if (intResult & 0x00200000) {  // If negative...
+		intResult |= 0xFFC00000; // sign-extend
 	}
+	*result = intResult;
 
-	return value;
+	return 0;
 }
 
 

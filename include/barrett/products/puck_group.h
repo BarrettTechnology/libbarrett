@@ -30,9 +30,9 @@ public:
 
 	bool verifyProperty(enum Puck::Property prop) const;
 
-	void getProperty(enum Puck::Property prop, int* values, bool realtime = false) const;
+	void getProperty(enum Puck::Property prop, int results[], bool realtime = false) const;
 	template<typename Parser> void getProperty(enum Puck::Property prop,
-			typename Parser::result_type* values, bool realtime = false) const;
+			typename Parser::result_type results[], bool realtime = false) const;
 
 	void setProperty(enum Puck::Property prop, int value) const;
 

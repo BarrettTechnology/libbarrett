@@ -16,17 +16,17 @@ namespace barrett {
 inline int Puck::getProperty(enum Property prop, bool realtime) const {
 	return getProperty(bus, id, getPropertyId(prop), realtime);
 }
-inline int Puck::tryGetProperty(enum Property prop, bool* successful, int timeout_us) const {
-	return tryGetProperty(bus, id, getPropertyId(prop), successful, timeout_us);
+inline int Puck::tryGetProperty(enum Property prop, int* result, int timeout_us) const {
+	return tryGetProperty(bus, id, getPropertyId(prop), result, timeout_us);
 }
 
 template<typename Parser>
-inline typename Parser::result_type Puck::getProperty(enum Property prop, bool realtime) const {
-	return getProperty<Parser> (bus, id, getPropertyId(prop), realtime);
+inline void Puck::getProperty(enum Property prop, typename Parser::result_type* result, bool realtime) const {
+	getProperty<Parser> (bus, id, getPropertyId(prop), result, realtime);
 }
 template<typename Parser>
-inline typename Parser::result_type Puck::tryGetProperty(enum Property prop, bool* successful, int timeout_us) const {
-	return tryGetProperty<Parser> (bus, id, getPropertyId(prop), successful, timeout_us);
+inline int Puck::tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_us) const {
+	return tryGetProperty<Parser> (bus, id, getPropertyId(prop), result, timeout_us);
 }
 
 template<template<typename U, typename = std::allocator<U> > class Container>
@@ -72,19 +72,19 @@ void Puck::wake(Container<Puck*> pucks)
 
 	usleep(WAKE_UP_TIME);
 
+	int ret;
 	int stat;
-	bool successful;
 	for (i = pucks.begin(); i != pucks.end(); ++i) {
 		if (*i == NULL) {
 			continue;
 		}
 
 		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
-		stat = (*i)->tryGetProperty(STAT, &successful, 50000);
-		if (successful  &&  stat == STATUS_READY) {
+		ret = (*i)->tryGetProperty(STAT, &stat, 50000);
+		if (ret == 0  &&  stat == STATUS_READY) {
 			(*i)->updateStatus();
 		} else {
-			if (successful) {
+			if (ret == 0) {
 				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
 			} else {
 				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e6);
@@ -96,54 +96,47 @@ void Puck::wake(Container<Puck*> pucks)
 
 inline int Puck::getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime)
 {
-	return getProperty<StandardParser>(bus, id, propId, realtime);
+	int result;
+	getProperty<StandardParser>(bus, id, propId, &result, realtime);
+	return result;
 }
 // TODO(dc): throw exception if getProperty is called with a group ID?
 template<typename Parser>
-typename Parser::result_type Puck::getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime)
+void Puck::getProperty(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime)
 {
-	int retCode;
-	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, true, realtime, &retCode, 0);
-	if (retCode != 0) {
-		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, retCode);
+	int ret = getPropertyHelper<Parser>(bus, id, propId, result, true, realtime, 0);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
 	}
-	return value;
 }
 
-inline int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, bool* successful, int timeout_us)
+inline int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, int* result, int timeout_us)
 {
-	return tryGetProperty<StandardParser>(bus, id, propId, successful, timeout_us);
+	return tryGetProperty<StandardParser>(bus, id, propId, result, timeout_us);
 }
 template<typename Parser>
-typename Parser::result_type Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, bool* successful, int timeout_us)
+int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, int timeout_us)
 {
-	int retCode;
-	typename Parser::result_type value = getPropertyHelper<Parser>(bus, id, propId, false, false, &retCode, timeout_us);
-	if (retCode == 0) {
-		*successful = true;
-	} else {
-		*successful = false;
-		if (retCode != 1) {  // some error other than "would block" occurred
-			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, retCode);
+	int ret = getPropertyHelper<Parser>(bus, id, propId, result, false, false, timeout_us);
+	if (ret != 0  &&  ret != 1) {  // some error other than "would block" occurred
+			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d.", __func__, ret);
 			throw std::runtime_error("Puck::tryGetProperty(): Receive error. Check /var/log/syslog for details.");
-		}
 	}
-
-	return value;
+	return ret;
 }
 
 template<typename Parser>
-typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode, int timeout_us)
+int Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_us)
 {
 	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
 	if (realtime) {
 		ul.lock();
 	}
 
-	*retCode = sendGetPropertyRequest(bus, id, propId);
-	if (*retCode != 0) {
-		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, *retCode);
+	int ret = sendGetPropertyRequest(bus, id, propId);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::getPropertyHelper(): Failed to send request. Check /var/log/syslog for details.");
 	}
 
@@ -151,7 +144,7 @@ typename Parser::result_type Puck::getPropertyHelper(const CommunicationsBus& bu
 		usleep(timeout_us);
 	}
 
-	return receiveGetPropertyReply<Parser>(bus, id, propId, blocking, realtime, retCode);
+	return receiveGetPropertyReply<Parser>(bus, id, propId, result, blocking, realtime);
 }
 
 inline void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, int value)
@@ -183,22 +176,23 @@ inline int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, in
 	return bus.send(nodeId2BusId(id), data, MSG_LEN);
 }
 
-inline int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode)
+inline int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, int* result, bool blocking, bool realtime)
 {
-	return receiveGetPropertyReply<StandardParser>(bus, id, propId, blocking, realtime, retCode);
+	return receiveGetPropertyReply<StandardParser>(bus, id, propId, result, blocking, realtime);
 }
 template<typename Parser>
-typename Parser::result_type Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, bool blocking, bool realtime, int* retCode)
+int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime)
 {
 	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t len;
 
-	*retCode = bus.receive(Parser::busId(id, propId), data, len, blocking, realtime);
-	if (*retCode != 0) {
-		return typename Parser::result_type();
+	int ret = bus.receive(Parser::busId(id, propId), data, len, blocking, realtime);
+	if (ret != 0) {
+		return ret;
 	}
 
-	return Parser::parse(id, propId, data, len);
+	// Make return code negative to avoid colliding with bus.receive() return codes.
+	return -Parser::parse(id, propId, result, data, len);
 }
 
 inline int Puck::getPropertyId(enum Property prop, enum PuckType pt, int fwVers)

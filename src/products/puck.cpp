@@ -81,8 +81,8 @@ void Puck::updateStatus()
 const char Puck::puckTypeStrs[][12] = { "Monitor", "Safety", "Motor", "ForceTorque", "Unknown" };
 
 
-Puck::StandardParser::result_type Puck::StandardParser::parse(int id,
-		int propId, const unsigned char* data, size_t len)
+int Puck::StandardParser::parse(int id,
+		int propId, result_type* result, const unsigned char* data, size_t len)
 {
 	bool err = false;
 	if (len != 4 && len != 6) {
@@ -102,7 +102,7 @@ Puck::StandardParser::result_type Puck::StandardParser::parse(int id,
 						& Puck::PROPERTY_MASK));
 		err = true;
 	}
-	if (data[1]) {
+	if (data[1] != 0) {
 		syslog(LOG_ERR,
 				"%s: expected second data byte to be 0, got value of %d",
 				__func__, (int) data[1]);
@@ -110,15 +110,15 @@ Puck::StandardParser::result_type Puck::StandardParser::parse(int id,
 	}
 
 	if (err) {
-		throw std::runtime_error("Puck::StandardParser::parse(): Unexpected "
-			"message. Check /var/log/syslog for details.");
+		return 1;
 	}
 
-	int value = (data[len - 1] & 0x80) ? -1 : 0;
+
+	*result = (data[len - 1] & 0x80) ? -1 : 0;
 	for (int i = len - 1; i >= 2; --i) {
-		value = (value << 8) | data[i];
+		*result = (*result << 8) | data[i];
 	}
-	return value;
+	return 0;
 }
 
 

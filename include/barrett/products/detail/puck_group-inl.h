@@ -11,11 +11,11 @@
 namespace barrett {
 
 
-inline void PuckGroup::getProperty(enum Puck::Property prop, int* values, bool realtime) const
+inline void PuckGroup::getProperty(enum Puck::Property prop, int results[], bool realtime) const
 {
-	getProperty<Puck::StandardParser>(prop, values, realtime);
+	getProperty<Puck::StandardParser>(prop, results, realtime);
 }
-template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type* values, bool realtime) const
+template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, typename Parser::result_type results[], bool realtime) const
 {
 	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
 	if (realtime) {
@@ -32,7 +32,7 @@ template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, 
 	}
 
 	for (size_t i = 0; i < numPucks(); ++i) {
-		values[i] = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, true, realtime, &ret);
+		ret = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, &results[i], true, realtime);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving message %d of %d for ID=%d.",
 					__func__, ret, i+1, numPucks(), pucks[i]->getId());
