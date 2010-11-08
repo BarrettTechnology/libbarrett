@@ -24,7 +24,7 @@ public:
 		type(_type) {}
 	virtual ~SpecialPuck() {}
 
-	void setPuck(Puck* puck, bool autoUpdate = true) {
+	virtual void setPuck(Puck* puck, bool autoUpdate = true) {
 		if (puck != NULL  &&  type != Puck::PT_Unknown  &&  puck->getType() != type) {
 			syslog(LOG_ERR, "SpecialPuck::setPuck(): Expected Puck with type %s, got Puck with type %s.",
 					Puck::getPuckTypeStr(type), Puck::getPuckTypeStr(puck->getType()));
@@ -36,7 +36,7 @@ public:
 		}
 	}
 	Puck* getPuck() const { return p; }
-	virtual void update() = 0;
+	virtual void update() {}
 
 	int getProperty(enum Puck::Property prop) const {
 		return p->getProperty(prop);
