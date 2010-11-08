@@ -28,7 +28,7 @@ public:
 		if (puck != NULL  &&  type != Puck::PT_Unknown  &&  puck->getType() != type) {
 			syslog(LOG_ERR, "SpecialPuck::setPuck(): Expected Puck with type %s, got Puck with type %s.",
 					Puck::getPuckTypeStr(type), Puck::getPuckTypeStr(puck->getType()));
-			std::logic_error("SpecialPuck::setPuck(): Bad PuckType. Check /var/log/syslog for details.");
+			throw std::logic_error("SpecialPuck::setPuck(): Bad PuckType. Check /var/log/syslog for details.");
 		}
 		p = puck;
 		if (p != NULL  &&  autoUpdate) {
