@@ -76,6 +76,7 @@
  *   - \c jp_type  The barrett::units::JointPositions::type of the given \c dimension
  *   - \c jv_type  The barrett::units::JointVelocities::type of the given \c dimension
  *   - \c cf_type  The barrett::units::CartesianForce::type
+ *   - \c ct_type  The barrett::units::CartesianTorque::type
  *   - \c cp_type  The barrett::units::CartesianPosition::type
  */
 #define BARRETT_UNITS_TYPEDEFS(dimension)  \
@@ -85,6 +86,7 @@
 	typedef ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef ::barrett::units::JointVelocities<dimension>::type jv_type;  \
 	typedef ::barrett::units::CartesianForce::type cf_type;  \
+	typedef ::barrett::units::CartesianTorque::type ct_type;  \
 	typedef ::barrett::units::CartesianPosition::type cp_type
 
 /** Used in place of #BARRETT_UNITS_TYPEDEFS when \c dimension is dependent on a template parameter of the containing class.
@@ -100,6 +102,7 @@
 	typedef typename ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef typename ::barrett::units::JointVelocities<dimension>::type jv_type;  \
 	typedef ::barrett::units::CartesianForce::type cf_type;  \
+	typedef ::barrett::units::CartesianTorque::type ct_type;  \
 	typedef ::barrett::units::CartesianPosition::type cp_type
 
 
@@ -135,6 +138,11 @@ template<int R> struct JointVelocities {
 /// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian force.\ Result available in the nested #type \c typedef.
 struct CartesianForce {
 	typedef math::Vector<3, CartesianForce>::type type;
+};
+
+/// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian torque.\ Result available in the nested #type \c typedef.
+struct CartesianTorque {
+	typedef math::Vector<3, CartesianTorque>::type type;
 };
 
 /// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian position.\ Result available in the nested #type \c typedef.
