@@ -51,7 +51,7 @@ public:
 		}
 
 		typedef double result_type;
-		static result_type parse(int id, int propId, const unsigned char* data, size_t len);
+		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
 	};
 
 

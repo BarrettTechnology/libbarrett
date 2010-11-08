@@ -104,7 +104,7 @@ BusManager::~BusManager()
 
 void BusManager::enumerate()
 {
-	bool successful;
+	int ret, result;
 	int propId = Puck::getPropertyId(Puck::STAT, Puck::PT_Unknown, 0);
 	Puck* p = NULL;
 	int lastId = -1;
@@ -113,10 +113,10 @@ void BusManager::enumerate()
 
 	syslog(LOG_ERR, "  Pucks:");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
-		Puck::tryGetProperty(*this, id, propId, &successful);
+		ret = Puck::tryGetProperty(*this, id, propId, &result);
 		p = getPuck(id);
 
-		if (successful) {
+		if (ret == 0) {
 			// if the Puck doesn't exist, make it
 			if (p == NULL) {
 				p = new Puck(*this, id);
