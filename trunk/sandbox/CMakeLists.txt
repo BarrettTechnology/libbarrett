@@ -14,11 +14,8 @@ endfunction()
 set(programs
 	bus_manager
 	can_terminal
-	cartesian_hold
-	friction_data
 	gimbals_hand_controller
 	hand_feedback
-	hand_motor_control_stress_test
 	haptics
 	high_level_wam
 	load_ft_cal

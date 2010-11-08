@@ -6,66 +6,38 @@
  */
 
 #include <iostream>
-#include <string>
 
+#include <barrett/detail/stl_utils.h>  // waitForEnter()
+#include <barrett/units.h>
 #include <barrett/systems.h>
+#include <barrett/bus/bus_manager.h>
+#include <barrett/products/safety_module.h>
+
+#include <barrett/standard_main_function.h>
 
 
 using namespace barrett;
-
-const size_t DOF = 4;
-const double T_s = 0.002;
-BARRETT_UNITS_TYPEDEFS(DOF);
+using detail::waitForEnter;
 
 
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
+template<size_t DOF>
+int wam_main(BusManager& bm, systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-
-int main() {
-	libconfig::Config config;
-	config.readFile("/etc/barrett/wam4.conf");
-
-	systems::RealTimeExecutionManager rtem(T_s);
-	systems::System::defaultExecutionManager = &rtem;
-
-
-	// instantiate Systems
-	systems::Wam<DOF> wam(config.lookup("wam"));
-
-
-	// start the main loop!
-	rtem.start();
-
-	std::cout << "Press [Enter] to compensate for gravity.\n";
-	waitForEnter();
 	wam.gravityCompensate();
 
 
-//	jp_type jp1, jp2;
-//	jp1 << 0, -M_PI/2.0, 0, 0;
-//	jp2 << 0, -M_PI/4.0, 0, 0;
-//
-//	wam.moveTo(jp1);
-//	while (true) {
-//		sleep(2);
-//		wam.moveTo(jp2, false);
-//		sleep(2);
-//		wam.moveTo(jp1, false);
-//	}
+	jp_type jp(0.0);
 
-	jp_type jp;
-	jp << 0, -M_PI/2.0, 0, 0;
-
+	std::cout << "Press [Enter] to move to Joint position: " << jp << "\n";
+	waitForEnter();
 	wam.moveTo(jp);
-	while (true) {
-		usleep(30000);
-		jp[1] += 0.03;
-		wam.moveTo(jp, false, 0.5, 1.0);
-	}
 
-	rtem.stop();
+	std::cout << "Press [Enter] to move to Home position: " << wam.getHomePosition() << "\n";
+	waitForEnter();
+	wam.moveHome();
+
+
+	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }
