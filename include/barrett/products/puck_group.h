@@ -51,7 +51,7 @@ public:
 		BGRP_LOWER_WAM = Puck::GROUP_MASK | 1,  // A packed-torque group (Pucks 1-4)
 		BGRP_UPPER_WAM = Puck::GROUP_MASK | 2,  // A packed-torque group (Pucks 5-7)
 
-		BGRP_BHAND = Puck::GROUP_MASK | 5,  // The whole hand (Pucks 11-14)
+		BGRP_HAND = Puck::GROUP_MASK | 5,  // The whole hand (Pucks 11-14)
 	};
 
 	enum FeedbackGroup {
