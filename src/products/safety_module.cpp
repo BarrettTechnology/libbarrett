@@ -18,7 +18,7 @@
 namespace barrett {
 
 
-enum SafetyModule::SafetyMode SafetyModule::getSafetyMode() const {
+enum SafetyModule::SafetyMode SafetyModule::getMode() const {
 	int mode = getProperty(Puck::MODE);
 	if (mode < 0  ||  mode > 2) {
 		syslog(LOG_ERR, "SafetyModule::getMode(): Expected MODE value of 0, 1, or 2. Got value of %d.", mode);
@@ -29,7 +29,7 @@ enum SafetyModule::SafetyMode SafetyModule::getSafetyMode() const {
 
 void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int pollingPeriod_us)
 {
-	if (getSafetyMode() == mode) {
+	if (getMode() == mode) {
 		return;
 	}
 
@@ -38,15 +38,15 @@ void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int poll
 	}
 	do {
 		usleep(pollingPeriod_us);
-	} while (getSafetyMode() != mode);
+	} while (getMode() != mode);
 }
 
 void SafetyModule::waitForModeChange(int pollingPeriod_us)
 {
-	enum SafetyMode mode = getSafetyMode();
+	enum SafetyMode mode = getMode();
 	do {
 		usleep(pollingPeriod_us);
-	} while (getSafetyMode() == mode);
+	} while (getMode() == mode);
 }
 
 

@@ -16,7 +16,7 @@ using namespace barrett;
 
 
 void printCurrentMode(SafetyModule& sm) {
-	printf("Current SafetyModule mode: %s\n", SafetyModule::getSafetyModeStr(sm.getSafetyMode()));
+	printf("Current SafetyModule mode: %s\n", SafetyModule::getSafetyModeStr(sm.getMode()));
 }
 
 int main() {
