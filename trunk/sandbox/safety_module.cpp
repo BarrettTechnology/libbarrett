@@ -26,9 +26,9 @@ int main() {
 	printCurrentMode(sm);
 
 	sm.waitForMode(SafetyModule::IDLE);
-	if ( !bm.wamFound() ) {
+	if ( !bm.foundWam() ) {
 		bm.enumerate();
-		if ( !bm.wamFound() ) {
+		if ( !bm.foundWam() ) {
 			printf("ERROR: No WAM was found.\n");
 			return 1;
 		}

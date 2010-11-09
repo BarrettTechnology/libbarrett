@@ -44,15 +44,15 @@ public:
 
 	void enumerate();
 
-	bool safetyModuleFound() const;
+	bool foundSafetyModule() const;
 	SafetyModule* getSafetyModule();
 
 	const std::vector<Puck*>& getWamPucks() const;
-	bool wamFound() const { return wam4Found() || wam7Found(); }
-	bool wam4Found() const;
-	bool wam7Found() const;
-	bool wam7WristFound() const;
-	bool wam7GimbalsFound() const;
+	bool foundWam() const { return foundWam4() || foundWam7(); }
+	bool foundWam4() const;
+	bool foundWam7() const;
+	bool foundWam7Wrist() const;
+	bool foundWam7Gimbals() const;
 
 	void waitForWam(bool promptOnZeroing = true);
 	const char* getWamDefaultConfigPath();
@@ -60,7 +60,7 @@ public:
 	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
 
-	bool forceTorqueSensorFound() const;
+	bool foundForceTorqueSensor() const;
 	ForceTorqueSensor* getForceTorqueSensor();
 
 	const std::vector<Puck*>& getPucks() const { return pucks; }
@@ -93,7 +93,7 @@ protected:
 
 	static const size_t MAX_WAM_DOF = 7;
 	static const double DEFAULT_LOOP_PERIOD = 0.002;
-	static const int SAFETY_PUCK_ID = 10;
+	static const int SAFETY_MODULE_ID = 10;
 	static const int FORCE_TORQUE_SENSOR_ID = 8;
 
 	libconfig::Config config;
@@ -101,7 +101,7 @@ protected:
 	std::vector<Puck*> pucks;
 	std::vector<Puck*> wamPucks;
 
-	SafetyModule* safetyModule;
+	SafetyModule* sm;
 	systems::RealTimeExecutionManager* rtem;
 	systems::Wam<4>* wam4;
 	systems::Wam<7>* wam7;

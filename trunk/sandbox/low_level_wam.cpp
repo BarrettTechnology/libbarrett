@@ -31,9 +31,9 @@ int main() {
 	BusManager bm;
 	bm.waitForWam();
 
-	if (bm.wam4Found()) {
+	if (bm.foundWam4()) {
 		return wam_main<4>(bm);
-	} else if (bm.wam7Found()) {
+	} else if (bm.foundWam7()) {
 		return wam_main<7>(bm);
 	}
 }

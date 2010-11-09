@@ -26,9 +26,9 @@ int main() {
 	::barrett::BusManager bm;
 	bm.waitForWam();
 
-	if (bm.wam4Found()) {
+	if (bm.foundWam4()) {
 		return wam_main(bm, *bm.getWam4());
-	} else if (bm.wam7Found()) {
+	} else if (bm.foundWam7()) {
 		return wam_main(bm, *bm.getWam7());
 	} else {
 		printf(">>> ERROR: No WAM was found. Perhaps you have found a bug in BusManager::waitForWam().\n");
