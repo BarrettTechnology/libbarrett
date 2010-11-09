@@ -38,6 +38,7 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPer
 	if (period < 3000) {
 		throw(std::logic_error("(log::RealTimeWriter::RealTimeWriter()): This constructor was not designed for data rates this high."));
 	}
+	period = std::min(period, (size_t)1000000u);  // limit period to a maximum of 1 second
 
 	init(recordsInSingleBuffer);
 }
