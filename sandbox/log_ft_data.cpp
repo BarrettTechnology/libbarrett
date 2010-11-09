@@ -138,6 +138,10 @@ int main(int argc, char** argv) {
 	tuple_type sum;
 
 	BusManager bm;
+	if ( !bm.foundForceTorqueSensor() ) {
+		printf("ERROR: No Force-Torque Sensor found!\n");
+		return 1;
+	}
 	boost::thread ftThread(ftThreadEntryPoint, &g_Going, T_s, *bm.getForceTorqueSensor(), lw, windowSize, &numSamples, &sum);
 
 	if (fileMode) {
