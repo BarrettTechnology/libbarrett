@@ -14,15 +14,10 @@
 #include <unistd.h>
 #include <native/task.h>
 
-#include <barrett/cdlbt/bus.h>
-#include <barrett/cdlbt/bus_can.h>
-
 
 using namespace std;
+using namespace barrett;
 
-
-const int ID = BT_BUS_PUCK_ID_FT;
-const int MIN_FW_VERS = 100;  // bogus value, but at least it rules out monitor
 const int GM_SIZE = 36;  // the gain matrix is a 6x6 matrix with 36 elements
 
 
