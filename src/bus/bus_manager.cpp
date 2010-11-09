@@ -37,7 +37,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -99,7 +99,7 @@ BusManager::~BusManager()
 	}
 	delete wam4;
 	delete wam7;
-	delete safetyModule;
+	delete sm;
 	delete fts;
 	detail::purge(pucks);
 }
@@ -153,24 +153,24 @@ void BusManager::enumerate()
 	syslog(LOG_ERR, "  Products:");
 	bool noProductsFound = true;
 	bool wamFound = false;
-	if (wam4Found()) {
+	if (foundWam4()) {
 		noProductsFound = false;
 		wamFound = true;
 		syslog(LOG_ERR, "    4-DOF WAM");
 	}
-	if (wam7Found()) {
+	if (foundWam7()) {
 		noProductsFound = false;
 		wamFound = true;
-		syslog(LOG_ERR, "    7-DOF WAM%s%s", wam7WristFound() ? " (Wrist)" : "", wam7GimbalsFound() ? " (Gimbals)" : "");
+		syslog(LOG_ERR, "    7-DOF WAM%s%s", foundWam7Wrist() ? " (Wrist)" : "", foundWam7Gimbals() ? " (Gimbals)" : "");
 	}
 	if (wamFound) {
-		if (safetyModuleFound()) {
+		if (foundSafetyModule()) {
 			syslog(LOG_ERR, "    Safety Module");
 		} else {
 			syslog(LOG_ERR, "    *** NO SAFETY MODULE ***");
 		}
 	}
-	if (forceTorqueSensorFound()) {
+	if (foundForceTorqueSensor()) {
 		noProductsFound = false;
 		syslog(LOG_ERR, "    Force-Torque Sensor");
 	}
@@ -181,16 +181,16 @@ void BusManager::enumerate()
 }
 
 
-bool BusManager::safetyModuleFound() const
+bool BusManager::foundSafetyModule() const
 {
-	return getPuck(SAFETY_PUCK_ID) != NULL;
+	return getPuck(SAFETY_MODULE_ID) != NULL;
 }
 SafetyModule* BusManager::getSafetyModule()
 {
-	if (safetyModule == NULL  &&  safetyModuleFound()) {
-		safetyModule = new SafetyModule(getPuck(SAFETY_PUCK_ID));
+	if (sm == NULL  &&  foundSafetyModule()) {
+		sm = new SafetyModule(getPuck(SAFETY_MODULE_ID));
 	}
-	return safetyModule;
+	return sm;
 }
 
 
@@ -199,25 +199,25 @@ const std::vector<Puck*>& BusManager::getWamPucks() const
 	return wamPucks;
 }
 
-bool BusManager::wam4Found() const
+bool BusManager::foundWam4() const
 {
 	return verifyWamPucks(4);
 }
-bool BusManager::wam7Found() const
+bool BusManager::foundWam7() const
 {
 	return verifyWamPucks(7);
 }
-bool BusManager::wam7WristFound() const
+bool BusManager::foundWam7Wrist() const
 {
 	return wam7FoundHelper(6);
 }
-bool BusManager::wam7GimbalsFound() const
+bool BusManager::foundWam7Gimbals() const
 {
 	return wam7FoundHelper(8);
 }
 bool BusManager::wam7FoundHelper(int poles) const
 {
-	if (wam7Found()) {
+	if (foundWam7()) {
 		Puck* p7 = getPuck(7);
 		p7->wake();
 		return p7->getProperty(Puck::POLES) == poles;
@@ -228,16 +228,16 @@ bool BusManager::wam7FoundHelper(int poles) const
 
 void BusManager::waitForWam(bool promptOnZeroing)
 {
-	if ( !safetyModuleFound() ) {
+	if ( !foundSafetyModule() ) {
 		printf(">>> ERROR: No SafetyModule was found.\n");
 		exit(1);
 	}
 	SafetyModule* sm = getSafetyModule();
 
 	sm->waitForMode(SafetyModule::IDLE);
-	if ( !wamFound() ) {
+	if ( !foundWam() ) {
 		enumerate();
-		if ( !wamFound() ) {
+		if ( !foundWam() ) {
 			printf(">>> ERROR: No WAM was found.\n");
 			exit(1);
 		}
@@ -253,11 +253,11 @@ void BusManager::waitForWam(bool promptOnZeroing)
 }
 const char* BusManager::getWamDefaultConfigPath()
 {
-	if (wam4Found()) {
+	if (foundWam4()) {
 		return "wam4";
-	} else if (wam7WristFound()) {
+	} else if (foundWam7Wrist()) {
 		return "wam7w";
-	} else if (wam7GimbalsFound()) {
+	} else if (foundWam7Gimbals()) {
 		return "wam7g";
 	} else {
 		throw std::logic_error("BusManager::getWamDefaultConfigPath(): No WAM found.");
@@ -266,7 +266,7 @@ const char* BusManager::getWamDefaultConfigPath()
 
 systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* configPath)
 {
-	if ( !wam4Found() ) {
+	if ( !foundWam4() ) {
 		throw std::logic_error("BusManager::getWam4(): No WAM4 was found on the bus.");
 	}
 
@@ -285,7 +285,7 @@ systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* conf
 	}
 
 	if (waitForShiftActivate) {
-		if ( !safetyModuleFound() ) {
+		if ( !foundSafetyModule() ) {
 			throw std::logic_error("BusManager::getWam4(): No SafetyModule was found on the bus.");
 		}
 
@@ -299,7 +299,7 @@ systems::Wam<4>* BusManager::getWam4(bool waitForShiftActivate, const char* conf
 
 systems::Wam<7>* BusManager::getWam7(bool waitForShiftActivate, const char* configPath)
 {
-	if ( !wam7Found() ) {
+	if ( !foundWam7() ) {
 		throw std::logic_error("BusManager::getWam7(): No WAM7 was found on the bus.");
 	}
 
@@ -318,7 +318,7 @@ systems::Wam<7>* BusManager::getWam7(bool waitForShiftActivate, const char* conf
 	}
 
 	if (waitForShiftActivate) {
-		if ( !safetyModuleFound() ) {
+		if ( !foundSafetyModule() ) {
 			throw std::logic_error("BusManager::getWam7(): No SafetyModule was found on the bus.");
 		}
 
@@ -342,13 +342,13 @@ systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
 }
 
 
-bool BusManager::forceTorqueSensorFound() const
+bool BusManager::foundForceTorqueSensor() const
 {
 	return getPuck(FORCE_TORQUE_SENSOR_ID) != NULL;
 }
 ForceTorqueSensor* BusManager::getForceTorqueSensor()
 {
-	if (fts == NULL  &&  forceTorqueSensorFound()) {
+	if (fts == NULL  &&  foundForceTorqueSensor()) {
 		fts = new ForceTorqueSensor(getPuck(FORCE_TORQUE_SENSOR_ID));
 	}
 	return fts;
