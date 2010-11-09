@@ -22,6 +22,7 @@
 #include <barrett/bus/can_socket.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
+#include <barrett/products/force_torque_sensor.h>
 
 
 namespace barrett {
@@ -59,6 +60,9 @@ public:
 	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::RealTimeExecutionManager* getExecutionManager(double T_s = DEFAULT_LOOP_PERIOD);
 
+	bool forceTorqueSensorFound() const;
+	ForceTorqueSensor* getForceTorqueSensor();
+
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 	Puck* getPuck(int id) const;
 	void deletePuck(Puck* p);
@@ -90,6 +94,7 @@ protected:
 	static const size_t MAX_WAM_DOF = 7;
 	static const double DEFAULT_LOOP_PERIOD = 0.002;
 	static const int SAFETY_PUCK_ID = 10;
+	static const int FORCE_TORQUE_SENSOR_ID = 8;
 
 	libconfig::Config config;
 	CommunicationsBus& bus;
@@ -100,6 +105,7 @@ protected:
 	systems::RealTimeExecutionManager* rtem;
 	systems::Wam<4>* wam4;
 	systems::Wam<7>* wam7;
+	ForceTorqueSensor* fts;
 
 private:
 	typedef CANSocket ActualBusType;
