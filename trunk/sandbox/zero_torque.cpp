@@ -17,7 +17,7 @@ using namespace barrett;
 
 
 template<size_t DOF>
-int wam_main(BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 
