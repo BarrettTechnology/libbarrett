@@ -25,6 +25,7 @@
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
+#include <barrett/products/force_torque_sensor.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/real_time_execution_manager.h>
 #include <barrett/systems/wam.h>
@@ -36,7 +37,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), wam7(NULL), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), safetyModule(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -99,6 +100,7 @@ BusManager::~BusManager()
 	delete wam4;
 	delete wam7;
 	delete safetyModule;
+	delete fts;
 	detail::purge(pucks);
 }
 
@@ -168,11 +170,16 @@ void BusManager::enumerate()
 			syslog(LOG_ERR, "    *** NO SAFETY MODULE ***");
 		}
 	}
+	if (forceTorqueSensorFound()) {
+		noProductsFound = false;
+		syslog(LOG_ERR, "    Force-Torque Sensor");
+	}
 
 	if (noProductsFound) {
 		syslog(LOG_ERR, "    (none)");
 	}
 }
+
 
 bool BusManager::safetyModuleFound() const
 {
@@ -333,6 +340,20 @@ systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
 	}
 	return rtem;
 }
+
+
+bool BusManager::forceTorqueSensorFound() const
+{
+	return getPuck(FORCE_TORQUE_SENSOR_ID) != NULL;
+}
+ForceTorqueSensor* BusManager::getForceTorqueSensor()
+{
+	if (fts == NULL  &&  forceTorqueSensorFound()) {
+		fts = new ForceTorqueSensor(getPuck(FORCE_TORQUE_SENSOR_ID));
+	}
+	return fts;
+}
+
 
 Puck* BusManager::getPuck(int id) const
 {
