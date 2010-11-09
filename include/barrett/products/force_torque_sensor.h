@@ -19,8 +19,7 @@ namespace barrett {
 
 
 class ForceTorqueSensor : public SpecialPuck {
-	typedef units::CartesianForce::type cf_type;
-	typedef units::CartesianTorque::type ct_type;
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 	typedef cf_type::Base base_type;
 
 public:
