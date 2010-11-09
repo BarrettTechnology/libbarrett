@@ -63,6 +63,22 @@
 #define BARRETT_UNITS_H_
 
 
+/** Creates a standard set of \c typedefs in the local scope for the subset of built-in barrett::units that have a fixed size.
+ *
+ * Many classes use this macro to define internal short-hand names for the barrett::units they use frequently.
+ *
+ * The following \c typedefs are defined:
+ *   - \c cf_type  The barrett::units::CartesianForce::type
+ *   - \c ct_type  The barrett::units::CartesianTorque::type
+ *   - \c cp_type  The barrett::units::CartesianPosition::type
+ *
+ * @see BARRETT_UNITS_TYPEDEFS
+ */
+#define BARRETT_UNITS_FIXED_SIZE_TYPEDEFS  \
+	typedef ::barrett::units::CartesianForce::type cf_type;  \
+	typedef ::barrett::units::CartesianTorque::type ct_type;  \
+	typedef ::barrett::units::CartesianPosition::type cp_type
+
 /** Creates a standard set of \c typedefs in the local scope for all built-in barrett::units.
  *
  * Many classes use this macro to define internal short-hand names for the barrett::units they use frequently.
@@ -75,9 +91,10 @@
  *   - \c jt_type  The barrett::units::JointTorques::type of the given \c dimension
  *   - \c jp_type  The barrett::units::JointPositions::type of the given \c dimension
  *   - \c jv_type  The barrett::units::JointVelocities::type of the given \c dimension
- *   - \c cf_type  The barrett::units::CartesianForce::type
- *   - \c ct_type  The barrett::units::CartesianTorque::type
- *   - \c cp_type  The barrett::units::CartesianPosition::type
+ *   - all \c typedefs from BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
+ *
+ * @see BARRETT_UNITS_TEMPLATE_TYPEDEFS
+ * @see BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
  */
 #define BARRETT_UNITS_TYPEDEFS(dimension)  \
 	typedef ::barrett::math::Matrix<dimension,dimension> sqm_type;  \
@@ -85,9 +102,7 @@
 	typedef ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef ::barrett::units::JointVelocities<dimension>::type jv_type;  \
-	typedef ::barrett::units::CartesianForce::type cf_type;  \
-	typedef ::barrett::units::CartesianTorque::type ct_type;  \
-	typedef ::barrett::units::CartesianPosition::type cp_type
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
 
 /** Used in place of #BARRETT_UNITS_TYPEDEFS when \c dimension is dependent on a template parameter of the containing class.
  *
@@ -101,10 +116,7 @@
 	typedef typename ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef typename ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef typename ::barrett::units::JointVelocities<dimension>::type jv_type;  \
-	typedef ::barrett::units::CartesianForce::type cf_type;  \
-	typedef ::barrett::units::CartesianTorque::type ct_type;  \
-	typedef ::barrett::units::CartesianPosition::type cp_type
-
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
 
 #include <libconfig.h++>
 #include <barrett/math/matrix.h>
@@ -112,6 +124,7 @@
 
 namespace barrett {
 namespace units {
+
 
 /** Template metafunction yielding the R-element math::Vector used to represent joint torques.\ Result available in the nested #type \c typedef.
  * @tparam R The number of rows in the resulting math::Vector
