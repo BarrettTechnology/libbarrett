@@ -23,7 +23,7 @@ inline thread::Mutex& ExecutionManager::getMutex()
 }
 
 inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
-	SCOPED_LOCK(getMutex());
+	BARRETT_SCOPED_LOCK(getMutex());
 
 	if (sys->isExecutionManaged()) {
 		sys->executionManager->stopManaging(sys);
@@ -41,7 +41,7 @@ inline void ExecutionManager::startManaging(System* sys, bool alwaysUpdate) {
 
 // this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
 inline void ExecutionManager::stopManaging(System* sys) {
-	SCOPED_LOCK(getMutex());
+	BARRETT_SCOPED_LOCK(getMutex());
 
 	sys->executionManager = NULL;
 
@@ -51,7 +51,7 @@ inline void ExecutionManager::stopManaging(System* sys) {
 
 
 inline void ExecutionManager::runExecutionCycle() {
-	SCOPED_LOCK(getMutex());
+	BARRETT_SCOPED_LOCK(getMutex());
 
 	resetExecutionCycle();
 	update();

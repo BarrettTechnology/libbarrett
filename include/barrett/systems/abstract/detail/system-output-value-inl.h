@@ -17,14 +17,14 @@ namespace systems {
 inline System::AbstractOutput::AbstractValue::AbstractValue(System* parentSys) :
 	parentSystem(parentSys)
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	parentSystem->outputValues.push_back(this);
 }
 
 inline System::AbstractOutput::AbstractValue::~AbstractValue()
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	if (parentSystem != NULL) {
 		detail::replaceWithNull(parentSystem->outputValues, this);
@@ -72,7 +72,7 @@ template<typename T>
 inline void
 System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	undelegate();
 	delegate = &(delegateOutput.value);
@@ -82,7 +82,7 @@ System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 template<typename T>
 inline void System::Output<T>::Value::undelegate()
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	if (delegate != NULL) {
 		delegate->parentOutput.delegators.remove(&parentOutput);

@@ -40,7 +40,7 @@ public:
 	void reset() {  setOutput(0.0);  }
 	void setOutput(double newOutput) {
 		// y is written and read in operate(), so it needs to be locked.
-		SCOPED_LOCK(getEmMutex());
+		BARRETT_SCOPED_LOCK(getEmMutex());
 		y = newOutput;
 	}
 

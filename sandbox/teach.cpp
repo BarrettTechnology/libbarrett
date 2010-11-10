@@ -65,7 +65,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 		// that the time is started. Otherwise we might record a bunch of
 		// samples all having t=0; this is bad because the Spline requires time
 		// to be monotonic.
-		SCOPED_LOCK(bm.getExecutionManager()->getMutex());
+		BARRETT_SCOPED_LOCK(bm.getExecutionManager()->getMutex());
 
 		connect(time.output, jpLogTg.template getInput<0>());
 		connect(wam.jpOutput, jpLogTg.template getInput<1>());

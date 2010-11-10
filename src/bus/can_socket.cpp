@@ -44,7 +44,7 @@ CANSocket::~CANSocket()
 
 void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 {
-	SCOPED_LOCK(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
 	if (isOpen()) {
 		throw std::logic_error("CANSocket::open(): This object is already associated with a CAN port.");
@@ -107,7 +107,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 void CANSocket::close()
 {
-	SCOPED_LOCK(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
 	if (isOpen()) {
 		struct ifreq ifr;
@@ -122,7 +122,7 @@ void CANSocket::close()
 
 int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 {
-	SCOPED_LOCK(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
 	int ret;
 
@@ -160,7 +160,7 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 
 int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking) const
 {
-	SCOPED_LOCK(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
 	struct can_frame frame;
 	int ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), blocking ? 0 : MSG_DONTWAIT);

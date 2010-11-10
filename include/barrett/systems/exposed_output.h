@@ -31,15 +31,15 @@ public:
 	}
 
 	void setValue(const T& value) {
-		SCOPED_LOCK(getEmMutex());
+		BARRETT_SCOPED_LOCK(getEmMutex());
 		this->outputValue->setValue(value);
 	}
 	void setValueUndefined() {
-		SCOPED_LOCK(getEmMutex());
+		BARRETT_SCOPED_LOCK(getEmMutex());
 		this->outputValue->setValueUndefined();
 	}
 	void delegateTo(const System::Output<T>& delegate) {
-		SCOPED_LOCK(getEmMutex());
+		BARRETT_SCOPED_LOCK(getEmMutex());
 		this->outputValue->delegateTo(delegate);
 	}
 

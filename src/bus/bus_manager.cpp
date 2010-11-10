@@ -437,7 +437,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 
 int BusManager::updateBuffers() const
 {
-	SCOPED_LOCK(getMutex());
+	BARRETT_SCOPED_LOCK(getMutex());
 
 	int busId;
 	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
