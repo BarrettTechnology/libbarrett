@@ -25,7 +25,7 @@ public:
 
 	int getId() const { return id; }
 	size_t numPucks() const { return pucks.size(); }
-	int getPuckId(size_t i) { return pucks.at(i)->getId(); }
+	int getPuckId(size_t i) const { return pucks.at(i)->getId(); }
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 
 	bool verifyProperty(enum Puck::Property prop) const;
