@@ -24,6 +24,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/products/puck.h>
+#include <barrett/products/hand.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/force_torque_sensor.h>
 #include <barrett/systems/abstract/system.h>
@@ -37,7 +38,7 @@ namespace barrett {
 
 
 BusManager::BusManager(const char* configFile) :
-	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), actualBus(), messageBuffers()
+	config(), bus(actualBus), pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), actualBus(), messageBuffers()
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -101,6 +102,7 @@ BusManager::~BusManager()
 	delete wam7;
 	delete sm;
 	delete fts;
+	delete hand;
 	detail::purge(pucks);
 }
 
@@ -144,9 +146,12 @@ void BusManager::enumerate()
 	}
 
 
-	// update wamPucks
+	// update WAM/Hand Pucks
 	for (size_t i = 0; i < MAX_WAM_DOF; ++i) {
 		wamPucks[i] = getPuck(i+1);
+	}
+	for (size_t i = 0; i < Hand::DOF; ++i) {
+		handPucks[i] = getPuck(i+11);
 	}
 
 
@@ -352,6 +357,23 @@ ForceTorqueSensor* BusManager::getForceTorqueSensor()
 		fts = new ForceTorqueSensor(getPuck(FORCE_TORQUE_SENSOR_ID));
 	}
 	return fts;
+}
+
+
+const std::vector<Puck*>& BusManager::getHandPucks() const
+{
+	return handPucks;
+}
+bool BusManager::foundHand() const
+{
+	return std::find(handPucks.begin(), handPucks.end(), (Puck*)NULL) == handPucks.end();
+}
+Hand* BusManager::getHand()
+{
+	if (hand == NULL  &&  foundHand()) {
+		hand = new Hand(handPucks);
+	}
+	return hand;
 }
 
 

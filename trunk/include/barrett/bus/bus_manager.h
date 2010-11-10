@@ -21,6 +21,7 @@
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/can_socket.h>
 #include <barrett/products/puck.h>
+#include <barrett/products/hand.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/force_torque_sensor.h>
 
@@ -63,6 +64,10 @@ public:
 	bool foundForceTorqueSensor() const;
 	ForceTorqueSensor* getForceTorqueSensor();
 
+	const std::vector<Puck*>& getHandPucks() const;
+	bool foundHand() const;
+	Hand* getHand();
+
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 	Puck* getPuck(int id) const;
 	void deletePuck(Puck* p);
@@ -100,12 +105,14 @@ protected:
 	CommunicationsBus& bus;
 	std::vector<Puck*> pucks;
 	std::vector<Puck*> wamPucks;
+	std::vector<Puck*> handPucks;
 
 	SafetyModule* sm;
 	systems::RealTimeExecutionManager* rtem;
 	systems::Wam<4>* wam4;
 	systems::Wam<7>* wam7;
 	ForceTorqueSensor* fts;
+	Hand* hand;
 
 private:
 	typedef CANSocket ActualBusType;

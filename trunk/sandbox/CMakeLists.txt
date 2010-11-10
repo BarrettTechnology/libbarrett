@@ -15,6 +15,7 @@ set(programs
 	bus_manager
 	can_terminal
 	gimbals_hand_controller
+	hand
 	hand_feedback
 	haptics
 	high_level_wam
