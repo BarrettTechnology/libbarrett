@@ -36,6 +36,9 @@ public:
 
 	static const char* getSafetyModeStr(enum SafetyMode mode) { return safetyModeStrs[mode]; }
 
+
+	static const int VELOCITY_FAULT_HISTORY_BUFFER_SIZE = 5;
+
 private:
 	static const char safetyModeStrs[][15];
 };
