@@ -21,14 +21,14 @@ namespace systems {
 inline System::AbstractInput::AbstractInput(System* parentSys) :
 	parentSystem(parentSys)
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	parentSystem->inputs.push_back(this);
 }
 
 inline System::AbstractInput::~AbstractInput()
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	if (parentSystem != NULL) {
 		detail::replaceWithNull(parentSystem->inputs, this);
@@ -48,7 +48,7 @@ inline thread::Mutex& System::AbstractInput::getEmMutex()
 template<typename T>
 inline System::Input<T>::~Input()
 {
-	SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(getEmMutex());
 
 	if (isConnected()) {
 		disconnect(*this);

@@ -148,7 +148,7 @@ inline const typename Wam<DOF>::jp_type& Wam<DOF>::getHomePosition() const
 template<size_t DOF>
 typename Wam<DOF>::jt_type Wam<DOF>::getJointTorques() const
 {
-	SCOPED_LOCK(gravity.getEmMutex());
+	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
 	return llww.input.getValue();
 }
 
@@ -167,14 +167,14 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 template<size_t DOF>
 typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 {
-	SCOPED_LOCK(gravity.getEmMutex());
+	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
 	return tpController.feedbackInput.getValue();
 }
 
 template<size_t DOF>
 Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
-	SCOPED_LOCK(gravity.getEmMutex());
+	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
 	return toController.feedbackInput.getValue();
 }
 

@@ -236,7 +236,7 @@ void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 
 	{
 		// Synchronize with execution-cycle
-		SCOPED_LOCK(bus.getMutex());
+		BARRETT_SCOPED_LOCK(bus.getMutex());
 		for (size_t i = 0; i < DOF; ++i) {
 			pucks[i].setProperty(Puck::P, floor(pp[i]));
 		}

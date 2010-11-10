@@ -13,8 +13,8 @@
 #include <barrett/detail/ca_macro.h>
 
 
-#define SCOPED_LOCK(mutex)  \
-	::boost::lock_guard< ::barrett::thread::Mutex> _barrett_scoped_lock_lg(mutex)
+#define BARRETT_SCOPED_LOCK(mutex)  \
+	::boost::lock_guard< ::barrett::thread::Mutex> _barrett_BARRETT_SCOPED_LOCK_lg(mutex)
 
 
 namespace barrett {

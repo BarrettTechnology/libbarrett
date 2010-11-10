@@ -94,7 +94,7 @@ RealTimeExecutionManager::~RealTimeExecutionManager()
 
 
 void RealTimeExecutionManager::start() {
-	SCOPED_LOCK(getMutex());
+	BARRETT_SCOPED_LOCK(getMutex());
 
 	if ( !isRunning() ) {
 		task = new RT_TASK;

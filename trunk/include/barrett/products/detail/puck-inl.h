@@ -59,7 +59,7 @@ void Puck::wake(Container<Puck*> pucks)
 	// bus-off.
 	{
 		// Prevent other threads from talking on the CANbus while Pucks are coming online.
-		SCOPED_LOCK(pucks.front()->getBus().getMutex());
+		BARRETT_SCOPED_LOCK(pucks.front()->getBus().getMutex());
 
 		for (i = pucks.begin(); i != pucks.end(); ++i) {
 			if (*i == NULL) {

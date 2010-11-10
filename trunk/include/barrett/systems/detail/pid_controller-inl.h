@@ -92,7 +92,7 @@ PIDController<InputType, OutputType, MathTraits>::setIntegratorState(
 		unitless_type integratorState)
 {
 	// intError is written and read in operate(), so it needs to be locked.
-	SCOPED_LOCK(this->getEmMutex());
+	BARRETT_SCOPED_LOCK(this->getEmMutex());
 	intError = integratorState;
 	return *this;
 }

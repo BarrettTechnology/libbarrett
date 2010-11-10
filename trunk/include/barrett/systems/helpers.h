@@ -56,7 +56,7 @@ template<typename T>
 void connect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	SCOPED_LOCK(input.getEmMutex());
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
 
 	if (input.isConnected()) {
 		throw std::invalid_argument("(systems::connect): "
@@ -82,7 +82,7 @@ template<typename T>
 void reconnect(System::Output<T>& newOutput, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	SCOPED_LOCK(input.getEmMutex());
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
 
 	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::reconnect): "
@@ -110,7 +110,7 @@ throw(std::invalid_argument)
 template<typename T>
 void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 {
-	SCOPED_LOCK(input.getEmMutex());
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
 
 	if (input.isConnected()) {
 		// disconnect old output
@@ -130,7 +130,7 @@ template<typename T>
 void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 throw(std::invalid_argument)
 {
-	SCOPED_LOCK(input.getEmMutex());
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
 
 	if ( !input.isConnected() ) {
 		throw std::invalid_argument("(systems::disconnect): "
@@ -145,7 +145,7 @@ throw(std::invalid_argument)
 template<typename T>
 void disconnect(System::Output<T>& output)  //NOLINT: non-const reference parameter chosen to keep syntax clean
 {
-	SCOPED_LOCK(output.getValueObject()->getEmMutex());
+	BARRETT_SCOPED_LOCK(output.getValueObject()->getEmMutex());
 
 	typename std::list<System::Input<T>* >::iterator i;
 	for (i = output.inputs.begin(); i != output.inputs.end(); ++i) {
