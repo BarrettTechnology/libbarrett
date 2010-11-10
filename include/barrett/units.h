@@ -39,7 +39,7 @@
  * particular WAM) 7-element arrays of \c doubles, they represent two different quantities. They are not interchangeable. They have different %units. A
  * user might want to design a joint-space position
  * controller and a joint-space velocity controller for the WAM. If the joint position output of the barrett::Wam were to be connected to the velocity
- * controller's feedback input, it would almost certainly be a programmer error. If such a program were run, the robot would not behave as intended and
+ * controller's feedback input, it would almost certainly result in a programmer-caused error. If such a program were run, the robot would not behave as intended and
  * finding the bug could be difficult and time-consuming.
  *
  * Adding a notion of %units to our vectors (units::JointPositions::type, units::JointVelocities::type, etc.) allows us to:
@@ -47,7 +47,7 @@
  *   - more closely mimic the mathematical rules that govern our engineering discipline
  *   - help the compiler to help us catch such errors.
  *   .
- * This comes without a runtime performance penalty.
+ * This comes without incurring a runtime performance penalty.
  *
  * Users can easily create their own barrett::units classes by passing any C++ type name (such as the name of a \c class or \c struct) as the \c Units template parameter
  * to math::Vector or math::Matrix. The type \c void is the default and lifts all compile-time restrictions regarding %units.
