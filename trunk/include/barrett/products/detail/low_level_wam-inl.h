@@ -226,16 +226,20 @@ void LowLevelWam<DOF>::setTorques(const jt_type& jt)
 template<size_t DOF>
 void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 {
-	// Tell the safety logic to ignore the next several faults
-	// (the position will appear to be changing rapidly)
+	// Tell the safety logic to ignore the next several velocity faults
+	// (the position will appear to change rapidly)
 	if (safetyModule != NULL) {
-		safetyModule->setProperty(Puck::IFAULT, 8);  // TODO(dc): Why 8?
+		safetyModule->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
 	}
 
 	pp = j2pp * jp;  // Convert from joint positions to Puck positions
-	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i].setProperty(Puck::P, floor(pp[i]));
-		usleep(1000);  // TODO(dc): necessary?
+
+	{
+		// Synchronize with execution-cycle
+		SCOPED_LOCK(bus.getMutex());
+		for (size_t i = 0; i < DOF; ++i) {
+			pucks[i].setProperty(Puck::P, floor(pp[i]));
+		}
 	}
 
 	// Record the fact that the WAM has been zeroed
