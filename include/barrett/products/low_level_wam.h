@@ -43,6 +43,7 @@ public:
 
 
 	const std::vector<MotorPuck>& getPucks() const { return pucks; }
+	const PuckGroup& getGroup() const { return wamGroup; }
 	const jp_type& getHomePosition() const { return home; }
 
 	const sqm_type& getJointToMotorPositionTransform() const { return j2mp; }
