@@ -54,6 +54,7 @@
  *
  * @see math::Vector
  * @see math::Matrix
+ * @see BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
  * @see BARRETT_UNITS_TYPEDEFS
  * @see BARRETT_UNITS_TEMPLATE_TYPEDEFS
  */
