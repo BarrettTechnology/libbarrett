@@ -7,6 +7,7 @@
 
 #include <boost/thread/locks.hpp>
 
+#include <barrett/thread/abstract/mutex.h>
 #include <barrett/products/puck_group.h>
 
 
@@ -56,21 +57,25 @@ void Puck::wake(Container<Puck*> pucks)
 	// Wake the Pucks. This is a separate step because talking on the CANbus
 	// while the Pucks' transceivers come online can cause the host to go
 	// bus-off.
-	// TODO(dc): lock the bus mutex when waking Pucks?
-	for (i = pucks.begin(); i != pucks.end(); ++i) {
-		if (*i == NULL) {
-			continue;
+	{
+		// Prevent other threads from talking on the CANbus while Pucks are coming online.
+		SCOPED_LOCK(pucks.front()->getBus().getMutex());
+
+		for (i = pucks.begin(); i != pucks.end(); ++i) {
+			if (*i == NULL) {
+				continue;
+			}
+			(*i)->setProperty(STAT, STATUS_READY);
+
+			// Talking on the CANbus when a transceiver goes offline can also cause
+			// bus-off. Wait until this Puck drops off the bus before trying to
+			// wake the next one.
+			// TODO(dc): is there a more robust way of doing this?
+			usleep(10000);
 		}
-		(*i)->setProperty(STAT, STATUS_READY);
 
-		// Talking on the CANbus when a transceiver goes offline can also cause
-		// bus-off. Wait until this Puck drops off the bus before trying to
-		// wake the next one.
-		// TODO(dc): is there a more robust way of doing this?
-		usleep(10000);
+		usleep(WAKE_UP_TIME);
 	}
-
-	usleep(WAKE_UP_TIME);
 
 	int ret;
 	int stat;
