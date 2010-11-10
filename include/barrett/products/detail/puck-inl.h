@@ -36,7 +36,7 @@ void Puck::wake(Container<Puck*> pucks)
 	typename Container<Puck*>::iterator i;
 	bool allPucksAwake;
 
-	// Find the Pucks that to be woken up
+	// Find the Pucks that need to be woken up
 	allPucksAwake = true;
 	for (i = pucks.begin(); i != pucks.end(); ++i) {
 		if (*i == NULL) {
