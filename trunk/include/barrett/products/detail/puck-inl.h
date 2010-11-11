@@ -35,6 +35,7 @@ void Puck::wake(Container<Puck*> pucks)
 {
 	typename Container<Puck*>::iterator i;
 	bool allPucksAwake;
+	Puck* aNonNullPuck = NULL;
 
 	// Find the Pucks that need to be woken up
 	allPucksAwake = true;
@@ -45,6 +46,7 @@ void Puck::wake(Container<Puck*> pucks)
 //		(*i)->updateStatus();
 		if ((*i)->getEffectiveType() == PT_Monitor) {
 			allPucksAwake = false;
+			aNonNullPuck = *i;
 		} else {
 			*i = NULL;
 		}
@@ -59,7 +61,7 @@ void Puck::wake(Container<Puck*> pucks)
 	// bus-off.
 	{
 		// Prevent other threads from talking on the CANbus while Pucks are coming online.
-		BARRETT_SCOPED_LOCK(pucks.front()->getBus().getMutex());
+		BARRETT_SCOPED_LOCK(aNonNullPuck->getBus().getMutex());
 
 		for (i = pucks.begin(); i != pucks.end(); ++i) {
 			if (*i == NULL) {
