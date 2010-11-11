@@ -18,6 +18,7 @@ set(barrett_SOURCES
 	products/force_torque_sensor.cpp
 	products/hand.cpp
 	products/motor_puck.cpp
+	products/multi_puck_product.cpp
 	products/property_list.cpp
 	products/puck.cpp
 	products/puck_group.cpp

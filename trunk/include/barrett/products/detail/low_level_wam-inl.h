@@ -23,6 +23,7 @@
 #include <barrett/products/motor_puck.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/puck_group.h>
+#include <barrett/products/abstract/multi_puck_product.h>
 
 #include <barrett/products/low_level_wam.h>
 
@@ -31,16 +32,15 @@ namespace barrett {
 
 
 template<size_t DOF>
-LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
-	bus(genericPucks.at(0)->getBus()), pucks(DOF), safetyModule(_safetyModule), wamGroup(PuckGroup::BGRP_WAM, genericPucks), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(-1)
-{
-	syslog(LOG_ERR, "LowLevelWam::LowLevelWam(%s => \"%s\")", setting.getSourceFile(), setting.getPath().c_str());
+const enum Puck::Property LowLevelWam<DOF>::props[] = { Puck::P, Puck::T };
 
-	// Check number of Pucks
-	if (genericPucks.size() != DOF) {
-		syslog(LOG_ERR, "  Expected a vector of %d Pucks, got %d", DOF, pucks.size());
-		throw std::invalid_argument("LowLevelWam::LowLevelWam(): Wrong number of Pucks. Check /var/log/syslog for details.");
-	}
+
+template<size_t DOF>
+LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
+	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_WAM, props, sizeof(props)/sizeof(props[0]), "LowLevelWam::LowLevelWam()"),
+	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
+{
+	syslog(LOG_ERR, "  Config setting: %s => \"%s\"", setting.getSourceFile(), setting.getPath().c_str());
 
 	// Zero-compensation?
 	bool zeroCompensation = setting.exists("zeroangle");
@@ -58,13 +58,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModu
 	j2mt = m2jp.transpose();
 
 
-	// Initialize MotorPucks
-	Puck::wake(genericPucks);  // Make sure Pucks are awake
-	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i].setPuck(genericPucks[i]);
-	}
-
-	// Setup PuckGroups
+	// Setup torque groups
 	// If no IDs are provided, use the defaults
 	if (torqueGroupIds.size() == 0) {
 		torqueGroupIds.push_back(PuckGroup::BGRP_LOWER_WAM);
@@ -80,50 +74,30 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModu
 	for (size_t g = 0; g < numTorqueGroups; ++g) {
 		std::vector<Puck*> tgPucks;
 		while (tgPucks.size() < 4  &&  i < DOF) {
-			tgPucks.push_back(genericPucks[i]);
+			tgPucks.push_back(pucks[i]);
 			++i;
 		}
 		torqueGroups.push_back(new PuckGroup(torqueGroupIds[g], tgPucks));
 	}
-
-	// Verify properties
-	bool err = false;
-	std::vector<enum Puck::Property> props;
-	props.push_back(Puck::P);
-	props.push_back(Puck::T);
-	for (size_t i = 0; i < props.size(); ++i) {
-		if ( !wamGroup.verifyProperty(props[i]) ) {
-			err = true;
-			syslog(LOG_ERR, "  Incompatible property: %s", Puck::getPropertyStr(props[i]));
-		}
-	}
-	if (err) {
-		syslog(LOG_ERR, "  Some Pucks might...");
-		syslog(LOG_ERR, "    a) still be in Monitor");
-		syslog(LOG_ERR, "    b) have incompatible firmware versions");
-		syslog(LOG_ERR, "    c) have incompatible ROLEs");
-		throw std::runtime_error("LowLevelWam::LowLevelWam(): WAM Pucks have incompatible property lists. Check /var/log/syslog for details.");
-	}
-	torquePropId = wamGroup.getPropertyId(Puck::T);
 
 
 	// Compute puck/joint transforms
 	// (See DC notebook 1p25)
 	v_type cpr;
 	for (size_t i = 0; i < DOF; ++i) {
-		cpr[i] = pucks[i].getCountsPerRad();
+		cpr[i] = motorPucks[i].getCountsPerRad();
 	}
 	j2pp = cpr.asDiagonal() * j2mp;
 
 	v_type rpc;
 	for (size_t i = 0; i < DOF; ++i) {
-		rpc[i] = pucks[i].getRadsPerCount();
+		rpc[i] = motorPucks[i].getRadsPerCount();
 	}
 	p2jp = m2jp * rpc.asDiagonal();
 
 	v_type ipnm;
 	for (size_t i = 0; i < DOF; ++i) {
-		ipnm[i] = pucks[i].getIpnm();
+		ipnm[i] = motorPucks[i].getIpnm();
 	}
 	j2pt = ipnm.asDiagonal() * j2mt;
 
@@ -138,7 +112,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModu
 
 		v_type currentAngle;
 		for (size_t i = 0; i < DOF; ++i) {
-			currentAngle[i] = pucks[i].counts2rad(pucks[i].getProperty(Puck::MECH));
+			currentAngle[i] = motorPucks[i].counts2rad(motorPucks[i].getProperty(Puck::MECH));
 		}
 
 		v_type errorAngle = (j2mp*home + zeroAngle) - currentAngle;
@@ -154,22 +128,22 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModu
 		// Check for exclusions
 		for (size_t i = 0; i < DOF; ++i) {
 			// If VERS < 118, then nothing useful is exposed on MECH; don't compensate
-			if (pucks[i].getVers() < 118) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: old firmware", pucks[i].getId());
+			if (pucks[i]->getVers() < 118) {
+				syslog(LOG_ERR, "  No zero-compensation for Puck %d: old firmware", pucks[i]->getId());
 				errorAngle[i] = 0;
 				continue;
 			}
 
 			// If not ROLE & 256, then it's not an absolute encoder; don't compensate
-			if ( !(pucks[i].getRole() & 256) ) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: no absolute encoder", pucks[i].getId());
+			if ( !(pucks[i]->getRole() & 256) ) {
+				syslog(LOG_ERR, "  No zero-compensation for Puck %d: no absolute encoder", pucks[i]->getId());
 				errorAngle[i] = 0;
 				continue;
 			}
 
 			// If the calibration data is out of range, don't compensate
 			if (zeroAngle[i] > 2*M_PI  ||  zeroAngle[i] < 0) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: bad calibration data", pucks[i].getId());
+				syslog(LOG_ERR, "  No zero-compensation for Puck %d: bad calibration data", pucks[i]->getId());
 				errorAngle[i] = 0;
 				continue;
 			}
@@ -198,7 +172,7 @@ template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
 	RTIME now = rt_timer_read();
-	wamGroup.getProperty<MotorPuck::PositionParser>(Puck::P, pp.data(), true);
+	group.getProperty<MotorPuck::PositionParser>(Puck::P, pp.data(), true);
 
 	jp = p2jp * pp;  // Convert from Puck positions to joint positions
 	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
@@ -238,7 +212,7 @@ void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 		// Synchronize with execution-cycle
 		BARRETT_SCOPED_LOCK(bus.getMutex());
 		for (size_t i = 0; i < DOF; ++i) {
-			pucks[i].setProperty(Puck::P, floor(pp[i]));
+			pucks[i]->setProperty(Puck::P, floor(pp[i]));
 		}
 	}
 

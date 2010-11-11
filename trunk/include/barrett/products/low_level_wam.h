@@ -21,18 +21,19 @@
 #include <barrett/products/motor_puck.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/puck_group.h>
+#include <barrett/products/abstract/multi_puck_product.h>
 
 
 namespace barrett {
 
 
 template<size_t DOF>
-class LowLevelWam {
+class LowLevelWam : public MultiPuckProduct {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	LowLevelWam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
+	// pucks must be ordered by joint and must break into torque groups as arranged
+	LowLevelWam(const std::vector<Puck*>& pucks, SafetyModule* safetyModule,
 			const libconfig::Setting& setting,
 			std::vector<int> torqueGroupIds = std::vector<int>());
 	~LowLevelWam();
@@ -42,8 +43,6 @@ public:
 	const jv_type& getJointVelocities() const { return jv; }
 
 
-	const std::vector<MotorPuck>& getPucks() const { return pucks; }
-	const PuckGroup& getGroup() const { return wamGroup; }
 	const jp_type& getHomePosition() const { return home; }
 
 	const sqm_type& getJointToMotorPositionTransform() const { return j2mp; }
@@ -60,10 +59,7 @@ public:
 	void definePosition(const jp_type& jp);
 
 protected:
-	const CommunicationsBus& bus;
-	std::vector<MotorPuck> pucks;
 	SafetyModule* safetyModule;
-	PuckGroup wamGroup;
 	std::vector<PuckGroup*> torqueGroups;
 
 	jp_type home;
@@ -79,6 +75,8 @@ protected:
 	int torquePropId;
 
 private:
+	static const enum Puck::Property props[];
+
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
 };
 
