@@ -179,6 +179,10 @@ void BusManager::enumerate()
 		noProductsFound = false;
 		syslog(LOG_ERR, "    Force-Torque Sensor");
 	}
+	if (foundHand()) {
+		noProductsFound = false;
+		syslog(LOG_ERR, "    BarrettHand");
+	}
 
 	if (noProductsFound) {
 		syslog(LOG_ERR, "    (none)");
