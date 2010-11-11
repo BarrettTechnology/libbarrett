@@ -57,18 +57,22 @@ public:
 	enum FeedbackGroup {
 		// When responding to requests for a normal property, Pucks send to Group 6.
 		FGRP_OTHER = Puck::GROUP_MASK | 6,
-		// When responding to position requests, Pucks send to Group 3.
-		FGRP_POSITION = Puck::GROUP_MASK | 3,
+
+		// When responding to requests for motor encoder position, Pucks send to Group 3.
+		FGRP_MOTOR_POSITION = Puck::GROUP_MASK | 3,
+		// When responding to requests for a secondary encoder position (e.g.
+		// joint encoder or break-away encoder), Pucks send to Group 7.
+		FGRP_SECONDARY_POSITION = Puck::GROUP_MASK | 7,
 
 		// On BHands with tactile sensors, TOP10 formated TACT data is sent to Group 8.
 		FGRP_TACT_TOP10 = Puck::GROUP_MASK | 8,
 		// On BHands with tactile sensors, FULL formated TACT data is sent to Group 9.
 		FGRP_TACT_FULL = Puck::GROUP_MASK | 9,
 
-		FGRP_FT_FORCE = Puck::GROUP_MASK | 10,  // Force data from the F/T Sensor is sent to group 10.
-		FGRP_FT_TORQUE = Puck::GROUP_MASK | 11,  // Torque data from the F/T Sensor is sent to group 11.
-
-		FGRP_RESERVED7 = Puck::GROUP_MASK | 7,  // Reserved
+		// Force data from the F/T Sensor is sent to group 10.
+		FGRP_FT_FORCE = Puck::GROUP_MASK | 10,
+		// Torque data from the F/T Sensor is sent to group 11.
+		FGRP_FT_TORQUE = Puck::GROUP_MASK | 11,
 	};
 
 protected:

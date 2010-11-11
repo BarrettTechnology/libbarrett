@@ -47,7 +47,7 @@ public:
 
 	struct PositionParser {
 		static int busId(int id, int propId) {
-			return Puck::encodeBusId(id, PuckGroup::FGRP_POSITION);
+			return Puck::encodeBusId(id, PuckGroup::FGRP_MOTOR_POSITION);
 		}
 
 		typedef double result_type;
