@@ -10,6 +10,8 @@
 #define BARRETT_PRODUCTS_MOTOR_PUCK_H_
 
 
+#include <boost/tuple/tuple.hpp>
+
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/math/utils.h>
 #include <barrett/products/puck.h>
@@ -45,12 +47,28 @@ public:
 	static const int MAX_PUCK_TORQUE = 8191;
 
 
-	struct PositionParser {
+	struct MotorPositionParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_MOTOR_POSITION);
 		}
 
 		typedef double result_type;
+		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
+	};
+	struct SecondaryPositionParser {
+		static int busId(int id, int propId) {
+			return Puck::encodeBusId(id, PuckGroup::FGRP_SECONDARY_POSITION);
+		}
+
+		typedef double result_type;
+		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
+	};
+	struct CombinedPositionParser {
+		static int busId(int id, int propId) {
+			return MotorPositionParser::busId(id, propId);
+		}
+
+		typedef boost::tuple<double,double> result_type;
 		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
 	};
 
@@ -59,6 +77,9 @@ protected:
 	int cts;
 	double rpc, cpr;
 	int ipnm;
+
+private:
+	static double twentyTwoBit2double(unsigned char msb, unsigned char middle, unsigned char lsb);
 };
 
 
