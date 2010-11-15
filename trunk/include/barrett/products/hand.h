@@ -13,10 +13,9 @@
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
-#include <barrett/products/puck.h>
-#include <barrett/products/motor_puck.h>
-#include <barrett/products/puck_group.h>
 #include <barrett/products/abstract/multi_puck_product.h>
+#include <barrett/products/puck.h>
+#include <barrett/products/tactile_puck.h>
 
 
 namespace barrett {
@@ -31,6 +30,11 @@ private:
 public:
 	Hand(const std::vector<Puck*>& pucks);
 	~Hand();
+
+	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
+
+protected:
+	std::vector<TactilePuck*> tactilePucks;
 
 private:
 	static const enum Puck::Property props[];
