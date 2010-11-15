@@ -112,7 +112,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 		v_type currentAngle;
 		for (size_t i = 0; i < DOF; ++i) {
-			currentAngle[i] = motorPucks[i].counts2rad(motorPucks[i].getProperty(Puck::MECH));
+			currentAngle[i] = motorPucks[i].counts2rad(pucks[i]->getProperty(Puck::MECH));
 		}
 
 		v_type errorAngle = (j2mp*home + zeroAngle) - currentAngle;
@@ -203,7 +203,7 @@ void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 	// Tell the safety logic to ignore the next several velocity faults
 	// (the position will appear to change rapidly)
 	if (safetyModule != NULL) {
-		safetyModule->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
+		safetyModule->getPuck()->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
 	}
 
 	pp = j2pp * jp;  // Convert from joint positions to Puck positions
