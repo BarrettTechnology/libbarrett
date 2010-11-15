@@ -135,7 +135,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 			}
 
 			// If not ROLE & 256, then it's not an absolute encoder; don't compensate
-			if ( !(pucks[i]->getRole() & 256) ) {
+			if ( !(pucks[i]->hasOption(Puck::RO_MagEncOnSerial)) ) {
 				syslog(LOG_ERR, "  No zero-compensation for Puck %d: no absolute encoder", pucks[i]->getId());
 				errorAngle[i] = 0;
 				continue;
