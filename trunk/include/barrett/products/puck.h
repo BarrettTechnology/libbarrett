@@ -23,9 +23,19 @@ namespace barrett {
 class Puck {
 
 public:
+	enum RoleOption {
+		RO_MagEncOnSerial = 0x0100,
+		RO_MagEncOnHall = 0x0200,
+		RO_MagEncOnEnc = 0x400,
+		RO_Strain = 0x0800,
+		RO_Tact = 0x1000,
+		RO_IMU = 0x2000,
+		RO_OpticalEncOnEnc = 0x4000
+	};
 	enum PuckType {
 		PT_Monitor, PT_Safety, PT_Motor, PT_ForceTorque, PT_Unknown
 	};
+
 	static const char* getPuckTypeStr(enum PuckType pt) {
 		return puckTypeStrs[pt];
 	}
@@ -69,6 +79,7 @@ public:
 	int getId() const { return id; }
 	int getVers() const { return vers; }
 	int getRole() const { return role; }
+	bool hasOption(enum RoleOption ro) const { return role & ro; }
 	enum PuckType getType() const { return type; }
 	enum PuckType getEffectiveType() const { return effectiveType; }
 
@@ -128,8 +139,6 @@ public:
 	static const int SET_MASK = 0x80;
 	static const int PROPERTY_MASK = 0x7f;
 
-	static const int ROLE_MASK = 0x1f;
-
 	static const int WAKE_UP_TIME = 1000000;  // microseconds
 
 
@@ -146,6 +155,8 @@ protected:
 	enum {
 		STATUS_RESET, STATUS_ERR, STATUS_READY
 	};
+
+	static const int ROLE_MASK = 0x1f;
 	enum {
 		ROLE_TATER,
 		ROLE_GIMBALS,
