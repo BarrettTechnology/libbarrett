@@ -17,14 +17,14 @@
 namespace barrett {
 
 
-void ForceTorqueSensor::setPuck(Puck* puck, bool autoUpdate)
+void ForceTorqueSensor::setPuck(Puck* puck)
 {
 	// Call super
-	SpecialPuck::setPuck(puck, autoUpdate);
+	SpecialPuck::setPuck(puck);
 
 	p->wake();
 	bus = &p->getBus();
-	id = getId();
+	id = p->getId();
 
 	// TODO(dc): Fix this once FT sensors have working ROLE/VERS properties.
 	propId = Puck::getPropertyId(Puck::FT, Puck::PT_ForceTorque, 0);

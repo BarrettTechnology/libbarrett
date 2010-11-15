@@ -25,9 +25,9 @@ class MotorPuck : public SpecialPuck {
 public:
 	MotorPuck(Puck* puck = NULL) :
 		SpecialPuck(Puck::PT_Motor), cts(0), rpc(0.0), cpr(0.0), ipnm(0) { setPuck(puck); }
-	virtual ~MotorPuck() {}
+	~MotorPuck() {}
 
-	virtual void update();
+	void setPuck(Puck* puck);
 
 	int getCts() const { return cts; }
 	double getRadsPerCount() const { return rpc; }
