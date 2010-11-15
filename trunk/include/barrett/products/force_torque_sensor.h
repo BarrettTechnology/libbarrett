@@ -23,10 +23,10 @@ class ForceTorqueSensor : public SpecialPuck {
 	typedef cf_type::Base base_type;
 
 public:
-	ForceTorqueSensor(Puck* puck = NULL) : SpecialPuck(/* TODO(dc): Puck::PT_ForceTorque */), bus(NULL) { setPuck(puck, false); }
-	virtual ~ForceTorqueSensor() {}
+	ForceTorqueSensor(Puck* puck = NULL) : SpecialPuck(/* TODO(dc): Puck::PT_ForceTorque */), bus(NULL) { setPuck(puck); }
+	~ForceTorqueSensor() {}
 
-	virtual void setPuck(Puck* puck, bool autoUpdate = true);
+	void setPuck(Puck* puck);
 
 	void tare() { Puck::setProperty(*bus, id, propId, 0); }
 

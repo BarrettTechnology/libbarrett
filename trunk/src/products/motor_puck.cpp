@@ -21,13 +21,18 @@
 namespace barrett {
 
 
-void MotorPuck::update()
+void MotorPuck::setPuck(Puck* puck)
 {
-	cts = getProperty(Puck::CTS);
-	rpc = 2*M_PI / cts;
-	cpr = cts / (2*M_PI);
+	// Call super
+	SpecialPuck::setPuck(puck);
 
-	ipnm = getProperty(Puck::IPNM);
+	if (p != NULL) {
+		cts = getProperty(Puck::CTS);
+		rpc = 2*M_PI / cts;
+		cpr = cts / (2*M_PI);
+
+		ipnm = getProperty(Puck::IPNM);
+	}
 }
 
 
