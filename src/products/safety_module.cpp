@@ -19,7 +19,7 @@ namespace barrett {
 
 
 enum SafetyModule::SafetyMode SafetyModule::getMode() const {
-	int mode = getProperty(Puck::MODE);
+	int mode = p->getProperty(Puck::MODE);
 	if (mode < 0  ||  mode > 2) {
 		syslog(LOG_ERR, "SafetyModule::getMode(): Expected MODE value of 0, 1, or 2. Got value of %d.", mode);
 		throw std::runtime_error("SafetyModule::getMode(): Bad MODE value. Check /var/log/syslog for details.");

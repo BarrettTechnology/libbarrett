@@ -34,13 +34,6 @@ public:
 		p = puck;
 	}
 
-	int getProperty(enum Puck::Property prop) const {
-		return p->getProperty(prop);
-	}
-	void setProperty(enum Puck::Property prop, int value) const {
-		p->setProperty(prop, value);
-	}
-
 protected:
 	enum Puck::PuckType type;
 	Puck* p;

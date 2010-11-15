@@ -27,8 +27,8 @@ public:
 	~SafetyModule() {}
 
 	enum SafetyMode getMode() const;
-	bool wamIsZeroed() const { return getProperty(Puck::ZERO) == 1; }
-	void setWamZeroed(bool zeroed = true) const { setProperty(Puck::ZERO, zeroed); }
+	bool wamIsZeroed() const { return p->getProperty(Puck::ZERO) == 1; }
+	void setWamZeroed(bool zeroed = true) const { p->setProperty(Puck::ZERO, zeroed); }
 
 	void waitForMode(enum SafetyMode mode, bool printMessage = true, int pollingPeriod_us = 250000);
 	void waitForModeChange(int pollingPeriod_us = 250000);

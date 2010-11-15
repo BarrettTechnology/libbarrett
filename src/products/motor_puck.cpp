@@ -27,11 +27,11 @@ void MotorPuck::setPuck(Puck* puck)
 	SpecialPuck::setPuck(puck);
 
 	if (p != NULL) {
-		cts = getProperty(Puck::CTS);
+		cts = p->getProperty(Puck::CTS);
 		rpc = 2*M_PI / cts;
 		cpr = cts / (2*M_PI);
 
-		ipnm = getProperty(Puck::IPNM);
+		ipnm = p->getProperty(Puck::IPNM);
 	}
 }
 
