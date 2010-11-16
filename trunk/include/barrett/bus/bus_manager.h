@@ -89,17 +89,20 @@ public:
 			bool blocking = true) const
 		{ return bus.receiveRaw(busId, data, len, blocking); }
 
+
+	static const size_t MAX_WAM_DOF = 7;
+	static const double DEFAULT_LOOP_PERIOD = 0.002;
+	static const int SAFETY_MODULE_ID = 10;
+	static const int FIRST_WAM_ID = 1;
+	static const int FIRST_HAND_ID = 11;
+	static const int FORCE_TORQUE_SENSOR_ID = 8;
+
 protected:
 	int updateBuffers() const;
 	void storeMessage(int busId, const unsigned char* data, size_t len) const;
 	bool retrieveMessage(int busId, unsigned char* data, size_t& len) const;
 
 	bool verifyWamPucks(const size_t dof) const;
-
-	static const size_t MAX_WAM_DOF = 7;
-	static const double DEFAULT_LOOP_PERIOD = 0.002;
-	static const int SAFETY_MODULE_ID = 10;
-	static const int FORCE_TORQUE_SENSOR_ID = 8;
 
 	libconfig::Config config;
 	CommunicationsBus& bus;
