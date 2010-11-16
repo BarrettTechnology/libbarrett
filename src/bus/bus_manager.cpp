@@ -148,10 +148,10 @@ void BusManager::enumerate()
 
 	// update WAM/Hand Pucks
 	for (size_t i = 0; i < MAX_WAM_DOF; ++i) {
-		wamPucks[i] = getPuck(i+1);
+		wamPucks[i] = getPuck(i + FIRST_WAM_ID);
 	}
 	for (size_t i = 0; i < Hand::DOF; ++i) {
-		handPucks[i] = getPuck(i+11);
+		handPucks[i] = getPuck(i + FIRST_HAND_ID);
 	}
 
 
