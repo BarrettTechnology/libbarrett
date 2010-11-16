@@ -6,25 +6,18 @@
  */
 
 #include <iostream>
-#include <vector>
-#include <string>
-#include <numeric>
-#include <algorithm>
-#include <cstdlib>
-
-#include <sys/mman.h>
-#include <unistd.h>
-#include <native/task.h>
 
 #include <curses.h>
 
-#include <barrett/cdlbt/bus.h>
-#include <barrett/cdlbt/bus_can.h>
+#include <barrett/detail/stl_utils.h>
+#include <barrett/bus/bus_manager.h>
+#include <barrett/products/tactile_puck.h>
 
 
-const int HAND_DOF = 4;
-const int NUM_SENSORS = 24;
-const int THRESH = 2000;
+using namespace barrett;
+using detail::waitForEnter;
+
+const double THRESH = 8.0;
 #define WIDTH  6
 #define HEIGHT 3
 
@@ -78,11 +71,6 @@ enum btkey btkey_get()
    }
 }
 
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
-
 void drawMenu(WINDOW *win, int starty, int startx, const std::string& title, const std::vector<std::string>& labels, const std::vector<bool>& checked, size_t activeIndex) {
 	mvwprintw(win, starty,startx, title.c_str());
 
@@ -130,11 +118,11 @@ void board(WINDOW *win, int starty, int startx, int lines, int cols, int tile_wi
 //	wrefresh(win);
 }
 
-void graphCell(WINDOW *win, int starty, int startx, int value) {
+void graphCell(WINDOW *win, int starty, int startx, double pressure) {
     int i, chunk;
     char c;
 
-    value /= 102;  // integer division
+    int value = (int)(pressure * 256.0) / 102;  // integer division
     for (i = 4; i >= 0; --i) {
         chunk = (value <= 7) ? value : 7;
         value -= chunk;
@@ -160,114 +148,45 @@ void graphCell(WINDOW *win, int starty, int startx, int value) {
 //    wrefresh(win);
 }
 
-void decodeMessage(std::vector<int>& pressures, const unsigned char* data) {  // data is 8 bytes wide
-	int i = (data[0] >> 4) * 5;  // sequence number --> first cell index
-
-	pressures[i++] = (((int)data[0]&0x000F)<<8) | ((int)data[1]&0x00FF);
-	pressures[i++] = (((int)data[2]&0x00FF)<<4) | (((int)data[3]&0x00F0)>>4);
-	pressures[i++] = (((int)data[3]&0x000F)<<8) | ((int)data[4]&0x00FF);
-	pressures[i++] = (((int)data[5]&0x00FF)<<4) | (((int)data[6]&0x00F0)>>4);
-    if (i < NUM_SENSORS) {
-    	pressures[i] = (((int)data[6]&0x000F)<<8) | ((int)data[7]&0x00FF);
-    }
-}
-
-void graphPressures(WINDOW *win, int starty, int startx, const std::vector<int>& pressures) {
-	for (int i = 0; i < NUM_SENSORS; ++i) {
+void graphPressures(WINDOW *win, int starty, int startx, const TactilePuck::v_type& pressures) {
+	for (int i = 0; i < pressures.size(); ++i) {
 	    graphCell(win, starty+1 + (7 - (i/3 /* integer division */))*HEIGHT, startx+1 + (i%3)*WIDTH, pressures[i]);
 	}
 }
 
 
-int largeDiff(int a, int b) {
-	return abs(a - b) > THRESH  ?  1 : 0;
-}
-
 int main(int argc, char** argv) {
-	int osTact = 0, numPucks = 0;
-	int id, property;
-	long value1;
-	unsigned char data[8];
+	Puck* puck;
+	TactilePuck tactPuck;
+	BusManager bm;
 
 
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-	rt_task_shadow(new RT_TASK, NULL, 10, 0);
-
-	int port = 0;
-	switch (argc) {
-	case 1:
-		printf("No port argument given. Using default.\n");
-		break;
-	case 2:
-		port = atoi(argv[1]);
-		break;
-	default:
-		printf("ERROR: Expected 1 or 0 arguments.\n");
-		return -1;
-		break;
-	}
-
-	printf("Using CAN bus port %d.\n", port);
-	bt_bus_can* dev = NULL;
-	if (bt_bus_can_create(&dev, port)) {
-		printf("Couldn't open the CAN bus.\n");
-		return -1;
-	}
-
-	printf(">>> Make sure the Hand is attached and powered.\n");
-
-	printf("Waking hand pucks ...\n");
-
-	for(int i = 11; i <= 14; i++) {
-		bt_bus_can_set_property(dev, i, 5, 2);  // Set STAT to STATUS_READY
-	}
-	usleep((long)1e6);
-
-	printf("Initializing tactile sensors...\n");
-	for(int i = 11; i <= 14; i++) {
-		bt_bus_can_async_get_property(dev, i, 5);
-		usleep(1000);
-		switch (bt_bus_can_async_read(dev, &id, &property, &value1, NULL, NULL, 0, 1)) {
-		case 0:
-			++numPucks;
-			printf("Found Puck %d.\n", i);
-
-			if (value1 == 0) {
-				bt_bus_can_set_property(dev, i, 5, 2);  // Set STAT to STATUS_READY
-				usleep((long)1e6);
-			}
-
-			bt_bus_can_get_property(dev, i, 107, &value1, NULL, 1);
-			if (value1 == -2) {
-				printf("Failed to init tactile sensors on ID=%d.\n", i);
-			}
-
-			break;
-
-		case 3:  // the puck was not found
-			continue;
-			break;
-
-		default:
-			printf("CAN read error.\n");
-			break;
+	printf("Found Hand Pucks:\n");
+	for (size_t i = 0; i < bm.getHandPucks().size(); ++i) {
+		if (bm.getHandPucks()[i] != NULL) {
+			printf("  ID = %d\n", bm.getHandPucks()[i]->getId());
 		}
 	}
+	printf("\n");
+	Puck::wake(bm.getHandPucks());
 
-	printf(" ... done.\n\n");
-
-
-	int streamId = 0;
+	size_t streamId = 0;
 	printf("Stream TACT data from ID = ");
 	std::cin >> streamId;
 	waitForEnter();
+	puck = bm.getPuck(streamId);
+	if (puck == NULL) {
+		printf("ERROR: Puck %d was not found on the bus.\n", streamId);
+		return 1;
+	}
+	tactPuck.setPuck(puck);
 
 
 	bool firstRun = true;
 	int numBadTransitions = 0;
-	std::vector<int> pressures(NUM_SENSORS);
-	std::vector<int> pressures_1(NUM_SENSORS);
-	std::vector<int> tmp(NUM_SENSORS);
+	const TactilePuck::v_type& pressures = tactPuck.getFullData();
+	TactilePuck::v_type pressures_1;
+	TactilePuck::v_type tmp;
 
 
 	initscr();
@@ -289,7 +208,7 @@ int main(int argc, char** argv) {
     size_t activeIndex = 0;
 
     drawMenu(stdscr, 5,20, title, labels, checked, activeIndex);
-    mvprintw(0,20, "Number of transitions larger than %d counts:", THRESH);
+    mvprintw(0,20, "Number of transitions larger than %f N*cm^-2:", THRESH);
 
 	while (true) {
 		btkey c = btkey_get();
@@ -303,11 +222,14 @@ int main(int argc, char** argv) {
 					break;
 				} else {
 					checked[activeIndex] = !checked[activeIndex];
-					if (checked[activeIndex]) {
-						bt_bus_can_set_property(dev, activeIndex+11, 78, 0);  // Set TSTOP to 0
-						bt_bus_can_set_property(dev, activeIndex+11, 8, 2);  // Set MODE to TORQUE
-					} else {
-						bt_bus_can_set_property(dev, activeIndex+11, 8, 0);  // Set MODE to IDLE
+					Puck* p = bm.getPuck(activeIndex + BusManager::FIRST_HAND_ID);
+					if (p != NULL) {
+						if (checked[activeIndex]) {
+							p->setProperty(Puck::TSTOP, 0);
+							p->setProperty(Puck::MODE, 2);
+						} else {
+							p->setProperty(Puck::MODE, 0);
+						}
 					}
 				}
 			}
@@ -320,34 +242,30 @@ int main(int argc, char** argv) {
 //			usleep(100000);
 //		}
 
-		bt_bus_can_set_property(dev, streamId, 106, 2);
-		usleep(100000);
-		osTact = 5;  // 5 messages are returned for full TACT data
-		while (osTact--) {
-			bt_bus_can_async_read(dev, &id, NULL, &value1, NULL, data, 0, 1);
-		    decodeMessage(pressures, data);
-		}
-
+		tactPuck.updateFull();
 		graphPressures(stdscr, 0,0, pressures);
 
 		if (firstRun) {
 			firstRun = false;
-
-			std::copy(pressures.begin(), pressures.end(), pressures_1.begin());
+			pressures_1 = pressures;
 		}
-		std::transform(pressures.begin(), pressures.end(), pressures_1.begin(), tmp.begin(), largeDiff);
-		numBadTransitions += std::accumulate(tmp.begin(), tmp.end(), 0);
+		tmp = pressures - pressures_1;
+		for (int i = 0; i < tmp.size(); ++i) {
+			if (abs(tmp[i] > THRESH)) {
+				++numBadTransitions;
+			}
+		}
 		mvprintw(1,23, "%d", numBadTransitions);
-		std::copy(pressures.begin(), pressures.end(), pressures_1.begin());
+		pressures_1 = pressures;
 
 		refresh();
 	}
 
 	endwin();
 
-	for (int i = 0; i < HAND_DOF; ++i) {
-		if (checked[i]) {
-			bt_bus_can_set_property(dev, i+11, 8, 0);  // Set MODE to IDLE
+	for (size_t i = 0; i < bm.getHandPucks().size(); ++i) {
+		if (bm.getHandPucks()[i] != NULL) {
+			bm.getHandPucks()[i]->setProperty(Puck::MODE, 0);
 		}
 	}
 
