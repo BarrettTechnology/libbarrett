@@ -12,6 +12,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/bus/bus_manager.h>
 #include <barrett/products/tactile_puck.h>
+#include <barrett/products/motor_puck.h>
 
 
 using namespace barrett;
@@ -226,9 +227,9 @@ int main(int argc, char** argv) {
 					if (p != NULL) {
 						if (checked[activeIndex]) {
 							p->setProperty(Puck::TSTOP, 0);
-							p->setProperty(Puck::MODE, 2);
+							p->setProperty(Puck::MODE, MotorPuck::MODE_TORQUE);
 						} else {
-							p->setProperty(Puck::MODE, 0);
+							p->setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
 						}
 					}
 				}
@@ -265,7 +266,7 @@ int main(int argc, char** argv) {
 
 	for (size_t i = 0; i < bm.getHandPucks().size(); ++i) {
 		if (bm.getHandPucks()[i] != NULL) {
-			bm.getHandPucks()[i]->setProperty(Puck::MODE, 0);
+			bm.getHandPucks()[i]->setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
 		}
 	}
 
