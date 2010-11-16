@@ -42,12 +42,10 @@ void TactilePuck::setPuck(Puck* puck)
 	}
 }
 
-void TactilePuck::updateFull(bool realtime)
+void TactilePuck::requestFull()
 {
-	int ret;
-
 	if (tact == FULL_FORMAT) {
-		ret = Puck::sendGetPropertyRequest(*bus, id, propId);
+		int ret = Puck::sendGetPropertyRequest(*bus, id, propId);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
 			throw std::runtime_error("TactilePuck::updateFull(): Failed to send request. Check /var/log/syslog for details.");
@@ -56,9 +54,11 @@ void TactilePuck::updateFull(bool realtime)
 		tact = FULL_FORMAT;
 		p->setProperty(Puck::TACT, tact);
 	}
-
+}
+void TactilePuck::receiveFull(bool realtime)
+{
 	for (size_t i = 0 ; i < NUM_FULL_MESSAGES; ++i) {
-		ret = Puck::receiveGetPropertyReply<FullTactParser>(*bus, id, propId, &full, true, realtime);
+		int ret = Puck::receiveGetPropertyReply<FullTactParser>(*bus, id, propId, &full, true, realtime);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving FULL TACT reply %d of %d from ID=%d.",
 					__func__, ret, i+1, NUM_FULL_MESSAGES, id);

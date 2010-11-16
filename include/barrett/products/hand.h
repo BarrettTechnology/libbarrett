@@ -33,6 +33,8 @@ public:
 
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
+	void updateTactFull(bool realtime = false) const;
+
 protected:
 	std::vector<TactilePuck*> tactilePucks;
 
