@@ -28,6 +28,13 @@ void TactilePuck::setPuck(Puck* puck)
 		id = p->getId();
 		propId = p->getPropertyId(Puck::TACT);
 
+
+		// Check for initialization error
+		if (p->getProperty(Puck::TACTID) == -2) {
+			syslog(LOG_ERR, "TactilePuck::setPuck(): TACT initialization error for ID = %d (TACTID = -2).", id);
+			throw std::runtime_error("TactilePuck::setPuck(): TACT initialization error. Check /var/log/syslog for details.");
+		}
+
 		tact = NONE;
 		p->setProperty(Puck::TACT, tact);
 
