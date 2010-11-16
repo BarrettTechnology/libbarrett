@@ -23,6 +23,16 @@ namespace barrett {
 
 class MotorPuck : public SpecialPuck {
 public:
+	enum MotorMode {
+		MODE_IDLE,
+		MODE_DUTY,
+		MODE_TORQUE,
+		MODE_PID,
+		MODE_VELOCITY,
+		MODE_TRAPEZOIDAL
+	};
+
+
 	MotorPuck(Puck* puck = NULL) :
 		SpecialPuck(Puck::PT_Motor), cts(0), rpc(0.0), cpr(0.0), ipnm(0) { setPuck(puck); }
 	~MotorPuck() {}
