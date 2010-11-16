@@ -13,6 +13,7 @@
 #include <barrett/products/abstract/multi_puck_product.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/puck_group.h>
+#include <barrett/products/motor_puck.h>
 #include <barrett/products/tactile_puck.h>
 #include <barrett/products/hand.h>
 
@@ -39,6 +40,32 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 Hand::~Hand()
 {
 	detail::purge(tactilePucks);
+}
+
+void Hand::trapezoidalMove(const jp_type& jp) const
+{
+	for (size_t i = 0; i < DOF; ++i) {
+		pucks[i]->setProperty(Puck::E, jp[i]);
+	}
+	group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
+}
+void Hand::setVelocity(const jv_type& jv) const
+{
+	for (size_t i = 0; i < DOF; ++i) {
+		pucks[i]->setProperty(Puck::V, jv[i]);
+	}
+	group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
+}
+
+void Hand::setPositionCommand(const jp_type& jp) const
+{
+	for (size_t i = 0; i < DOF; ++i) {
+		pucks[i]->setProperty(Puck::P, jp[i]);
+	}
+}
+void Hand::setTorqueCommand(const jt_type& jt) const
+{
+	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, jt.data(), DOF);
 }
 
 void Hand::updateTactFull(bool realtime) const {
