@@ -41,5 +41,12 @@ Hand::~Hand()
 	detail::purge(tactilePucks);
 }
 
+void Hand::updateTactFull(bool realtime) const {
+	group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
+	for (size_t i = 0; i < tactilePucks.size(); ++i) {
+		tactilePucks[i]->receiveFull(realtime);
+	}
+}
+
 
 }

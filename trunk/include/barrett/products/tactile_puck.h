@@ -34,10 +34,17 @@ public:
 
 	void tare() { p->setProperty(Puck::TACT, TARE); }
 
-	void updateFull(bool realtime = false);
+	void updateFull(bool realtime = false) {
+		requestFull();
+		receiveFull(realtime);
+	}
 //	void updateTop10(bool realtime = false);
 
 	const v_type& getFullData() const { return full; }
+
+
+	void requestFull();
+	void receiveFull(bool realtime = false);
 
 
 	struct FullTactParser {
@@ -71,6 +78,9 @@ protected:
 	static const size_t NUM_FULL_MESSAGES = 5;
 	static const size_t NUM_SENSORS_PER_FULL_MESSAGE = 5;
 	static const double FULL_SCALE_FACTOR = 256.0;
+
+
+	friend class Hand;
 };
 
 
