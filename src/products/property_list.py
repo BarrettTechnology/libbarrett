@@ -11,6 +11,13 @@ WC_DIR = "__property_list_tmp_dir/"
 OUTPUT_H_FILE = "../../include/barrett/products/detail/property_list.h"
 OUTPUT_CPP_FILE = "property_list.cpp"
 
+PROP_SYNONYMS = (
+	('AP','P'),
+	('T','TORQ'),
+	('FET0','B'),
+	('FET1','TENSION'),
+)
+
 # puck types
 PT_MONITOR = 0
 PT_SAFETY = 1
@@ -199,6 +206,19 @@ for pt in range(len(p)):
 		print >> f, "const int PL_%s[][Puck::NUM_PROPERTIES] = {" % PUCK_TYPE_NAMES[pt]
 		for v in vers:
 			reversePropList = dict(zip(p[pt][v], range(len(p[pt][v]))))
+			
+			# process synonyms
+			for prop1,prop2 in PROP_SYNONYMS:
+				pId1 = reversePropList.get(prop1, -1)
+				pId2 = reversePropList.get(prop2, -1)
+				if pId1 != -1 and pId2 != -1:
+					print "WARNING! SYNONYM COLLISION: On VERS=%d of PuckType=%s, %s=%d collides with %s=%d. Using %s." % (v, PUCK_TYPE_NAMES[pt], prop1, pId1, prop2, pId2, prop1)
+				
+				if pId1 != -1:
+					reversePropList[prop2] = pId1
+				elif pId2 != -1:
+					reversePropList[prop1] = pId2
+			
 			pl = [reversePropList.get(prop, -1) for prop in props]
 			
 			if universalPropList == None:
