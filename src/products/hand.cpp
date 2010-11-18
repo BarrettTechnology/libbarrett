@@ -27,7 +27,7 @@ const enum Puck::Property Hand::props[] = { Puck::P, Puck::T };
 
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
-	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"), tactilePucks()
+	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"), tactilePucks(), sg(DOF, 0)
 {
 	// Make TactilePucks
 	int numTact = 0;
@@ -53,7 +53,8 @@ void Hand::initialize(/*bool blocking*/) const
 
 //	if (blocking) {
 		int modes[DOF];
-		std::vector<bool> seenMode4(DOF, false), seenNotMode4(DOF, false);
+		std::vector<bool> seenMode4(DOF, false);
+		std::vector<bool> seenNotMode4(DOF, false);
 
 		while (true) {
 			group.getProperty(Puck::MODE, modes);
@@ -75,10 +76,10 @@ void Hand::initialize(/*bool blocking*/) const
 //	}
 }
 
-bool Hand::doneMoving() const
+bool Hand::doneMoving(bool realtime) const
 {
 	int modes[DOF];
-	group.getProperty(Puck::MODE, modes);
+	group.getProperty(Puck::MODE, modes, realtime);
 
 	for (size_t i = 0; i < DOF; ++i) {
 		if ((holds[i] != 0 && modes[i] != MotorPuck::MODE_PID)  ||  (holds[i] == 0 && modes[i] != MotorPuck::MODE_IDLE)) {
@@ -94,10 +95,10 @@ void Hand::waitUntilDoneMoving(int period_us) const
 	}
 }
 
-void Hand::trapezoidalMove(const jp_type& jp, bool blocking) const
+void Hand::trapezoidalMove(const jp_type& jpc, bool blocking) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::E, jp[i]);
+		pucks[i]->setProperty(Puck::E, jpc[i]);
 	}
 	group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
 
@@ -113,10 +114,10 @@ void Hand::setVelocity(const jv_type& jv) const
 	group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
 }
 
-void Hand::setPositionCommand(const jp_type& jp) const
+void Hand::setPositionCommand(const jp_type& jpc) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::P, jp[i]);
+		pucks[i]->setProperty(Puck::P, jpc[i]);
 	}
 }
 void Hand::setTorqueCommand(const jt_type& jt) const
@@ -124,7 +125,16 @@ void Hand::setTorqueCommand(const jt_type& jt) const
 	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, jt.data(), DOF);
 }
 
-void Hand::updateTactFull(bool realtime) const {
+void Hand::updatePosition(bool realtime)
+{
+	group.getProperty<MotorPuck::MotorPositionParser>(Puck::P, jp.data(), realtime);
+}
+void Hand::updateStrain(bool realtime)
+{
+	group.getProperty(Puck::SG, sg.data(), realtime);
+}
+void Hand::updateTactFull(bool realtime)
+{
 	group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
 	for (size_t i = 0; i < tactilePucks.size(); ++i) {
 		tactilePucks[i]->receiveFull(realtime);
