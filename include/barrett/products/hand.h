@@ -31,12 +31,14 @@ public:
 	Hand(const std::vector<Puck*>& pucks);
 	~Hand();
 
-	void initialize() const { group.setProperty(Puck::CMD, CMD_HI); }
+	void initialize() const;
 	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
 
+	bool doneMoving() const;
+	void waitUntilDoneMoving(int period_us = 10000) const;
 
 	// preferred: low control-rate moves
-	void trapezoidalMove(const jp_type& jp) const;
+	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
 	void setVelocity(const jv_type& jv) const;
 
 	// advanced: high control-rate moves
@@ -53,6 +55,7 @@ public:
 
 protected:
 	std::vector<TactilePuck*> tactilePucks;
+	int holds[DOF];
 
 private:
 	static const int CMD_HI = 13;
