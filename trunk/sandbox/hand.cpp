@@ -45,12 +45,28 @@ int main() {
 
 
 	hand.initialize();
+
 	Hand::jp_type jp;
 	jp << 30000, 30000, 30000, 10000;
 	hand.trapezoidalMove(jp);
+
+	hand.updatePosition();
+	hand.updateStrain();
+	std::cout << hand.getPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
+
 	Hand::jv_type jv(50.0);
 	hand.setVelocity(jv);
-	sleep(2);
+
+	sleep(1);
+	hand.updatePosition();
+	hand.updateStrain();
+	std::cout << hand.getPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
+
+	sleep(1);
+	hand.updatePosition();
+	hand.updateStrain();
+	std::cout << hand.getPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
+
 	hand.idle();
 
 

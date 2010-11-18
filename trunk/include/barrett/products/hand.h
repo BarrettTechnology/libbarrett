@@ -34,21 +34,26 @@ public:
 	void initialize() const;
 	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
 
-	bool doneMoving() const;
+	bool doneMoving(bool realtime = false) const;
 	void waitUntilDoneMoving(int period_us = 10000) const;
 
 	// preferred: low control-rate moves
-	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
+	void trapezoidalMove(const jp_type& jpc, bool blocking = true) const;
 	void setVelocity(const jv_type& jv) const;
 
 	// advanced: high control-rate moves
 	void setPositionMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_PID); }
-	void setPositionCommand(const jp_type& jp) const;
+	void setPositionCommand(const jp_type& jpc) const;
 	void setTorqueMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_TORQUE); }
 	void setTorqueCommand(const jt_type& jt) const;
 
 
-	void updateTactFull(bool realtime = false) const;
+	void updatePosition(bool realtime = false);
+	void updateStrain(bool realtime = false);
+	void updateTactFull(bool realtime = false);
+
+	const jp_type& getPosition() const { return jp; }
+	const std::vector<int>& getStrain() const { return sg; }
 
 
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
@@ -56,6 +61,9 @@ public:
 protected:
 	std::vector<TactilePuck*> tactilePucks;
 	int holds[DOF];
+
+	jp_type jp;
+	std::vector<int> sg;
 
 private:
 	static const int CMD_HI = 13;
