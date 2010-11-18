@@ -6,8 +6,10 @@
  */
 
 #include <vector>
+#include <algorithm>
 
 #include <syslog.h>
+#include <unistd.h>
 
 #include <barrett/detail/stl_utils.h>
 #include <barrett/products/abstract/multi_puck_product.h>
@@ -36,18 +38,72 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 		}
 	}
 	syslog(LOG_ERR, "  Found %d Tactile arrays", numTact);
+
+	// record HOLD values
+	group.getProperty(Puck::HOLD, holds);
 }
 Hand::~Hand()
 {
 	detail::purge(tactilePucks);
 }
 
-void Hand::trapezoidalMove(const jp_type& jp) const
+void Hand::initialize(/*bool blocking*/) const
+{
+	group.setProperty(Puck::CMD, CMD_HI);
+
+//	if (blocking) {
+		int modes[DOF];
+		std::vector<bool> seenMode4(DOF, false), seenNotMode4(DOF, false);
+
+		while (true) {
+			group.getProperty(Puck::MODE, modes);
+			for (size_t i = 0; i < DOF; ++i) {
+				if (seenMode4[i]) {
+					if (modes[i] != MotorPuck::MODE_VELOCITY) {
+						seenNotMode4[i] = true;
+					}
+				} else if (modes[i] == MotorPuck::MODE_VELOCITY) {
+						seenMode4[i] = true;
+				}
+			}
+
+			if (std::count(seenNotMode4.begin(), seenNotMode4.end(), true) == (int)DOF) {
+				break;
+			}
+			usleep(100000);  // Poll at < 10Hz
+		}
+//	}
+}
+
+bool Hand::doneMoving() const
+{
+	int modes[DOF];
+	group.getProperty(Puck::MODE, modes);
+
+	for (size_t i = 0; i < DOF; ++i) {
+		if ((holds[i] != 0 && modes[i] != MotorPuck::MODE_PID)  ||  (holds[i] == 0 && modes[i] != MotorPuck::MODE_IDLE)) {
+			return false;
+		}
+	}
+	return true;
+}
+void Hand::waitUntilDoneMoving(int period_us) const
+{
+	while ( !doneMoving() ) {
+		usleep(period_us);
+	}
+}
+
+void Hand::trapezoidalMove(const jp_type& jp, bool blocking) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
 		pucks[i]->setProperty(Puck::E, jp[i]);
 	}
 	group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
+
+	if (blocking) {
+		waitUntilDoneMoving();
+	}
 }
 void Hand::setVelocity(const jv_type& jv) const
 {
