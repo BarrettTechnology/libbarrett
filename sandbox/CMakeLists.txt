@@ -14,6 +14,7 @@ endfunction()
 set(programs
 	bus_manager
 	can_terminal
+	full_system_test
 	gimbals_hand_controller
 	hand
 	hand_feedback
