@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
 			// TODO(dc): Fix once F/T has working ROLE
 			//fts.setProperty(Puck::GM, calValue);
-			Puck::setProperty(bm, fts.getId(), Puck::getPropertyId(Puck::GM, Puck::PT_ForceTorque, 152), calValue);
+			Puck::setProperty(bm, fts.getPuck()->getId(), Puck::getPropertyId(Puck::GM, Puck::PT_ForceTorque, 152), calValue);
 
 			printf(".");
 			fflush(stdout);
