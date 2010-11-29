@@ -43,7 +43,11 @@ RealTimeMutex::~RealTimeMutex()
 
 void RealTimeMutex::lock()
 {
-	acquireWrapper(mutex, TM_INFINITE);
+    int ret = acquireWrapper(mutex, TM_INFINITE);
+    if (ret != 0) {
+            syslog(LOG_ERR, "RealTimeMutex::lock(): acquireWrapper() returned %d", ret);
+            throw boost::thread_resource_error(ret);
+    }
 }
 
 bool RealTimeMutex::try_lock()
