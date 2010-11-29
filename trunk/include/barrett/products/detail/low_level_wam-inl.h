@@ -42,11 +42,16 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 {
 	syslog(LOG_ERR, "  Config setting: %s => \"%s\"", setting.getSourceFile(), setting.getPath().c_str());
 
+
+	group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE);  // Make sure the Pucks are IDLE
+
+
 	// Zero-compensation?
 	bool zeroCompensation = setting.exists("zeroangle");
 	if (!zeroCompensation) {
 		syslog(LOG_ERR, "  Missing \"zeroangle\" vector: no zero-compensation");
 	}
+
 
 	// Compute motor/joint transforms
 	Eigen::LU<typename sqm_type::Base> lu(j2mp);
