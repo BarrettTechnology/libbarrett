@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
 
 	::barrett::BusManager bm;
 	bm.waitForWam();
+	bm.wakeAllPucks();
 
 	if (bm.foundWam4()) {
 		return wam_main(argc, argv, bm, *bm.getWam4());
