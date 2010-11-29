@@ -44,6 +44,7 @@ public:
 	virtual ~BusManager();
 
 	void enumerate();
+	void wakeAllPucks() const { Puck::wake(getPucks()); }
 
 	bool foundSafetyModule() const;
 	SafetyModule* getSafetyModule();
