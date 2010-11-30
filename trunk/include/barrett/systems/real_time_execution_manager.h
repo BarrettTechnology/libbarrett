@@ -44,7 +44,7 @@ public:
 	virtual ~RealTimeExecutionManager();
 
 	void start();
-	bool isRunning();
+	bool isRunning() const { return running; }
 	void stop();
 
 protected:

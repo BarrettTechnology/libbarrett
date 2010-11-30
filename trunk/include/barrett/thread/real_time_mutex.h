@@ -34,9 +34,11 @@ public:
 	virtual void unlock();
 
 protected:
-	static int acquireWrapper(RT_MUTEX* m, RTIME timeout);
+	int acquireWrapper(RTIME timeout);
 
 	RT_MUTEX* mutex;
+	int lockCount;
+	bool leaveWarnSwitchOn;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(RealTimeMutex);

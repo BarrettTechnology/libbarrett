@@ -5,21 +5,39 @@
  *      Author: dc
  */
 
+#include <iostream>
 #include <stdexcept>
+
 #include <syslog.h>
+#include <signal.h>
 
 #include <native/task.h>
 #include <native/mutex.h>
 
+#include <barrett/detail/stacktrace.h>
 #include <barrett/thread/real_time_mutex.h>
 
 
 namespace barrett {
 namespace thread {
 
+namespace detail {
+extern "C" {
+
+void warnOnSwitchToSecondaryMode(int)
+{
+	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
+	barrett::detail::syslog_stacktrace();
+	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
+}
+
+
+}
+}
+
 
 RealTimeMutex::RealTimeMutex() :
-	mutex(NULL)
+	mutex(NULL), lockCount(0), leaveWarnSwitchOn(false)
 {
 	mutex = new RT_MUTEX;
 	int ret = rt_mutex_create(mutex, NULL);
@@ -27,6 +45,9 @@ RealTimeMutex::RealTimeMutex() :
 		syslog(LOG_ERR, "Could not create RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::RealTimeMutex(): Could not create RT_MUTEX.");
 	}
+
+	// Handler for warnings about falling out of real time mode
+	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
 }
 
 RealTimeMutex::~RealTimeMutex()
@@ -43,7 +64,7 @@ RealTimeMutex::~RealTimeMutex()
 
 void RealTimeMutex::lock()
 {
-    int ret = acquireWrapper(mutex, TM_INFINITE);
+    int ret = acquireWrapper(TM_INFINITE);
     if (ret != 0) {
             syslog(LOG_ERR, "RealTimeMutex::lock(): acquireWrapper() returned %d", ret);
             throw boost::thread_resource_error(ret);
@@ -52,7 +73,7 @@ void RealTimeMutex::lock()
 
 bool RealTimeMutex::try_lock()
 {
-	return acquireWrapper(mutex, TM_NONBLOCK) == 0;
+	return acquireWrapper(TM_NONBLOCK) == 0;
 }
 
 void RealTimeMutex::unlock()
@@ -62,11 +83,21 @@ void RealTimeMutex::unlock()
 		syslog(LOG_ERR, "Could not release RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::unlock(): Could not release RT_MUTEX.");
 	}
+
+    --lockCount;
+	if (lockCount == 0 && !leaveWarnSwitchOn) {
+		ret = rt_task_set_mode(T_WARNSW, 0, NULL);
+		if (ret != 0) {
+			throw std::runtime_error("thread::RealTimeMutex::unlock(): Could not clear T_WARNSW mode.");
+		}
+	}
 }
 
-int RealTimeMutex::acquireWrapper(RT_MUTEX* m, RTIME timeout)
+int RealTimeMutex::acquireWrapper(RTIME timeout)
 {
-	int ret = rt_mutex_acquire(m, timeout);
+	int ret;
+
+	ret = rt_mutex_acquire(mutex, timeout);
 	if (ret == -EPERM) {
 		// become real-time, then try again
 
@@ -78,8 +109,18 @@ int RealTimeMutex::acquireWrapper(RT_MUTEX* m, RTIME timeout)
 		// by calling rt_task_self().
 		rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
-		ret = rt_mutex_acquire(m, timeout);
+		ret = rt_mutex_acquire(mutex, timeout);
 	}
+
+	if (lockCount == 0) {
+		int oldMode;
+		ret = rt_task_set_mode(0, T_WARNSW, &oldMode);
+		if (ret != 0) {
+			throw std::runtime_error("thread::RealTimeMutex::acquireWrapper(): Could not set T_WARNSW mode.");
+		}
+		leaveWarnSwitchOn = oldMode & T_WARNSW;
+	}
+	++lockCount;
 
 	return ret;
 }
