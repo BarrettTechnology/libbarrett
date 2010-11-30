@@ -10,6 +10,7 @@
 
 #include <syslog.h>
 #include <unistd.h>
+#include <native/task.h>
 
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
@@ -79,6 +80,77 @@ void Puck::updateStatus()
 }
 
 const char Puck::puckTypeStrs[][12] = { "Monitor", "Safety", "Motor", "ForceTorque", "Unknown" };
+
+
+void Puck::wake(std::vector<Puck*> pucks)
+{
+	std::vector<Puck*>::iterator i;
+	bool allPucksAwake;
+	Puck* aNonNullPuck = NULL;
+
+	// Find the Pucks that need to be woken up
+	allPucksAwake = true;
+	for (i = pucks.begin(); i != pucks.end(); ++i) {
+		if (*i == NULL) {
+			continue;
+		}
+//		(*i)->updateStatus();
+		if ((*i)->getEffectiveType() == PT_Monitor) {
+			allPucksAwake = false;
+			aNonNullPuck = *i;
+		} else {
+			*i = NULL;
+		}
+	}
+
+	if (allPucksAwake) {
+		return;
+	}
+
+	// Wake the Pucks. This is a separate step because talking on the CANbus
+	// while the Pucks' transceivers come online can cause the host to go
+	// bus-off.
+	{
+		// Prevent other threads from talking on the CANbus while Pucks are coming online.
+		BARRETT_SCOPED_LOCK(aNonNullPuck->getBus().getMutex());
+
+		for (i = pucks.begin(); i != pucks.end(); ++i) {
+			if (*i == NULL) {
+				continue;
+			}
+			(*i)->setProperty(STAT, STATUS_READY);
+
+			// Talking on the CANbus when a transceiver goes offline can also cause
+			// bus-off. Wait until this Puck drops off the bus before trying to
+			// wake the next one.
+			// TODO(dc): is there a more robust way of doing this?
+			rt_task_sleep(TURN_OFF_TIME);
+		}
+
+		rt_task_sleep(WAKE_UP_TIME);
+	}
+
+	int ret;
+	int stat;
+	for (i = pucks.begin(); i != pucks.end(); ++i) {
+		if (*i == NULL) {
+			continue;
+		}
+
+		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
+		ret = (*i)->tryGetProperty(STAT, &stat, 50000);
+		if (ret == 0  &&  stat == STATUS_READY) {
+			(*i)->updateStatus();
+		} else {
+			if (ret == 0) {
+				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
+			} else {
+				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e6);
+			}
+			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
+		}
+	}
+}
 
 
 int Puck::StandardParser::parse(int id,
