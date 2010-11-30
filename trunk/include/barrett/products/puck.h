@@ -84,8 +84,7 @@ public:
 	enum PuckType getEffectiveType() const { return effectiveType; }
 
 
-	template<template<typename U, typename = std::allocator<U> > class Container>
-	static void wake(Container<Puck*> pucks);
+	static void wake(std::vector<Puck*> pucks);
 
 	static int getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime = false);
 	template<typename Parser> static void getProperty(
@@ -139,8 +138,8 @@ public:
 	static const int SET_MASK = 0x80;
 	static const int PROPERTY_MASK = 0x7f;
 
-	static const int WAKE_UP_TIME = 1000000;  // microseconds
-
+	static const int WAKE_UP_TIME = 1000000000;  // nanoseconds
+	static const int TURN_OFF_TIME = 10000000;  // nanoseconds
 
 	struct StandardParser {
 		static int busId(int id, int propId);
