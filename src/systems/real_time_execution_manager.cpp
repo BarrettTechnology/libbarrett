@@ -6,14 +6,10 @@
  */
 
 
-#include <iostream>
-
 #include <syslog.h>
-#include <signal.h>
 #include <sys/mman.h>
 #include <native/task.h>
 
-#include <barrett/detail/stacktrace.h>
 #include <barrett/thread/real_time_mutex.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/real_time_execution_manager.h>
@@ -54,13 +50,6 @@ void rtemEntryPoint(void* cookie)
 	rtem->running = false;
 
 	rt_task_set_mode(T_WARNSW, 0, NULL);
-}
-
-void warnOnSwitchToSecondaryMode(int)
-{
-	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
-	barrett::detail::syslog_stacktrace();
-	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
 }
 
 
@@ -109,10 +98,6 @@ void RealTimeExecutionManager::start() {
 	// TODO(dc): else, throw an exception?
 }
 
-bool RealTimeExecutionManager::isRunning() {
-	return running;
-}
-
 void RealTimeExecutionManager::stop() {
 	stopRunning = true;
 	rt_task_join(task);
@@ -127,9 +112,6 @@ void RealTimeExecutionManager::init()
 {
 	// Avoids memory swapping for this program
 	mlockall(MCL_CURRENT|MCL_FUTURE);
-
-	// handler for warnings about falling out of real time mode
-	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
 
 	// install a more appropriate mutex
 	delete mutex;
