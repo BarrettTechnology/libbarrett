@@ -44,8 +44,6 @@ CANSocket::~CANSocket()
 
 void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 {
-	BARRETT_SCOPED_LOCK(mutex);
-
 	if (isOpen()) {
 		throw std::logic_error("CANSocket::open(): This object is already associated with a CAN port.");
 	}
