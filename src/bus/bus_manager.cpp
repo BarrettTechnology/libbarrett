@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include <native/task.h>
 #include <native/timer.h>
 
 #include <boost/thread/locks.hpp>
@@ -408,10 +409,13 @@ void BusManager::deletePuck(Puck* p)
 
 int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const
 {
-	boost::unique_lock<thread::Mutex> ul(getMutex());
+	thread::Mutex& m = getMutex();
+	m.lock();
+
 	RTIME start = rt_timer_read();
 
 	if (retrieveMessage(expectedBusId, data, len)) {
+		m.unlock();
 		return 0;
 	}
 
@@ -419,22 +423,27 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	while (true) {
 		ret = updateBuffers();
 		if (ret != 0) {
+			m.unlock();
 			return ret;
 		} else if (retrieveMessage(expectedBusId, data, len)) {
+			m.unlock();
 			return 0;
 		} else if (!blocking) {
+			m.unlock();
 			return 1;
 		}
 
 		if ((rt_timer_read() - start) > CommunicationsBus::TIMEOUT) {
+			m.unlock();
 			syslog(LOG_ERR, "BusManager::receive(): timed out");
 			return 2;
 		}
 
 		if (!realtime) {
-			ul.unlock();
-			usleep(100);
-			ul.lock();
+			int lc = m.fullUnlock();
+//			usleep(100);
+			rt_task_sleep(100000);
+			m.relock(lc);
 		}
 	}
 }
