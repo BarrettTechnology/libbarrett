@@ -33,6 +33,9 @@ public:
 	virtual bool try_lock();
 	virtual void unlock();
 
+	virtual int fullUnlock();
+	virtual void relock(int lc);
+
 protected:
 	int acquireWrapper(RTIME timeout);
 

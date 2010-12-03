@@ -31,6 +31,9 @@ public:
 	virtual bool try_lock() = 0;
 	virtual void unlock() = 0;
 
+	virtual int fullUnlock() = 0;
+	virtual void relock(int lc) = 0;
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(Mutex);
 };

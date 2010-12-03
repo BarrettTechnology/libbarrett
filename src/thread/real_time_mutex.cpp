@@ -78,20 +78,47 @@ bool RealTimeMutex::try_lock()
 
 void RealTimeMutex::unlock()
 {
+	--lockCount;
+	bool changeMode = lockCount == 0 && !leaveWarnSwitchOn;
+
 	int ret = rt_mutex_release(mutex);
 	if (ret) {
 		syslog(LOG_ERR, "Could not release RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::unlock(): Could not release RT_MUTEX.");
 	}
 
-    --lockCount;
-	if (lockCount == 0 && !leaveWarnSwitchOn) {
+	if (changeMode) {
 		ret = rt_task_set_mode(T_WARNSW, 0, NULL);
 		if (ret != 0) {
 			throw std::runtime_error("thread::RealTimeMutex::unlock(): Could not clear T_WARNSW mode.");
 		}
 	}
 }
+
+int RealTimeMutex::fullUnlock()
+{
+	int lc = lockCount;
+	if (lc <= 0) {
+		syslog(LOG_ERR, "thread::RealTimeMutex::fullUnlock() called when lockCount = %d", lc);
+		throw std::logic_error("thread::RealTimeMutex::fullUnlock(): Bad lockCount value.");
+	}
+
+	while (lockCount > 1) {
+		unlock();
+	}
+	unlock();
+
+	return lc;
+}
+
+void RealTimeMutex::relock(int lc)
+{
+	lock();
+	while (lockCount != lc) {
+		lock();
+	}
+}
+
 
 int RealTimeMutex::acquireWrapper(RTIME timeout)
 {
