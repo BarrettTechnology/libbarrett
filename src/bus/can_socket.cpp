@@ -105,8 +105,6 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 void CANSocket::close()
 {
-	BARRETT_SCOPED_LOCK(mutex);
-
 	if (isOpen()) {
 		struct ifreq ifr;
 		can_mode_t* mode = (can_mode_t *)&ifr.ifr_ifru;
