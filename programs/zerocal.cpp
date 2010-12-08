@@ -397,7 +397,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 				printf("      zeroangle = %s\n", zeromag);
 				break;
 			}
-		printf("--------\n\n");
+		printf("--------\n");
 //      {
 //         FILE * logfile;
 //         logfile = fopen("cal-zero.log","w");
@@ -421,7 +421,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 
 //		printf("Note that you must E-Stop (or power-cycle) your WAM\n");
 //		printf("for the calibrated settings to take effect!\n");
-//		printf("\n");
+		printf("\n");
 	}
 
 
@@ -429,6 +429,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 	magenc_thd.join();
 
 	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	bm.getSafetyModule()->setWamZeroed(false);  // Make sure the user applies their new calibration
 
 	free(mz_mechisset);
 	free(mz_counts);
