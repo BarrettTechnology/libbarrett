@@ -17,7 +17,6 @@ set(programs
 	full_system_test
 	gimbals_hand_controller
 	hand
-	hand_feedback
 	haptics
 	high_level_wam
 	load_ft_cal
@@ -33,7 +32,6 @@ set(programs
 	safety_module
 	tactile_test
 	teach
-	update_properties
 	zero_torque
 )
 
