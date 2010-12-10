@@ -1,0 +1,181 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_Section5 Previous] | [wiki:WAMManual_Section7 Next] >
+{{{
+#!html
+<a name="6" />
+}}}
+= 6 WAM Properties List =
+{{{
+#!html
+<a name="6.1" />
+}}}
+== 6.1 Common Properties ==
+These properties are common to both the motor encoders and the Safety Module. 
+
+||Property:||Definition:||Values (Units):||Read/Write:||Default:||Saved:||Notes:
+||ADDR||Address to peek/poke||||R/W||0||No||
+||ANA0, ANA1||Analog input values from the  on-board DAC||0 Ð 4095	||R/-||None	||No||0-3.0 V only
+||BAUD||RS-232 serial baud rate||Bits/sec	||R/W||9600	||No||
+||CMD||Execute a special command over CANbus, instead of the typical Get/Set command.||	||-/W||None	||No||Set CMD to the enumerated value of the desired command. Can only be used with commands that donÕt take values: RESET, HOME, KEEP, PASS, LOOP, HI, IC, IO, TC, TO, C, O, T
+||DEF||Default command for CAN||	||-/W||None	||No||Resets all parameters to their defaults (use SAVE to store them permanently in EEPROM)
+||DIG0||Digital I/O, PWM-capable||-1 to 100	||R/W||0	||No||0-3.3 V only (no optical isolation, reverse voltage, or overvoltage protection, be careful). -1 = Input, 0 = Output low, 1 = Output high, 2-100 = PWM duty cycle of n%, Pin 41 (Pin 44 = GND)
+||DIG1||Digital I/O||-1, 0, 1	||R/W||0	||No||0-3.3 V only (no optical isolation, reverse voltage, or overvoltage protection, be careful). -1 = Input, 0 = Output low, 1 = Output high, Pin 43 (Pin 44 = GND)
+||ERROR||Reports the last error encountered by the Puck||	||R/-||None	||No||Not yet implemented
+||FET0||Tensioner output (0 = Off, 1 = On)||0, 1	||R/W||0	||No||Pin 33 floats when FET0 = 0, it is grounded when FET0 = 1 (Pin 34 = 5V, current source)
+||FET1||Brake output (0 = Off, 1 = On)||0, 1	||R/W||0	||No||Pin 31 floats when FET1 = 0, it is grounded when FET1 = 1 (Pin 32 = 5V, current source)
+||FIND||Find command for CAN||	||-/W||None	||No||Used for calibration. Set FIND to the value you want to calibrate: setProperty(0, FIND, FALSE, MOFST);
+||GRPA, GRPB, GRPC||The communication groups to which the puck belongs||0 to 31	||R/W||None	||Yes||A Puck can be addressed by ID, or as part of a group
+||ID||CANbus ID||0 to 31	||R/W||None	||Yes||Each Puck on a CANbus must have a unique ID
+||ILOGIC||||	||R/-||None	||No||
+||IMOTOR||||	||R/-||None	||No||
+||LOAD||Load a property from non-volatile memory into active puck memory via the CAN bus||	||-/W||None	||No||Example of use: setProperty(0,4,LOAD,FALSE,MT)
+||LOCK||A combination lock to allow write access to locked properties||	||-/W||None	||No||These properties are locked: ROLE, SN, PTEMP, UPSECS, OD
+||MODE||The control method for the motor controller||0, 2, 3, 4, 5	||R/W||0	||No||0 = Idle, 2 = Torque, 3 = PID, 4 = Velocity, 5 = Trapezoidal
+||OTEMP||Over temperature limit||	||R/W||82	||No||MT is reduced gradually 16C before OTEMP. When TEMP >= OTEMP, MT will be zero.
+||PTEMP||Peak temperature recorded||	||R/W||None	||Yes||
+||ROLE||A value used by the firmware to determine the function of the device||	||R/W||None	||Yes||Bitfield: F=Feedback, R=Role: XXXX FFFF XXXX RRRR ROLE: 0 = Tater, 1 = Gimbals, 2 = Safety, 3 = Wraptor, 4 = Trigger FEEDBACK: 0 = Optical encoder, 1 = Magnetic encoder
+||SAVE||After setting a non-volatile property, save it to non-volatile Puckª memory||	||-/W||None	||No|||| setProperty(0, 4, SAVE, FALSE, MT);
+||SG||Analog reading of the strain gage peripheral||0-4095	||R/-||None	||No||The 12-bit value 0-4095 corresponds to an analog reading of 0-3.0V
+||SN||The unique manufacturing serial number for this Puck||	||R/W||	||Yes||
+||STAT||0 = Reset/Monitor, 2 = Ready/Main||0, 2	||R/W||	||No||The Puck firmware is divided into two parts: Monitor and Main. The Puck initially boots into Monitor where there is a very limited command/property set. From here, you can download new Main firmware, or SET STAT 2 to execute the Main firmware. Setting STAT=0 forces a firmware reset, which will leave the motors free-spinning (no torque, no braking).
+||TEMP||Puckª temperature||	||R/-||	||No||The Puck temperature should not exceed  70 ûC for extended periods.
+||THERM||Thermistor (motor) temperature||	||R/-||	||No||The motor temperature should not exceed 125 ûC for extended periods.
+||VALUE||Value to poke/peek||	||R/W||	||No||Use with ADDR to read/write data from the Puck memory. || Read the TMS320F2812 DSPÕs GPBDAT register; setProperty(0, 4, ADDR, FALSE, 28900); getProperty(0, 4, VALUE, &longVal);
+||VBUS||The bus voltage on a Puckª||	||R/-||	||No||The standard Puck is designed for operation between 18V and 90V. However, contact Barrett Technology if operating the bus at a voltage other than 48 V.
+||VERS||Firmware version (or the monitor version, if the Puckª is in reset)||	||R/W||	||No||
+||VLOGIC||||	||R/-||	||No||Not yet implemented
+||X0, X1, X2||||	||R/W||	||Yes||N/A||
+||X3, X4, X5||||	||R/W||	||Yes||
+||X6, X7||||	||R/W||	||Yes||
+
+{{{
+#!html
+<a name="6.2" />
+}}}
+== 6.2 Motor Properties ==
+These properties are used only by the motor controllers (not the safety module).
+||ACCEL||||	||R/W||2048	||Yes||
+||CT||32-Bit Close Target||	||R/W||30000	||Yes||
+||CTS||32-Bit Counts per revolution||	||R/W||4096	||Yes||CTS
+||DP||32-Bit Default Position||	||R/W||0	||Yes||
+||DS||||	||R/W||25000	||Yes||
+||E||32-Bit Endpoint||	||R/W||0	||No||
+||ECMAX||Encoder Correction Maximum Value||	||R/W||0	||No||
+||ECMIN||Encoder Correction Minimum Value||	||R/W||0	||No||
+||EN||||	||R/W||	||No||
+||HALLH||32-Bit Hall History Bitfield||	||R/W||0	||No||
+||HALLS||Hall feedback bitfield: CBA||	||R/W||	||No||
+||HOLD||Flag to hold position after move||	||R/W||0	||Yes||
+||HSG||||	||R/W||255	||Yes||
+||IKCOR||Current sense correction factor||	||R/W||1638	||Yes||
+||IKI||Current sense integral gain||	||R/W||3276	||Yes||
+||IKP||Current sense proportional gain||	||R/W||8192	||Yes||
+||IOFF||32-Bit Intialization Offset||	||R/W||	||Yes||
+||IOFST||Current Offset Calibration||	||R/W||	||Yes||
+||IPNM||The puck torque unit to Nm (Command Current / Nm) conversion is stored here||	||R/W||2755	||Yes||IPNM is set at the factory. IPNM is never actually used in the pucks themselves. It is simply a non-volatile place to store the conversion constant so that the controlling PC can read it upon startup and use it to convert between puck units and SI units of torque for the end user.
+||IVEL||||	||R/W||20	||Yes||
+||JIDX||||	||R/W||	||Yes||
+||KD||||	||R/W||8000	||Yes||
+||KI||||	||R/W||0	||Yes||
+||KP||||	||R/W||2000	||Yes||
+||LCTC||||	||R/W||1	||No||
+||LCVC||||	||R/W||1	||No||
+||LFLAGS||||	||R/W||0	||No||
+||LSG||||	||R/W||0	||Yes||
+||M||32-Bit Mechanical Angle in ENCODER counts?||	||-/W||	||No||
+||MCV|| In counts/ms||	||R/W||1500	||Yes||
+||MDS||Max Duty Sum for Power Limiting||	||R/W||1650	||Yes||
+||MECH||Mechanical encoder angle||	||R/-||	||No||For magnetic encoders, MECH is the raw encoder feedback, absolute within one rotation of the motor. For optical encoders, MECH is the number of encoder counts between the present location and the index pulse. (See Appendix C for details about MECH with optical encoders).
+||MOFST||Mechanical Offset Calibration||	||R/W||	||Yes||Calibrated at lab. MOFST is the encoder reading at the start of an electrical cycle. (See Appendix C for details about MOFST with Optical Encoders).
+||MOV||Counts/ms||	||R/W||1500	||Yes||
+||MPE||||	||R/W||5	||Yes||
+||MT||The maximum torque a Puckª will apply, even if commanded to apply more (in milliamps).||	||R/W||4700	||Yes||OpenWAM() calls !InitializeSystem() (see the Doxygen documentation) which sets MT to 4731 for each puck. A value of 1024 corresponds to 1.00A of current in the motor windings. Let's say MT = 750, TL1 = 2500, TL2 = 4000. You send a T of 2800. The safety system is okay with this, it just shows the warning light on the pendant. The puck notices that abs(2800) exceeds 750, so it sets its own torque output to 750 * sign(2800).
+||MV||Maximum Velocity in counts/millisecond||	||R/W||1500	||Yes||
+||OD||||	||R/W||	||Yes||
+||OT||32-Bit Open Target||	||R/W||0	||Yes||
+||P||Motor position in encoder counts.||	||R/W||	||Yes||You can set P in a puck only when the puck's MODE = 0 (MODE = MODE_IDLE). Just be careful to set IFAULT (see Section 6.3) in the safety module before you do this, else you will likely get a velocity fault 
+||PIDX||Puckª Index for Torque||	||R/W||	||Yes||
+||POLES||Number of magnets on rotor||	||R/W||12, 8, or 6, depending on motor type	||Yes||
+||T||Set the Puckª torque (in milliamps)||	||R/W||0	||No||The pucks will apply the last received torque until a new torque is sent, or the MODE changes to MODE_IDLE.
+||TENSO||||	||R/W||	||Yes||
+||TENST||||	||R/W||	||Yes||
+||TIE||Flag to tie inner and outer links||	||R/W||0	||Yes||
+||TSTOP||Time until considered stopped||	||R/W||1000	||Yes||
+||UPSECS||The total power-up time for this WAM||	||R/W||	||Yes||
+||V||Velocity in counts/milliseconds||	||R/W||0	||No||
+
+{{{
+#!html
+<a name="6.3" />
+}}}
+== 6.3 Safety-Module Properties ==
+The Safety Module is an additional Puck located in the base of the WAM (not attached to a motor). The Safety Module has a puck ID of 10, and is identified in the software as SAFETY_MODULE. Its job is to listen to the CANbus traffic and shut the WAM down in the event of an over-torque, over-velocity, voltage problem, or heartbeat error (missing communication from any puck or the PC). It also controls the pendant lights and switches. The properties below are only applicable to the Safety Module. All safety module properties apply to the whole arm on a global basis. For example, if the torque of ANY motor exceeds TL2, the safety system will force the arm into IDLE mode (all phase leads tied together).
+
+||Property:||Definition:||Values (Units):||Read/Write:||Default:||Saved:||Notes:
+||IFAULT||If IFAULT is greater than 0 and a fault is observed by the safety system, IFAULT is decremented by one, and the fault is ignored.||0 to 20 (typical)||0||To set the initial positions of the pucks, you must also set IFAULT (Ignore Fault) at that time to prevent the giant instantaneous position change from causing an over-velocity fault in the safety module. See the DefineWAMpos() function in the Doxygen documentation for an example.
+||MAXPWR||||	||||	||||
+||PEN||||	||||	||||
+||PWR||||	||||	||||
+||SAFE||||	||||	||||
+||TL1, TL2||The safety systemÕs motor torque warning, fault levels (Puckª torque units)||	||||	||||TL1 is the minimum torque that will cause a warning; TL2 is the minimum torque that will cause a fault.
+||VL1, VL2||VL1 is the minimum velocity that will cause a warning; VL2 is the minimum velocity that will cause a fault.||(rad/s or m/s)	||||0.5, 1.0 (respectively)	||||Before calling DefineWAMpos() (otherwise known as zeroing the WAM), VL1 and VL2 limit the angular velocity (rad/s) of every joint, and the 7-segment LED display on the pendants will show which joint exceeded the velocity limit if a velocity warning or fault occurs. After DefineWAMpos() is called, the WAM switches to limiting the Cartesian velocity (m/s) of the elbow and 4-DOF endpoint, instead of each jointÕs velocity. In the event of a fault after DefineWAMpos() is called, the 7-segment LED display on the pendants will show ÒEÓ or ÒAÓ to indicate whether the Elbow or the Arm endpoint exceeded the velocity limit. The value of these limits can be changed at any time, but both limits are always applicable to the entire robot Ð the limits cannot be applied only to particular joints or points on the WAM.
+If you want to set these properties directly (using setProperty()), please note that they are in Q4.12 notation, so take whatever you want the value to be and multiply it by 4096 before you set it. Q4.12 means "4 bits of integer, 12 bits of fraction". 0x1000 = 1.0, 0x1800 = 1.5, 0x7800 = 7.5. If you go much higher, you'll go negative (do not do this). See the source code for !SetSafetyLimits() in src/btwam/btwam.c for an example.
+||VNOM||||	||||	||||
+||VOLTH1, VOLTH2||The safety systemÕs high voltage warning, fault limit||Volts	||||54, 57	||||If the bus voltage exceeds VOLTH1, the safety system will begin bleeding off bus voltage through a resistor, and the pendants will display a voltage warning with the letter ÔHÕ. If the bus voltage exceeds VOLTH2, the safety system will disconnect the bus and clamp it, and the pendants will display a voltage fault with the letter ÔHÕ.
+||VOLTL1, VOLTL2||The safety systemÕs low voltage warning, fault limit.||Volts	||||36, 30	||||If the bus voltage falls below VOLTL1, the pendants will display a voltage warning with the letter ÔLÕ. If the bus voltage falls below VOLTL2, the safety system will disconnect the bus and clamp it, and the pendants will display a voltage fault with the letter ÔLÕ. 
+||ZERO||After sending the pucks their known initial position, set the safety system's ZERO property to 1 so it can start calculating Cartesian velocities.||	||||	||||Use the DefineWAMpos() function in src/btwam/btwam.c to set the initial positions of the other motor controllers. This is called automatically during the normal OpenWAM() call.
+
+
+ 
+{{{
+#!html
+<a name="6.4" />
+}}}
+== 6.4 Key to Property Table ==
+
+||Key||Param.||45||MV||91||IKP
+||0||VERS||46||MCV||92||IKI
+||1||ROLE||47||MOV||93||IKCOR
+||2||SN||48||P||94||HOLD
+||3||ID||49||P2||95||TIE
+||4||ERROR||50||DP||96||ECMAX
+||5||STAT||51||DP2||97||ECMIN
+||6||ADDR||52||E||98||LFLAGS
+||7||VALUE||53||E2||99||LCTC
+||8||MODE||54||OT||100||LCVC
+||9||TEMP||55||OT2||
+||10||PTEMP||56||CT||
+||11||OTEMP||57||CT2||
+||12||BAUD||58||M||
+||13||LOCK||59||M2||
+||14||DIG0||60||DS||
+||15||DIG1||61||MOFST||
+||16||FET0||62||IOFST||
+||17||FET1||63||UPSECS||
+||18||ANA0||64||OD||
+||19||ANA1||65||MDS||
+||20||THERM||66||MECH||
+||21||VBUS||67||MECH2||
+||22||IMOTOR||68||CTS||
+||23||VLOGIC||69||CTS2||
+||24||ILOGIC||70||PIDX||
+||25||SG||71||HSG||
+||26||GRPA||72||LSG||
+||27||GRPB||73||IVEL||
+||28||GRPC||74||IOFF||
+||29||CMD||75||IOFF2||
+||30||SAVE||76||MPE||
+||31||LOAD||77||EN||
+||32||DEF||78||TSTOP||
+||33||FIND||79||KP||
+||34||X0||80||KD||
+||35||X1||81||KI||
+||36||X2||82||ACCEL||
+||37||X3||83||TENST||
+||38||X4||84||TENSO||
+||39||X5||85||JIDX||
+||40||X6||86||IPNM||
+||41||X7||87||HALLS||
+||42||T||88||HALLH||
+||43||MT||89||HALLH2||
+||44||V||90||POLES||

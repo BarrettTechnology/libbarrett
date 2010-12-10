@@ -1,0 +1,303 @@
+#LyX 1.6.8 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+Equation 1:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{i-l}T_{i}=\left[\begin{array}{cccc}
+c\theta_{i} & -s\theta_{i}c\alpha_{i} & s\theta_{i}s\alpha_{i} & a_{i}c\theta_{i}\\
+s\theta_{i} & c\theta_{i}c\alpha_{i} & -c\theta_{i}s\alpha_{i} & a_{i}s\theta_{i}\\
+0 & s\alpha_{i} & c\alpha_{i} & d_{i}\\
+0 & 0 & 0 & 1\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 2:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{1}T_{2}=\left[\begin{array}{cccc}
+cos(\theta_{2}) & -sin(\theta_{2})cos(\pi/2) & sin(\theta_{2})sin(\pi/2) & cos(\theta_{2})(0)\\
+sin(\theta_{2}) & cos(\theta_{2})cos(\pi/2) & -cos(\theta_{2})sin(\pi/2) & sin(\theta_{2})(0)\\
+0 & sin(\pi/2) & cos(\pi/2) & (0)\\
+0 & 0 & 0 & 1\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{1}T_{2}=\left[\begin{array}{cccc}
+cos(\theta_{2}) & 0 & sin(\theta_{2}) & 0\\
+sin(\theta_{2}) & 0 & -cos(\theta_{2}) & 0\\
+0 & 1 & 0 & 0\\
+0 & 0 & 0 & 1\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 3:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{4}T_{tool}=\left[\begin{array}{cccc}
+u_{x} & v_{x} & w_{x} & P_{x}\\
+u_{y} & v_{y} & w_{y} & P_{y}\\
+u_{z} & v_{z} & w_{z} & P_{z}\\
+0 & 0 & 0 & 1\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 4:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{0}T_{Tool}=^{0}T_{1}^{1}T_{2}^{2}T_{3}^{3}T_{4}^{4}T_{Tool}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 5:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $^{0}T_{Tool}=^{0}T_{1}^{1}T_{2}^{2}T_{3}^{3}T_{4}^{4}T_{5}^{5}T_{6}^{6}T_{7}^{7}T_{Tool}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 6:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+J\theta_{1}\\
+J\theta_{2}\\
+J\theta_{3}\\
+J\theta_{4}\end{array}\right]=\left[\begin{array}{cccc}
+\frac{-1}{N_{1}} & 0 & 0 & 0\\
+0 & \frac{1}{2N_{2}} & \frac{-1}{2N_{2}} & 0\\
+0 & \frac{-n_{3}}{2N_{2}} & \frac{-n_{3}}{2N_{2}} & 0\\
+0 & 0 & 0 & \frac{-1}{N_{4}}\end{array}\right]\left[\begin{array}{c}
+M\theta_{1}\\
+M\theta_{2}\\
+M\theta_{3}\\
+M\theta_{4}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 7:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+J\theta_{5}\\
+J\theta_{6}\\
+J\theta_{7}\end{array}\right]=\left[\begin{array}{ccc}
+\frac{1}{2N_{5}} & \frac{1}{2N_{5}} & 0\\
+\frac{-n_{6}}{2N_{5}} & \frac{n_{6}}{2N_{5}} & 0\\
+0 & 0 & \frac{1}{N_{7}}\end{array}\right]\left[\begin{array}{c}
+M\theta_{5}\\
+M\theta_{6}\\
+M\theta_{7}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 8:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+M\theta_{1}\\
+M\theta_{2}\\
+M\theta_{3}\\
+M\theta_{4}\end{array}\right]=\left[\begin{array}{cccc}
+-N_{1} & 0 & 0 & 0\\
+0 & N_{2} & \frac{-N_{2}}{n_{3}} & 0\\
+0 & -N_{2} & \frac{-N_{2}}{n_{3}} & 0\\
+0 & 0 & 0 & -N_{4}\end{array}\right]\left[\begin{array}{c}
+J\theta_{1}\\
+J\theta_{2}\\
+J\theta_{3}\\
+J\theta_{4}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 9:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+M\theta_{5}\\
+M\theta_{6}\\
+M\theta_{7}\end{array}\right]=\left[\begin{array}{ccc}
+N_{5} & \frac{-N_{5}}{n_{6}} & 0\\
+N_{5} & \frac{N_{5}}{n_{6}} & 0\\
+0 & 0 & -N_{7}\end{array}\right]\left[\begin{array}{c}
+J\theta_{5}\\
+J\theta_{6}\\
+J\theta_{7}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 10:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+J\tau_{1}\\
+J\tau_{2}\\
+J\tau_{3}\\
+J\tau_{4}\end{array}\right]=\left[\begin{array}{cccc}
+-N_{1} & 0 & 0 & 0\\
+0 & N_{2} & -N_{2} & 0\\
+0 & \frac{-N_{2}}{n_{3}} & \frac{-N_{2}}{n_{3}} & 0\\
+0 & 0 & 0 & -N_{4}\end{array}\right]\left[\begin{array}{c}
+M\tau_{1}\\
+M\tau_{2}\\
+M\tau_{3}\\
+M\tau_{4}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 11:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+J\tau_{5}\\
+J\tau_{6}\\
+J\tau_{7}\end{array}\right]=\left[\begin{array}{ccc}
+N_{5} & N_{5} & 0\\
+\frac{-N_{5}}{n_{6}} & \frac{N_{5}}{n_{6}} & 0\\
+0 & 0 & -N_{7}\end{array}\right]\left[\begin{array}{c}
+M\tau_{5}\\
+M\tau_{6}\\
+M\tau_{7}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 12:
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+\begin_inset Formula $\left[\begin{array}{c}
+M\tau_{1}\\
+M\tau_{2}\\
+M\tau_{3}\\
+M\tau_{4}\end{array}\right]=\left[\begin{array}{cccc}
+\frac{-1}{N_{1}} & 0 & 0 & 0\\
+0 & \frac{1}{2N_{2}} & \frac{-n_{3}}{2N_{2}} & 0\\
+0 & \frac{-1}{2N_{2}} & \frac{-n_{3}}{2N_{2}} & 0\\
+0 & 0 & 0 & \frac{-1}{N_{7}}\end{array}\right]\left[\begin{array}{c}
+J\tau_{1}\\
+J\tau_{2}\\
+J\tau_{3}\\
+J\tau_{4}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 13:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left[\begin{array}{c}
+M\tau_{5}\\
+M\tau_{6}\\
+M\tau_{7}\end{array}\right]=\left[\begin{array}{ccc}
+\frac{1}{2N_{5}} & \frac{-n_{6}}{2N_{5}} & 0\\
+\frac{1}{2N_{5}} & \frac{n_{6}}{2N_{5}} & 0\\
+0 & 0 & \frac{-1}{N_{7}}\end{array}\right]\left[\begin{array}{c}
+J\tau_{5}\\
+J\tau_{6}\\
+J\tau_{7}\end{array}\right]$
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

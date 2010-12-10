@@ -1,0 +1,90 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_Section1 Previous] | [wiki:WAMManual_Section3 Next] >
+{{{
+#!html
+<a name="2" />
+}}}
+= 2 Safety and Cautions =
+{{{
+#!html
+<a name="2.1" />
+}}}
+== 2.1 Safety Instructions ==
+PLEASE READ THIS SECTION IN ITS ENTIRETY BEFORE USING YOUR WAM.
+
+Following these safety instructions will help prevent user injury and equipment damage.
+
+Proper precautions should be taken when selecting the location and setup of your WAM system. DO NOT set up the system such that any part of the robot’s workspace (resembling a sphere with an approximately one meter radius, as shown in Figure 16) reaches into a pedestrian pathway in the lab space. The WAM is an unusually quiet mechanism – it generates little servo or transmission noise – thereby providing very little intrinsic warning of its enabled state.
+
+In addition, as with any piece of robotic equipment, it is ultimately up to you to be aware of your surroundings during robot operation. Although the WAM is intrinsically safer than other robotic systems, you may wish to integrate standard safety measures such as mats, gates, light curtains, etc. into the lab space surrounding the WAM.
+
+NEVER connect or disconnect any electrical cables while the Power Supply is turned on. Failure to follow this instruction could impart irreparable damage to the onboard electronics or put you at risk of electrical shock. 
+
+Always plug the Power Supply into a properly grounded wall source. Failure to do so could damage the WAM electronics and put you at risk of electrical shock.
+
+Do not allow the WAM to be exposed to liquids that may cause electrical short-circuit and put you at risk of electrical shock.
+
+Keep dirt and debris away from the exposed cable drives located at the joints.
+
+Do not exceed the load limit of the arm: 4 kg for a 4-DOF WAM and 3 kg for a 7-DOF WAM. Consider all loading situations including accelerated loads, cantilever loads from long objects, robot collisions, active loads, etc.
+
+Remove/replace the WAM Wrist only as instructed in Section 3.4.
+
+Monitor the operating temperature of the WAM so that it remains between 0 °C and 70 °C. Under normal conditions, the Pucks operate between 40 and 60 ˚C. Idling the motors, when possible, will help keep the temperature lower.
+
+
+{{{
+#!html
+<a name="2.2" />
+}}}
+== 2.2 Safety System: Pendants ==
+{{{
+#!html
+<a name="2.2.1" />
+}}}
+=== 2.2.1 Safety States ===
+The WAM Arm has three safety states: E-STOP, IDLE, and ACTIVATED:
+
+E-STOP means there is no motor bus voltage, in fact the motor bus power and ground lines are tied together, resulting in a “resistive braking” effect on the joints of the WAM Arm. The motor controllers are off line and do not keep track of their motor positions in this state. E-STOP is achieved by pressing the E-STOP button on either pendant. In this state, neither the IDLE nor ACTIVATE button lights are lit on the control pendant.
+
+IDLE means there is voltage applied to the motor bus and the motor controllers are on line and keeping track of their motor positions, but they are commanded to tie their motor phase leads together (also resulting in a braking effect), and they will ignore any command torque sent to them. To put the WAM Arm into the IDLE state (which will also reset any existing faults), press and hold the Shift button on the control pendant, then press the Reset/Idle button (yellow) and release both buttons. The yellow Idle button will light up, indicating that the WAM Arm is now in the IDLE state. Make sure both E-STOP buttons are reset (popped up) before attempting to change modes.
+
+ACTIVATED means the motor controllers are actively applying any commanded torque they receive from the control PC. To put the WAM into the ACTIVATED state, press and hold the Shift button on the control pendant, then press the Activate button (green) and release both buttons. This state may only be reached when all of the status lights are showing OK (green). All warnings or faults must be cleared before activating the WAM. The green Activate button will light up, indicating that the WAM Arm is now in the ACTIVATED state.
+
+Status Lights
+The WAM Arm has five sets of status lights: Velocity, Torque, Voltage, Heartbeat, and Other.
+
+Velocity: Before the WAM Arm’s joint positions are initialized by the PC control software, the velocity status lights indicate the state of the WAM’s angular joint speed. By default, there is a yellow LED warning when any joint exceeds 0.5 radians/sec and a red LED fault when any joint exceeds 2 radians/sec. The joint number responsible for the warning/fault is indicated by the single-character display on each pendant. After the WAM Arm’s joint positions are initialized, the safety system begins calculating and monitoring the WAM’s elbow and arm endpoint velocities in Cartesian space instead of monitoring individual joint velocities. By default, there is a warning when either the elbow (single-character “E”) or arm endpoint (single-character “A”) exceeds 0.5 m/s and a fault when either one exceeds 2 m/s. These defaults are modifiable in software (see 6.3). 
+
+Torque: The torque status lights indicate the state of the torque commands being received by the WAM Arm from the PC control software. If the PC sends non-zero torques while the WAM is in the IDLE state (the yellow Reset/Idle button is lit), the safety system will display a torque warning- prohibiting the WAM Arm from being activated. If the WAM Arm is in the ACTIVATED state (the green Activate button is lit) and the PC sends torques which exceed the default torque warning or fault levels, the torque warning or fault light will be lit- and the offending motor number will be shown in the single-character display. If a torque limit is exceeded, the safety system automatically idles all motors (puts the WAM in the IDLE safety state). See Section 6.3 for more information about how to set the torque limits.
+
+Sometimes, when you exit a WAM control program, the torque warning light will stay on. That just means that the last torque that the safety system saw go by was beyond the warning level for the present state ( > 0 for E-STOP or IDLE, or > TL1 for ACTIVATED). As long as you send one or more zero-torque commands to the pucks, the warning light should extinguish.
+
+Voltage: The voltage status lights indicate the state of the WAM Arm’s motor bus voltage. When the system is first powered up, the bus is off (there is no motor power), and the safety system registers a voltage fault. This fault is cleared by pressing Shift-Idle on the control pendant. Placing the WAM Arm into the IDLE state applies a DC voltage on the motor bus and clears the fault. If the voltage approaches the limits, the voltage warning light is lit. If the voltage exceeds the limits, the voltage fault light is lit.
+
+Heartbeat: The heartbeat status lights indicate the state of the communication between the PC and each motor controller in the WAM Arm. If the WAM is in the IDLE state and no control loop is active between the PC and the motor controllers, the pendants will display a heartbeat warning. If the WAM is in the ACTIVATED state, the computer must request encoder values in a constant loop until you press Shift-Idle again. If PC or any motor controller fails to issue any communication for longer than 16ms, the safety system will register a heartbeat fault and shut down the WAM.
+
+Other: The “Other” status lights presently only indicate whether an E-STOP has occurred. If this is the case, the fault light will be lit and the single-character display will show “E”.
+
+{{{
+#!html
+<a name="2.3" />
+}}}
+== 2.3 Handling Safety Faults ==
+If the safety system registers a fault during WAM operation, the fault must be cleared before continuing to use the WAM. The most common safety faults (over velocity, over torque) leave the WAM safety system in the IDLE state (yellow button is lit). To reset the fault from this state (when using the btdiag example application): 
+	1. Stop any running Teach & Play playback (press ‘/’)
+	1. Set the position controller to IDLE mode (press ‘p’ to toggle mode)
+	1. Turn off gravity compensation (press ‘g’ and enter 0)
+	1. Reset the safety fault (press <Shift+Reset/Idle> on the control pendant)
+	1. Re-activate the WAM (press <Shift+Activate> on the control pendant)
+	1. Turn on gravity compensation (press ‘g’)
+
+If the safety system encountered a critical fault that resulted in an E-STOP of the WAM (no pendant buttons are lit), follow these steps to recover from the fault:
+	1. Exit the application (press ‘x’)
+	1. Reset the safety fault (press <Shift+Reset/Idle> on the control pendant)
+	1. Grab the WAM and move it back to the home position (the joint positions are lost after an E-STOP)
+	1. Re-launch the control program and follow the on-screen instructions
+
+[[Image(htdocs:figure17.png)]]
+
+Figure 17 – WAM Responses to Errors and Requests

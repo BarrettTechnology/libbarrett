@@ -1,0 +1,67 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_AppendixC Previous] | Next >
+= Appendix D GLOSSARY =
+
+'''Backdrivability''' - Backdrivability is the measure of how accurately a force or motion that is applied at the output end of a mechanical transition is reproduced at the input end. In a mechanical robot-like linkage, good backdrivability means that a person can grab the ending of the linkage and move it around effortlessly.  Some robots show acceptable backdrivability for slow disturbances, but near-zero backdrivability when the disturbances happen suddenly.  
+
+'''Backdrivable Robot''' - A robot which exhibits greater than 95% backdrivability.
+
+'''!BarrettHandª''' - The 1.2 kilogram dexterous robotic Grasperª as described in the !BarrettHandª BH8-Series UserÕs Manual.
+
+'''Cables (mechanical tension elements)''' - A Òwire ropeÓ typically made from very fine strands of stainless steel. 
+
+'''CANbus Communications''' - CANbus is a robust, deterministic, and addressable 2-wire serial-communications protocol that operates up to 1 megabit/sec.
+
+'''Cartesian Space''' - Cartesian space is a rectilinear, orthogonal description of three-dimensional space. It consists of three infinitely long straight lines that intersect at a mutual point, the origin. The lines are often associated with right-hand X, Y, and Z axes, and half of each line is designated positive. For the WAM, the world coordinate frame is right-handed and its origin is in the center of the shoulder with X pointing toward the front (rounded) part of the WAM, and Z pointing up (see frame docs in this manual).
+
+'''Controller''' - The word controller in the field of motion controls has two meanings:
+1.	A motor controller takes sensor feedback of rotor position and performs (brushless-commutation) calculations to determine a set of winding currents for that position that will produce either a desired trajectory or a desired torque (in cases with very low Coulomb friction). Then, in most modern motor controllers, a set of PWM signals is generated that control a set of (typically 6) FETs (through charge pumps) arranged in a double-H bridge (in the 6-FET case). 
+2.	A high-level motion controller coordinates the motions of one or more axes of a robot. A simple controller may apply a PID filter to a single joint to follow a trapezoidal function (velocity vs. time) with limits on acceleration/deceleration and velocity. More sophisticated controllers may control trajectories and forces in true Cartesian space and may exploit modeled observers, nonlinear functions, and adaptive control techniques. 
+
+'''Degrees of Freedom''' - Degrees of freedom is shorthand for independent degrees of freedom, which is almost always equal to the number of motors, as long as the motors drive independent axes. Generally a six-degree-of-freedom robotic arm can place its tool frame origin at any location within its reach and orient that frame arbitrarily anywhere within its dexterous workspace. However, for a fixed position and orientation of the tool frame the arm pose is fixed.
+
+When there are more degrees of freedom than 6-space, the robot arm kinematics are called redundant. For example, a seven-degree-of-freedom robotic arm such as the WAM arm remains free to move even while holding a position and orientation.
+
+'''Denavit-Hartenberg (D-H)''' - Denavit-Hartenberg is a technique for analyzing the type of serial-link kinematic chains used in robotic manipulators in which each frame is defined relative to its adjacent frame via two length dimensions and two rotations. The scheme is flexible enough to work with both revolute and prismatic joints. An important initial step in the analysis is to affix coordinate frames to each sequential link according to a protocol that is consistent with correct interpretation of the D-H parameters.
+
+'''Denavit-Hartenberg Parameters''' - The D-H parameters form an n x 4 matrix of parameters that define the kinematic relationship between coordinate frames that are attached to links in a robot. Knowledge of the D-H parameters allows immediate construction of the transformation matrices. Multiplying the chain of transformation matrices enables the final tool frame to be described relative to the userÕs robot-base or room coordinates.
+
+'''Encoders''' - Encoders come in two main types: incremental and absolute. The sensor types are usually optical, but may also be magnetic or electrical. In absolute encoders, when power is booted, the encoder knows its absolute location before there is any motion. Incremental encoders rely on A and B pulse trains in quadrature to report relative distances and direction. An optional index pulse on a third track allows the incremental encoder to calibrate and begin reporting absolute position only after the rotor rotates far enough (up to 1 full turn) to locate it.
+
+'''Ethernet Communications''' - Ethernet is a high-speed non-deterministic serial communications protocol. There are versions for 2-, 4-, and 8-wire variants and optical physical layers, with bandwidth highest in the 8-wire and optical versions.
+
+'''Firmware''' - Software that is embedded in a hardware device that allows reading and executing the software, but does not allow modification, e.g., writing or deleting data by an end user.
+
+'''Gravity Compensation''' - Gravity compensation is a specialized type of feedforward control used in backdrivable robotic arms. The kinematics, relative orientation of the gravity vector, and instantaneous pose must be known or knowable. The link and payload masses must be known a priori or measured (in a process called identification). In these circumstances, only a few sines and cosines must be evaluated to determine the unique set of joint torques required to balance gravity precisely and these balancing torque change only gradually as the arm moves or is pushed around the workspace.
+
+'''Haptic Device''' - An articulated machine designed to come in physical contact with people, usually through a handle that a person grasps, and to have the capability to control the forces that the person experiences.
+
+Haptic Object- A haptic object is a virtual object that is suspended (and can move and morph) within the workspace of a haptic device. A person moving the handle, stylus, or thimble of the device senses resistance forces generated by the device to simulate collision with the membrane of the haptic object.
+
+'''Haptics''' - Haptics is the study of the perception of touch in exploring and controlling objects and fluids that we can touch.
+
+'''Home Position''' - The default home position for the WAM (specified in the Quick-Start Guide) is J2 folded about 2 rad back against its large rubber stop, and J4 folded in against the inner link (+pi rad). It looks like the WAM is trying to touch its shoulder. In order to change the default home position, you must change the defined home joint positions in wam.conf. The normal joint readings for home positions are as follows:
+J1	J2	J3	J4	J5	J6	J7
+0	-2	0	3.14	0	0	0
+
+
+'''Jacobian''' - The Jacobian is a mathematical matrix representing the first derivative of kinematics and is very important in robotics. There are two interpretations of the Jacobian: one using the Jacobian-Inverse, and the other using the Jacobian-Transpose. The latter is only used in advanced robotics and is more powerful. 
+
+'''Jacobian-Inverse''' - Jacobian-Inverse is a computationally slow and burdensome operation in robotics, generally calculated off-line on a powerful processor, and virtually barring true realtime Cartesian control. It is a matrix inversion in the formal sense, which means that it must be well conditioned (the robot must be far from singularities) and it must be square (so only non-redundant robots can have a Jacobian-Inverse).
+
+'''Jacobian-Transpose''' - A Jacobian-Transpose is derived from the Jacobian with no computation, allowing realtime Cartesian control of robots with redundant degrees-of-freedom. A mathematical matrix transpose affects only the order in which the matrix elements are written into and subsequently read from memory.
+
+'''Kinematics''' - The science of motion which treats motion without regard to the forces which cause it, specifically all the geometrical and time-based properties of position.
+
+'''Micro-Yielding''' - Micro-yielding occurs when instantaneous cable tension loads combined with bending-induced (tension) stresses in the outmost cable fibers exceed the yield strength in the material, causing some of the fibers to break. 
+
+'''Pretension''' - The process of adding additional tension to a cable during the assembly process.
+
+'''Puckª''' - An ultra-miniature brushless servo controller fit into an ultra-high-precision encoder.  Developed over several years by Barrett Technology, this puck weighs only 44gms and is only 35mm (dia) x 17 (high) with connectors. The Puckª fulfills both definitions of a Controller (see Controller).
+
+'''Stiffness''' - The stiffness of a spring or similar mechanism (with units of force/distance, or force x distance in the case of trosional mechanisms) is defined as the slope of the curve of the restoring force relative to the displacement from equilibrium. So, in a robot stiffness can be measured at the endtip of the arm with the arm outstretched. In robotics high stiffness is always better.
+
+'''Whole Arm Manipulation''' - There are two meanings to Whole-Arm Manipulation, both exemplified in BarrettÕs WAM arm:
+	1. The inherent capability of a robot to control contact forces with inherent safety and robustness all along its link and joint surfaces, from the base of the arm through its end. This capability is especially enabling when applied to a kinematically redundant arm. 
+	1. A holistic approach to robot design enhances safety and performance while reducing intrinsic manufacturing, shipping, training, software, footprint, power, and servicing costs. For example, conventional robot designs continue today to depend on legacy drive technologies that introduce friction, backlash, torque fluctuations, or generate poor aspect ratios. Then conventional designers go to great lengths to attempt to mask these effects at the expense of safety or other performance metrics. The holistic approach leverages simple, (high-speed cable) drives that do not introduce these problems in the first place and yet exceed the highest standards of conventional performance. 
+ 

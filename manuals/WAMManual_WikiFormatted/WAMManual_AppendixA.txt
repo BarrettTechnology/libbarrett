@@ -1,0 +1,36 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_Section9 Previous] | [wiki:WAMManual_AppendixB Next] > 
+= Appendix A Integrating a !BarrettHandª =
+The !BarrettHand can be readily integrated into the WAM system. The Hand can be powered either internally using the built-in DC-DC converter on the Safety Board, or externally using the standard !BarrettHand power supply. See Table 2 for the necessary Safety Board switch settings to power and control the Hand.
+
+There are two methods by which Hand control can be integrated with Arm control. The first method allows the user to control the Hand from a separate window while the Arm is running. The second method is integration of Hand commands with Arm commands within the same program. Both methods require the following setup procedure.
+
+Setup:
+	* Turn power to entire system OFF
+	* Plug in Hand connector that extends from the modular outer link or Wrist into base of Hand
+	* Use white washers and screws to secure the connector.
+	* Align pins on Tool Plate with holes on Hand Base Ring
+	* Attach Hand to modular outer link or Wrist by turning Tool Plate Attachment Ring clockwise (when viewed from beyond the palm of the hand).
+	* The pins must engage completely for Hand to be securely attached to Wrist
+	* Plug external hand cable from base of Arm to rear of Hand Power Supply Box
+	* Plug power cord into Power Supply Box
+	* Attach a standard serial cable from COM port to rear of Hand Power Supply Box
+	
+The Hand is attached and ready for operation. Read the !BarrettHand User Manual before proceeding with Hand operation.
+Before operating both Hand and Arm together the Hand should be tested on the end of the Arm. Place Arm in a configuration that allows the Hand to move through its full range of motion. Follow the procedures in the !BarrettHand User Manual for testing Hand operation. If Hand operation is successful, the system is ready for use.
+
+To operate the Hand separately from the Arm:
+	* Turn Hand Power Supply Box ON
+	* Open a serial terminal application (such as !TeraTerm, !HyperTerminal, minicom) and connect to the COM port of the !BarrettHand at 9600 baud, No parity, 8 bits, One stop bit, No flow control
+	* Put Arm in a configuration that allows for full joint motion of the Hand
+	* Initialize Hand (Type ÒHIÓ). The Hand is now ready for operation while executing Arm programs
+	* Execute desired Arm program
+	* While Arm program is running, switch to the serial terminal window
+	* Type Hand commands (see the Grasper Control Language section of the !BarrettHand manual
+
+To operate Hand and Arm from the same program:
+
+Integration of the Hand and the Arm in the same program requires opening and initializing the serial port from within your WAM control application, then sending the desired Grasper Control Language (GCL) commands from the application. See the directory of example code for details about how this is implemented.
+
+Type Hand commands (see the Grasper Control Language section of the !BarrettHand manual)
+ 

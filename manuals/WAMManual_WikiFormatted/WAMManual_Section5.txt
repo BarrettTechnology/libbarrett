@@ -1,0 +1,39 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_Section4 Previous] | [wiki:WAMManual_Section6 Next] >
+{{{
+#!html
+<a name="5" />
+}}}
+= 5 WAM Commands List =
+For the full WAM Application Programming Interface (API), please refer to the fully indexed and cross-referenced doxygen-style documentation in the btclient/doc/html directory.
+
+	* '''Command''': getProperty
+	* '''Name''': Get Property
+	* '''Purpose''': Obtains the properties of a single Puckª.
+	* '''Arguments''': Bus (0), Node [1,31] (0x400 is not valid), property [0,108] inclusive (use the enumerations in btcan.h), &reply 
+	* '''Example''': 
+	* '''Notes''': 
+
+getProperty(bus, node, property, &reply) 
+bus = 0 (no other value has been tested) 
+node =  
+property = 
+&reply = pointer to a long integer 
+
+If you want to get the properties of several pucks at one time, you will have to write your own routine using an array for the replies along with canSendMsg() and canReadMsg() - see the getPositions() function in src/btsystem/btcan_esd.c as an example. 
+
+Otherwise, you can use getProperty to get a single property of a single puck at a time. 
+
+	* '''Command''': setProperty
+	* '''Name''': Set Property
+	* '''Purpose''': Sets the properties of Pucksª (single or group)
+	* '''Arguments''': Bus (0), Node [1,31] (0x400 is not valid), property [0,108] inclusive (use the enumerations in btcan.h), &reply 
+	* '''Example''': 
+	* '''Notes'''''': 
+
+The setProperty() function, in contrast, DOES allow nodeIDs OR group messageIDs to be used interchangeably. So setProperty(0,0x400,STAT,FALSE,STATUS_READY) is okay. 
+
+However, if the 4th parameter is set to TRUE (verify=TRUE), then it is effectively calling getProperty() with the 0x400, which is illegal. Calling getProperty() with 0x400 will prompt at least 4 responses (one from each puck), but getProperty() will only read the first one, leaving 3 in the queue to be read by some later call to getProperty() (or canReadMsg()). In order to prevent confusion after the illegal call (which could occur even if things are done correctly), reboot the system to clear out these messages. Alternatively, you could call canReadMessage() with a non-blocking read until no messages are found Ð see getBusStatus() for an example.
+
+Most properties may be read and written via getProperty() and setProperty() messages.
+ 

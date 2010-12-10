@@ -1,0 +1,59 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_AppendixB Previous] | [wiki:WAMManual_AppendixD Next] >
+= Appendix C FAQ =
+Q1:	What types of motions are possible with the WAM Arm, and what mechanisms are used to control them?
+A1:	The WAM Arm has a workspace that can be approx a sphere 1 meter in diameter centered between the WAMÕs ÒshouldersÓ. It can reach any position and orientation that does not require the arm to intersect with itself or some obstacle in a workspace ____. While most of the joints are connected to standard cable drives, joints 2 and 3 (the roll and pitch of the Arm) are both controlled by motors 2 and 3 using BarrettÕs patented cable differential (see Figure 47). In addition, all motors and the Safety Board are controlled by BarrettÕs Puckª miniature brushless motor controller (see Figure 48). The Puckª serves a multitude of purposes (see Section 9.1 and Appendix D for details). 
+
+[[Image(htdocs:figure4748.png)]]
+
+
+Q2:	What materials is the WAM made of?
+
+A2:	The WAM (both the Arm and the Wrist) are made mostly from aircraft-grade aluminum, but also contains some steel (ball bearings, stainless drive cables, fasteners), carbon-fiber-epoxy internal structures, titanium (Ti-6Al-4V),  PEEK, copper motor-stator coils and bus/signal wiring, cobalt motor laminations, ceramic rotor magnets, Teflon-impregnated ceramics for cable pulley surfaces, Kydex acrylic-polyvinyl chloride covers, RTV, FR4 phenolic, adhesives, beryllium-copper, and gold. 
+
+Q3:	Does my WAM use optical or magnetic encoders?
+
+A3:	Your WAM uses magnetic encoders if it has a serial number greater than 20 (WAM-05020 or greater), or if you were notified that your encoders were updated to magnetic encoders during a repair or replacement. Otherwise your WAM has optical encoders.
+	The property CTS can also be used to differentiate between optical and magnetic encoders -- if CTS is 40960, then the encoder is optical, if CTS is 4096 then the encoder is magnetic.
+
+Q4:	What qualities of a WAM depend on whether the WAM implements optical or magnetic encoders?
+
+A4:	The number of encoder ticks per motor revolution:
+	* Optical Encoders Ð There are 40960 encoder ticks per motor revolution for each motor.
+	* Magnetic Encoders Ð There are 4096 encoder ticks per motor revolution for each motor.
+
+The procedure for motor controllers when the WAM is first powered on:
+	* Optical Encoders Ð When the WAM is first powered on, the motor controllers use Hall-effect sensors and six-step commutation for control until an initial hall transition occurs. Then they switch to using the incremental encoders for smoother commutation until the encoder index pulse is observed (once per motor revolution). Then they begin a factory-calibrated commutation loop for precise torque control.
+	* Magnetic Encoders Ð When the WAM is first powered on, the motor controllers use the absolute magnetic encoder to begin a factory-calibrated commutation loop for precise torque control.
+
+MECH:
+	* Optical Encoders Ð MECH tells you how many encoder counts there are between the present location and the index pulse. Unless you want to write your own cogging or torque ripple cancellation code, these properties are not important. It is only important to know the orientation of the rotor magnets inside the stator for low-level commutation and any types of perturbation cancellation you may wish to implement
+	* Magnetic Encoders Ð MECH is the raw magnetic encoder feedback, absolute within one rotation of the motor.
+
+MOFST:
+	* Optical Encoders Ð MOFST is the distance in encoder counts between the index pulse of the encoder and the start of an electrical cycle for that motor (a point where the magnets are aligned with a single phase coil).
+	* Magnetic Encoders Ð MOFST is the encoder reading at the start of an electrical cycle.
+
+Q5:	How do I calculate the desired Maximum Torque (MT) values for each joint?
+
+A5:	
+Table 9 Ð Maximum Torque (MT) mA to Nm conversion table
+(Note: Cable limits chosen to be approx 20% of the rated breaking strength)
+||Motor:||1||2||3||4||5||6||7
+||Stall (Nm):||1.49||1.49||1.49||1.49||0.356||0.356||0.091
+||Peak (Nm):||6.31||6.31||6.31||6.31||1.826||1.826||0.613
+||Cable limit (Nm):||1.8||1.8||1.8||1.6||0.6||0.6||N/A
+||Nm/AÐpublished:||0.457||0.457||0.457||0.457||0.236||0.236||0.067
+||Nm/AÐactual:||0.379||0.379||0.379||0.379||0.157||0.157||0.058
+
+Example:
+What should the motor 3 Max Torque (MT) be set to in order to not exceed the designed cable limit?
+ (1.8 Nm) / (0.379 Nm/A) * (1024 Units/A) = 4863 
+
+	* setProperty(bus, 1, MT, FALSE, 4860); // Cable limit = 4860
+	* setProperty(bus, 2, MT, FALSE, 4860); // Cable limit = 4860
+	* setProperty(bus, 3, MT, FALSE, 4860); // Cable limit = 4860
+	* setProperty(bus, 4, MT, FALSE, 4320); // Cable limit = 4320
+	* setProperty(bus, 5, MT, FALSE, 3900); // Cable limit = 3900
+	* setProperty(bus, 6, MT, FALSE, 3900); // Cable limit = 3900
+	* setProperty(bus, 7, MT, FALSE, 3200); // J7 Gears (max stall = 1600)

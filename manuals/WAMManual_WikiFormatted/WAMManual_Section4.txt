@@ -1,0 +1,177 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_Section3 Previous] | [wiki:WAMManual_Section5 Next] >
+{{{
+#!html
+<a name="4" />
+}}}
+= 4 PC & Control Software =
+{{{
+#!html
+<a name="4.1" />
+}}}
+== 4.1 Library Overview ==
+This provides a brief overview of the WAM library. It is not an exhaustive feature list, but it gives a sampling of the WAM libraryÕs functionality.
+
+Every WAM comes with its own internal PC running real-time Linux. Many WAM control demos and example applications are pre-loaded on the PC, along with their full ANSI-C source code. Each WAM application is linked against the WAM control library (source included, with C++ wrappers). This library offers easy access to many properties of the WAM, including:
+	* Joint torques
+	* Joint positions
+
+Once it receives the joint positions from the WAM, the library uses the forward kinematics and mass parameters from an easily configured file (wam.conf) to calculate:
+	* Tool position and orientation (XYZ, !RxRyRz)
+	* Jacobians for each link
+	* Mass (inertia) matrix
+
+The WAM is a fundamentally torque-controlled robot. The typical control loop asks for joint positions and calculates new joint torques at 500 Hz. This control rate is adjustable (up to 1 kHz) to meet varying requirements. The WAM library saturates packed torques at 14-bits (from Ð8191 to +8191). To assist with application development, the WAM library offers:
+	* Adjustable control loop sample time
+	* Real-time data logging of any application data up to the control frequency
+	* Control loop callback hooks to perform calculations on the WAM data in real-time
+
+Due to the WAMÕs tension element (cable) drive system, motor torque is directly related to joint torque with zero backlash and near-zero friction. This makes it possible for the WAM library to perform online real-time joint torque calculations (using the Jacobian transpose) to generate any desired link forces. The WAMÕs Ògravity compensationÓ routines use this feature to make the robot arm appear weightless by constantly calculating and applying the correct upward force on each link to negate the effect of gravity. Gravity compensation makes it very easy to perform lead-through teaching and precision playback. Real-time link forces are also useful for creating Òhaptic scenesÓ or interactive virtual objects that a user can ÒfeelÓ within the workspace of the WAM. The WAM library gives you access to:
+	* Joint torques calculated to yield gravity-compensation forces
+	* Teach & Play functionality with a simple keypress
+	* Simple haptic scene primitives
+
+Even though a key feature of the WAM is its ability to apply forces in Cartesian (XYZ) coordinates without requiring a force sensor, the WAM library also provides a simple position controller (PID) in order to perform joint-space or Cartesian-space position moves like other robot arms. Therefore, the WAM library also provides:
+	* Point-to-point moves in joint or Cartesian space
+	* Adjustable acceleration and max velocity (for trapezoidal moves)
+	* Continuous-trajectory path-following in joint or Cartesian space
+	* Adjustable PID gains (control stiffness)
+	* Joint torque saturation limits
+	* Cartesian force saturation limits
+
+Because the WAM was designed to be used with people in its workspace, safety is paramount. The WAM library allows you to adjust the sensitivity levels in the WAMÕs embedded safety system. This circuitry actively monitors the state of the robot, even if the control PC crashes. Using the WAM library, you can adjust:
+	* Torque limits to trigger a shutdown
+	* Joint velocity limits to trigger a shutdown
+	* Endpoint and elbow velocity limits to trigger a shutdown
+
+For a more in-depth description of the WAM library API, please see the Doxygen documentation provided with the source code.
+
+{{{
+#!html
+<a name="4.2" />
+}}}
+== 4.2 File System Layout ==
+The Barrett Technology robot control client software (btclient) is divided into multiple parts:
+examples/ - example source code for robot control software development
+doc/ - source code documentation, Doxygen (HTML/RTF) **
+lib/ - location of library binaries
+include/ - common include directory for libraries
+src/btsystem/ - software library with general robot routines*
+src/btwam/ - software library with WAM-specific routines*
+src/btutil/ - utility for enumerating the motor controllers, restoring defaults, updating firmware
+src/btdiag/ - the primary robot diagnostic application (and demo program)
+
+*If you edit the btsystem or btwam libraries, the procedure to recompile is: 
+{{{
+# make lib; make install
+}}}
+**To rebuild the Doxygen documentation:
+{{{
+# cd btclient/src; doxygen config.dox
+}}}
+
+{{{
+#!html
+<a name="4.3" />
+}}}
+== 4.3 The Configuration File ==
+The configuration file (wam.conf) is read by the OpenWAM() function to set up the operating parameters for the WAM. This file must be located in the same directory as your executable application and may be a symbolic link to a configuration file that describes your particular WAM parameters. If you add or remove the wrist, or change any link or tool masses, you will need to edit your active configuration file. You should take a look at this file to familiarize yourself with its contents. It contains the default home position, the Denavit-Hartenberg parameters, and the inertial parameters, and many other useful robot parameters.
+
+
+{{{
+#!html
+<a name="4.4" />
+}}}
+== 4.4 Operating Modes ==
+
+The WAM has a number of operating modes (key commands apply to the btdiag application): 
+
+IDLE/POSITION (press 'p' to toggle) 
+In IDLE mode, the WAM does not try to maintain its present position. In POSITION mode, it will try to maintain its position using a PID controller.
+
+JOINT/CARTESIAN (press <tab> to toggle) 
+In JOINT mode, the WAM will report joint angles (in radians) and control joint torques (in Nm). In CARTESIAN mode, it will report the end-effector position in world coordinates (in meters) and control tool forces (in Newtons). In both cases, the Move command executes a trapezoidal velocity profile and generates a stream of torque commands based on position error. 
+
+Move command arguments for JOINT mode must be entered in units of radians. In CARTESIAN mode, the units are meters from the world frame origin. All arguments should be specified and comma-separated: 4 arguments for a 4-DOF JOINT Move, 7 arguments for a 7-DOF JOINT Move, 12 arguments for any CARTESIAN Move. See examples/ex5-!SimpleMove for more detail. 
+
+GRAVITY-COMPENSATION (press 'g', enter a scaling value) 
+If you set the gravity scaling value set to 1.0 and have appropriate mass parameters defined in "wam.conf", then the WAM will apply the necessary joint torques to "float" in normal Earth gravity. 
+
+== 4.5 Updating Firmware ==
+Updating the firmware occurs in two steps: updating the Pucksª, and updating the Safety Board. However, both of these processes must be completed in the order below; do not do one without the other. The following instructions are for WAMs which have the most current version of safety boards (the wireless router is mounted on the outside). If you are trying to update a WAM without the above characteristics, or you need to download some of the files mentioned in the following steps please see instructions on the Barrett wiki at: http://wiki.barrett.com/index.php/Firmware_update_instructions.
+
+{{{
+#!html
+<a name="4.5.1" />
+}}}
+=== 4.5.1 Pucksª ===
+	1. Move to the btutil directory (cd ~/btclient/src/btutil)
+	1. Make the btutil application (make clean; make)
+	1. Turn on the WAM power supply 
+	1. Press <SHIFT+RESET/IDLE> on the control pendant 
+	1. Determine which version of firmware you are upgrading from (./btutil -g 1)
+	1. Note the VERS (version) and CTS (counts) parameters. 
+	1. Repeat the following steps (replace <id> with a Puckª number to update, 1 Ð 7):
+		a. For WAMs with optical encoders (if CTS = 40960)
+			* Motors 1-4: ./btutil -d <id> -f puck2.tek.r39b
+			* Motors 5-6: ./btutil -d <id> -f puck2.tek.r39b.wdiff
+			* Motor 7: ./btutil -d <id> -f puck2.tek.r39b.wroll
+		a. For WAMs with magnetic encoders (if CTS = 4096), all motors: ./btutil -d <id> -f puck2.tek.r109
+		a. Wait for the download to complete 
+		a. Set the default parameters for the new firmware (./btutil -p <id> -l <id>)
+			* Ò-lÓ is a dash-ell, not dash-one
+			* example for puck 2: ./btutil -p 2 -l 2
+	1. Switch off the WAM power supply when you have finished updating all the pucks.
+	1. Update the Safety Board firmware using the instructions on the following page (this is not optional).
+ 
+{{{
+#!html
+<a name="4.5.2" />
+}}}
+=== 4.5.2 Safety Board ===
+	1. Ensure that main power to the WAM is off. 
+	1. Remove the wrap-around base cover by releasing the four latches that secure it to the back plate of the WAM. 
+	1. Use a 4-mm hex key to remove the screw that keeps the back plate closed.
+	1. Remove the 4-6 small Philips screws securing the safety board cover (see Figure 30). 
+	1. Connect the serial cable (Figure 31) to the connector near the safety puck and flip the nearby switch (both halves) to the "ON" position. See Figure 32 for the final setup.
+	1. Connect the other side of the serial cable to COM1 of a Windows PC.
+	1. Turn on main power to the WAM.
+	1. Under MS Windows, simultaneously drag puck2mon.out.r6 and puck2.out.r102.enet.mag onto F28xxConsole.exe.
+	1. Wait for the download to complete (about 4 minutes).
+	1. Turn off main power to the WAM.
+	1. Flip the nearby switch (both halves) to the "OFF" position (opposite of Figure 32).
+	1. Launch !TeraTerm/Hyperterminal (9600 baud, no parity, 8 bits, 1 stop bit, no flow control)
+	1. Turn on main power to the WAM. You should get a prompt (=>). Type the following commands in sequence, each followed by <Enter>. A mis-typed command will NOT result in an error message, so type carefully! 
+		a. SET SAFE 4 (this is necessary; do not skip this step) 
+		a. SET SAFE 5 
+		a. FIND VBUS 
+		a. SET SAFE 0 
+		a. SET VOLTL1 36 
+		a. SET VOLTL2 30 
+		a. SET VOLTH1 54 
+		a. SET VOLTH2 57
+		a. SET GRPA 1 
+		a. SET GRPB 2 
+		a. SET GRPC 3 
+		a. SAVE
+		a. RESET 
+		a. GET VOLTL1 (should be 36, else SET and SAVE it again) 
+		a. GET VOLTL2 (should be 30, else SET and SAVE it again) 
+		a. GET VOLTH1 (should be 54, else SET and SAVE it again) 
+		a. GET VOLTH2 (should be 57, else SET and SAVE it again)	 	
+		a. GET GRPA (should be 1, else SET and SAVE it again) 
+		a. GET GRPB (should be 2, else SET and SAVE it again)
+		a. GET GRPC (should be 3, else SET and SAVE it again) 
+	1. Turn off main power to WAM
+	
+[[Image(htdocs:figure30.png)]]
+
+Figure 30 Ð Safety Board Cover
+
+[[Image(htdocs:figure31.png)]]
+
+Figure 31 Ð Serial Cable
+
+[[Image(htdocs:figure32.png)]]
+
+Figure 32 Ð Serial Connection with Switch in ÒOnÓ Position

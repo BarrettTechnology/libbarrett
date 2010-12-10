@@ -1,0 +1,89 @@
+[[TracNav(ManualTOC)]]
+< [wiki:WAMManual_AppendixA Previous] | [wiki:WAMManual_AppendixC Next] >
+= Appendix B Technical Specifications =
+== Kinematics ==
+Total number of joints:	4 or 7
+Total number of motors:	4 or 7
+Total joint friction:	3 Nm
+Mechanical stiffness:	1.5*106 N/m
+Control stiffness:	5000 N/m
+Percent backdrivability:	> 95% 
+
+== Range of Motion ==
+Reach:
+	* 4-DOF WAM: 0.90 m to mounting plate
+	* 7-DOF WAM: 0.91 m to mounting plate
+||Joint||Positive Joint Limit||Negative Joint Limit 
+||1||2.6 (150û)||-2.6 (-150û)
+||2||2.0 (113û)||-2.0 (-113û)
+||3||2.8 (157û)||-2.8 (-157û)
+||4||3.1 (180û)||-0.9 (-50û)
+||5||1.24 (71û)||-4.76 (-273û)
+||6||1.57 (90û)||-1.57 (-90û)
+||7||3.0 (172û)||-3.0 (-172û)
+
+Weight
+	* 4-DOF WAM: 25.6 kg (56.5 lb)
+	* 7-DOF WAM: 27.4 kg (60.5 lb)
+
+Maximum Payload
+	* 4-DOF WAM: 4.0 kg (8.8 lb) at endpoint
+	* 7-DOF WAM: 3.0 kg (6.6 lb) at endpoint
+
+Motor Type
+	* Neodymium Iron Boron, brushless, DC servo motors
+
+Mechanisms
+	* Cable drives integrated with a cable differential
+	* Barrett quick-connect feature for outer-link
+	* Puckª ultra-miniature motor encoders
+
+Power Requirements
+	* Single phase AC electrical outlet with ground:
+	* Load:	250 W
+	* Phases:	Single
+	* Voltage:	100-120 & 200-240 VAC
+	* Frequency:	50/60 Hz
+
+Power Supply
+	* Location:	dry, stable surface
+	* Voltage:	48 VDC output
+	* Size:	279.4 x 127 x 63.5 mm (11 x 5 x 2.5 in)
+	* Weight:	2.27 kg (5.0 lb)
+	* Cables
+	* AC Line Cord
+	* DC Power Cable
+	* Pendant Cables (Two)
+	* Ethernet Cable
+	* External CAN cable (optional)
+	* External Hand control cable (optional)
+
+Available Options
+	* 3-DOF Wrist
+	* 3-DOF Gimbals
+	* External Computer
+
+WAM Dimensions
+	* NOTE: The dimensions for a 4 degree of freedom WAM are the same except that the 4 degree of freedom WAM does not have a joint at 850 mm and the ÒEnd PlateÓ dimension is 900 mm.
+
+All measurements are in millimeters.
+
+[[Image(htdocs:figure45.png)]]
+
+Figure 45 Ð WAM Dimensions
+
+[[Image(htdocs:figure46.png)]]
+
+Figure 46 Ð Tool Plate Dimensions
+
+US Patents (and international equivalents)
+	* 4,903,536
+	* 4,957,320
+	* 5,046,375
+	* 5,207,114
+	* 5,388,480
+	* 5,501,498
+	* D351,849
+	* D352,050
+	* Additional US and international patents pending 
+ 
