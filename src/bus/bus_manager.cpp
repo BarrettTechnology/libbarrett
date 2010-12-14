@@ -340,11 +340,11 @@ systems::Wam<7>* BusManager::getWam7(bool waitForShiftActivate, const char* conf
 	return wam7;
 }
 
-systems::RealTimeExecutionManager* BusManager::getExecutionManager(double T_s)
+systems::RealTimeExecutionManager* BusManager::getExecutionManager(double period_s, int rt_priority)
 {
 	if (systems::System::defaultExecutionManager == NULL) {
 		if (rtem == NULL) {
-			rtem = new systems::RealTimeExecutionManager(T_s);
+			rtem = new systems::RealTimeExecutionManager(period_s, rt_priority);
 		}
 		systems::System::defaultExecutionManager = rtem;
 	}

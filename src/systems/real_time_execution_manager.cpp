@@ -38,9 +38,6 @@ void rtemEntryPoint(void* cookie)
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
 	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
-	if (rtem->warnOnSwitch) {
-		rt_task_set_mode(0, T_WARNSW, NULL);
-	}
 
 	rtem->running = true;
 	while ( !rtem->stopRunning ) {
@@ -48,8 +45,6 @@ void rtemEntryPoint(void* cookie)
 		rtem->runExecutionCycle();
 	}
 	rtem->running = false;
-
-	rt_task_set_mode(T_WARNSW, 0, NULL);
 }
 
 
@@ -57,18 +52,17 @@ void rtemEntryPoint(void* cookie)
 }
 
 
-RealTimeExecutionManager::RealTimeExecutionManager(double period_s, bool warnOnSwitchToSecondaryMode, int rt_priority) :
+RealTimeExecutionManager::RealTimeExecutionManager(double period_s, int rt_priority) :
 	ExecutionManager(period_s),
-	task(NULL), priority(rt_priority), warnOnSwitch(warnOnSwitchToSecondaryMode), running(false), stopRunning(false)
+	task(NULL), priority(rt_priority), running(false), stopRunning(false)
 {
 	init();
 }
 
 RealTimeExecutionManager::RealTimeExecutionManager(const libconfig::Setting& setting) :
 	ExecutionManager(setting),
-	task(NULL), priority(), warnOnSwitch(), running(false), stopRunning(false)
+	task(NULL), priority(), running(false), stopRunning(false)
 {
-	warnOnSwitch = setting["warn_on_switch_to_secondary_mode"];
 	priority = setting["thread_priority"];
 	init();
 }
