@@ -2,6 +2,7 @@
  * network_haptics.h
  *
  *  Created on: Apr 14, 2010
+ *      Author: cd
  *      Author: dc
  */
 
@@ -20,17 +21,17 @@
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/systems/abstract/single_io.h>
+#include <barrett/thread/disable_secondary_mode_warning.h>
 
 
 class NetworkHaptics : public barrett::systems::SingleIO<barrett::units::CartesianPosition::type, barrett::units::CartesianForce::type> {
-	typedef barrett::units::CartesianPosition::type cp_type;
-	typedef barrett::units::CartesianForce::type cf_type;
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
 public:
 	static const int SIZE_OF_MSG = 3 * sizeof(double);
 
 	explicit NetworkHaptics(char* remoteHost, int port = 5555) :
-		barrett::systems::SingleIO<cp_type, cf_type>(true), sock(-1), numMissed(0), cf(0.0)
+		barrett::systems::SingleIO<cp_type, cf_type>(true), sock(-1), cp(), numMissed(0), cf(0.0)
 	{
 		int err;
 		long flags;
@@ -44,7 +45,7 @@ public:
 		if (sock == -1)
 		{
 			syslog(LOG_ERR,"%s: Could not create socket.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Set socket to non-blocking, set flag associated with open file */
@@ -52,14 +53,14 @@ public:
 		if (flags < 0)
 		{
 			syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 		flags |= O_NONBLOCK;
 		err = fcntl(sock, F_SETFL, flags);
 		if (err < 0)
 		{
 			syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Maybe set UDP buffer size? */
@@ -68,7 +69,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
 
@@ -78,7 +79,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not set output buffer size.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 
 		buflenlen = sizeof(buflen);
@@ -86,7 +87,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
 
@@ -98,7 +99,7 @@ public:
 		if (err == -1)
 		{
 			syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Set up the other guy's address */
@@ -108,7 +109,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Call "connect" to set datagram destination */
@@ -116,7 +117,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
-			throw std::runtime_error("(systems::NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
 	}
 
@@ -126,20 +127,30 @@ public:
 
 protected:
 	virtual void operate() {
-		send(sock, input.getValue().data(), SIZE_OF_MSG, 0);
+		cp = input.getValue();
 
-		++numMissed;
-		while (recv(sock, cf.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
-			numMissed = 0;
-		}
-		if (numMissed > 10) {
-			cf.setConstant(0.0);
+		{
+			// send() and recv() cause switches to secondary mode. The socket is
+			// non-blocking, so this *probably* won't impact the control-loop
+			// timing that much...
+			barrett::thread::DisableSecondaryModeWarning dsmw;
+
+			send(sock, cp.data(), SIZE_OF_MSG, 0);
+
+			++numMissed;
+			while (recv(sock, cf.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
+				numMissed = 0;
+			}
+			if (numMissed > 10) {
+				cf.setZero();
+			}
 		}
 
 		outputValue->setValue(cf);
 	}
 
 	int sock;
+	cp_type cp;
 	int numMissed;
 	cf_type cf;
 
