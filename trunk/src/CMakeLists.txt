@@ -29,6 +29,7 @@ set(barrett_SOURCES
 	systems/real_time_execution_manager.cpp
 	systems/system.cpp
 
+	thread/disable_secondary_mode_warning.cpp
 	thread/null_mutex.cpp
 	thread/real_time_mutex.cpp
 
