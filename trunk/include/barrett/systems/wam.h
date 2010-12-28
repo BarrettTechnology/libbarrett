@@ -114,6 +114,7 @@ public:
 
 
 	void gravityCompensate(bool compensate = true);
+	bool isGravityCompensated();
 	void moveHome(bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	template<typename T> void moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration);

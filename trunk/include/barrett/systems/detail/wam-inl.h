@@ -188,6 +188,11 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 		disconnect(jtSum.getInput(GRAVITY_INPUT));
 	}
 }
+template<size_t DOF>
+bool Wam<DOF>::isGravityCompensated()
+{
+	return jtSum.getInput(GRAVITY_INPUT).isConnected();
+}
 
 template<size_t DOF>
 void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
