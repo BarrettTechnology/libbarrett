@@ -1,9 +1,41 @@
 /*
- * standard_main_function.h
+	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/** Defines a boilerplate main() function that initializes a WAM.
  *
- *  Created on: Nov 5, 2010
- *      Author: dc
+ * This "standard" main() function simply initializes the WAM in the normal way, by:
+ *   - Waiting for the WAM to be Shift-idled, if it's not already
+ *   - Waking all Pucks found on the bus
+ *   - Waiting for the WAM to be Shift-activated
+ *   - Calling the wam_main() function that the user is responsible for defining
+ *
+ * The behavior is appropriate for most applications, but there is no issue with writing a custom main() function.
+ *
+ * @file standard_main_function.h
+ * @date Nov 5, 2010
+ * @author Dan Cody
  */
+
 
 #ifndef BARRETT_STANDARD_MAIN_FUNCTION_H_
 #define BARRETT_STANDARD_MAIN_FUNCTION_H_
