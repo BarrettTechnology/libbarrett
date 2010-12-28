@@ -35,10 +35,10 @@
  *
  * These classes use type information to give meaning to what would otherwise be an anonymous math::Vector of \c doubles.
  *
- * For instance, a barrett::Wam has two outputs: one for joint positions and one for joint velocities. Though both of these might be (depending on the
+ * For instance, a systems::Wam has two outputs: one for joint positions and one for joint velocities. Though both of these might be (depending on the
  * particular WAM) 7-element arrays of \c doubles, they represent two different quantities. They are not interchangeable. They have different %units. A
  * user might want to design a joint-space position
- * controller and a joint-space velocity controller for the WAM. If the joint position output of the barrett::Wam were to be connected to the velocity
+ * controller and a joint-space velocity controller for the WAM. If the joint position output of the systems::Wam were to be connected to the velocity
  * controller's feedback input, it would almost certainly result in a programmer-caused error. If such a program were run, the robot would not behave as intended and
  * finding the bug could be difficult and time-consuming.
  *
@@ -54,8 +54,8 @@
  *
  * @see math::Vector
  * @see math::Matrix
- * @see BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
  * @see BARRETT_UNITS_TYPEDEFS
+ * @see BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
  * @see BARRETT_UNITS_TEMPLATE_TYPEDEFS
  */
 
@@ -131,6 +131,7 @@ namespace units {
  * @tparam R The number of rows in the resulting math::Vector
  */
 template<int R> struct JointTorques {
+	/// Result of the metafunction
 	typedef typename math::Vector<R, JointTorques<R> >::type type;
 };
 
@@ -138,6 +139,7 @@ template<int R> struct JointTorques {
  * @tparam R The number of rows in the resulting math::Vector
  */
 template<int R> struct JointPositions {
+	/// Result of the metafunction
 	typedef typename math::Vector<R, JointPositions<R> >::type type;
 };
 
@@ -145,22 +147,26 @@ template<int R> struct JointPositions {
  * @tparam R The number of rows in the resulting math::Vector
  */
 template<int R> struct JointVelocities {
+	/// Result of the metafunction
 	typedef typename math::Vector<R, JointVelocities<R> >::type type;
 };
 
 
 /// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian force.\ Result available in the nested #type \c typedef.
 struct CartesianForce {
+	/// Result of the metafunction
 	typedef math::Vector<3, CartesianForce>::type type;
 };
 
 /// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian torque.\ Result available in the nested #type \c typedef.
 struct CartesianTorque {
+	/// Result of the metafunction
 	typedef math::Vector<3, CartesianTorque>::type type;
 };
 
 /// Template metafunction yielding the 3-element math::Vector used to represent a Cartesian position.\ Result available in the nested #type \c typedef.
 struct CartesianPosition {
+	/// Result of the metafunction
 	typedef math::Vector<3, CartesianPosition>::type type;
 };
 

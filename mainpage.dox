@@ -63,3 +63,7 @@ There are several example programs in the \c examples directory.
 See <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes> for more details.
 
 */
+
+/** @namespace barrett
+The root namespace for libbarrett.
+*/
