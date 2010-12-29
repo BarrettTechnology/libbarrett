@@ -427,6 +427,7 @@ public:
 		 * @details
 		 * Instantiates an Output and yields a handle to the new Output's Value object. The Output's initial value will be \ref Input::valueDefined() "undefined".
 		 *
+		 * @param[in] parentSystem A pointer to the System that this Output belongs to.
 		 * @param[out] valuePtr will be filled with a pointer to the Value object. The Value object is owned by the Output.
 		 */
 		Output(System* parentSystem, Value** valuePtr);
