@@ -45,6 +45,7 @@ template<
 class TupleGrouper;
 
 
+// doxygen can't handle InputHolder's recursive inheritance.
 #ifndef BARRETT_PARSED_BY_DOXYGEN
 namespace detail {
 
