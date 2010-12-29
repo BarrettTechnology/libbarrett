@@ -24,8 +24,9 @@
 /** Defines a boilerplate main() function that initializes a WAM.
  *
  * This "standard" main() function simply initializes the WAM in the normal way, by:
- *   - Waiting for the WAM to be Shift-idled, if it's not already
+ *   - Waiting for the WAM to be Shift-idled, if it's not already idled
  *   - Waking all Pucks found on the bus
+ *   - Zero the WAM, if it's not already zeroed
  *   - Waiting for the WAM to be Shift-activated
  *   - Calling the wam_main() function that the user is responsible for defining
  *   .
