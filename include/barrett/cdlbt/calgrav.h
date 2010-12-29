@@ -98,7 +98,7 @@ struct bt_calgrav
  *
  * \param[out] gravptr The bt_calgrav object on success, or 0 on failure
  * \param[in] gravconfig Calgrav configuration, from libconfig
- * \param[in] kin Previously-created bt_kinematics object describing robot
+ * \param[in] dof Degrees of freedom
  * \retval 0 Success 
  */
 int bt_calgrav_create(struct bt_calgrav ** gravptr,
@@ -128,7 +128,8 @@ int bt_calgrav_destroy(struct bt_calgrav * grav);
  *       want the gravity torque!
  *
  * \param[in] grav bt_calgrav object
- * \paran[out] jtorque Computed joint torque vector
+ * \param[in] kin Previously-created bt_kinematics object describing robot
+ * \param[out] jtorque Computed joint torque vector
  * \retval 0 Success
  */
 int bt_calgrav_eval(struct bt_calgrav * grav,

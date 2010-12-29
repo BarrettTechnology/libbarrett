@@ -21,9 +21,9 @@
 	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
 */
 
-/** Defines barrett::Wam.
+/** Defines systems::Wam.
  *
- * @file barrett/wam.h
+ * @file systems/wam.h
  * @date Sep 25, 2009
  * @author Dan Cody
  */
