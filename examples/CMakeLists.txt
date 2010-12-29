@@ -11,5 +11,7 @@ endfunction()
 add_programs(
 	hold_joint_position
 	polynomial_evaluator
+	seven_dof_only
+	zero_torque
 )
 
