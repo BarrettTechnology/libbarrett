@@ -1,10 +1,3 @@
-/*
- * ca_macro.h
- *
- *  Created on: Sep 21, 2009
- *      Author: dc
- */
-
 #ifndef BARRETT_DETAIL_CA_MACRO_H_
 #define BARRETT_DETAIL_CA_MACRO_H_
 
