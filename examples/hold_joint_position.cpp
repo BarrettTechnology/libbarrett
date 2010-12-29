@@ -1,42 +1,27 @@
 #include <iostream>
 #include <string>
 
+#include <barrett/detail/stl_utils.h>
+#include <barrett/units.h>
 #include <barrett/systems.h>
+#include <barrett/bus/bus_manager.h>
+#include <barrett/products/safety_module.h>
+
+#include <barrett/standard_main_function.h>
 
 
 using namespace barrett;
-
-const size_t DOF = 4;
-const double T_s = 0.002;
-BARRETT_UNITS_TYPEDEFS(DOF);  // declares jp_type
+using detail::waitForEnter;
 
 
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
+template<size_t DOF>
+int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-
-int main() {
-	libconfig::Config config;
-	config.readFile("/etc/barrett/wam4.conf");
-
-	systems::RealTimeExecutionManager rtem(T_s);
-	systems::System::defaultExecutionManager = &rtem;
-
-
-	// instantiate Systems
-	systems::Wam<DOF> wam(config.lookup("wam"));
-	systems::ExposedOutput<jp_type> setPoint;
-
-
-	// start the main loop!
-	rtem.start();
-
-	std::cout << "Shift-activate the WAM, "
-	        "then press [Enter] to compensate for gravity.\n";
-	waitForEnter();
 	wam.gravityCompensate();
+
+
+	systems::ExposedOutput<jp_type> setPoint;
 
 	std::string line;
 	bool going = true, holding = false;
@@ -49,7 +34,7 @@ int main() {
 		case 'h':
 			holding = !holding;
 			if (holding) {
-				SCOPED_LOCK(rtem.getMutex());
+				BARRETT_SCOPED_LOCK(bm.getExecutionManager()->getMutex());
 
 				setPoint.setValue(wam.getJointPositions());
 				wam.trackReferenceSignal(setPoint.output);
@@ -68,9 +53,10 @@ int main() {
 		}
 	}
 
-	std::cout << "Shift-idle the WAM, then press [Enter] to exit.\n";
-	waitForEnter();
-	rtem.stop();
 
+	wam.idle();  // Release the WAM if we're holding
+
+	// Wait for the user to press Shift-idle
+	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }
