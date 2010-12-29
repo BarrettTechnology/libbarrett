@@ -1,30 +1,31 @@
+/*
+	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
 /** Defines barrett::systems::System.
  *
  * @file system.h
  * @date Sep 4, 2009
  * @author Dan Cody
- */
-
-/* Copyright 2009 Barrett Technology <support@barrett.com> */
-
-/* This file is part of libbarrett.
- *
- * This version of libbarrett is free software: you can redistribute it
- * and/or modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This version of libbarrett is distributed in the hope that it will be
- * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this version of libbarrett.  If not, see
- * <http://www.gnu.org/licenses/>.
- *
- * Further, non-binding information about licensing is available at:
- * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
 
@@ -49,7 +50,7 @@ class ExecutionManager;
 
 /** An abstract class that encapsulates a chunk of functionality and its various inputs and outputs.
  *
- * \section  sec_metaphor Metaphor
+ * @section sec_metaphor Metaphor
  *
  * The System class is named in the same metaphor as the \c system from the phrase "signals and systems", where:
  *   - a \c signal represents the flow of specific information and
@@ -65,7 +66,7 @@ class ExecutionManager;
  *   - etc.
  *
  *
- * \section sec_interface Interface
+ * @section sec_interface Interface
  *
  * All that a System must have is an operate() member function. The operate() function is where the guts go. It is where a System should use its
  * \ref Input "Input"s and state to update the values of its \ref Output "Output"s. The operate() function should expect to be called automatically when
@@ -85,7 +86,7 @@ class ExecutionManager;
  * that most of the Systems provided by the library define their \ref Input "Input"s and \ref Output "Output"s as public data members.
  *
  *
- * \section sec_goals Goals
+ * @section sec_goals Goals
  *
  * The aim of this support structure is to:
  *   - intuitively describe a main-loop using a syntax that mimics the natural language of the problem
@@ -93,10 +94,11 @@ class ExecutionManager;
  *   - encourage the user to write clean, reusable code
  *   - make it easier for users to "enter the main-loop" rather than interacting solely with a limited asynchronous interface.
  *
- * The aim of this library is not to be a full-featured block diagraming solution. As such, things like internal cyclic dependencies are not supported.
+ * The aim of this library is not to be a full-featured block diagraming solution. As such, degenerate conditions (eg. internal
+ * cyclic dependencies) are generally not supported.
  *
  *
- * \section sec_examples Examples
+ * @section sec_examples Examples
  *
  * The following is a a minimal example showing the definition and usage of a new type of System called \c PolynomialEvaluator.
  * @include polynomial_evaluator.cpp
@@ -198,6 +200,11 @@ public:
 	 */
 	class AbstractOutput {
 	public:
+		/** An abstract class to allow collections of, and operations on
+		 * generic \ref Output::Value "Output::Value"s.
+		 *
+		 * @see Output::Value
+		 */
 		class AbstractValue {
 		public:
 			explicit AbstractValue(System* parentSys);
@@ -216,6 +223,7 @@ public:
 			thread::Mutex& getEmMutex();
 
 		protected:
+			/// The System that should be notified when this Output's value changes.
 			System* parentSystem;
 
 		protected:
@@ -224,10 +232,13 @@ public:
 
 
 		AbstractOutput() {}
+		virtual ~AbstractOutput();
 
-		/// @details Virtual in order to make this class polymorphic.
-		virtual ~AbstractOutput() = 0;
-
+		/** Tests if this Output is connected to any Inputs.
+		 *
+		 * @retval true if the Output is connected
+		 * @retval false otherwise.
+		 */
 		virtual bool isConnected() const = 0;
 
 	private:
@@ -372,6 +383,8 @@ public:
 			/// Sets the value of the associated Output
 			void setValue(const T& newValue);
 
+			/// @copybrief AbstractValue::setValueUndefined()
+			/// @copydetails AbstractValue::setValueUndefined()
 			virtual void setValueUndefined();
 
 			// TODO(dc): check for self-delegation (direct and indirect)
@@ -420,7 +433,7 @@ public:
 
 		virtual ~Output();
 
-		inline virtual bool isConnected() const;
+		virtual bool isConnected() const;
 
 	protected:
 		Value* getValueObject();
@@ -471,7 +484,7 @@ protected:
 	/** Tests if the System's Inputs are in a valid state.
 	 *
 	 * This function is used as a gate to control the execution of the operate() function. The default behavior is to return \c true only if all of a System's
-	 * Inputs have defined values (<tt>Input::valueDefined() == true</tt>). If a System desires a different behavior, this method should be reimplemented.
+	 * Inputs have defined values (<tt>Input::valueDefined() == true</tt>). If a different behavior is desired, this method should be re-implemented.
 	 *
 	 * @retval true if it is ok to execute the operate() function
 	 * @retval false if the operate() function should not currently be executed.
@@ -480,20 +493,29 @@ protected:
 	 */
 	virtual bool inputsValid();
 
-	/** The guts of the System.
+	/** The guts of a System.
 	 *
 	 * This is where a System should update its Outputs using information from its Inputs, state, and environment.
 	 *
 	 * This function will be called automatically. When new Input data is available, the return value of inputsValid() will be checked. If it returns \c true,
-	 * operate() will be called. If it returns \c false, the call will be skipped until new Input data is available. (Expect the details of this behavior to change
-	 * in future releases.)
+	 * operate() will be called. If it returns \c false, the call will be skipped (until new Input data is available) and invalidateOutputs() will be called instead.
 	 *
 	 * This function should be real-time safe and thread-safe.
 	 *
 	 * @see inputsValid()
+	 * @see invalidateOutputs()
 	 */
 	virtual void operate() = 0;
 
+	/** Called instead of operate() if the System's Inputs are not in a valid state.
+	 *
+	 * The validity of the Inputs is determined by calling inputsValid().
+	 *
+	 * The default behavior is to call Output::Value::setValueUndefined() on all of the System's Outputs.
+	 * If a different behavior is desired, this method should be re-implemented.
+	 *
+	 * @see operate()
+	 */
 	virtual void invalidateOutputs();
 
 	virtual bool updateEveryExecutionCycle();
