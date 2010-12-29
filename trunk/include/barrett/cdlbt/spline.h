@@ -1,6 +1,6 @@
 /** Definition of bt_spline, an n-dimensional vector interpolator.
  *
- * \file spline.h
+ * \file cdlbt/spline.h
  * \author Christopher Dellin
  * \date 2008-2009
  */
@@ -28,7 +28,7 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-/** \file spline.h
+/** \file cdlbt/spline.h
  *
  * \section sec_intro Introduction
  *
@@ -91,7 +91,7 @@ struct bt_spline
  * This function creates a new bt_spline object, with the given vector as its
  * starting point.
  *
- * \param[out] The bt_spline object on success, or 0 on failure
+ * \param[out] splineptr The bt_spline object on success, or 0 on failure
  * \param[in] start Starting point
  * \param[in] mode Spline mode; either arclen or external.
  * \retval 0 Success

@@ -45,6 +45,7 @@ template<
 class TupleGrouper;
 
 
+#ifndef BARRETT_PARSED_BY_DOXYGEN
 namespace detail {
 
 
@@ -125,5 +126,6 @@ protected:
 
 
 }
+#endif // BARRETT_PARSED_BY_DOXYGEN
 }
 }

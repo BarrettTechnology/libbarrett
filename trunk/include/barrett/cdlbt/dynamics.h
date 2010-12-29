@@ -233,9 +233,9 @@ int bt_dynamics_destroy(struct bt_dynamics * dyn);
  * \note This takes ~ 152us on PC104 right now.
  *
  * \param[in] dyn bt_dynamics object
- * \paran[in] jvel Present joint velocity vector
- * \paran[in] jacc Desired joint acceleration vector
- * \paran[out] jtor Computed joint torque vector
+ * \param[in] jvel Present joint velocity vector
+ * \param[in] jacc Desired joint acceleration vector
+ * \param[out] jtor Computed joint torque vector
  * \retval 0 Success
  */
 int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
@@ -247,6 +247,8 @@ int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
  * The formulation used is the explicit formulation given in <em>Spong,
  * Hutchinson, and Vidyasagar: Robot Modeling and Control, 2006</em>
  * page 254.
+ *
+ * \param[in] dyn bt_dynamics object
  */
 int bt_dynamics_eval_jsim( struct bt_dynamics * dyn );
 

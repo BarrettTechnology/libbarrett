@@ -1,14 +1,8 @@
-/** <b> Implementation file: do not include.\ </b> Math utilities and operators
- * for \c double and descendants of barrett::math::Vector.
+/*
+ * utils-inl.h
  *
- * @file math/utils-inl.h
- * @date Nov 11, 2009
- * @author Dan Cody
- *
- * @warning
- * This file is located in a \c detail directory. It is part of the
- * implementation and should not be directly included by the user.
- * @see math/utils.h
+ *  Created on: Nov 11, 2009
+ *      Author: dc
  */
 
 /* Copyright 2009 Barrett Technology <support@barrett.com> */

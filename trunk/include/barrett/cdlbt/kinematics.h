@@ -1,7 +1,7 @@
 /** Definition of bt_kinematics, a simple forward kinematics library for
  *  single-chain revolute robots.
  *
- * \file kinematics.h
+ * \file cdlbt/kinematics.h
  * \author Christopher Dellin
  * \date 2008-2009
  */
@@ -29,7 +29,7 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-/** \file kinematics.h
+/** \file cdlbt/kinematics.h
  *
  * \section sec_intro Introduction
  *
@@ -218,7 +218,7 @@ int bt_kinematics_destroy(struct bt_kinematics * kin);
  *
  * \param[in] kin bt_kinematics object
  * \param[in] jposition Joint position vector
- * \paran[in] jvelocity Joint velocity vector
+ * \param[in] jvelocity Joint velocity vector
  * \retval 0 Success
  */
 int bt_kinematics_eval(struct bt_kinematics * kin, const gsl_vector * jposition,
