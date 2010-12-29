@@ -1,10 +1,3 @@
-/*
- * zero_torque.cpp
- *
- *  Created on: Apr 5, 2010
- *      Author: dc
- */
-
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/bus/bus_manager.h>
@@ -23,6 +16,8 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 
 	// The WAM is now Shift-activated and applying zero torque with a loop-rate of 500Hz.
 
+
+	// Wait for the user to press Shift-idle
 	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }

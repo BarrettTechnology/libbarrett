@@ -33,7 +33,6 @@ set(programs
 	safety_module
 	tactile_test
 	teach
-	zero_torque
 )
 
 add_programs(${programs})
