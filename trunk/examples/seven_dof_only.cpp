@@ -10,7 +10,7 @@ using namespace barrett;
 
 
 int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<4>& wam) {
-	printf("ERROR: This program is designed to be used only with 7-DOF WAMs.\n");
+	printf("ERROR: This program is designed to be used with 7-DOF WAMs only.\n");
 	return 1;
 }
 
