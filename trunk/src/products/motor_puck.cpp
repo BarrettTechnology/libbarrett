@@ -116,7 +116,7 @@ double MotorPuck::twentyTwoBit2double(unsigned char msb, unsigned char middle, u
 	intResult |= ((long) lsb) & 0x000000FF;
 
 	if (intResult & 0x00200000) {  // If negative...
-		intResult |= 0xFFC00000; // sign-extend
+		intResult |= ~((int)0x3fffff); // sign-extend
 	}
 
 	return intResult;
