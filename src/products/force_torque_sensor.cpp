@@ -80,7 +80,7 @@ int ForceTorqueSensor::twoByte2int(unsigned char lsb, unsigned char msb)
 	int res = ((int)msb << 8)  |  lsb;
 
 	if (res & 0x00008000) {
-		res |= 0xffff0000;
+		res |= ~((int)0xffff);
 	}
 
 	return res;
