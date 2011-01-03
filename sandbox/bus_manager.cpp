@@ -10,9 +10,7 @@
 #include <vector>
 
 #include <barrett/exception.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/puck.h>
-#include <barrett/products/puck_group.h>
+#include <barrett/products/product_manager.h>
 
 #include <barrett/products/low_level_wam.h>
 #include <signal.h>
@@ -56,10 +54,10 @@ int main() {
 	installExceptionHandler();
 	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 
-	BusManager bm;
+	ProductManager pm;
 
 //	printf("Pucks found on bus:\n");
-//	const std::vector<Puck*>& pucks = bm.getPucks();
+//	const std::vector<Puck*>& pucks = pm.getPucks();
 //	for (size_t i = 0; i < pucks.size(); ++i) {
 //		if (i > 0  &&  pucks[i]->getId() - 1 != pucks[i-1]->getId()) {
 //			printf("  --\n");
@@ -78,13 +76,13 @@ int main() {
 //	pg.setProperty(Puck::TSTOP, pucks[0]->getProperty(Puck::TSTOP) + 1);
 //	usleep(1000);
 //	pg.getProperty(Puck::TSTOP);
-////	Puck::sendGetPropertyRequest(bm, PuckGroup::BGRP_BHAND, pucks[0]->getPropertyId(Puck::TSTOP));
+////	Puck::sendGetPropertyRequest(pm.getBus(), PuckGroup::BGRP_BHAND, pucks[0]->getPropertyId(Puck::TSTOP));
 //	sleep(2);
 
 
-	std::vector<Puck*> wamPucks = bm.getWamPucks();
+	std::vector<Puck*> wamPucks = pm.getWamPucks();
 	wamPucks.resize(DOF);
-	LowLevelWam<DOF> wam(wamPucks, bm.getPuck(10), bm.getConfig().lookup("wam4.low_level"));
+	LowLevelWam<DOF> wam(wamPucks, pm.getSafetyModule(), pm.getConfig().lookup("wam4.low_level"));
 	boost::thread t(wamControl, &wam);
 
 	while (true) {

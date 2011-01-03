@@ -2,20 +2,19 @@
 
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/safety_module.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
 
 
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<4>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<4>& wam) {
 	printf("ERROR: This program is designed to be used with 7-DOF WAMs only.\n");
 	return 1;
 }
 
 const size_t DOF = 7;
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TYPEDEFS(DOF);
 
 	wam.gravityCompensate();
@@ -25,7 +24,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 
 
 	// Wait for the user to press Shift-idle
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }
 

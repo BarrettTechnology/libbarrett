@@ -10,9 +10,7 @@
 #include <curses.h>
 
 #include <barrett/detail/stl_utils.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/tactile_puck.h>
-#include <barrett/products/motor_puck.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -159,23 +157,23 @@ void graphPressures(WINDOW *win, int starty, int startx, const TactilePuck::v_ty
 int main(int argc, char** argv) {
 	Puck* puck;
 	TactilePuck tactPuck;
-	BusManager bm;
+	ProductManager pm;
 
 
 	printf("Found Hand Pucks:\n");
-	for (size_t i = 0; i < bm.getHandPucks().size(); ++i) {
-		if (bm.getHandPucks()[i] != NULL) {
-			printf("  ID = %d\n", bm.getHandPucks()[i]->getId());
+	for (size_t i = 0; i < pm.getHandPucks().size(); ++i) {
+		if (pm.getHandPucks()[i] != NULL) {
+			printf("  ID = %d\n", pm.getHandPucks()[i]->getId());
 		}
 	}
 	printf("\n");
-	Puck::wake(bm.getHandPucks());
+	Puck::wake(pm.getHandPucks());
 
 	size_t streamId = 0;
 	printf("Stream TACT data from ID = ");
 	std::cin >> streamId;
 	waitForEnter();
-	puck = bm.getPuck(streamId);
+	puck = pm.getPuck(streamId);
 	if (puck == NULL) {
 		printf("ERROR: Puck %d was not found on the bus.\n", streamId);
 		return 1;
@@ -223,7 +221,7 @@ int main(int argc, char** argv) {
 					break;
 				} else {
 					checked[activeIndex] = !checked[activeIndex];
-					Puck* p = bm.getPuck(activeIndex + BusManager::FIRST_HAND_ID);
+					Puck* p = pm.getPuck(activeIndex + ProductManager::FIRST_HAND_ID);
 					if (p != NULL) {
 						if (checked[activeIndex]) {
 							p->setProperty(Puck::TSTOP, 0);
@@ -264,9 +262,9 @@ int main(int argc, char** argv) {
 
 	endwin();
 
-	for (size_t i = 0; i < bm.getHandPucks().size(); ++i) {
-		if (bm.getHandPucks()[i] != NULL) {
-			bm.getHandPucks()[i]->setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
+	for (size_t i = 0; i < pm.getHandPucks().size(); ++i) {
+		if (pm.getHandPucks()[i] != NULL) {
+			pm.getHandPucks()[i]->setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
 		}
 	}
 

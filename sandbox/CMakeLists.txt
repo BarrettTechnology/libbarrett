@@ -22,13 +22,13 @@ set(programs
 	high_level_wam
 	load_ft_cal
 	log_ft_data
-	log_ft_data_with_wam
-	log_sg_data
-	log_velocity
+#	log_ft_data_with_wam
+#	log_sg_data
+#	log_velocity
 	low_level_wam
-	master_master
+#	master_master
 	move_to
-	network_haptics
+#	network_haptics
 	puck_terminal
 	safety_module
 	tactile_test

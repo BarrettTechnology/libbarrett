@@ -16,8 +16,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/force_torque_sensor.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -26,7 +25,7 @@ using boost::ref;
 
 
 template<size_t DOF>
-void moveWam(const bool& going, BusManager& bm, systems::Wam<DOF>& wam) {
+void moveWam(const bool& going, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	while (going) {
@@ -80,27 +79,27 @@ int main(int argc, char** argv) {
 	// Give us pretty stack-traces when things die
 	installExceptionHandler();
 
-	BusManager bm;
+	ProductManager pm;
 	bool going = true;
 	std::vector<boost::thread*> threads;
 
 
 	// WAM
-	bm.waitForWam();
-	if (bm.foundWam4()) {
+	pm.waitForWam();
+	if (pm.foundWam4()) {
 		printf("Starting WAM4...\n");
-		threads.push_back(new boost::thread(moveWam<4>, ref(going), ref(bm), ref(*bm.getWam4(false))));
-	} else if (bm.foundWam7()) {
+		threads.push_back(new boost::thread(moveWam<4>, ref(going), ref(pm), ref(*pm.getWam4(false))));
+	} else if (pm.foundWam7()) {
 		printf("Starting WAM7...\n");
-		threads.push_back(new boost::thread(moveWam<7>, ref(going), ref(bm), ref(*bm.getWam7(false))));
+		threads.push_back(new boost::thread(moveWam<7>, ref(going), ref(pm), ref(*pm.getWam7(false))));
 	} else {
 		printf(">>> WARNING: No WAM found\n");
 	}
 
 	// Hand
-	if (bm.foundHand()) {
+	if (pm.foundHand()) {
 		printf("Starting Hand...\n");
-		Hand& hand = *bm.getHand();
+		Hand& hand = *pm.getHand();
 
 		printf(">>> Press [Enter] to initialize Hand. (Make sure it has room!)\n");
 		waitForEnter();
@@ -114,9 +113,9 @@ int main(int argc, char** argv) {
 	}
 
 	// F/T
-	if (bm.foundForceTorqueSensor()) {
+	if (pm.foundForceTorqueSensor()) {
 		printf("Starting F/T Sensor...\n");
-		threads.push_back(new boost::thread(readFTS, ref(going), ref(*bm.getForceTorqueSensor())));
+		threads.push_back(new boost::thread(readFTS, ref(going), ref(*pm.getForceTorqueSensor())));
 	} else {
 		printf(">>> WARNING: No F/T Sensor found\n");
 	}

@@ -19,6 +19,7 @@ set(barrett_SOURCES
 	products/hand.cpp
 	products/motor_puck.cpp
 	products/multi_puck_product.cpp
+	products/product_manager.cpp
 	products/property_list.cpp
 	products/puck.cpp
 	products/puck_group.cpp

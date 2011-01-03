@@ -20,7 +20,7 @@
 #include <barrett/exception.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
+#include <barrett/products/product_manager.h>
 
 #include <barrett/cdlbt/gsl.h>
 #include <barrett/cdlbt/kinematics.h>
@@ -177,7 +177,7 @@ int mu_stats(gsl_vector * torques, gsl_vector * positions) {
 }
 
 template<size_t DOF>
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	int err; /* Generic error variable for function calls */
@@ -503,7 +503,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 		printf("\n");
 		printf("Calculating ...\n");
 
-		libconfig::Setting& wamSetting = bm.getConfig().lookup(bm.getWamDefaultConfigPath());
+		libconfig::Setting& wamSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
 		bt_kinematics_create(&kin, wamSetting["kinematics"].getCSetting(), n);
 		bt_calgrav_create(&grav, wamSetting["gravity_compensation"].getCSetting(), n);
 
@@ -690,7 +690,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 	}
 
 
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	/* Free the variables */
 	for (pose = 0; pose < num_poses; pose++) {
@@ -711,16 +711,16 @@ int main(int argc, char** argv) {
 	// Give us pretty stack-traces when things die
 	installExceptionHandler();
 
-	BusManager bm;
-	bm.waitForWam();
+	ProductManager pm;
+	pm.waitForWam();
 
-	if (bm.foundWam4()) {
-		return wam_main(argc, argv, bm, *bm.getWam4());
-	} else if (bm.foundWam7()) {
-		return wam_main(argc, argv, bm, *bm.getWam7());
+	if (pm.foundWam4()) {
+		return wam_main(argc, argv, pm, *pm.getWam4());
+	} else if (pm.foundWam7()) {
+		return wam_main(argc, argv, pm, *pm.getWam7());
 	} else {
 		printf(
-				">>> ERROR: No WAM was found. Perhaps you have found a bug in BusManager::waitForWam().\n");
+				">>> ERROR: No WAM was found. Perhaps you have found a bug in ProductManager::waitForWam().\n");
 		return 1;
 	}
 }

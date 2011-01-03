@@ -21,9 +21,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/safety_module.h>
-#include <barrett/products/motor_puck.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -123,7 +121,7 @@ void magenc_thd_function(bool* going , const std::vector<MotorPuck>& motorPucks)
 
 
 template<size_t DOF>
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	int i; /* For iterating through the pucks */
@@ -428,8 +426,8 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 	magencGoing = false;
 	magenc_thd.join();
 
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-	bm.getSafetyModule()->setWamZeroed(false);  // Make sure the user applies their new calibration
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->setWamZeroed(false);  // Make sure the user applies their new calibration
 
 	free(mz_mechisset);
 	free(mz_counts);
@@ -445,11 +443,11 @@ int main(int argc, char** argv) {
 	// Give us pretty stack-traces when things die
 	installExceptionHandler();
 
-	BusManager bm;
-	bm.waitForWam(false);
+	ProductManager pm;
+	pm.waitForWam(false);
 
 
-	SafetyModule* sm = bm.getSafetyModule();
+	SafetyModule* sm = pm.getSafetyModule();
 	if (sm == NULL) {
 		printf("ERROR: No SafetyModule found.\n");
 		return 1;
@@ -458,7 +456,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Remove existing zerocal information, if present
-	libconfig::Setting& llSetting = bm.getConfig().lookup(bm.getWamDefaultConfigPath())["low_level"];
+	libconfig::Setting& llSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath())["low_level"];
 	if (llSetting.exists("zeroangle")) {
 		llSetting.remove(llSetting["zeroangle"].getIndex());
 		syslog(LOG_ERR, "** Ignoring previous \"zeroangle\" vector **");
@@ -469,12 +467,12 @@ int main(int argc, char** argv) {
 	waitForEnter();
 
 
-	if (bm.foundWam4()) {
-		return wam_main(argc, argv, bm, *bm.getWam4());
-	} else if (bm.foundWam7()) {
-		return wam_main(argc, argv, bm, *bm.getWam7());
+	if (pm.foundWam4()) {
+		return wam_main(argc, argv, pm, *pm.getWam4());
+	} else if (pm.foundWam7()) {
+		return wam_main(argc, argv, pm, *pm.getWam7());
 	} else {
-		printf(">>> ERROR: No WAM was found. Perhaps you have found a bug in BusManager::waitForWam().\n");
+		printf(">>> ERROR: No WAM was found. Perhaps you have found a bug in ProductManager::waitForWam().\n");
 		return 1;
 	}
 }

@@ -13,8 +13,7 @@
 
 #include <barrett/exception.h>
 #include <barrett/detail/stl_utils.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/hand.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -36,12 +35,12 @@ int main() {
 	installExceptionHandler();
 
 
-	BusManager bm;
-	if ( !bm.foundHand() ) {
+	ProductManager pm;
+	if ( !pm.foundHand() ) {
 		printf("ERROR: No Hand found on bus!\n");
 		return 1;
 	}
-	Hand& hand = *bm.getHand();
+	Hand& hand = *pm.getHand();
 
 
 	hand.initialize();

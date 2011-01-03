@@ -12,8 +12,7 @@
 
 #include <unistd.h>
 
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/force_torque_sensor.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace std;
@@ -30,12 +29,12 @@ int main(int argc, char** argv) {
 	}
 
 
-	BusManager bm;
-	if ( !bm.foundForceTorqueSensor() ) {
+	ProductManager pm;
+	if ( !pm.foundForceTorqueSensor() ) {
 		printf("ERROR: No Force-Torque Sensor found!\n");
 		return 1;
 	}
-	ForceTorqueSensor& fts = *bm.getForceTorqueSensor();
+	ForceTorqueSensor& fts = *pm.getForceTorqueSensor();
 
 
 	int calValue = 0;
@@ -50,7 +49,7 @@ int main(int argc, char** argv) {
 
 			// TODO(dc): Fix once F/T has working ROLE
 			//fts.setProperty(Puck::GM, calValue);
-			Puck::setProperty(bm, fts.getPuck()->getId(), Puck::getPropertyId(Puck::GM, Puck::PT_ForceTorque, 152), calValue);
+			Puck::setProperty(pm.getBus(), fts.getPuck()->getId(), Puck::getPropertyId(Puck::GM, Puck::PT_ForceTorque, 152), calValue);
 
 			printf(".");
 			fflush(stdout);

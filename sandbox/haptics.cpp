@@ -13,7 +13,7 @@
 #include <barrett/exception.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
+#include <barrett/products/product_manager.h>
 
 #include <barrett/standard_main_function.h>
 
@@ -43,7 +43,7 @@ typename units::JointTorques<DOF>::type saturateJt(const typename units::JointTo
 }
 
 template <size_t DOF>
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	wam.gravityCompensate();
@@ -105,10 +105,10 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 
 
 	// adjust velocity fault limit
-	bm.getSafetyModule()->getPuck()->setProperty(Puck::VL2, (int)(1.5*0x1000));
+	pm.getSafetyModule()->getPuck()->setProperty(Puck::VL2, (int)(1.5*0x1000));
 
 	// block until the user Shift-idles
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	return 0;
 }

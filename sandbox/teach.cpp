@@ -18,8 +18,7 @@
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/log.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/safety_module.h>
+#include <barrett/products/product_manager.h>
 
 #include <barrett/standard_main_function.h>
 
@@ -33,7 +32,7 @@ using systems::reconnect;
 
 
 template<size_t DOF>
-int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
+int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 	typedef boost::tuple<double, jp_type> jp_sample_type;
 
@@ -43,7 +42,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 		return 1;
 	}
 
-	const double T_s = bm.getExecutionManager()->getPeriod();
+	const double T_s = pm.getExecutionManager()->getPeriod();
 
 
 	wam.gravityCompensate();
@@ -65,7 +64,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 		// that the time is started. Otherwise we might record a bunch of
 		// samples all having t=0; this is bad because the Spline requires time
 		// to be monotonic.
-		BARRETT_SCOPED_LOCK(bm.getExecutionManager()->getMutex());
+		BARRETT_SCOPED_LOCK(pm.getExecutionManager()->getMutex());
 
 		connect(time.output, jpLogTg.template getInput<0>());
 		connect(wam.jpOutput, jpLogTg.template getInput<1>());
@@ -116,7 +115,7 @@ int wam_main(int argc, char** argv, BusManager& bm, systems::Wam<DOF>& wam) {
 
 
 	std::remove(tmpFile);
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	return 0;
 }
