@@ -13,7 +13,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
-#include <barrett/bus/bus_manager.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -23,32 +23,32 @@ using systems::reconnect;
 using systems::disconnect;
 
 
-template<size_t DOF> int wam_main(BusManager& bm);
+template<size_t DOF> int wam_main(ProductManager& pm);
 int main() {
 	// Give us pretty stack traces when things die
 	barrett::installExceptionHandler();
 
-	BusManager bm;
-	bm.waitForWam();
+	ProductManager pm;
+	pm.waitForWam();
 
-	if (bm.foundWam4()) {
-		return wam_main<4>(bm);
-	} else if (bm.foundWam7()) {
-		return wam_main<7>(bm);
+	if (pm.foundWam4()) {
+		return wam_main<4>(pm);
+	} else if (pm.foundWam7()) {
+		return wam_main<7>(pm);
 	}
 }
 
-template<size_t DOF> int wam_main(BusManager& bm) {
+template<size_t DOF> int wam_main(ProductManager& pm) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 
-	const libconfig::Setting& setting = bm.getConfig().lookup(bm.getWamDefaultConfigPath());
-	systems::RealTimeExecutionManager& rtem = *bm.getExecutionManager();
+	const libconfig::Setting& setting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
+	systems::RealTimeExecutionManager& rtem = *pm.getExecutionManager();
 
     // instantiate Systems
-	std::vector<Puck*> wamPucks = bm.getWamPucks();
+	std::vector<Puck*> wamPucks = pm.getWamPucks();
 	wamPucks.resize(DOF);
-	systems::LowLevelWamWrapper<DOF> llww(wamPucks, bm.getSafetyModule(), setting["low_level"]);
+	systems::LowLevelWamWrapper<DOF> llww(wamPucks, pm.getSafetyModule(), setting["low_level"]);
 	systems::PIDController<jp_type, jt_type> jpController(setting["joint_position_control"]);
 	systems::Constant<jp_type> point(llww.getLowLevelWam().getHomePosition());
 
@@ -63,7 +63,7 @@ template<size_t DOF> int wam_main(BusManager& bm) {
 
 	// start the main loop!
 	rtem.start();
-	bm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
 
 	std::cout << "Press [Enter] to move to home position.\n";
 	waitForEnter();
@@ -74,7 +74,7 @@ template<size_t DOF> int wam_main(BusManager& bm) {
 	reconnect(llww.jpOutput, jpController.referenceInput);
 	jpController.resetIntegrator();
 
-	bm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	rtem.stop();
 
 	return 0;

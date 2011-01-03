@@ -12,8 +12,7 @@
 
 #include <unistd.h>
 
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/puck.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -32,11 +31,11 @@ void waitForEnter() {
 }
 
 int main() {
-	BusManager bm;
-	bm.enumerate();
+	ProductManager pm;
+	pm.enumerate();
 
-	Puck& p6 = *bm.getPuck(6);
-	Puck& p7 = *bm.getPuck(7);
+	Puck& p6 = *pm.getPuck(6);
+	Puck& p7 = *pm.getPuck(7);
 
 	p6.wake();
 	p7.wake();

@@ -12,8 +12,7 @@
 
 #include <unistd.h>
 
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/force_torque_sensor.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace std;
@@ -23,12 +22,12 @@ const size_t NUM_SG = 6;
 
 
 int main(int argc, char** argv) {
-	BusManager bm;
-	if ( !bm.foundForceTorqueSensor() ) {
+	ProductManager pm;
+	if ( !pm.foundForceTorqueSensor() ) {
 		printf("ERROR: No Force-Torque Sensor found!\n");
 		return 1;
 	}
-	ForceTorqueSensor& fts = *bm.getForceTorqueSensor();
+	ForceTorqueSensor& fts = *pm.getForceTorqueSensor();
 
 
 	printf("Reading strain gauges: ");
@@ -36,7 +35,7 @@ int main(int argc, char** argv) {
 	for (size_t i = 0; i < NUM_SG; ++i) {
 		// TODO(dc): Fix once F/T has working ROLE
 		//ov[i] = fts.getProperty(static_cast<Puck::Property>(Puck::SG1 + i));
-		ov[i] = Puck::getProperty(bm, fts.getPuck()->getId(), Puck::getPropertyId(static_cast<Puck::Property>(Puck::SG1 + i), Puck::PT_ForceTorque, 152));
+		ov[i] = Puck::getProperty(pm.getBus(), fts.getPuck()->getId(), Puck::getPropertyId(static_cast<Puck::Property>(Puck::SG1 + i), Puck::PT_ForceTorque, 152));
 	}
 	cout << ov << "\n";
 
@@ -44,7 +43,7 @@ int main(int argc, char** argv) {
 	for (size_t i = 0; i < NUM_SG; ++i) {
 		// TODO(dc): Fix once F/T has working ROLE
 		//fts.setProperty(Puck::OV, calValue);
-		Puck::setProperty(bm, fts.getPuck()->getId(), Puck::getPropertyId(Puck::OV, Puck::PT_ForceTorque, 152), ov[i]);
+		Puck::setProperty(pm.getBus(), fts.getPuck()->getId(), Puck::getPropertyId(Puck::OV, Puck::PT_ForceTorque, 152), ov[i]);
 		printf(".");
 		fflush(stdout);
 		usleep(1000000);

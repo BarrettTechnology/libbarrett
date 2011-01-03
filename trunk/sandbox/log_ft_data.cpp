@@ -23,8 +23,7 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/log.h>
-#include <barrett/bus/bus_manager.h>
-#include <barrett/products/force_torque_sensor.h>
+#include <barrett/products/product_manager.h>
 
 
 using namespace barrett;
@@ -137,12 +136,12 @@ int main(int argc, char** argv) {
 	int numSamples = windowSize, numSets = 0;
 	tuple_type sum;
 
-	BusManager bm;
-	if ( !bm.foundForceTorqueSensor() ) {
+	ProductManager pm;
+	if ( !pm.foundForceTorqueSensor() ) {
 		printf("ERROR: No Force-Torque Sensor found!\n");
 		return 1;
 	}
-	boost::thread ftThread(ftThreadEntryPoint, &g_Going, T_s, *bm.getForceTorqueSensor(), lw, windowSize, &numSamples, &sum);
+	boost::thread ftThread(ftThreadEntryPoint, &g_Going, T_s, *pm.getForceTorqueSensor(), lw, windowSize, &numSamples, &sum);
 
 	if (fileMode) {
 		printf(">>> Logging data. Press [Ctrl-C] to exit.\n");
