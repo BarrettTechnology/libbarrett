@@ -6,11 +6,8 @@
  */
 
 #include <stdexcept>
-//#include <algorithm>
 
-//#include <string.h>
 #include <syslog.h>
-//#include <libgen.h>
 
 #include <native/task.h>
 #include <native/timer.h>
@@ -18,24 +15,33 @@
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/bus/abstract/communications_bus.h>
+#include <barrett/bus/can_socket.h>
 #include <barrett/bus/bus_manager.h>
 
 
 namespace barrett {
 
 
-BusManager::BusManager() :
-	bus(actualBus), actualBus(), messageBuffers()
+BusManager::BusManager(CommunicationsBus* _bus) :
+	bus(_bus), deleteBus(false), messageBuffers()
 {
+	if (bus == NULL) {
+		bus = new CANSocket;
+		deleteBus = true;
+	}
 }
 
 BusManager::BusManager(int port) :
-	bus(actualBus), actualBus(port), messageBuffers()
+	bus(NULL), deleteBus(true), messageBuffers()
 {
+	bus = new CANSocket(port);
 }
 
 BusManager::~BusManager()
 {
+	if (deleteBus) {
+		delete bus;
+	}
 }
 
 int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const
