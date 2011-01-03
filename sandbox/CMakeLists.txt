@@ -12,7 +12,6 @@ function(add_programs)
 endfunction()
 
 set(programs
-	bus_manager
 	can_terminal
 	ft_persistent_tare
 	full_system_test
