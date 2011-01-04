@@ -11,7 +11,7 @@
 
 #include <unistd.h>
 
-#include <barrett/bus/can_socket.h>
+#include <barrett/bus/bus_manager.h>
 #include <barrett/products/puck.h>
 
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 	}
 
 	printf("Using CAN bus port %d.\n", port);
-	CANSocket bus(port);
+	bus::BusManager bus(port);
 
 
 	string line;

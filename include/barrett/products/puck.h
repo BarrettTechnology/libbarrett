@@ -46,7 +46,7 @@ public:
 
 
 public:
-	Puck(const CommunicationsBus& bus, int id);
+	Puck(const bus::CommunicationsBus& bus, int id);
 	~Puck();
 
 	void wake();
@@ -75,7 +75,7 @@ public:
 	void updateRole();
 	void updateStatus();
 
-	const CommunicationsBus& getBus() const { return bus; }
+	const bus::CommunicationsBus& getBus() const { return bus; }
 	int getId() const { return id; }
 	int getVers() const { return vers; }
 	int getRole() const { return role; }
@@ -86,22 +86,22 @@ public:
 
 	static void wake(std::vector<Puck*> pucks);
 
-	static int getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime = false);
+	static int getProperty(const bus::CommunicationsBus& bus, int id, int propId, bool realtime = false);
 	template<typename Parser> static void getProperty(
-			const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime = false);
-	static int tryGetProperty(const CommunicationsBus& bus, int id, int propId,
+			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime = false);
+	static int tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId,
 			int* result, int timeout_us = 1000);
 	template<typename Parser> static int tryGetProperty(
-			const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
+			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
 			int timeout_us = 1000);
-	static void setProperty(const CommunicationsBus& bus, int id, int propId,
+	static void setProperty(const bus::CommunicationsBus& bus, int id, int propId,
 			int value);
 
-	static int sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId);
-	static int receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId,
+	static int sendGetPropertyRequest(const bus::CommunicationsBus& bus, int id, int propId);
+	static int receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int propId,
 			int* result, bool blocking, bool realtime);
 	template<typename Parser> static int receiveGetPropertyReply(
-			const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime);
+			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime);
 
 	static bool respondsToProperty(enum Property prop, enum PuckType pt, int fwVers) {
 		return getPropertyIdNoThrow(prop, pt, fwVers) != -1;
@@ -167,14 +167,14 @@ protected:
 	};
 
 
-	const CommunicationsBus& bus;
+	const bus::CommunicationsBus& bus;
 	int id;
 	int vers, role;
 	enum PuckType type, effectiveType;
 
 private:
 	template<typename Parser>
-	static int getPropertyHelper(const CommunicationsBus& bus,
+	static int getPropertyHelper(const bus::CommunicationsBus& bus,
 			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_us);
 
 	static const char puckTypeStrs[][12];

@@ -31,7 +31,7 @@ inline int Puck::tryGetProperty(enum Property prop, typename Parser::result_type
 }
 
 
-inline int Puck::getProperty(const CommunicationsBus& bus, int id, int propId, bool realtime)
+inline int Puck::getProperty(const bus::CommunicationsBus& bus, int id, int propId, bool realtime)
 {
 	int result;
 	getProperty<StandardParser>(bus, id, propId, &result, realtime);
@@ -39,7 +39,7 @@ inline int Puck::getProperty(const CommunicationsBus& bus, int id, int propId, b
 }
 // TODO(dc): throw exception if getProperty is called with a group ID?
 template<typename Parser>
-void Puck::getProperty(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime)
+void Puck::getProperty(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime)
 {
 	int ret = getPropertyHelper<Parser>(bus, id, propId, result, true, realtime, 0);
 	if (ret != 0) {
@@ -48,12 +48,12 @@ void Puck::getProperty(const CommunicationsBus& bus, int id, int propId, typenam
 	}
 }
 
-inline int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, int* result, int timeout_us)
+inline int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, int* result, int timeout_us)
 {
 	return tryGetProperty<StandardParser>(bus, id, propId, result, timeout_us);
 }
 template<typename Parser>
-int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, int timeout_us)
+int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, int timeout_us)
 {
 	int ret = getPropertyHelper<Parser>(bus, id, propId, result, false, false, timeout_us);
 	if (ret != 0  &&  ret != 1) {  // some error other than "would block" occurred
@@ -64,7 +64,7 @@ int Puck::tryGetProperty(const CommunicationsBus& bus, int id, int propId, typen
 }
 
 template<typename Parser>
-int Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_us)
+int Puck::getPropertyHelper(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_us)
 {
 	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
 	if (realtime) {
@@ -84,7 +84,7 @@ int Puck::getPropertyHelper(const CommunicationsBus& bus, int id, int propId, ty
 	return receiveGetPropertyReply<Parser>(bus, id, propId, result, blocking, realtime);
 }
 
-inline void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, int value)
+inline void Puck::setProperty(const bus::CommunicationsBus& bus, int id, int propId, int value)
 {
 	static const size_t MSG_LEN = 6;
 
@@ -103,7 +103,7 @@ inline void Puck::setProperty(const CommunicationsBus& bus, int id, int propId, 
 	}
 }
 
-inline int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, int propId)
+inline int Puck::sendGetPropertyRequest(const bus::CommunicationsBus& bus, int id, int propId)
 {
 	static const size_t MSG_LEN = 1;
 
@@ -113,14 +113,14 @@ inline int Puck::sendGetPropertyRequest(const CommunicationsBus& bus, int id, in
 	return bus.send(nodeId2BusId(id), data, MSG_LEN);
 }
 
-inline int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, int* result, bool blocking, bool realtime)
+inline int Puck::receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int propId, int* result, bool blocking, bool realtime)
 {
 	return receiveGetPropertyReply<StandardParser>(bus, id, propId, result, blocking, realtime);
 }
 template<typename Parser>
-int Puck::receiveGetPropertyReply(const CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime)
+int Puck::receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime)
 {
-	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
+	unsigned char data[bus::CommunicationsBus::MAX_MESSAGE_LEN];
 	size_t len;
 
 	int ret = bus.receive(Parser::busId(id, propId), data, len, blocking, realtime);

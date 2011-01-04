@@ -31,7 +31,7 @@ public:
 	const PuckGroup& getGroup() const { return group; }
 
 protected:
-	const CommunicationsBus& bus;
+	const bus::CommunicationsBus& bus;
 	std::vector<Puck*> pucks;
 	std::vector<MotorPuck> motorPucks;
 	PuckGroup group;

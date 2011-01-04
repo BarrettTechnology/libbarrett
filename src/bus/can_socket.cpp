@@ -21,6 +21,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 CANSocket::CANSocket() :
@@ -214,4 +215,5 @@ void CANSocket::init() {
 }
 
 
+}
 }

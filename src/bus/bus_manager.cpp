@@ -20,6 +20,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 BusManager::BusManager(CommunicationsBus* _bus) :
@@ -129,4 +130,5 @@ bool BusManager::retrieveMessage(int busId, unsigned char* data, size_t& len) co
 }
 
 
+}
 }

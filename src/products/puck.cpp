@@ -20,7 +20,7 @@
 namespace barrett {
 
 
-Puck::Puck(const CommunicationsBus& _bus, int _id) :
+Puck::Puck(const bus::CommunicationsBus& _bus, int _id) :
 	bus(_bus), id(_id), vers(-1), role(-1), type(PT_Unknown), effectiveType(PT_Unknown)
 {
 	if ((id & NODE_ID_MASK) != id) {

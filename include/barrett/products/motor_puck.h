@@ -49,7 +49,7 @@ public:
 	int nm2i(double torque) const { return floor(math::saturate(torque*ipnm, MAX_PUCK_TORQUE)); }
 
 
-	static void sendPackedTorques(const CommunicationsBus& bus, int groupId, int propId,
+	static void sendPackedTorques(const bus::CommunicationsBus& bus, int groupId, int propId,
 			const double* pt, int numTorques);
 
 
