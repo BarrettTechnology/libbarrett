@@ -36,7 +36,7 @@ namespace barrett {
 
 const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
 
-ProductManager::ProductManager(CommunicationsBus* _bus, const char* configFile) :
+ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configFile) :
 	config(), bus(_bus), deleteBus(false), pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL)
 {
 	char* cf1 = strdup(configFile);
@@ -66,7 +66,7 @@ ProductManager::ProductManager(CommunicationsBus* _bus, const char* configFile) 
 		config.readFile(configBase);
 
 		if (bus == NULL) {
-			bus = new BusManager;
+			bus = new bus::BusManager;
 			deleteBus = true;
 		}
 		if ( !bus->isOpen() ) {

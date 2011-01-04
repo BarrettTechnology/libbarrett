@@ -13,6 +13,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 class CommunicationsBus {
@@ -34,6 +35,7 @@ public:
 };
 
 
+}
 }
 
 

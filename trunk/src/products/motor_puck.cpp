@@ -36,7 +36,7 @@ void MotorPuck::setPuck(Puck* puck)
 }
 
 
-void MotorPuck::sendPackedTorques(const CommunicationsBus& bus, int groupId, int propId,
+void MotorPuck::sendPackedTorques(const bus::CommunicationsBus& bus, int groupId, int propId,
 		const double* pt, int numTorques)
 {
 	unsigned char data[8];

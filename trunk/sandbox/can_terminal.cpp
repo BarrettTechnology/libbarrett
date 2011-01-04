@@ -18,10 +18,10 @@
 using namespace barrett;
 
 
-void readThread(const CANSocket* bus, const bool* going) {
+void readThread(const bus::CANSocket* bus, const bool* going) {
 	int ret;
 	int id;
-	unsigned char data[CANSocket::MAX_MESSAGE_LEN];
+	unsigned char data[bus::CANSocket::MAX_MESSAGE_LEN];
 	size_t len;
 
 	while (*going) {
@@ -33,7 +33,7 @@ void readThread(const CANSocket* bus, const bool* going) {
 			}
 			printf("\n");
 		} else if (ret != 1) {  // error other than no data
-			printf("ERROR: CANSocket::receive() returned %d.\n", ret);
+			printf("ERROR: bus::CANSocket::receive() returned %d.\n", ret);
 		}
 
 		usleep(100000);
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 	}
 
 	printf("Using CAN bus port %d.\n", port);
-	CANSocket bus(port);
+	bus::CANSocket bus(port);
 
 	bool going = true;
 	boost::thread thread(readThread, &bus, &going);
@@ -65,12 +65,14 @@ int main(int argc, char** argv) {
 	std::string line;
 	int ret;
 	int id;
-	unsigned char data[CANSocket::MAX_MESSAGE_LEN];
+	unsigned char data[bus::CANSocket::MAX_MESSAGE_LEN];
 	size_t len;
 	while (going) {
 		printf(">> ");
 		std::getline(std::cin, line);
-		len = sscanf(line.c_str(), "%3x %2x %2x %2x %2x %2x %2x %2x %2x", &id, (unsigned int*)data+0, (unsigned int*)data+1, (unsigned int*)data+2, (unsigned int*)data+3, (unsigned int*)data+4, (unsigned int*)data+5, (unsigned int*)data+6, (unsigned int*)data+7) - 1;
+		len = sscanf(line.c_str(), "%3x %2x %2x %2x %2x %2x %2x %2x %2x", &id,
+				(unsigned int*)(data+0), (unsigned int*)(data+1), (unsigned int*)(data+2), (unsigned int*)(data+3),
+				(unsigned int*)(data+4), (unsigned int*)(data+5), (unsigned int*)(data+6), (unsigned int*)(data+7)) - 1;
 		if (len < 0  ||  len > 8) {
 			printf("ERROR: Input format. No message sent.\n");
 			continue;
@@ -78,7 +80,7 @@ int main(int argc, char** argv) {
 
 		ret = bus.send(id, data, len);
 		if (ret) {
-			printf("ERROR: CANSocket::send() returned %d.\n", ret);
+			printf("ERROR: bus::CANSocket::send() returned %d.\n", ret);
 		}
 	}
 

@@ -38,7 +38,7 @@ class ProductManager {
 public:
 	static const char DEFAULT_CONFIG_FILE[];  // = "/etc/barrett/default.conf"
 
-	ProductManager(CommunicationsBus* bus = NULL, const char* configFile = DEFAULT_CONFIG_FILE);
+	ProductManager(bus::CommunicationsBus* bus = NULL, const char* configFile = DEFAULT_CONFIG_FILE);
 	virtual ~ProductManager();
 
 	void enumerate();
@@ -73,7 +73,7 @@ public:
 	void deletePuck(Puck* p);
 
 	libconfig::Config& getConfig() { return config; }
-	const CommunicationsBus& getBus() const { return *bus; }
+	const bus::CommunicationsBus& getBus() const { return *bus; }
 	virtual thread::Mutex& getMutex() const { return bus->getMutex(); }
 
 
@@ -88,7 +88,7 @@ protected:
 	bool verifyWamPucks(const size_t dof) const;
 
 	libconfig::Config config;
-	CommunicationsBus* bus;
+	bus::CommunicationsBus* bus;
 	bool deleteBus;
 	std::vector<Puck*> pucks;
 	std::vector<Puck*> wamPucks;

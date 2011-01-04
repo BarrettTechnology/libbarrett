@@ -78,7 +78,7 @@ public:
 protected:
 	int id;
 	std::vector<Puck*> pucks;
-	const CommunicationsBus& bus;
+	const bus::CommunicationsBus& bus;
 };
 
 

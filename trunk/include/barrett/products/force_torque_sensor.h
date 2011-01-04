@@ -60,7 +60,7 @@ public:
 
 
 protected:
-	const CommunicationsBus* bus;
+	const bus::CommunicationsBus* bus;
 	int id;
 	int propId;
 

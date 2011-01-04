@@ -12,6 +12,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const {
@@ -35,4 +36,5 @@ int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& l
 
 
 
+}
 }

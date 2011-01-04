@@ -20,6 +20,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 class BusManager : public CommunicationsBus {
@@ -81,6 +82,7 @@ private:
 };
 
 
+}
 }
 
 

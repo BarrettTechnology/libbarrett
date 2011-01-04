@@ -17,6 +17,7 @@
 
 
 namespace barrett {
+namespace bus {
 
 
 // TODO(dc): expose a receive timeout option?
@@ -54,6 +55,7 @@ private:
 };
 
 
+}
 }
 
 
