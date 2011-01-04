@@ -37,7 +37,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     // instantiate Systems
 	systems::Constant<jp_type> jpPoint(wam.getHomePosition());
 
-	math::Kinematics<DOF> kin(pm.getConfig().lookup("wam4.kinematics"));
+	math::Kinematics<DOF> kin(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["kinematics"]);
 	kin.eval(wam.getHomePosition(), jv_type(0.0));
 	systems::Constant<units::CartesianPosition::type> tpPoint(
 			units::CartesianPosition::type(kin.impl->tool->origin_pos));
