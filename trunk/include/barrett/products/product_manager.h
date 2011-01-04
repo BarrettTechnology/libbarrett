@@ -36,7 +36,9 @@ class RealTimeExecutionManager;
 
 class ProductManager {
 public:
-	ProductManager(CommunicationsBus* bus = NULL, const char* configFile = "/etc/barrett/default.conf");
+	static const char DEFAULT_CONFIG_FILE[];  // = "/etc/barrett/default.conf"
+
+	ProductManager(CommunicationsBus* bus = NULL, const char* configFile = DEFAULT_CONFIG_FILE);
 	virtual ~ProductManager();
 
 	void enumerate();
