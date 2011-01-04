@@ -34,6 +34,8 @@
 namespace barrett {
 
 
+const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
+
 ProductManager::ProductManager(CommunicationsBus* _bus, const char* configFile) :
 	config(), bus(_bus), deleteBus(false), pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL)
 {
