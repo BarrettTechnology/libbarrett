@@ -18,6 +18,7 @@
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/hand.h>
+#include <barrett/products/gimbals_hand_controller.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/force_torque_sensor.h>
 
@@ -68,6 +69,9 @@ public:
 	bool foundHand() const;
 	Hand* getHand();
 
+	bool foundGimbalsHandController() const;
+	GimbalsHandController* getGimbalsHandController();
+
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 	Puck* getPuck(int id) const;
 	void deletePuck(Puck* p);
@@ -100,6 +104,7 @@ protected:
 	systems::Wam<7>* wam7;
 	ForceTorqueSensor* fts;
 	Hand* hand;
+	GimbalsHandController* ghc;
 
 private:
 	bool wam7FoundHelper(int poles) const;

@@ -16,6 +16,7 @@ set(barrett_SOURCES
 	math/trapezoidal_velocity_profile.cpp
 
 	products/force_torque_sensor.cpp
+	products/gimbals_hand_controller.cpp
 	products/hand.cpp
 	products/motor_puck.cpp
 	products/multi_puck_product.cpp

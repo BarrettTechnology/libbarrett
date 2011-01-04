@@ -23,6 +23,7 @@
 #include <barrett/bus/bus_manager.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/hand.h>
+#include <barrett/products/gimbals_hand_controller.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/products/force_torque_sensor.h>
 #include <barrett/systems/abstract/system.h>
@@ -37,7 +38,9 @@ namespace barrett {
 const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
 
 ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configFile) :
-	config(), bus(_bus), deleteBus(false), pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF), sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL)
+	config(), bus(_bus), deleteBus(false),
+	pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF),
+	sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), ghc(NULL)
 {
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
@@ -109,6 +112,7 @@ ProductManager::~ProductManager()
 	delete sm;
 	delete fts;
 	delete hand;
+	delete ghc;
 	detail::purge(pucks);
 	if (deleteBus) {
 		delete bus;
@@ -192,6 +196,7 @@ void ProductManager::enumerate()
 		noProductsFound = false;
 		syslog(LOG_ERR, "    BarrettHand");
 	}
+	// TODO(dc): Don't report GHC because we don't have a very selective test.
 
 	if (noProductsFound) {
 		syslog(LOG_ERR, "    (none)");
@@ -387,6 +392,19 @@ Hand* ProductManager::getHand()
 		hand = new Hand(handPucks);
 	}
 	return hand;
+}
+
+
+bool ProductManager::foundGimbalsHandController() const
+{
+	return foundWam7Gimbals();
+}
+GimbalsHandController* ProductManager::getGimbalsHandController()
+{
+	if (ghc == NULL  &&  foundGimbalsHandController()) {
+		ghc = new GimbalsHandController(wamPucks[5], wamPucks[6]);
+	}
+	return ghc;
 }
 
 
