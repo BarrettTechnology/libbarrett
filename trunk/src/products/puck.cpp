@@ -145,7 +145,7 @@ void Puck::wake(std::vector<Puck*> pucks)
 			if (ret == 0) {
 				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
 			} else {
-				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e6);
+				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e9);
 			}
 			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
 		}
