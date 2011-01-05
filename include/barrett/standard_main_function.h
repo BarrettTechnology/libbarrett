@@ -58,6 +58,10 @@
 	template<size_t DOF> int wam_main(int argc, char** argv, ::barrett::ProductManager& pm, ::barrett::systems::Wam<DOF>& wam);
 #endif
 
+#ifdef BARRETT_SMF_VALIDATE_ARGS
+	bool validate_args(int argc, char** argv);
+#endif
+
 #ifndef BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
 #  define BARRETT_SMF_WAIT_FOR_SHIFT_ACTIVATE true
 #else
@@ -72,6 +76,14 @@
 int main(int argc, char** argv) {
 	// Give us pretty stack-traces when things die
 	::barrett::installExceptionHandler();
+
+
+#ifdef BARRETT_SMF_VALIDATE_ARGS
+	if ( !validate_args(argc, argv) ) {
+		return 1;
+	}
+#endif
+
 
 	::barrett::ProductManager pm;
 	pm.waitForWam();
