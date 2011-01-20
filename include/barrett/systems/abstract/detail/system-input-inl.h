@@ -58,7 +58,7 @@ inline System::AbstractInput::~AbstractInput()
 	}
 }
 
-inline thread::Mutex& System::AbstractInput::getEmMutex()
+inline thread::Mutex& System::AbstractInput::getEmMutex() const
 {
 	if (parentSystem != NULL) {
 		return parentSystem->getEmMutex();

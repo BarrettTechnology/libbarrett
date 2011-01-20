@@ -54,7 +54,7 @@ inline System::AbstractOutput::AbstractValue::~AbstractValue()
 	}
 }
 
-inline thread::Mutex& System::AbstractOutput::AbstractValue::getEmMutex()
+inline thread::Mutex& System::AbstractOutput::AbstractValue::getEmMutex() const
 {
 	if (parentSystem != NULL) {
 		return parentSystem->getEmMutex();
