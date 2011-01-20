@@ -13,30 +13,26 @@
 #include <stdexcept>
 
 #include <syslog.h>
-
-#include <boost/thread.hpp>
-
 #include <unistd.h> /* for close() */
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
 #include <arpa/inet.h>  /* For inet_pton() */
 
 #include <barrett/detail/ca_macro.h>
+#include <barrett/thread/abstract/mutex.h>
+#include <barrett/thread/disable_secondary_mode_warning.h>
 #include <barrett/units.h>
 #include <barrett/systems/abstract/single_io.h>
 
 
-namespace barrett {
-namespace systems {
-
-
-template<size_t DOF>
-class MasterMaster : public SingleIO<typename units::JointPositions<DOF>::type, typename units::JointPositions<DOF>::type> {
+template <size_t DOF>
+class MasterMaster : public barrett::systems::SingleIO<typename barrett::units::JointPositions<DOF>::type, typename barrett::units::JointPositions<DOF>::type> {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
 	explicit MasterMaster(char* remoteHost, int port = 5555) :
-		sock(-1), init(true), locked(false), numMissed(), theirJp(), stopRunning(false), thread() {
+		barrett::systems::SingleIO<jp_type,jp_type>(true), sock(-1), linked(false), numMissed(NUM_MISSED_LIMIT), theirJp(0.0)
+	{
 		int err;
 		long flags;
 		int buflen;
@@ -49,7 +45,7 @@ public:
 		if (sock == -1)
 		{
 			syslog(LOG_ERR,"%s: Could not create socket.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Set socket to non-blocking, set flag associated with open file */
@@ -57,14 +53,14 @@ public:
 		if (flags < 0)
 		{
 			syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 		flags |= O_NONBLOCK;
 		err = fcntl(sock, F_SETFL, flags);
 		if (err < 0)
 		{
 			syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Maybe set UDP buffer size? */
@@ -73,17 +69,17 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
 
 		buflenlen = sizeof(buflen);
-		buflen = 5 * DOF * sizeof(double);
+		buflen = 5 * SIZE_OF_MSG;
 		err = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, buflenlen);
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not set output buffer size.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 
 		buflenlen = sizeof(buflen);
@@ -91,7 +87,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
 
@@ -103,7 +99,7 @@ public:
 		if (err == -1)
 		{
 			syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Set up the other guy's address */
@@ -113,7 +109,7 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
 
 		/* Call "connect" to set datagram destination */
@@ -121,108 +117,61 @@ public:
 		if (err)
 		{
 			syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
-			throw std::runtime_error("(systems::MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
+			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
-
-
-		// start comm thread
-		boost::thread tmpThread(Runnable(this));
-		thread.swap(tmpThread);
 	}
 
 	virtual ~MasterMaster() {
-		stopRunning = true;
-		thread.join();
-
 		close(sock);
 	}
 
-	bool isLocked() {  return locked;  }
-	void tryToLock() {
-		theirJp.setConstant(0.0);
-		init = false;
-		locked = true;
+	bool isLinked() const { return linked; }
+	void tryLink() {
+		BARRETT_SCOPED_LOCK(this->getEmMutex());
+
+		if (numMissed < NUM_MISSED_LIMIT) {
+			linked = true;
+		}
 	}
-	void unlock() {
-		theirJp.setConstant(0.0);
-		init = true;
-		locked = false;
-	}
+	void unlink() { linked = false; }
 
 protected:
-	class Runnable {
-	public:
-		Runnable(MasterMaster<DOF>* mm) :
-			mm(mm) {}
-		void operator() () {
-			while ( !mm->stopRunning ) {
-//				usleep(580); // give other threads a turn...
-//				usleep(600); // give other threads a turn...
-//				usleep(615); // give other threads a turn...
-
-				usleep(750); // give other threads a turn...
-
-//				usleep(2000); // about 500Hz
-				usleep(1000000); // about 1Hz
-
-
-//				send(mm->sock, mm->input.getValue().data(), DOF*sizeof(double), 0);
-//
-//				++mm->numMissed;
-//				while (recv(mm->sock, mm->theirJp.data(), DOF*sizeof(double), 0) == DOF*sizeof(double)) {
-//					mm->numMissed = 0;
-//				}
-			}
-		}
-
-	private:
-		MasterMaster<DOF>* mm;
-	};
-
+	static const int SIZE_OF_MSG = DOF*sizeof(double);
+	static const int NUM_MISSED_LIMIT = 10;
 
 	virtual void operate() {
-		send(sock, this->input.getValue().data(), DOF*sizeof(double), 0);
+		// send() and recv() cause switches to secondary mode. The socket is
+		// non-blocking, so this *probably* won't impact the control-loop
+		// timing that much...
+		barrett::thread::DisableSecondaryModeWarning dsmw;
 
 
-		if (init) {
-			this->outputValue->setValue(jp_type(0.0));
-			return;
+		send(sock, this->input.getValue().data(), SIZE_OF_MSG, 0);
+
+
+		if (numMissed < NUM_MISSED_LIMIT) {  // prevent numMissed from wrapping
+			++numMissed;
 		}
-
-
-		++numMissed;
-		while (recv(sock, theirJp.data(), DOF*sizeof(double), 0) == DOF*sizeof(double)) {
+		while (recv(sock, theirJp.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
 			numMissed = 0;
 		}
-		if (numMissed > 10) {
-			locked = false;
-			theirJp.setConstant(0.0);
-		}
 
-		if (locked) {
-//			this->outputValue->setValue(0.5*theirJp + 0.5*this->input.getValue());
+		if (linked  &&  numMissed < NUM_MISSED_LIMIT) {
 			this->outputValue->setValue(theirJp);
 		} else {
+			linked = false;
 			this->outputValue->setValue(this->input.getValue());
 		}
 	}
 
 	int sock;
-	bool init;
-	bool locked;
+	bool linked;
 	int numMissed;
 	jp_type theirJp;
-
-	bool stopRunning;
-	boost::thread thread;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(MasterMaster);
 };
-
-
-}
-}
 
 
 #endif /* MASTER_MASTER_H_ */

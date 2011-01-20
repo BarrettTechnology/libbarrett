@@ -25,7 +25,7 @@ set(programs
 #	log_sg_data
 #	log_velocity
 	low_level_wam
-#	master_master
+	master_master
 	move_to
 #	network_haptics
 	puck_terminal
