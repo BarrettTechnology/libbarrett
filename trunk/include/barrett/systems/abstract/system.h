@@ -183,7 +183,7 @@ public:
 		 */
 		virtual bool valueDefined() const = 0;
 
-		thread::Mutex& getEmMutex();
+		thread::Mutex& getEmMutex() const;
 
 	protected:
 		/// The System that should be notified when this Input's value changes.
@@ -220,7 +220,7 @@ public:
 			 */
 			virtual void setValueUndefined() = 0;
 
-			thread::Mutex& getEmMutex();
+			thread::Mutex& getEmMutex() const;
 
 		protected:
 			/// The System that should be notified when this Output's value changes.
@@ -475,7 +475,7 @@ public:
 	bool isExecutionManaged() const;
 	virtual void setExecutionManager(ExecutionManager* newEm);
 	ExecutionManager* getExecutionManager() const;
-	thread::Mutex& getEmMutex();
+	thread::Mutex& getEmMutex() const;
 
 	static ExecutionManager* defaultExecutionManager;
 

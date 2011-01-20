@@ -70,7 +70,7 @@ inline ExecutionManager* System::getExecutionManager() const
 	return executionManager;
 }
 
-inline thread::Mutex& System::getEmMutex()
+inline thread::Mutex& System::getEmMutex() const
 {
 	if (isExecutionManaged()) {
 		return executionManager->getMutex();
