@@ -244,8 +244,8 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	vec.push_back(destination);
 	math::Spline<T> spline(vec, currentVel);
 	// TODO(dc): write a vel/acc traits class to give intelligent defaults for these values
-	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInX());
-//	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInX());
+	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
+//	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInS());
 
 	Ramp time(1.0, false);
 	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));

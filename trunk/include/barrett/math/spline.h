@@ -24,7 +24,7 @@ namespace barrett {
 namespace math {
 
 
-// TODO(dc): add an option to saturate x if it is outside the range of [initialX, finalX].
+// TODO(dc): add an option to saturate s if it is outside the range of [initialS, finalS].
 template<typename T>
 class Spline {
 public:
@@ -39,20 +39,20 @@ public:
 
 	~Spline();
 
-	double initialX() const;
-	double finalX() const;
-	double changeInX() const;
+	double initialS() const;
+	double finalS() const;
+	double changeInS() const;
 
-	T eval(double x) const;
+	T eval(double s) const;
 
 	typedef T result_type;  ///< For use with boost::bind().
-	result_type operator() (double x) const {
-		return eval(x);
+	result_type operator() (double s) const {
+		return eval(s);
 	}
 
 protected:
 	struct bt_spline* impl;
-	double x_0;
+	double s_0;
 
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?

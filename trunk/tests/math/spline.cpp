@@ -39,10 +39,10 @@ TEST(SplineTest, ImplicitParameter) {
 	math::Spline<jp_type> spline(points);
 
 
-	EXPECT_EQ(0.0, spline.initialX());
+	EXPECT_EQ(0.0, spline.initialS());
 
 	jp.setConstant(1.5);
-	EXPECT_EQ(jp, spline.eval(spline.changeInX() * 3/4));
+	EXPECT_EQ(jp, spline.eval(spline.changeInS() * 3/4));
 }
 
 TEST(SplineTest, InitialDirection) {
@@ -60,11 +60,11 @@ TEST(SplineTest, InitialDirection) {
 	math::Spline<jp_type> spline(points, jv);
 
 
-	EXPECT_EQ(0.0, spline.initialX());
+	EXPECT_EQ(0.0, spline.initialS());
 
 	// the spline should go the "wrong" direction at first...
 	jp.setConstant(0.0);
-	EXPECT_TRUE((spline.eval(spline.changeInX() * 0.1).cwise() < jp).all());
+	EXPECT_TRUE((spline.eval(spline.changeInS() * 0.1).cwise() < jp).all());
 }
 
 TEST(SplineTest, ExplicitParameter) {
@@ -83,9 +83,9 @@ TEST(SplineTest, ExplicitParameter) {
 	math::Spline<jp_type> spline(samples);
 
 
-	EXPECT_EQ(-2.0, spline.initialX());
-	EXPECT_EQ(5.0, spline.finalX());
-	EXPECT_EQ(7.0, spline.changeInX());
+	EXPECT_EQ(-2.0, spline.initialS());
+	EXPECT_EQ(5.0, spline.finalS());
+	EXPECT_EQ(7.0, spline.changeInS());
 
 	jp_type jp;
 

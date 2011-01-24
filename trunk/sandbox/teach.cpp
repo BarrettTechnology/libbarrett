@@ -90,21 +90,21 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	waitForEnter();
 
 	// First, move to the starting position
-	wam.moveTo(spline.eval(spline.initialX()));
+	wam.moveTo(spline.eval(spline.initialS()));
 
 	// Then play back the recorded motion
 	time.stop();
-	time.setOutput(spline.initialX());
+	time.setOutput(spline.initialS());
 
 	double (*saturatePtr)(double,double) = math::saturate;  // Cast needed because math::saturate is overloaded
-	systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(saturatePtr, _1, spline.finalX())));
+	systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(saturatePtr, _1, spline.finalS())));
 
 	connect(time.output, trajectory.input);
 	wam.trackReferenceSignal(trajectory.output);
 
 	time.start();
 
-	while (trajectory.input.getValue() < spline.finalX()) {
+	while (trajectory.input.getValue() < spline.finalS()) {
 		usleep(100000);
 	}
 
