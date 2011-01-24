@@ -17,15 +17,15 @@ namespace math {
 template<typename T>
 template<template<typename U, typename = std::allocator<U> > class Container>
 Spline<T>::Spline(const Container<tuple_type>& samples) :
-	impl(NULL), x_0(0.0)
+	impl(NULL), s_0(0.0)
 {
-	x_0 = boost::get<0>(samples[0]);
+	s_0 = boost::get<0>(samples[0]);
 
 	bt_spline_create(&impl, boost::get<1>(samples[0]).asGslType(), BT_SPLINE_MODE_EXTERNAL);
 
 	typename Container<tuple_type>::const_iterator i;
 	for (i = ++(samples.begin()); i != samples.end(); ++i) {  // start with the 2nd sample
-		bt_spline_add(impl, boost::get<1>(*i).asGslType(), boost::get<0>(*i) - x_0);
+		bt_spline_add(impl, boost::get<1>(*i).asGslType(), boost::get<0>(*i) - s_0);
 	}
 
 	bt_spline_init(impl, NULL, NULL);
@@ -34,7 +34,7 @@ Spline<T>::Spline(const Container<tuple_type>& samples) :
 template<typename T>
 template<template<typename U, typename = std::allocator<U> > class Container>
 Spline<T>::Spline(const Container<T>& points, const typename T::unitless_type& initialDirection) :
-	impl(NULL), x_0(0.0)
+	impl(NULL), s_0(0.0)
 {
 	bt_spline_create(&impl, points[0].asGslType(), BT_SPLINE_MODE_ARCLEN);
 
@@ -57,29 +57,29 @@ Spline<T>::~Spline()
 
 
 template<typename T>
-inline double Spline<T>::initialX() const
+inline double Spline<T>::initialS() const
 {
-	return x_0;
+	return s_0;
 }
 
 template<typename T>
-inline double Spline<T>::finalX() const
+inline double Spline<T>::finalS() const
 {
-	return x_0 + impl->length;
+	return s_0 + impl->length;
 }
 
 template<typename T>
-inline double Spline<T>::changeInX() const
+inline double Spline<T>::changeInS() const
 {
 	return impl->length;
 }
 
 
 template<typename T>
-inline T Spline<T>::eval(double x) const
+inline T Spline<T>::eval(double s) const
 {
 	T result;
-	bt_spline_get(impl, result.asGslType(), x - x_0);
+	bt_spline_get(impl, result.asGslType(), s - s_0);
 	return result;
 }
 
