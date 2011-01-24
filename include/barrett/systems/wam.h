@@ -57,6 +57,7 @@
 #include <barrett/systems/pid_controller.h>
 #include <barrett/systems/tool_orientation_controller.h>
 #include <barrett/systems/tool_force_to_joint_torques.h>
+#include <barrett/systems/tool_torque_to_joint_torques.h>
 
 
 namespace barrett {
@@ -85,6 +86,7 @@ public:
 	PIDController<cp_type, cf_type> tpController;
 	ToolForceToJointTorques<DOF> tf2jt;
 	ToolOrientationController<DOF> toController;
+	ToolTorqueToJointTorques<DOF> tt2jt;
 
 	Summer<jt_type, 3> jtSum;
 	enum {JT_INPUT = 0, GRAVITY_INPUT, SC_INPUT};

@@ -34,8 +34,6 @@
 
 #include <libconfig.h++>
 #include <Eigen/Geometry>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 
 #include <barrett/detail/ca_macro.h>
@@ -52,7 +50,7 @@ namespace systems {
 
 template<size_t DOF>
 class ToolOrientationController : public Controller<Eigen::Quaterniond,
-													typename units::JointTorques<DOF>::type>,
+													units::CartesianTorque::type>,
 								  public KinematicsInput<DOF> {
 
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
@@ -64,7 +62,6 @@ public:
 protected:
 	Eigen::AngleAxisd error;
 	ct_type ct;
-	jt_type jt;
 
 	virtual void operate() {
 //		error = this->referenceInput.getValue() * this->feedbackInput.getValue().inverse();  // I think it should be this way
@@ -84,11 +81,7 @@ protected:
 
 		gsl_blas_daxpy( -kd, this->kinInput.getValue()->impl->tool_velocity_angular, ct.asGslType());
 
-		gsl_blas_dgemv(CblasTrans, 1.0,
-				this->kinInput.getValue()->impl->tool_jacobian_angular,
-				ct.asGslType(), 0.0, jt.asGslType());
-
-		this->controlOutputValue->setValue(jt);
+		this->controlOutputValue->setValue(ct);
 	}
 
 	double kp;
