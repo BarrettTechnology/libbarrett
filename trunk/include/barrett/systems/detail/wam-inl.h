@@ -77,6 +77,7 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	tpController(setting["tool_position_control"]),
 	tf2jt(),
 	toController(setting["tool_orientation_control"]),
+	tt2jt(),
 
 	jtSum(true),
 
@@ -94,6 +95,7 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	connect(kinematicsBase.kinOutput, toolOrientation.kinInput);
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);
+	connect(kinematicsBase.kinOutput, tt2jt.kinInput);
 
 	connect(llww.jvOutput, jvFilter.input);
 
@@ -116,8 +118,9 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 			tpController.referenceInput, tf2jt.output));
 
 	connect(toolOrientation.output, toController.feedbackInput);
+	connect(toController.controlOutput, tt2jt.input);
 	supervisoryController.registerConversion(makeIOConversion(
-			toController.referenceInput, toController.controlOutput));
+			toController.referenceInput, tt2jt.output));
 
 	connect(supervisoryController.output, jtSum.getInput(SC_INPUT));
 	connect(jtSum.output, llww.input);
