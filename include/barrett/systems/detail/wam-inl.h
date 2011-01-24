@@ -76,7 +76,7 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	jvController2(setting["joint_velocity_control"][1]),
 	tpController(setting["tool_position_control"]),
 	tf2jt(),
-	toController(),
+	toController(setting["tool_orientation_control"]),
 
 	jtSum(true),
 
