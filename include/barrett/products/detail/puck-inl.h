@@ -98,7 +98,7 @@ inline void Puck::setProperty(const bus::CommunicationsBus& bus, int id, int pro
 
 	int ret = bus.send(nodeId2BusId(id), data, MSG_LEN);
 	if (ret != 0) {
-		syslog(LOG_ERR, "%s: Puck::setProperty() returned error %d.", __func__, ret);
+		syslog(LOG_ERR, "%s: bus::CommunicationsBus::send() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::setProperty(): Failed to send SET message. Check /var/log/syslog for details.");
 	}
 }
