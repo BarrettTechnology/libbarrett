@@ -66,9 +66,9 @@ namespace systems {
 
 template<size_t DOF>
 class Wam {
+public:
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-public:
 
 	// these need to be before the IO references
 	LowLevelWamWrapper<DOF> llww;
