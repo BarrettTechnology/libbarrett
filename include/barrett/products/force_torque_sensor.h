@@ -19,10 +19,10 @@ namespace barrett {
 
 
 class ForceTorqueSensor : public SpecialPuck {
-	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
-	typedef cf_type::Base base_type;
-
 public:
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
+
+
 	ForceTorqueSensor(Puck* puck = NULL) : SpecialPuck(/* TODO(dc): Puck::PT_ForceTorque */), bus(NULL) { setPuck(puck); }
 	~ForceTorqueSensor() {}
 
@@ -68,6 +68,8 @@ protected:
 	ct_type ct;
 
 private:
+	typedef cf_type::Base base_type;
+
 	static int twoByte2int(unsigned char lsb, unsigned char msb);
 	static int parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor);
 };
