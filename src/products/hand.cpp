@@ -23,7 +23,7 @@
 namespace barrett {
 
 
-const enum Puck::Property Hand::props[] = { Puck::P, Puck::T };
+const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, Puck::P, Puck::T, Puck::SG };
 
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
