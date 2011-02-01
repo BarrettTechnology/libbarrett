@@ -7,6 +7,7 @@
  */
 
 #include <stdexcept>
+#include <limits>
 
 #include <syslog.h>
 
@@ -69,57 +70,6 @@ void MotorPuck::sendPackedTorques(const bus::CommunicationsBus& bus, int groupId
 
 
 	bus.send(Puck::nodeId2BusId(groupId), data, 8);
-}
-
-
-int MotorPuck::MotorPositionParser::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
-	if (len != 3 && len != 6) {
-		syslog(LOG_ERR,
-				"%s: expected message length of 3 or 6, got message length of %d",
-				__func__, len);
-		return 1;
-	}
-
-	*result = twentyTwoBit2double(data[0], data[1], data[2]);
-	return 0;
-}
-int MotorPuck::SecondaryPositionParser::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
-	if (len != 3) {
-		syslog(LOG_ERR,
-				"%s: expected message length of 3, got message length of %d",
-				__func__, len);
-		return 1;
-	}
-
-	*result = twentyTwoBit2double(data[0], data[1], data[2]);
-	return 0;
-}
-int MotorPuck::CombinedPositionParser::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
-	if (len != 6) {
-		syslog(LOG_ERR,
-				"%s: expected message length of 6, got message length of %d",
-				__func__, len);
-		return 1;
-	}
-
-	result->get<0>() = twentyTwoBit2double(data[0], data[1], data[2]);
-	result->get<1>() = twentyTwoBit2double(data[3], data[4], data[5]);
-	return 0;
-}
-
-
-double MotorPuck::twentyTwoBit2double(unsigned char msb, unsigned char middle, unsigned char lsb)
-{
-	int intResult = 0;
-	intResult |= ((long) msb << 16) & 0x003F0000;
-	intResult |= ((long) middle << 8) & 0x0000FF00;
-	intResult |= ((long) lsb) & 0x000000FF;
-
-	if (intResult & 0x00200000) {  // If negative...
-		intResult |= ~((int)0x3fffff); // sign-extend
-	}
-
-	return intResult;
 }
 
 

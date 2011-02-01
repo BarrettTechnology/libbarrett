@@ -57,28 +57,31 @@ public:
 	static const int MAX_PUCK_TORQUE = 8191;
 
 
+	template<typename ResultType>
 	struct MotorPositionParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_MOTOR_POSITION);
 		}
 
-		typedef double result_type;
+		typedef ResultType result_type;
 		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
 	};
+	template<typename ResultType>
 	struct SecondaryPositionParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_SECONDARY_POSITION);
 		}
 
-		typedef double result_type;
+		typedef ResultType result_type;
 		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
 	};
+	template<typename ResultType>
 	struct CombinedPositionParser {
 		static int busId(int id, int propId) {
-			return MotorPositionParser::busId(id, propId);
+			return MotorPositionParser<ResultType>::busId(id, propId);
 		}
 
-		typedef boost::tuple<double,double> result_type;
+		typedef boost::tuple<ResultType,ResultType> result_type;
 		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len);
 	};
 
@@ -89,11 +92,16 @@ protected:
 	int ipnm;
 
 private:
-	static double twentyTwoBit2double(unsigned char msb, unsigned char middle, unsigned char lsb);
+	template<typename ResultType>
+	static ResultType twentyTwoBit2(unsigned char msb, unsigned char middle, unsigned char lsb);
 };
 
 
 }
+
+
+// include template definitions
+#include <barrett/products/detail/motor_puck-inl.h>
 
 
 #endif /* BARRETT_PRODUCTS_MOTOR_PUCK_H_ */
