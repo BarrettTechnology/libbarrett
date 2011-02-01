@@ -177,7 +177,7 @@ template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
 	RTIME now = rt_timer_read();
-	group.getProperty<MotorPuck::MotorPositionParser>(Puck::P, pp.data(), true);
+	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
 
 	jp = p2jp * pp;  // Convert from Puck positions to joint positions
 	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));

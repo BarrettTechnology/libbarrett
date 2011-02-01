@@ -127,7 +127,7 @@ void Hand::setTorqueCommand(const jt_type& jt) const
 
 void Hand::updatePosition(bool realtime)
 {
-	group.getProperty<MotorPuck::MotorPositionParser>(Puck::P, jp.data(), realtime);
+	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, jp.data(), realtime);
 }
 void Hand::updateStrain(bool realtime)
 {
