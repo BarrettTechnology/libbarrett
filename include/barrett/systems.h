@@ -83,6 +83,7 @@
 #include <barrett/systems/array_splitter.h>
 #include <barrett/systems/array_editor.h>
 #include <barrett/systems/tuple_grouper.h>
+#include <barrett/systems/tuple_splitter.h>
 
 
 #endif /* BARRETT_SYSTEMS_H_ */
