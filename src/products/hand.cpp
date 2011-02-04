@@ -47,33 +47,10 @@ Hand::~Hand()
 	detail::purge(tactilePucks);
 }
 
-void Hand::initialize(/*bool blocking*/) const
+void Hand::initialize() const
 {
 	group.setProperty(Puck::CMD, CMD_HI);
-
-//	if (blocking) {
-		int modes[DOF];
-		std::vector<bool> seenMode4(DOF, false);
-		std::vector<bool> seenNotMode4(DOF, false);
-
-		while (true) {
-			group.getProperty(Puck::MODE, modes);
-			for (size_t i = 0; i < DOF; ++i) {
-				if (seenMode4[i]) {
-					if (modes[i] != MotorPuck::MODE_VELOCITY) {
-						seenNotMode4[i] = true;
-					}
-				} else if (modes[i] == MotorPuck::MODE_VELOCITY) {
-						seenMode4[i] = true;
-				}
-			}
-
-			if (std::count(seenNotMode4.begin(), seenNotMode4.end(), true) == (int)DOF) {
-				break;
-			}
-			usleep(100000);  // Poll at < 10Hz
-		}
-//	}
+	waitUntilDoneMoving();
 }
 
 bool Hand::doneMoving(bool realtime) const
