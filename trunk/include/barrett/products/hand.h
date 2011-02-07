@@ -1,12 +1,12 @@
 /*
- * bhand.h
+ * hand.h
  *
  *  Created on: Nov 9, 2010
  *      Author: dc
  */
 
-#ifndef BARRETT_PRODUCTS_BHAND_H_
-#define BARRETT_PRODUCTS_BHAND_H_
+#ifndef BARRETT_PRODUCTS_HAND_H_
+#define BARRETT_PRODUCTS_HAND_H_
 
 
 #include <vector>
@@ -38,31 +38,43 @@ public:
 	void waitUntilDoneMoving(int period_us = 10000) const;
 
 	// preferred: low control-rate moves
-	void trapezoidalMove(const jp_type& jpc, bool blocking = true) const;
+	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
 	void setVelocity(const jv_type& jv) const;
 
 	// advanced: high control-rate moves
 	void setPositionMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_PID); }
-	void setPositionCommand(const jp_type& jpc) const;
+	void setPositionCommand(const jp_type& jp) const;
 	void setTorqueMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_TORQUE); }
 	void setTorqueCommand(const jt_type& jt) const;
 
 
 	void updatePosition(bool realtime = false);
-	void updateStrain(bool realtime = false);
-	void updateTactFull(bool realtime = false);
+	const jp_type& getInnerLinkPosition() const { return innerJp; }
+	const jp_type& getOuterLinkPosition() const { return outerJp; }
+	const std::vector<int>& getPrimaryEncoderPosition() const { return primaryEncoder; }
+	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
 
-	const jp_type& getPosition() const { return jp; }
+	void updateStrain(bool realtime = false);
 	const std::vector<int>& getStrain() const { return sg; }
 
-
+	void updateTactFull(bool realtime = false);
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
 protected:
+	static const double J2_RATIO = 125.0;
+	static const double J2_ENCODER_RATIO = 50.0;
+	static const double J3_RATIO = 375.0;
+	static const double SPREAD_RATIO = 17.5;
+
+
 	std::vector<TactilePuck*> tactilePucks;
 	int holds[DOF];
+	v_type j2pp, j2pt;
+	mutable v_type pt;
 
-	jp_type jp;
+	std::vector<MotorPuck::CombinedPositionParser<int>::result_type> encoderTmp;
+	std::vector<int> primaryEncoder, secondaryEncoder;
+	jp_type innerJp, outerJp;
 	std::vector<int> sg;
 
 private:
@@ -76,4 +88,4 @@ private:
 }
 
 
-#endif /* BARRETT_PRODUCTS_BHAND_H_ */
+#endif /* BARRETT_PRODUCTS_HAND_H_ */

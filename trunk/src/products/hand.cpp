@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include <syslog.h>
 #include <unistd.h>
@@ -27,7 +28,8 @@ const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, P
 
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
-	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"), tactilePucks(), sg(DOF, 0)
+	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"),
+	tactilePucks(), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0)
 {
 	// Make TactilePucks
 	int numTact = 0;
@@ -41,6 +43,16 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 
 	// record HOLD values
 	group.getProperty(Puck::HOLD, holds);
+
+
+	// For the fingers
+	for (size_t i = 0; i < DOF - 1; ++i) {
+		j2pp[i] = motorPucks[i].getCountsPerRad() * J2_RATIO;
+		j2pt[i] = motorPucks[i].getIpnm() / J2_RATIO;
+	}
+	// For the spread
+	j2pp[3] = motorPucks[3].getCountsPerRad() * SPREAD_RATIO;
+	j2pt[3] = motorPucks[3].getIpnm() / SPREAD_RATIO;
 }
 Hand::~Hand()
 {
@@ -72,10 +84,10 @@ void Hand::waitUntilDoneMoving(int period_us) const
 	}
 }
 
-void Hand::trapezoidalMove(const jp_type& jpc, bool blocking) const
+void Hand::trapezoidalMove(const jp_type& jp, bool blocking) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::E, jpc[i]);
+		pucks[i]->setProperty(Puck::E, j2pp[i] * jp[i]);
 	}
 	group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
 
@@ -86,25 +98,48 @@ void Hand::trapezoidalMove(const jp_type& jpc, bool blocking) const
 void Hand::setVelocity(const jv_type& jv) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::V, jv[i]);
+		// Convert to counts/millisecond
+		pucks[i]->setProperty(Puck::V, (j2pp[i] * jv[i]) / 1000.0);
 	}
 	group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
 }
 
-void Hand::setPositionCommand(const jp_type& jpc) const
+void Hand::setPositionCommand(const jp_type& jp) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::P, jpc[i]);
+		pucks[i]->setProperty(Puck::P, j2pp[i] * jp[i]);
 	}
 }
 void Hand::setTorqueCommand(const jt_type& jt) const
 {
-	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, jt.data(), DOF);
+	pt = j2pt.cwise() * jt;
+	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, pt.data(), DOF);
 }
 
 void Hand::updatePosition(bool realtime)
 {
-	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, jp.data(), realtime);
+	group.getProperty<MotorPuck::CombinedPositionParser<int> >(Puck::P, encoderTmp.data(), realtime);
+
+	for (size_t i = 0; i < DOF; ++i) {
+		primaryEncoder[i] = encoderTmp[i].get<0>();
+		secondaryEncoder[i] = encoderTmp[i].get<1>();
+	}
+
+	// For the fingers
+	for (size_t i = 0; i < DOF-1; ++i) {
+		// If we got a reading from the secondary encoder...
+		if (secondaryEncoder[i] != std::numeric_limits<int>::max()) {
+			innerJp[i] = motorPucks[i].counts2rad(secondaryEncoder[i]) / J2_ENCODER_RATIO;
+			outerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) * (1.0/J2_RATIO + 1.0/J3_RATIO) - innerJp[i];
+		} else {
+			// These calculations are only valid before breakaway!
+			innerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) / J2_RATIO;
+			outerJp[i] = innerJp[i] * J2_RATIO / J3_RATIO;
+		}
+	}
+
+	// For the spread
+	innerJp[3] = outerJp[3] = motorPucks[3].counts2rad(primaryEncoder[3]) / SPREAD_RATIO;
 }
 void Hand::updateStrain(bool realtime)
 {
