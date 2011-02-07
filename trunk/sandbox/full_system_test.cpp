@@ -186,17 +186,20 @@ void runDisplay(bool& going, ProductManager& pm)
 
 	mvprintw(26,0, "Hand");
 	mvprintw(27,0, "  Update-rate (Hz):");
-	mvprintw(28,0, "          Position:");
-	mvprintw(29,0, "     Strain gauges:");
-	mvprintw(30,0, "     Puck temp (C):");
-	mvprintw(31,0, "    Motor temp (C):");
+	mvprintw(28,0, "    Inner Position:");
+	mvprintw(29,0, "    Outer Position:");
+	mvprintw(30,0, "     Strain gauges:");
+	mvprintw(31,0, "     Puck temp (C):");
+	mvprintw(32,0, "    Motor temp (C):");
 
 	mvprintw(26,60, "F/T Sensor");
 	mvprintw(27,60, "  Update-rate (Hz):");
 
 	g_DisplayActive = true;
 	std::stringstream ss;
-	const std::string emptyStr("");
+	ss.precision(3);
+	ss.setf(std::ios::fixed, std::ios::floatfield);
+
 	while (going) {
 		btkey c = btkey_get();
 		if (c != BTKEY_NOKEY) {
@@ -216,13 +219,16 @@ void runDisplay(bool& going, ProductManager& pm)
 				graphPressures(stdscr, 0,i*(3*WIDTH+2), tps[i]->getFullData());
 			}
 
-			ss.str(emptyStr);
-			ss << hand->getPosition();
+			ss.str("");
+			ss << hand->getInnerLinkPosition();
 			mvprintw(28,20, "%-40s", ss.str().c_str());
+			ss.str("");
+			ss << hand->getOuterLinkPosition();
+			mvprintw(29,20, "%-40s", ss.str().c_str());
 
-			mvprintw(29,20, "[%4d, %4d, %4d, %4d]", hand->getStrain()[0], hand->getStrain()[1], hand->getStrain()[2], hand->getStrain()[3]);
-			mvprintw(30,20, "[%3d, %3d, %3d, %3d]", puckTemp[0], puckTemp[1], puckTemp[2], puckTemp[3]);
-			mvprintw(31,20, "[%3d, %3d, %3d, %3d]", motorTemp[0], motorTemp[1], motorTemp[2], motorTemp[3]);
+			mvprintw(30,20, "[%4d, %4d, %4d, %4d]", hand->getStrain()[0], hand->getStrain()[1], hand->getStrain()[2], hand->getStrain()[3]);
+			mvprintw(31,20, "[%3d, %3d, %3d, %3d]", puckTemp[0], puckTemp[1], puckTemp[2], puckTemp[3]);
+			mvprintw(32,20, "[%3d, %3d, %3d, %3d]", motorTemp[0], motorTemp[1], motorTemp[2], motorTemp[3]);
 		}
 
 		refresh();
@@ -283,7 +289,7 @@ void moveHand(const bool& going, Hand& hand) {
 	tmp.setZero();
 	pos.push_back(tmp);
 
-	tmp.setConstant(300000);
+	tmp.setConstant(M_PI);
 	tmp[3] = 0;
 	pos.push_back(tmp);
 
@@ -291,15 +297,14 @@ void moveHand(const bool& going, Hand& hand) {
 	pos.push_back(tmp);
 
 	tmp.setZero();
-	tmp[3] = 150000;
+	tmp[3] = M_PI;
 	pos.push_back(tmp);
 
-	tmp.setConstant(300000);
-	tmp[3] = 150000;
+	tmp.setConstant(M_PI);
 	pos.push_back(tmp);
 
 	tmp.setZero();
-	tmp[3] = 150000;
+	tmp[3] = M_PI;
 	pos.push_back(tmp);
 
 
