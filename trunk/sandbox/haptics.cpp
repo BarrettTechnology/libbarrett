@@ -15,6 +15,7 @@
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 
+#define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
 #include "network_haptics.h"
@@ -23,6 +24,30 @@
 using namespace barrett;
 using systems::connect;
 BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
+
+
+char* remoteHost = NULL;
+double kp = 3e3;
+double kd = 3e1;
+bool validate_args(int argc, char** argv) {
+	switch (argc) {
+	case 4:
+		kd = atof(argv[3]);
+	case 3:
+		kp = atof(argv[2]);
+	case 2:
+		remoteHost = argv[1];
+		break;
+
+	default:
+		printf("Usage: %s <otherip> [<kp> [<kd>]]\n", argv[0]);
+		return false;
+		break;
+	}
+
+	printf("Gains: kp = %f; kd = %f\n", kp, kd);
+	return true;
+}
 
 
 cf_type scale(boost::tuple<cf_type, double> t) {
@@ -49,15 +74,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.gravityCompensate();
 
 
-	// check arguments
-	if (argc != 2) {
-		printf("Usage: %s <otherip>\n", argv[0]);
-		return 0;
-	}
-
-
     // instantiate Systems
-	NetworkHaptics nh(argv[1]);
+	NetworkHaptics nh(remoteHost);
 
 	cp_type center;
 	center << 0.4, -.3, 0.0;
@@ -77,8 +95,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Callback<jt_type> jtSat(boost::bind(saturateJt<DOF>, _1, jtLimits));
 
 	// configure Systems
-	comp.setKp(3e3);
-	comp.setKd(3e1);
+	comp.setKp(kp);
+	comp.setKd(kd);
 
 	// connect Systems
 	connect(wam.toolPosition.output, nh.input);
