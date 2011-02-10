@@ -283,6 +283,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	time.start();
 
 	doneMoving = false;
+	*started = true;
 
 	while (trajectory.input.getValue() < profile.finalT()) {
 		// if the move is interrupted, clean up and end the thread
@@ -293,7 +294,6 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	}
 
 	doneMoving = true;
-	*started = true;
 
 	// wait until the trajectory is no longer referenced by supervisoryController
 	while (trajectory.output.isConnected()) {
