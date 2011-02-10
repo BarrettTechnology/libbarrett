@@ -35,7 +35,7 @@ public:
 	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
 
 	bool doneMoving(bool realtime = false) const;
-	void waitUntilDoneMoving(int period_us = 10000) const;
+	void waitUntilDoneMoving(int period_us = 100000) const;
 
 	// preferred: low control-rate moves
 	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
