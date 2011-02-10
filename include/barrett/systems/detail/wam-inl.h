@@ -232,11 +232,11 @@ template<size_t DOF>
 template<typename T>
 void Wam<DOF>::moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration)
 {
-	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, currentVel, destination, velocity, acceleration);
+	bool started = false;
+	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, currentVel, destination, velocity, acceleration, &started);
 
-	// wait until thread starts
-	// TODO(dc): potential deadlock issue for very short trajectories
-	while (moveIsDone()) {
+	// wait until move starts
+	while ( !started ) {
 		usleep(1000);
 	}
 
@@ -262,7 +262,7 @@ void Wam<DOF>::idle()
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration)
+void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration, bool* started)
 {
 	std::vector<T> vec;
 	vec.push_back(currentPos);
@@ -293,6 +293,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	}
 
 	doneMoving = true;
+	*started = true;
 
 	// wait until the trajectory is no longer referenced by supervisoryController
 	while (trajectory.output.isConnected()) {

@@ -134,7 +134,7 @@ public:
 	void idle();
 
 protected:
-	template<typename T> void moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration);
+	template<typename T> void moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration, bool* started);
 
 	bool doneMoving;
 
