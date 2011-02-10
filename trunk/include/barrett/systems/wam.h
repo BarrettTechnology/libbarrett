@@ -48,6 +48,7 @@
 #include <barrett/systems/converter.h>
 #include <barrett/systems/summer.h>
 #include <barrett/systems/gain.h>
+#include <barrett/systems/tuple_splitter.h>
 
 #include <barrett/systems/kinematics_base.h>
 #include <barrett/systems/gravity_compensator.h>
@@ -87,6 +88,14 @@ public:
 	ToolForceToJointTorques<DOF> tf2jt;
 	ToolOrientationController<DOF> toController;
 	ToolTorqueToJointTorques<DOF> tt2jt;
+
+	// tool orientation + tool position control
+	TupleSplitter<cp_type, Eigen::Quaterniond> tpoSplitter;
+	PIDController<cp_type, cf_type> tpoTpController;
+	ToolForceToJointTorques<DOF> tpoTf2jt;
+	ToolOrientationController<DOF> tpoToController;
+	ToolTorqueToJointTorques<DOF> tpoTt2jt;
+	Summer<jt_type, 2> tpoSum;
 
 	Summer<jt_type, 3> jtSum;
 	enum {JT_INPUT = 0, GRAVITY_INPUT, SC_INPUT};

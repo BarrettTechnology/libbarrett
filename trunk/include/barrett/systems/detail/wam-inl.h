@@ -79,6 +79,13 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	toController(setting["tool_orientation_control"]),
 	tt2jt(),
 
+	tpoSplitter(),
+	tpoTpController(setting["tool_position_control"]),
+	tpoTf2jt(),
+	tpoToController(setting["tool_orientation_control"]),
+	tpoTt2jt(),
+	tpoSum(),
+
 	jtSum(true),
 
 	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(jvFilter.output),
@@ -96,6 +103,9 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);
 	connect(kinematicsBase.kinOutput, tt2jt.kinInput);
+	connect(kinematicsBase.kinOutput, tpoTf2jt.kinInput);
+	connect(kinematicsBase.kinOutput, tpoToController.kinInput);
+	connect(kinematicsBase.kinOutput, tpoTt2jt.kinInput);
 
 	connect(llww.jvOutput, jvFilter.input);
 
@@ -121,6 +131,18 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 	connect(toController.controlOutput, tt2jt.input);
 	supervisoryController.registerConversion(makeIOConversion(
 			toController.referenceInput, tt2jt.output));
+
+	connect(tpoSplitter.getOutput<0>(), tpoTpController.referenceInput);
+	connect(toolPosition.output, tpoTpController.feedbackInput);
+	connect(tpoTpController.controlOutput, tpoTf2jt.input);
+	connect(tpoTf2jt.output, tpoSum.getInput(0));
+
+	connect(tpoSplitter.getOutput<1>(), tpoToController.referenceInput);
+	connect(toolOrientation.output, tpoToController.feedbackInput);
+	connect(tpoToController.controlOutput, tpoTt2jt.input);
+	connect(tpoTt2jt.output, tpoSum.getInput(1));
+	supervisoryController.registerConversion(makeIOConversion(
+			tpoSplitter.input, tpoSum.output));
 
 	connect(supervisoryController.output, jtSum.getInput(SC_INPUT));
 	connect(jtSum.output, llww.input);
