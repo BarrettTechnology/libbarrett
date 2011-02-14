@@ -52,11 +52,11 @@ public:
 	void wake();
 
 	int getProperty(enum Property prop, bool realtime = false) const;
-	int tryGetProperty(enum Property prop, int* result, int timeout_us = 1000) const;
+	int tryGetProperty(enum Property prop, int* result, int timeout_ns = 1000000) const;
 
 	template<typename Parser> void getProperty(enum Property prop,
 			typename Parser::result_type* result, bool realtime = false) const;
-	template<typename Parser> int tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_us = 1000) const;
+	template<typename Parser> int tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_ns = 1000000) const;
 
 	void setProperty(enum Property prop, int value) const {
 		setProperty(bus, id, getPropertyId(prop), value);
@@ -90,10 +90,10 @@ public:
 	template<typename Parser> static void getProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime = false);
 	static int tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId,
-			int* result, int timeout_us = 1000);
+			int* result, int timeout_ns = 1000000);
 	template<typename Parser> static int tryGetProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
-			int timeout_us = 1000);
+			int timeout_ns = 1000000);
 	static void setProperty(const bus::CommunicationsBus& bus, int id, int propId,
 			int value);
 
@@ -175,7 +175,7 @@ protected:
 private:
 	template<typename Parser>
 	static int getPropertyHelper(const bus::CommunicationsBus& bus,
-			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_us);
+			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_ns);
 
 	static const char puckTypeStrs[][12];
 };
