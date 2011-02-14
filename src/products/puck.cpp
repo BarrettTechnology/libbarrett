@@ -138,7 +138,7 @@ void Puck::wake(std::vector<Puck*> pucks)
 		}
 
 		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
-		ret = (*i)->tryGetProperty(STAT, &stat, 50000);
+		ret = (*i)->tryGetProperty(STAT, &stat, 50000000);
 		if (ret == 0  &&  stat == STATUS_READY) {
 			(*i)->updateStatus();
 		} else {
