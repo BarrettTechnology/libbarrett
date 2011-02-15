@@ -61,7 +61,12 @@ Hand::~Hand()
 
 void Hand::initialize() const
 {
-	group.setProperty(Puck::CMD, CMD_HI);
+	for (size_t i = 0; i < DOF-1; ++i) {
+		pucks[i]->setProperty(Puck::CMD, CMD_HI);
+	}
+	waitUntilDoneMoving();
+
+	pucks[SPREAD_INDEX]->setProperty(Puck::CMD, CMD_HI);
 	waitUntilDoneMoving();
 }
 
