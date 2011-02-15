@@ -60,6 +60,9 @@ public:
 	void updateTactFull(bool realtime = false);
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
+
+	static const size_t SPREAD_INDEX = 3;
+
 protected:
 	static const double J2_RATIO = 125.0;
 	static const double J2_ENCODER_RATIO = 50.0;

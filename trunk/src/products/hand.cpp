@@ -51,8 +51,8 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 		j2pt[i] = motorPucks[i].getIpnm() / J2_RATIO;
 	}
 	// For the spread
-	j2pp[3] = motorPucks[3].getCountsPerRad() * SPREAD_RATIO;
-	j2pt[3] = motorPucks[3].getIpnm() / SPREAD_RATIO;
+	j2pp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].getCountsPerRad() * SPREAD_RATIO;
+	j2pt[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].getIpnm() / SPREAD_RATIO;
 }
 Hand::~Hand()
 {
@@ -140,7 +140,7 @@ void Hand::updatePosition(bool realtime)
 	}
 
 	// For the spread
-	innerJp[3] = outerJp[3] = motorPucks[3].counts2rad(primaryEncoder[3]) / SPREAD_RATIO;
+	innerJp[SPREAD_INDEX] = outerJp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].counts2rad(primaryEncoder[SPREAD_INDEX]) / SPREAD_RATIO;
 }
 void Hand::updateStrain(bool realtime)
 {
