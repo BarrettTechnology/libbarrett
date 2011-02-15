@@ -71,7 +71,7 @@ bool Hand::doneMoving(bool realtime) const
 	group.getProperty(Puck::MODE, modes, realtime);
 
 	for (size_t i = 0; i < DOF; ++i) {
-		if ((holds[i] != 0 && modes[i] != MotorPuck::MODE_PID)  ||  (holds[i] == 0 && modes[i] != MotorPuck::MODE_IDLE)) {
+		if (modes[i] != MotorPuck::MODE_IDLE  &&  (modes[i] != MotorPuck::MODE_PID  ||  holds[i] == 0)) {
 			return false;
 		}
 	}
