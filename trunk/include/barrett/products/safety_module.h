@@ -26,7 +26,7 @@ public:
 	SafetyModule(Puck* puck = NULL) : SpecialPuck(Puck::PT_Safety) { setPuck(puck); }
 	~SafetyModule() {}
 
-	enum SafetyMode getMode() const;
+	enum SafetyMode getMode(bool realtime = false) const;
 	bool wamIsZeroed() const { return p->getProperty(Puck::ZERO) == 1; }
 	void setWamZeroed(bool zeroed = true) const { p->setProperty(Puck::ZERO, zeroed); }
 
