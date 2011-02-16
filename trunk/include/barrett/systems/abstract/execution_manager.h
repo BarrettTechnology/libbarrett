@@ -33,6 +33,9 @@
 
 
 #include <vector>
+#include <stdexcept>
+#include <string>
+
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
@@ -46,6 +49,14 @@ namespace systems {
 
 
 class System;
+
+
+// Thrown to indicate that the ExecutionManager should stop executing.
+class ExecutionManagerException : public std::runtime_error {
+public:
+	explicit ExecutionManagerException(const std::string& str) : std::runtime_error(str) {}
+};
+
 
 // TODO(dc): prevent Systems managed by different EMs from being connected
 

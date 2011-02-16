@@ -5,6 +5,7 @@
  *      Author: dc
  */
 
+#include <stdexcept>
 
 #include <syslog.h>
 #include <sys/mman.h>
@@ -40,9 +41,16 @@ void rtemEntryPoint(void* cookie)
 	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 
 	rtem->running = true;
-	while ( !rtem->stopRunning ) {
-		rt_task_wait_period(NULL);
-		rtem->runExecutionCycle();
+	try {
+		while ( !rtem->stopRunning ) {
+			rt_task_wait_period(NULL);
+			rtem->runExecutionCycle();
+		}
+	} catch (const ExecutionManagerException& e) {
+		BARRETT_SCOPED_LOCK(rtem->getMutex());
+
+		rtem->error = true;
+		rtem->errorStr = e.what();
 	}
 	rtem->running = false;
 }
@@ -54,14 +62,14 @@ void rtemEntryPoint(void* cookie)
 
 RealTimeExecutionManager::RealTimeExecutionManager(double period_s, int rt_priority) :
 	ExecutionManager(period_s),
-	task(NULL), priority(rt_priority), running(false), stopRunning(false)
+	task(NULL), priority(rt_priority), running(false), stopRunning(false), error(false), errorStr()
 {
 	init();
 }
 
 RealTimeExecutionManager::RealTimeExecutionManager(const libconfig::Setting& setting) :
 	ExecutionManager(setting),
-	task(NULL), priority(), running(false), stopRunning(false)
+	task(NULL), priority(), running(false), stopRunning(false), error(false), errorStr()
 {
 	priority = setting["thread_priority"];
 	init();
@@ -76,8 +84,13 @@ RealTimeExecutionManager::~RealTimeExecutionManager()
 }
 
 
-void RealTimeExecutionManager::start() {
+void RealTimeExecutionManager::start()
+{
 	BARRETT_SCOPED_LOCK(getMutex());
+
+	if (getError()) {
+		throw std::logic_error("systems::RealTimeExecutionManager::start(): Cannot start while in an error state. Call RealTimeExecutionManager::clearError() first.");
+	}
 
 	if ( !isRunning() ) {
 		task = new RT_TASK;
@@ -92,7 +105,8 @@ void RealTimeExecutionManager::start() {
 	// TODO(dc): else, throw an exception?
 }
 
-void RealTimeExecutionManager::stop() {
+void RealTimeExecutionManager::stop()
+{
 	stopRunning = true;
 	rt_task_join(task);
 
@@ -101,6 +115,13 @@ void RealTimeExecutionManager::stop() {
 	task = NULL;
 }
 
+void RealTimeExecutionManager::clearError()
+{
+	BARRETT_SCOPED_LOCK(getMutex());
+
+	error = false;
+	errorStr = "";
+}
 
 void RealTimeExecutionManager::init()
 {
@@ -110,6 +131,8 @@ void RealTimeExecutionManager::init()
 	// install a more appropriate mutex
 	delete mutex;
 	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
+
+	clearError();
 }
 
 
