@@ -32,6 +32,8 @@
 #define BARRETT_SYSTEMS_REAL_TIME_EXECUTION_MANAGER_H_
 
 
+#include <string>
+
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
@@ -58,8 +60,6 @@ void rtemEntryPoint(void* cookie);
 }
 
 
-// TODO(dc): add a configuration file interface
-
 class RealTimeExecutionManager : public ExecutionManager {
 public:
 	explicit RealTimeExecutionManager(double period_s, int rt_priority = 50);
@@ -70,10 +70,17 @@ public:
 	bool isRunning() const { return running; }
 	void stop();
 
+	bool getError() const { return error; }
+	const std::string& getErrorStr() const { return errorStr; }
+	void clearError();
+
 protected:
 	RT_TASK* task;
 	int priority;
 	bool running, stopRunning;
+
+	bool error;
+	std::string errorStr;
 
 private:
 	void init();
