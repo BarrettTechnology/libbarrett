@@ -2,6 +2,7 @@
  * low_level_wam-inl.h
  *
  *  Created on: Nov 2, 2010
+ *      Author: cd
  *      Author: dc
  */
 
