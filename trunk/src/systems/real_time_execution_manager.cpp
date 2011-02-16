@@ -93,6 +93,7 @@ void RealTimeExecutionManager::start()
 	}
 
 	if ( !isRunning() ) {
+		stopRunning = false;
 		task = new RT_TASK;
 		rt_task_create(task, "RTEM", 0, priority, T_JOINABLE);
 		rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
@@ -121,6 +122,11 @@ void RealTimeExecutionManager::clearError()
 
 	error = false;
 	errorStr = "";
+
+	stopRunning = true;
+	rt_task_delete(task);
+	delete task;
+	task = NULL;
 }
 
 void RealTimeExecutionManager::init()
@@ -131,8 +137,6 @@ void RealTimeExecutionManager::init()
 	// install a more appropriate mutex
 	delete mutex;
 	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
-
-	clearError();
 }
 
 
