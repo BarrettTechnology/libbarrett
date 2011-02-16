@@ -65,7 +65,16 @@ void LowLevelWamWrapper<DOF>::Sink::operate()
 template<size_t DOF>
 void LowLevelWamWrapper<DOF>::Source::operate()
 {
-	parent->llw.update();
+	try {
+		parent->llw.update();
+	} catch (const std::runtime_error& e) {
+		if (parent->llw.getSafetyModule() != NULL  &&  parent->llw.getSafetyModule()->getMode(true) == SafetyModule::ESTOP) {
+			throw ExecutionManagerException("systems::LowLevelWamWrapper::Source::operate(): E-stop! Cannot communicate with Pucks.");
+		} else {
+			throw;
+		}
+	}
+
 	this->jpOutputValue->setValue(parent->llw.getJointPositions());
 	this->jvOutputValue->setValue(parent->llw.getJointVelocities());
 }
