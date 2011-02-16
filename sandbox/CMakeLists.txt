@@ -32,6 +32,7 @@ set(programs
 	safety_module
 	tactile_test
 	teach
+	two_wams
 )
 
 add_programs(${programs})
