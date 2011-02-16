@@ -58,6 +58,9 @@ public:
 	void setTorques(const jt_type& jt);
 	void definePosition(const jp_type& jp);
 
+
+	SafetyModule* getSafetyModule() const { return safetyModule; }
+
 protected:
 	SafetyModule* safetyModule;
 	std::vector<PuckGroup*> torqueGroups;
