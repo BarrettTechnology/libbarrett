@@ -43,6 +43,7 @@ public:
 	virtual ~ProductManager();
 
 	void enumerate();
+	void cleanUpAfterEstop();
 	void wakeAllPucks() const { Puck::wake(getPucks()); }
 
 	bool foundSafetyModule() const;
@@ -89,6 +90,7 @@ public:
 	static const int FORCE_TORQUE_SENSOR_ID = 8;
 
 protected:
+	void destroyEstopProducts();
 	bool verifyWamPucks(const size_t dof) const;
 
 	libconfig::Config config;
