@@ -41,12 +41,16 @@ void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int poll
 	} while (getMode() != mode);
 }
 
-void SafetyModule::waitForModeChange(int pollingPeriod_us)
+enum SafetyModule::SafetyMode SafetyModule::waitForModeChange(int pollingPeriod_us)
 {
-	enum SafetyMode mode = getMode();
+	enum SafetyMode originalMode = getMode();
+	enum SafetyMode currentMode;
+
 	do {
 		usleep(pollingPeriod_us);
-	} while (getMode() == mode);
+	} while ( (currentMode = getMode()) == originalMode );
+
+	return currentMode;
 }
 
 
