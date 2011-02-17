@@ -101,21 +101,13 @@ ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configF
 
 ProductManager::~ProductManager()
 {
-	if (rtem != NULL) {
-		if (rtem->isRunning()) {
-			rtem->stop();
-		}
-		delete rtem;
-	}
-	delete wam4;
-	delete wam7;
+	destroyEstopProducts();
 	delete sm;
-	delete fts;
-	delete hand;
-	delete ghc;
+	sm = NULL;
 	detail::purge(pucks);
 	if (deleteBus) {
 		delete bus;
+		bus = NULL;
 	}
 }
 
@@ -201,6 +193,35 @@ void ProductManager::enumerate()
 	if (noProductsFound) {
 		syslog(LOG_ERR, "    (none)");
 	}
+}
+
+void ProductManager::cleanUpAfterEstop()
+{
+	destroyEstopProducts();
+	enumerate();
+}
+void ProductManager::destroyEstopProducts()
+{
+	if (rtem != NULL) {
+		if (rtem->isRunning()) {
+			rtem->stop();
+		}
+		if (systems::System::defaultExecutionManager == rtem) {
+			systems::System::defaultExecutionManager = NULL;
+		}
+		delete rtem;
+		rtem = NULL;
+	}
+	delete wam4;
+	wam4 = NULL;
+	delete wam7;
+	wam7 = NULL;
+	delete fts;
+	fts = NULL;
+	delete hand;
+	hand = NULL;
+	delete ghc;
+	ghc = NULL;
 }
 
 
