@@ -34,6 +34,8 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
@@ -62,6 +64,8 @@ void rtemEntryPoint(void* cookie);
 
 class RealTimeExecutionManager : public ExecutionManager {
 public:
+	typedef boost::function<void (RealTimeExecutionManager*, const ExecutionManagerException&)> callback_type;
+
 	explicit RealTimeExecutionManager(double period_s, int rt_priority = 50);
 	explicit RealTimeExecutionManager(const libconfig::Setting& setting);  //TODO(dc): test!
 	virtual ~RealTimeExecutionManager();
@@ -74,6 +78,9 @@ public:
 	const std::string& getErrorStr() const { return errorStr; }
 	void clearError();
 
+	void setErrorCallback(callback_type callback);
+	void clearErrorCallback();
+
 protected:
 	RT_TASK* task;
 	int priority;
@@ -81,6 +88,7 @@ protected:
 
 	bool error;
 	std::string errorStr;
+	callback_type errorCallback;
 
 private:
 	void init();
