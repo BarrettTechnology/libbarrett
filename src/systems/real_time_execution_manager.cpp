@@ -11,6 +11,8 @@
 #include <sys/mman.h>
 #include <native/task.h>
 
+#include <boost/bind.hpp>
+
 #include <barrett/thread/real_time_mutex.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/real_time_execution_manager.h>
@@ -51,6 +53,10 @@ void rtemEntryPoint(void* cookie)
 
 		rtem->error = true;
 		rtem->errorStr = e.what();
+
+		if (rtem->errorCallback) {
+			rtem->errorCallback(rtem, e);
+		}
 	}
 	rtem->running = false;
 }
@@ -62,14 +68,14 @@ void rtemEntryPoint(void* cookie)
 
 RealTimeExecutionManager::RealTimeExecutionManager(double period_s, int rt_priority) :
 	ExecutionManager(period_s),
-	task(NULL), priority(rt_priority), running(false), stopRunning(false), error(false), errorStr()
+	task(NULL), priority(rt_priority), running(false), stopRunning(false), error(false), errorStr(), errorCallback()
 {
 	init();
 }
 
 RealTimeExecutionManager::RealTimeExecutionManager(const libconfig::Setting& setting) :
 	ExecutionManager(setting),
-	task(NULL), priority(), running(false), stopRunning(false), error(false), errorStr()
+	task(NULL), priority(), running(false), stopRunning(false), error(false), errorStr(), errorCallback()
 {
 	priority = setting["thread_priority"];
 	init();
@@ -129,6 +135,18 @@ void RealTimeExecutionManager::clearError()
 	task = NULL;
 }
 
+void RealTimeExecutionManager::setErrorCallback(callback_type callback)
+{
+	BARRETT_SCOPED_LOCK(getMutex());
+
+	errorCallback = callback;
+}
+
+void RealTimeExecutionManager::clearErrorCallback()
+{
+	setErrorCallback(callback_type());
+}
+
 void RealTimeExecutionManager::init()
 {
 	// Avoids memory swapping for this program
@@ -137,6 +155,8 @@ void RealTimeExecutionManager::init()
 	// install a more appropriate mutex
 	delete mutex;
 	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this
+
+	errorCallback = boost::bind(std::terminate);
 }
 
 
