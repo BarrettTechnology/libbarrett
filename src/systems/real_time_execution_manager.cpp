@@ -6,10 +6,14 @@
  */
 
 #include <stdexcept>
+#include <limits>
+#include <cmath>
 
 #include <syslog.h>
 #include <sys/mman.h>
+
 #include <native/task.h>
+#include <native/timer.h>
 
 #include <boost/bind.hpp>
 
@@ -40,13 +44,37 @@ void rtemEntryPoint(void* cookie)
 {
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
+    RTIME start;
+    uint32_t duration;
+	uint32_t min = std::numeric_limits<unsigned int>::max();
+	uint32_t max = 0;
+	uint64_t sum = 0;
+	uint64_t sumSq = 0;
+	uint32_t loopCount = 0;
+
+
 	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 
 	rtem->running = true;
 	try {
 		while ( !rtem->stopRunning ) {
 			rt_task_wait_period(NULL);
+
+
+			start = rt_timer_read();
+
 			rtem->runExecutionCycle();
+
+            duration = (rt_timer_read() - start) / 1000;
+			if (duration < min) {
+				min = duration;
+			}
+			if (duration > max) {
+				max = duration;
+			}
+			sum += duration;
+			sumSq += duration * duration;
+			++loopCount;
 		}
 	} catch (const ExecutionManagerException& e) {
 		BARRETT_SCOPED_LOCK(rtem->getMutex());
@@ -59,6 +87,17 @@ void rtemEntryPoint(void* cookie)
 		}
 	}
 	rtem->running = false;
+
+
+	double mean = (double)sum / loopCount;
+	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
+
+    syslog(LOG_ERR, "RealTimeExecutionManager control-loop stats (microseconds):");
+    syslog(LOG_ERR, "  target period = %.3f", rtem->period * 1e6);
+    syslog(LOG_ERR, "  min = %u", min);
+    syslog(LOG_ERR, "  ave = %.3f", mean);
+    syslog(LOG_ERR, "  max = %u", max);
+    syslog(LOG_ERR, "  stdev = %.3f", stdev);
 }
 
 
