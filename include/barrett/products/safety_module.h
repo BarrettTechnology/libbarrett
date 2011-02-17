@@ -31,7 +31,7 @@ public:
 	void setWamZeroed(bool zeroed = true) const { p->setProperty(Puck::ZERO, zeroed); }
 
 	void waitForMode(enum SafetyMode mode, bool printMessage = true, int pollingPeriod_us = 250000);
-	void waitForModeChange(int pollingPeriod_us = 250000);
+	enum SafetyMode waitForModeChange(int pollingPeriod_us = 250000);
 
 
 	static const char* getSafetyModeStr(enum SafetyMode mode) { return safetyModeStrs[mode]; }
