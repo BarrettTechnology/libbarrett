@@ -49,6 +49,8 @@ boost::thread startWam(ProductManager& pm,
 		boost::function<void (ProductManager&, systems::Wam<4>&)> wt4,
 		boost::function<void (ProductManager&, systems::Wam<7>&)> wt7)
 {
+	// Slow the loop-rate down to 400 Hz
+	pm.getExecutionManager(0.0025);
 	pm.waitForWam();
 	pm.wakeAllPucks();
 
