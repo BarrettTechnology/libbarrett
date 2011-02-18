@@ -9,7 +9,7 @@ set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR
 
 # debug build by default
 if (NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE "Debug")
+   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
 # Fail to link if there are undefined symbols in a shared library
@@ -25,8 +25,20 @@ include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 ### Options
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
-option(NON_REALTIME "Set to on to avoid building code that depends on a real-time operating system (NOT FULLY IMPLEMENTED YET)" OFF)
+option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system (NOT FULLY IMPLEMENTED YET)" OFF)
+option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that can be copied to other machines" OFF)
 
+
+if (OPTIMIZE_FOR_PROCESSOR)
+	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
+	set(NEW_FLAGS "-march=native -mtune=native")
+	
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NEW_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NEW_FLAGS}")
+	
+	message(STATUS "OPTIMIZE_FOR_PROCESSOR: ${NEW_FLAGS}")
+	set(NEW_FLAGS)  # unset
+endif()
 
 
 ### Dependencies
