@@ -7,7 +7,6 @@
 
 
 #include <gtest/gtest.h>
-#include <barrett/systems.h>
 #include "../exposed_io_system.h"
 
 

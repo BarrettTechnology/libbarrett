@@ -12,7 +12,11 @@
 
 #include <barrett/units.h>
 #include <barrett/math/kinematics.h>
-#include <barrett/systems.h>
+#include <barrett/systems/constant.h>
+#include <barrett/systems/tuple_grouper.h>
+#include <barrett/systems/callback.h>
+#include <barrett/systems/helpers.h>
+//#include <barrett/systems/>
 #include "../systems/exposed_io_system.h"
 
 

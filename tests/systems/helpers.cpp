@@ -8,7 +8,7 @@
 
 #include <stdexcept>
 #include <gtest/gtest.h>
-#include <barrett/systems.h>
+#include <barrett/systems/helpers.h>
 #include "./exposed_io_system.h"
 
 namespace {
