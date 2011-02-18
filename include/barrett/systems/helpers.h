@@ -128,18 +128,13 @@ void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT:
  */
 template<typename T>
 void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
-throw(std::invalid_argument)
 {
 	BARRETT_SCOPED_LOCK(input.getEmMutex());
 
-	if ( !input.isConnected() ) {
-		throw std::invalid_argument("(systems::disconnect): "
-		                            "Input is not connected to anything. "
-		                            "Cannot disconnect.");
+	if (input.isConnected()) {
+		input.output->inputs.remove(&input);
+		input.output = NULL;
 	}
-
-	input.output->inputs.remove(&input);
-	input.output = NULL;
 }
 
 template<typename T>

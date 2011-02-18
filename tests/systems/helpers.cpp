@@ -87,10 +87,10 @@ TEST_F(SystemHelperTest, DisconnectDisconnects) {
 	checkDisconnected(eios);
 }
 
-TEST_F(SystemHelperTest, DisconnectThrowsIfInputNotConnected) {
-	ASSERT_THROW(systems::disconnect(eios.input), std::invalid_argument)
-		<< "disconnect() didn't throw when passed an already disconnected input";
-}
+//TEST_F(SystemHelperTest, DisconnectThrowsIfInputNotConnected) {
+//	ASSERT_THROW(systems::disconnect(eios.input), std::invalid_argument)
+//		<< "disconnect() didn't throw when passed an already disconnected input";
+//}
 
 
 }
