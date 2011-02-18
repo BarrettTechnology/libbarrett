@@ -180,6 +180,8 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+	Hand* hand = pm.getHand();
+
 	int err; /* Generic error variable for function calls */
 	int j;
 	int n;
@@ -392,6 +394,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		case MU_P_TO_TOP:
 			if (!wam.moveIsDone())
 				break;
+
+			if (hand != NULL  &&  pose == 0) {
+				hand->initialize();
+				hand->trapezoidalMove(Hand::jp_type(M_PI, M_PI, M_PI, 0.0));
+			}
+
 			mvprintw(9, 3, "Moving to position (from above) ...    ");
 			cur.copyFrom(poses[pose]);
 			wam.moveTo(prev, jv_type(0.0), cur, false, 0.05, 0.05);
@@ -461,6 +469,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	/* Re-fold, print, and exit */
 	printf("Beginning move back to the home location...\n");
+	
+	if (hand != NULL) {
+		hand->trapezoidalMove(Hand::jp_type(0.0));
+		hand->trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
+		hand->trapezoidalMove(Hand::jp_type(M_PI));
+	}
 //	wam.moveHome(false);
 	wam.moveTo(prev, jv_type(0.0), wam.getHomePosition(), false, 0.5, 0.5);
 
