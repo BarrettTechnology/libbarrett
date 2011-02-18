@@ -44,6 +44,7 @@ void rtemEntryPoint(void* cookie)
 {
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
+	uint32_t period_us = rtem->period * 1e6;
     RTIME start;
     uint32_t duration;
 	uint32_t min = std::numeric_limits<unsigned int>::max();
@@ -51,6 +52,7 @@ void rtemEntryPoint(void* cookie)
 	uint64_t sum = 0;
 	uint64_t sumSq = 0;
 	uint32_t loopCount = 0;
+	uint32_t missedCycleCount = 0;
 
 
 	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
@@ -75,6 +77,9 @@ void rtemEntryPoint(void* cookie)
 			sum += duration;
 			sumSq += duration * duration;
 			++loopCount;
+			if (duration > period_us) {
+				++missedCycleCount;
+			}
 		}
 	} catch (const ExecutionManagerException& e) {
 		BARRETT_SCOPED_LOCK(rtem->getMutex());
@@ -93,7 +98,8 @@ void rtemEntryPoint(void* cookie)
 	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
 
     syslog(LOG_ERR, "RealTimeExecutionManager control-loop stats (microseconds):");
-    syslog(LOG_ERR, "  target period = %.3f", rtem->period * 1e6);
+    syslog(LOG_ERR, "  num missed cycles = %u (%u cycles total)", missedCycleCount, loopCount);
+    syslog(LOG_ERR, "  target period = %u", period_us);
     syslog(LOG_ERR, "  min = %u", min);
     syslog(LOG_ERR, "  ave = %.3f", mean);
     syslog(LOG_ERR, "  max = %u", max);
