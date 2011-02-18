@@ -33,9 +33,9 @@
 #define BARRETT_SYSTEMS_HELPERS_H_
 
 
-#include <stdexcept>
+#include <cassert>
 
-#include <barrett/thread/abstract/mutex.h>
+//#include <barrett/thread/abstract/mutex.h>
 #include <barrett/systems/abstract/system.h>
 
 
@@ -43,111 +43,47 @@ namespace barrett {
 namespace systems {
 
 
-/** Connects a System::Output to a System::Input.
- *
- * @param[in] output The System::Output that will source the data.
- * @param[in] input The System::Input that will receive the data.
- * @throws std::invalid_argument in the case that \c input was already
- *         connected to a System::Output.
- * @see reconnect()
- * @see forceConnect()
- */
 template<typename T>
-void connect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
-throw(std::invalid_argument)
+void connect(System::Output<T>& output, System::Input<T>& input)
 {
-	BARRETT_SCOPED_LOCK(input.getEmMutex());
-
-	if (input.isConnected()) {
-		throw std::invalid_argument("(systems::connect): "
-		                            "Input is already connected to something. "
-		                            "Use 'systems::reconnect' instead.");
-	}
+	assert( !input.isConnected() );
 
 	input.output = &output;
-	output.inputs.push_back(&input);
+	output.inputs.push_back(input);
 }
 
-/** Takes a System::Input that is connected to a System::Output and reconnects
- * it to another System::Output.
- *
- * @param[in] newOutput The System::Output that \c input will be connected to.
- * @param[in] input The System::Input that will be disconnected and then
- *            connected to \c newOutput.
- * @throws std::invalid_argument in the case that \c input was not already
- *         connected to another System::Output.
- * @see connect()
- */
 template<typename T>
-void reconnect(System::Output<T>& newOutput, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
-throw(std::invalid_argument)
+void reconnect(System::Output<T>& newOutput, System::Input<T>& input)
 {
-	BARRETT_SCOPED_LOCK(input.getEmMutex());
+	assert(input.isConnected());
 
-	if ( !input.isConnected() ) {
-		throw std::invalid_argument("(systems::reconnect): "
-		                            "Input is not connected to anything. "
-		                            "Use 'systems::connect' instead.");
-	}
-
-	// disconnect old output
-	input.output->inputs.remove(&input);
-
-	// connect new output
-	input.output = &newOutput;
-	newOutput.inputs.push_back(&input);
+	disconnect(input);
+	connect(newOutput, input);
 }
 
-/** Connects a System::Output to a System::Input, even if the System::Input is
- * already connected.
- *
- * This function could also be named \c connectOrReconnect().
- *
- * @param[in] output The System::Output that will source the data.
- * @param[in] input The System::Input that will receive the data.
- * @see connect()
- */
 template<typename T>
-void forceConnect(System::Output<T>& output, System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
+void forceConnect(System::Output<T>& output, System::Input<T>& input)
 {
-	BARRETT_SCOPED_LOCK(input.getEmMutex());
-
 	if (input.isConnected()) {
-		// disconnect old output
-		input.output->inputs.remove(&input);
+		reconnect(output, input);
+	} else {
+		connect(output, input);
 	}
-
-	input.output = &output;
-	output.inputs.push_back(&input);
 }
 
-/** Disconnects a System::Input from a System::Output.
- *
- * @param[in] input The System::Input that will stop receiving data from its
- *            System::Output, if any.
- */
 template<typename T>
-void disconnect(System::Input<T>& input)  //NOLINT: non-const reference parameter chosen to keep syntax clean
+void disconnect(System::Input<T>& input)
 {
-	BARRETT_SCOPED_LOCK(input.getEmMutex());
-
 	if (input.isConnected()) {
-		input.output->inputs.remove(&input);
+		input.output->inputs.erase(System::Output<T>::connected_input_list_type::s_iterator_to(input));
 		input.output = NULL;
 	}
 }
 
 template<typename T>
-void disconnect(System::Output<T>& output)  //NOLINT: non-const reference parameter chosen to keep syntax clean
+void disconnect(System::Output<T>& output)
 {
-	BARRETT_SCOPED_LOCK(output.getValueObject()->getEmMutex());
-
-	typename std::list<System::Input<T>* >::iterator i;
-	for (i = output.inputs.begin(); i != output.inputs.end(); ++i) {
-		(*i)->output = NULL;
-	}
-
-	output.inputs.clear();
+	output.inputs.clear_and_dispose(typename System::Input<T>::DisconnectDisposer());
 }
 
 

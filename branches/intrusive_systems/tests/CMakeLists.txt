@@ -6,35 +6,35 @@ project(libbarrett_tests)
 #file(GLOB_RECURSE tests_SOURCES "*.cpp")
 set(tests_SOURCES
 	log/reader.cpp
-	log/real_time_writer.cpp
+	#log/real_time_writer.cpp
 	log/verify_file_contents.cpp
 	log/writer.cpp
 
-	math/first_order_filter.cpp
-	math/kinematics.cpp
-	math/matrix.cpp
-	math/spline.cpp
-	math/traits.cpp
-	math/utils.cpp
-	math/vector.cpp
+#	math/first_order_filter.cpp
+#	math/kinematics.cpp
+#	math/matrix.cpp
+#	math/spline.cpp
+#	math/traits.cpp
+#	math/utils.cpp
+#	math/vector.cpp
 
-	systems/abstract/controller.cpp
+#	systems/abstract/controller.cpp
 	systems/abstract/execution_manager.cpp
-	systems/abstract/single_io.cpp
+#	systems/abstract/single_io.cpp
 	systems/abstract/system.cpp
-	systems/callback.cpp
-	systems/constant.cpp
-	systems/converter.cpp
-	systems/first_order_filter.cpp
-	systems/gain.cpp
+#	systems/callback.cpp
+#	systems/constant.cpp
+#	systems/converter.cpp
+#	systems/first_order_filter.cpp
+#	systems/gain.cpp
 	systems/helpers.cpp
-	systems/io_conversion.cpp
-	systems/manual_execution_manager.cpp
-	systems/pid_controller.cpp
-	systems/print_to_stream.cpp
-	systems/summer-polarity.cpp
-	systems/summer.cpp
-#	systems/tool_orientation.cpp
+#	systems/io_conversion.cpp
+#	systems/manual_execution_manager.cpp
+#	systems/pid_controller.cpp
+#	systems/print_to_stream.cpp
+#	systems/summer-polarity.cpp
+#	systems/summer.cpp
+	#systems/tool_orientation.cpp
 )
 
 add_executable(tests ${tests_SOURCES})

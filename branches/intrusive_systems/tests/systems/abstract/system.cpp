@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <gtest/gtest.h>
+#include <barrett/systems/abstract/system.h>
 #include <barrett/systems/helpers.h>
 #include "../exposed_io_system.h"
 
