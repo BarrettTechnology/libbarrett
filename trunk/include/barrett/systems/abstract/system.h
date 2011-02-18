@@ -310,8 +310,7 @@ public:
 		friend void forceConnect(System::Output<T2>& output, System::Input<T2>& input);  //NOLINT: see ../helpers.h
 
 		template<typename T2>
-		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
-		throw(std::invalid_argument);
+		friend void disconnect(System::Input<T2>& input);  //NOLINT: see ../helpers.h
 
 		template<typename T2>
 		friend void disconnect(System::Output<T2>& output);  //NOLINT: see ../helpers.h
@@ -458,8 +457,7 @@ public:
 		friend void forceConnect(System::Output<T2>& output, System::Input<T2>& input);  //NOLINT: see ../helpers.h
 
 		template<typename T2>
-		friend void disconnect(System::Input<T2>& input)  //NOLINT: see ../helpers.h
-		throw(std::invalid_argument);
+		friend void disconnect(System::Input<T2>& input);  //NOLINT: see ../helpers.h
 
 		template<typename T2>
 		friend void disconnect(System::Output<T2>& output);  //NOLINT: see ../helpers.h
