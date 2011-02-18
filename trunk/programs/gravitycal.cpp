@@ -473,7 +473,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (hand != NULL) {
 		hand->trapezoidalMove(Hand::jp_type(0.0));
 		hand->trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
-		hand->trapezoidalMove(Hand::jp_type(M_PI));
+		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0, M_PI/2.0, M_PI/2.0, M_PI));
 	}
 //	wam.moveHome(false);
 	wam.moveTo(prev, jv_type(0.0), wam.getHomePosition(), false, 0.5, 0.5);
