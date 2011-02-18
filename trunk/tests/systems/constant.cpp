@@ -6,7 +6,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <barrett/systems.h>
+#include <barrett/systems/constant.h>
 #include "./exposed_io_system.h"
 
 
