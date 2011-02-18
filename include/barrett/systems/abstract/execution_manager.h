@@ -70,7 +70,7 @@ public:
 		mutex(new thread::NullMutex), period(),
 		managedSystems(), alwaysUpdatedSystems(), updatedSystems()
 	{
-		period = detail::numericToDouble(setting["control_loop_period"]);
+		period = barrett::detail::numericToDouble(setting["control_loop_period"]);
 	}
 	virtual ~ExecutionManager();
 
