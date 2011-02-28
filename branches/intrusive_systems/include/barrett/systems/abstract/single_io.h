@@ -77,8 +77,8 @@ class SingleIO :	public System, public SingleInput<InputType>,
 					public SingleOutput<OutputType>,
 					public Conversion<OutputType> {
 public:
-	explicit SingleIO(bool updateEveryExecutionCycle = false) :
-		System(updateEveryExecutionCycle),
+	explicit SingleIO(const std::string& sysName = "SingleIO") :
+		System(sysName),
 		SingleInput<InputType>(this), SingleOutput<OutputType>(this) {}
 	virtual ~SingleIO() {}
 

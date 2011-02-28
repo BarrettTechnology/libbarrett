@@ -5,6 +5,7 @@
  *      Author: dc
  */
 
+#include <cassert>
 
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/systems/abstract/system.h>
@@ -19,28 +20,32 @@ ExecutionManager::~ExecutionManager()
 {
 	{
 		BARRETT_SCOPED_LOCK(getMutex());
-		managedSystems.clear();
-//		managedSystems.clear_and_dispose(System::Input<T>::DisconnectDisposer());
+		managedSystems.clear_and_dispose(System::StopManagingDisposer());
 	}
 
 	delete mutex;
 }
 
-void ExecutionManager::startManaging(System* sys)
+void ExecutionManager::startManaging(System& sys)
 {
 	BARRETT_SCOPED_LOCK(getMutex());
 
-	if (sys->hasExecutionManager()) {
-		sys->getExecutionManager()->stopManaging(sys);
+	if (sys.hasExecutionManager()) {
+		sys.getExecutionManager()->stopManaging(sys);
 	}
-	managedSystems.push_back(*sys);
+	managedSystems.push_back(sys);
+	sys.em = this;
 }
 
 // this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
-void ExecutionManager::stopManaging(System* sys)
+void ExecutionManager::stopManaging(System& sys)
 {
 	BARRETT_SCOPED_LOCK(getMutex());
-	managedSystems.erase(ExecutionManager::managed_system_list_type::s_iterator_to(*sys));
+
+	assert(sys.getExecutionManager() == this);
+
+	sys.em = NULL;
+	managedSystems.erase(ExecutionManager::managed_system_list_type::s_iterator_to(sys));
 }
 
 

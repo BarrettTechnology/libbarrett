@@ -18,8 +18,8 @@ class ExposedIOSystem : public barrett::systems::SingleIO<T, T> {
 public:
 	mutable bool operateCalled;
 
-	ExposedIOSystem(bool updateEveryExecutionCycle = true) :
-		barrett::systems::SingleIO<T, T>(updateEveryExecutionCycle),
+	ExposedIOSystem(const std::string& sysName = "ExposedIOSystem") :
+		barrett::systems::SingleIO<T, T>(sysName),
 		operateCalled(false) {}
 
 	const T& getInputValue() const {
@@ -31,20 +31,24 @@ public:
 	}
 
 	void setOutputValue(const T& value) {
-		this->outputValue->setValue(value);
+		this->outputValue->setData(value);
 	}
 
 	void setOutputValueUndefined() {
-		this->outputValue->setValueUndefined();
+		this->outputValue->setUndefined();
 	}
 
 	void delegateOutputValueTo(barrett::systems::System::Output<T>& delegate) {
 		this->outputValue->delegateTo(delegate);
 	}
 
+	void undelegate() {
+		this->outputValue->undelegate();
+	}
+
 protected:
 	// This System has no invalid Input state.
-	virtual bool inputsValid() {
+	virtual bool inputsValid() const {
 		return true;
 	}
 
@@ -67,6 +71,9 @@ void checkConnected(ExposedIOSystem<T>* outSys,
 					const ExposedIOSystem<T>& inSys,
 					const T& value)
 {
+	EXPECT_TRUE(inSys.input.isConnected());
+	EXPECT_TRUE((outSys->output.isConnected()));
+
 	outSys->operateCalled = false;
 	outSys->setOutputValue(value);
 
@@ -92,8 +99,7 @@ template<typename T>
 void checkDisconnected(const ExposedIOSystem<T>& inSys)
 {
 	EXPECT_FALSE(inSys.inputValueDefined()) << "input value defined";
-	EXPECT_THROW(inSys.getInputValue(), std::logic_error)
-			<< "input thinks it has an output";
+	EXPECT_FALSE(inSys.input.isConnected()) << "input thinks it has an output";
 }
 
 

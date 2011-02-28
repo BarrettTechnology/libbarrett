@@ -29,7 +29,7 @@ set(tests_SOURCES
 #	systems/gain.cpp
 	systems/helpers.cpp
 #	systems/io_conversion.cpp
-#	systems/manual_execution_manager.cpp
+	systems/manual_execution_manager.cpp
 #	systems/pid_controller.cpp
 #	systems/print_to_stream.cpp
 #	systems/summer-polarity.cpp

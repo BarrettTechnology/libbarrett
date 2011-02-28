@@ -57,6 +57,9 @@ class ExecutionManager;
 
 
 class System {
+private:
+	typedef uint_fast32_t update_token_type;
+
 public:
 	// Forward decls
 	class AbstractInput;
@@ -65,8 +68,9 @@ public:
 	template<typename T> class Output;
 
 
-	explicit System(const std::string& sysName = "System") : name(sysName), em(NULL), updateToken(UT_NULL) {}
-	virtual ~System() {}
+	explicit System(const std::string& sysName = "System") :
+			name(sysName), em(NULL), ut(UT_NULL) {}
+	virtual ~System();
 
 	void setName(const std::string& newName) { name = newName; }
 	const std::string& getName() const { return name; }
@@ -76,7 +80,7 @@ public:
 	thread::Mutex& getEmMutex() const;
 
 protected:
-	void update(uint_fast32_t ut);
+	void update(update_token_type updateToken);
 
 	virtual bool inputsValid() const;
 	virtual void operate() = 0;
@@ -136,12 +140,18 @@ public:
 
 
 private:
-	static const uint_fast32_t UT_NULL = 0;
-	uint_fast32_t updateToken;
+	static const update_token_type UT_NULL = 0;
+	update_token_type ut;
 
 
 	typedef boost::intrusive::list_member_hook<> managed_hook_type;
 	managed_hook_type managedHook;
+
+	struct StopManagingDisposer {
+		void operator() (System* sys) {
+			sys->em = NULL;
+		}
+	};
 
 	typedef boost::intrusive::list<AbstractInput, boost::intrusive::member_hook<AbstractInput, AbstractInput::child_hook_type, &AbstractInput::childHook> > child_input_list_type;
 	child_input_list_type inputs;
@@ -166,16 +176,20 @@ public:
 
 	bool isConnected() const { return output != NULL; }
 	virtual bool valueDefined() const {
-		return isConnected()  &&  output->getValueObject()->updateData(parentSys.updateToken);
+		return isConnected()  &&  output->getValueObject()->updateData(parentSys.ut);
 	}
 
 	const T& getValue() const {
+		// XXX
+		if (!valueDefined()) {
+			throw std::logic_error("");
+		}
 		assert(valueDefined());
 
 		// valueDefined() calls Output<T>::Value::updateData() for us. Make
 		// sure it gets called even if NDEBUG is defined.
 #ifdef NDEBUG
-		output->getValueObject()->updateData(parentSys.updateToken);
+		output->getValueObject()->updateData(parentSys.ut);
 #endif
 
 		return *(output->getValueObject()->getData());
@@ -229,10 +243,12 @@ public:
 	virtual ~Output() {
 		disconnect(*this);
 		value.undelegate();
+		value.delegators.clear_and_dispose(typename Value::UndelegateDisposer());
 	}
 
+	// TODO(dc): How should isConnected() treat delegation?
 	bool isConnected() const {
-		return !inputs.empty();
+		return !inputs.empty()  ||  !value.delegators.empty();
 	}
 
 protected:
@@ -289,13 +305,19 @@ protected:
 private:
 	explicit Value(Output<T>* parent) : parentOutput(*parent), delegate(NULL), data(NULL) {}
 
-	bool updateData(uint_fast32_t updateToken) {
+	bool updateData(update_token_type updateToken) {
 		parentOutput.parentSys.update(updateToken);
 		return isDefined();
 	}
 
 	typedef boost::intrusive::list<Output<T>, boost::intrusive::function_hook<typename detail::IntrusiveDelegateFunctor<T> > > delegate_output_list_type;
 	delegate_output_list_type delegators;
+
+	struct UndelegateDisposer {
+		void operator() (Output<T>* output) {
+			output->value.delegate = NULL;
+		}
+	};
 
 	friend class Input<T>;
 	friend class Output<T>;
@@ -305,6 +327,44 @@ private:
 
 
 #undef DECLARE_HELPER_FRIENDS
+
+
+template<typename T>
+void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
+{
+	undelegate();
+	delegate = &(delegateOutput.value);
+	delegate->delegators.push_back(parentOutput);
+}
+
+template<typename T>
+void System::Output<T>::Value::undelegate()
+{
+	if (delegate != NULL) {
+		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
+		delegate = NULL;
+	}
+}
+
+
+namespace detail {
+template<typename T> inline typename IntrusiveDelegateFunctor<T>::hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(IntrusiveDelegateFunctor<T>::value_type &value)
+{
+	return &value.delegateHook;
+}
+template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(const IntrusiveDelegateFunctor<T>::value_type &value)
+{
+	return &value.delegateHook;
+}
+template<typename T> inline typename IntrusiveDelegateFunctor<T>::pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::hook_ptr n)
+{
+	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
+}
+template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::const_hook_ptr n)
+{
+	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
+}
+}
 
 
 }

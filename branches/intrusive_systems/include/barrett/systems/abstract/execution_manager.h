@@ -59,16 +59,16 @@ public:
 class ExecutionManager {
 public:
 	explicit ExecutionManager(double period_s) :
-		mutex(new thread::NullMutex), period(period_s), updateToken(System::UT_NULL) {}
+		mutex(new thread::NullMutex), period(period_s), ut(System::UT_NULL) {}
 	explicit ExecutionManager(const libconfig::Setting& setting) :
-		mutex(new thread::NullMutex), period(), updateToken(System::UT_NULL)
+		mutex(new thread::NullMutex), period(), ut(System::UT_NULL)
 	{
 		period = barrett::detail::numericToDouble(setting["control_loop_period"]);
 	}
 	~ExecutionManager();
 
-	void startManaging(System* sys);
-	void stopManaging(System* sys);
+	void startManaging(System& sys);
+	void stopManaging(System& sys);
 
 	thread::Mutex& getMutex() { return *mutex; }
 	double getPeriod() const {  return period;  }
@@ -77,17 +77,17 @@ protected:
 	void runExecutionCycle() {
 		BARRETT_SCOPED_LOCK(getMutex());
 
-		++updateToken;
+		++ut;
 
 		managed_system_list_type::iterator i(managedSystems.begin()), iEnd(managedSystems.end());
 		for (; i != iEnd; ++i) {
-			i->update(updateToken);
+			i->update(ut);
 		}
 	}
 
 	thread::Mutex* mutex;
 	double period;
-	uint_fast32_t updateToken;
+	System::update_token_type ut;
 
 private:
 	typedef boost::intrusive::list<System, boost::intrusive::member_hook<System, System::managed_hook_type, &System::managedHook> > managed_system_list_type;

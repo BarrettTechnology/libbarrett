@@ -17,39 +17,37 @@ namespace {
 using namespace barrett;
 
 
-// TODO(dc): make this a type-parameterized test case so users can test their
-// own code
 class SystemTest : public ::testing::Test {
 protected:
-	ExposedIOSystem<double> eios;
+	ExposedIOSystem<double> out;
+	ExposedIOSystem<double> in;
 };
 
 
 TEST_F(SystemTest, GeneralIO) {
-	systems::connect(eios.output, eios.input);
-	EXPECT_FALSE(eios.inputValueDefined())
-		<< "input value not initially undefined when no initial value given";
+	systems::connect(out.output, in.input);
+	EXPECT_FALSE(in.inputValueDefined()) << "input value not initially undefined";
 
 	// set outputValue, then make sure value is defined and correct
-	checkConnected(&eios, eios, 12.2);
+	checkConnected(&out, in, 12.2);
 
-	eios.setOutputValueUndefined();
-	EXPECT_FALSE(eios.inputValueDefined())
-		<< "input value defined after call to outputValue.setValueUndefined()";
+	out.setOutputValueUndefined();
+	EXPECT_FALSE(in.inputValueDefined())
+		<< "input value defined after call to outputValue.setUndefined()";
 
 	// set outputValue, then make sure value is defined and correct
-	checkConnected(&eios, eios, 145.0);
+	checkConnected(&out, in, 145.0);
 }
 
 TEST_F(SystemTest, InputGetValueThrowsWhenNotConnected) {
-	EXPECT_THROW(eios.getInputValue(), std::logic_error)
+	EXPECT_THROW(in.getInputValue(), std::logic_error)
 		<< "input.getValue() didn't throw when not connected";
 }
 
 TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
-	systems::connect(eios.output, eios.input);
+	systems::connect(out.output, in.input);
 
-	EXPECT_THROW(eios.getInputValue(),
+	EXPECT_THROW(in.getInputValue(),
 			std::logic_error)
 		<< "input.getValue() didn't throw when value undefined";
 }
@@ -60,17 +58,17 @@ TEST_F(SystemTest, OutputNotifyInputs) {
 	std::vector<ExposedIOSystem<double>*> systems(numInputs);
 	for (size_t i = 0; i < numInputs; ++i) {
 		systems[i] = new ExposedIOSystem<double>;
-		systems::connect(eios.output, systems[i]->input);
+		systems::connect(out.output, systems[i]->input);
 		systems[i]->operateCalled = false;
 	}
 
-	eios.setOutputValue(-87.1);
+	out.setOutputValue(-87.1);
 
 	for (size_t i = 0; i < numInputs; ++i) {
-		eios.operateCalled = false;
+		out.operateCalled = false;
 		systems[i]->inputValueDefined();  // update the value
-		EXPECT_TRUE(eios.operateCalled)
-			<< "operate() didn't get called on eios for system " << i;
+		EXPECT_TRUE(out.operateCalled)
+			<< "operate() didn't get called on EIOS for system " << i;
 
 		delete systems[i];
 	}
@@ -79,19 +77,19 @@ TEST_F(SystemTest, OutputNotifyInputs) {
 // TODO(dc): the delegate system could be better tested
 TEST_F(SystemTest, OutputDelegates) {
 	ExposedIOSystem<double> d;
-	eios.delegateOutputValueTo(d.output);
+	out.delegateOutputValueTo(d.output);
 
-	systems::connect(eios.output, eios.input);
-	checkConnected(&d, eios, 34.8);
+	systems::connect(out.output, in.input);
+	checkConnected(&d, in, 34.8);
 }
 
 TEST_F(SystemTest, OutputDelegatesCanBeChained) {
 	ExposedIOSystem<double> d1, d2;
 	d2.delegateOutputValueTo(d1.output);
-	eios.delegateOutputValueTo(d2.output);
+	out.delegateOutputValueTo(d2.output);
 
-	systems::connect(eios.output, eios.input);
-	checkConnected(&d1, eios, 38.234);
+	systems::connect(out.output, in.input);
+	checkConnected(&d1, in, 38.234);
 }
 
 
