@@ -25,21 +25,11 @@ protected:
 };
 
 
-// systems::connect
 TEST_F(SystemHelperTest, ConnectConnects) {
 	systems::connect(out.output, in.input);
 	checkConnected(&out, in, 5.7);
 }
 
-TEST_F(SystemHelperTest, ConnectDoesntConnectTwice) {
-	ASSERT_NO_THROW(systems::connect(out.output, in.input))
-		<< "connect() threw on first connection";
-	ASSERT_THROW(systems::connect(in.output, in.input), std::invalid_argument)
-		<< "connect() didn't throw on second connection";
-}
-
-
-// systems::reconnect
 TEST_F(SystemHelperTest, ReconnectReconnects) {
 	systems::connect(out.output, in.input);
 	checkConnected(&out, in, -8.6e4);
@@ -49,14 +39,6 @@ TEST_F(SystemHelperTest, ReconnectReconnects) {
 	checkConnected(&other, in, 712.0);
 }
 
-TEST_F(SystemHelperTest, ReconnectThrowsIfInputNotConnected) {
-	ASSERT_THROW(systems::reconnect(out.output, in.input),
-			std::invalid_argument)
-		<< "reconnect() didn't throw when passed a disconnected input";
-}
-
-
-// systems::forceConnect
 TEST_F(SystemHelperTest, ForceConnectConnects) {
 	systems::forceConnect(out.output, in.input);
 	checkConnected(&out, in, 5.7);
@@ -71,8 +53,6 @@ TEST_F(SystemHelperTest, ForceConnectReconnects) {
 	checkConnected(&other, in, 712.0);
 }
 
-
-// systems::disconnect
 TEST_F(SystemHelperTest, DisconnectDisconnects) {
 	systems::connect(out.output, in.input);
 	checkConnected(&out, in, 42.0);
@@ -81,6 +61,19 @@ TEST_F(SystemHelperTest, DisconnectDisconnects) {
 		<< "disconnect() threw when passed a connected input";
 	checkNotConnected(&out, in, 5.0);
 	checkDisconnected(in);
+}
+
+
+// death tests
+typedef SystemHelperTest SystemHelperDeathTest;
+
+TEST_F(SystemHelperDeathTest, ConnectDoesntConnectTwice) {
+	systems::connect(out.output, in.input);
+	ASSERT_DEATH(systems::connect(in.output, in.input), "");
+}
+
+TEST_F(SystemHelperDeathTest, ReconnectDiesIfInputNotConnected) {
+	ASSERT_DEATH(systems::reconnect(out.output, in.input), "");
 }
 
 

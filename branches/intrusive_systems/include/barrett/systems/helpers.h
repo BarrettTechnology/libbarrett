@@ -33,7 +33,6 @@
 #define BARRETT_SYSTEMS_HELPERS_H_
 
 
-#include <stdexcept> // XXX
 #include <cassert>
 
 //#include <barrett/thread/abstract/mutex.h>
@@ -47,10 +46,6 @@ namespace systems {
 template<typename T>
 void connect(System::Output<T>& output, System::Input<T>& input)
 {
-	// XXX
-	if (input.isConnected()) {
-		throw std::invalid_argument("");
-	}
 	assert( !input.isConnected() );
 
 	input.output = &output;
@@ -60,10 +55,6 @@ void connect(System::Output<T>& output, System::Input<T>& input)
 template<typename T>
 void reconnect(System::Output<T>& newOutput, System::Input<T>& input)
 {
-	// XXX
-	if (!input.isConnected()) {
-		throw std::invalid_argument("");
-	}
 	assert(input.isConnected());
 
 	disconnect(input);

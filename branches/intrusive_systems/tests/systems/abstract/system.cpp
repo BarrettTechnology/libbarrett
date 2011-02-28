@@ -39,19 +39,6 @@ TEST_F(SystemTest, GeneralIO) {
 	checkConnected(&out, in, 145.0);
 }
 
-TEST_F(SystemTest, InputGetValueThrowsWhenNotConnected) {
-	EXPECT_THROW(in.getInputValue(), std::logic_error)
-		<< "input.getValue() didn't throw when not connected";
-}
-
-TEST_F(SystemTest, InputGetValueThrowsWhenUndefined) {
-	systems::connect(out.output, in.input);
-
-	EXPECT_THROW(in.getInputValue(),
-			std::logic_error)
-		<< "input.getValue() didn't throw when value undefined";
-}
-
 TEST_F(SystemTest, OutputNotifyInputs) {
 	const size_t numInputs = 50;
 
@@ -90,6 +77,20 @@ TEST_F(SystemTest, OutputDelegatesCanBeChained) {
 
 	systems::connect(out.output, in.input);
 	checkConnected(&d1, in, 38.234);
+}
+
+
+// death tests
+typedef SystemTest SystemDeathTest;
+
+TEST_F(SystemDeathTest, InputGetValueDiesWhenNotConnected) {
+	ASSERT_DEATH(in.getInputValue(), "");
+}
+
+TEST_F(SystemDeathTest, InputGetValueDiesWhenUndefined) {
+	systems::connect(out.output, in.input);
+
+	ASSERT_DEATH(in.getInputValue(), "");
 }
 
 

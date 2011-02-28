@@ -180,10 +180,6 @@ public:
 	}
 
 	const T& getValue() const {
-		// XXX
-		if (!valueDefined()) {
-			throw std::logic_error("");
-		}
 		assert(valueDefined());
 
 		// valueDefined() calls Output<T>::Value::updateData() for us. Make
