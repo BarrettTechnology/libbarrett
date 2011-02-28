@@ -75,7 +75,7 @@ public:
 	void setName(const std::string& newName) { name = newName; }
 	const std::string& getName() const { return name; }
 
-	bool hasExecutionManager() const { return em != NULL; }
+	bool hasExecutionManager() const { return getExecutionManager() != NULL; }
 	ExecutionManager* getExecutionManager() const { return em; }
 	thread::Mutex& getEmMutex() const;
 
@@ -325,46 +325,12 @@ private:
 #undef DECLARE_HELPER_FRIENDS
 
 
-template<typename T>
-void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
-{
-	undelegate();
-	delegate = &(delegateOutput.value);
-	delegate->delegators.push_back(parentOutput);
-}
-
-template<typename T>
-void System::Output<T>::Value::undelegate()
-{
-	if (delegate != NULL) {
-		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
-		delegate = NULL;
-	}
-}
-
-
-namespace detail {
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(IntrusiveDelegateFunctor<T>::value_type &value)
-{
-	return &value.delegateHook;
-}
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(const IntrusiveDelegateFunctor<T>::value_type &value)
-{
-	return &value.delegateHook;
-}
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::hook_ptr n)
-{
-	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
-}
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::const_hook_ptr n)
-{
-	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
 }
 }
 
 
-}
-}
+// include template definitions
+#include <barrett/systems/abstract/detail/system-inl.h>
 
 
 #endif /* BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_ */

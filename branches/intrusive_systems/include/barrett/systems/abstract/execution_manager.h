@@ -28,6 +28,11 @@
  *      Author: dc
  */
 
+
+// Include system.h before the include-guard to resolve include order dependency.
+#include <barrett/systems/abstract/system.h>
+
+
 #ifndef BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_
 #define BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_
 
@@ -40,7 +45,6 @@
 #include <barrett/detail/libconfig_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/thread/null_mutex.h>
-#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {
@@ -74,16 +78,7 @@ public:
 	double getPeriod() const {  return period;  }
 
 protected:
-	void runExecutionCycle() {
-		BARRETT_SCOPED_LOCK(getMutex());
-
-		++ut;
-
-		managed_system_list_type::iterator i(managedSystems.begin()), iEnd(managedSystems.end());
-		for (; i != iEnd; ++i) {
-			i->update(ut);
-		}
-	}
+	void runExecutionCycle();
 
 	thread::Mutex* mutex;
 	double period;

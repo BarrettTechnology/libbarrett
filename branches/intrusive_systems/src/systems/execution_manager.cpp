@@ -48,6 +48,17 @@ void ExecutionManager::stopManaging(System& sys)
 	managedSystems.erase(ExecutionManager::managed_system_list_type::s_iterator_to(sys));
 }
 
+void ExecutionManager::runExecutionCycle() {
+	BARRETT_SCOPED_LOCK(getMutex());
+
+	++ut;
+
+	managed_system_list_type::iterator i(managedSystems.begin()), iEnd(managedSystems.end());
+	for (; i != iEnd; ++i) {
+		i->update(ut);
+	}
+}
+
 
 }
 }
