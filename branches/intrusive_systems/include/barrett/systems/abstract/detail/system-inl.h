@@ -48,7 +48,30 @@ ExecutionManager* System::Output<T>::collectExecutionManager() const
 		}
 	}
 
+	typename Value::delegate_output_list_type::const_iterator o(value.delegators.begin()), oEnd(value.delegators.end());
+	for (; o != oEnd; ++o) {
+		if (o->parentSys.hasExecutionManager()) {
+			return o->parentSys.getExecutionManager();
+		}
+	}
+
 	return NULL;
+}
+
+template<typename T>
+void System::Output<T>::pushExecutionManager()
+{
+	if (value.delegate != NULL) {
+		value.delegate->parentOutput.parentSys.setExecutionManager(parentSys.em);
+	}
+}
+
+template<typename T>
+void System::Output<T>::unsetExecutionManager()
+{
+	if (value.delegate != NULL) {
+		value.delegate->parentOutput.parentSys.unsetExecutionManager();
+	}
 }
 
 template<typename T>
@@ -57,6 +80,8 @@ void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 	undelegate();
 	delegate = &(delegateOutput.value);
 	delegate->delegators.push_back(parentOutput);
+
+	parentOutput.pushExecutionManager();
 }
 
 template<typename T>
@@ -64,6 +89,7 @@ void System::Output<T>::Value::undelegate()
 {
 	if (delegate != NULL) {
 		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
+		parentOutput.unsetExecutionManager();
 		delegate = NULL;
 	}
 }

@@ -47,29 +47,6 @@ TEST_F(SystemTest, GeneralIO) {
 	checkConnected(mem, &out, in, 145.0);
 }
 
-TEST_F(SystemTest, OutputNotifyInputs) {
-	const size_t numInputs = 50;
-
-	std::vector<ExposedIOSystem<double>*> systems(numInputs);
-	for (size_t i = 0; i < numInputs; ++i) {
-		systems[i] = new ExposedIOSystem<double>;
-		systems::connect(out.output, systems[i]->input);
-		systems[i]->operateCalled = false;
-	}
-
-	out.setOutputValue(-87.1);
-
-	for (size_t i = 0; i < numInputs; ++i) {
-		out.operateCalled = false;
-		systems[i]->inputValueDefined();  // update the value
-		EXPECT_TRUE(out.operateCalled)
-			<< "operate() didn't get called on EIOS for system " << i;
-
-		delete systems[i];
-	}
-}
-
-// TODO(dc): the delegate system could be better tested
 TEST_F(SystemTest, OutputDelegates) {
 	ExposedIOSystem<double> d;
 	out.delegateOutputValueTo(d.output);
@@ -87,6 +64,117 @@ TEST_F(SystemTest, OutputDelegatesCanBeChained) {
 	checkConnected(mem, &d1, in, 38.234);
 }
 
+TEST_F(SystemTest, OutputDelegatePropagatesEmDirect) {
+	ExposedIOSystem<double> d1, d2;
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_FALSE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d1.getExecutionManager());
+
+	EXPECT_FALSE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d2.getExecutionManager());
+
+
+	in.delegateOutputValueTo(d1.output);
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_TRUE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d1.getExecutionManager());
+
+	EXPECT_FALSE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d2.getExecutionManager());
+
+
+	d1.delegateOutputValueTo(d2.output);
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_TRUE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d1.getExecutionManager());
+
+	EXPECT_TRUE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d2.getExecutionManager());
+}
+
+TEST_F(SystemTest, OutputDelegatePropagatesEmIndirect) {
+	ExposedIOSystem<double> d1, d2;
+	d1.delegateOutputValueTo(d2.output);
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_FALSE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d1.getExecutionManager());
+
+	EXPECT_FALSE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d2.getExecutionManager());
+
+
+	in.delegateOutputValueTo(d1.output);
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_TRUE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d1.getExecutionManager());
+
+	EXPECT_TRUE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d2.getExecutionManager());
+}
+
+TEST_F(SystemTest, OutputUndelegatePropagatesEm) {
+	ExposedIOSystem<double> d1, d2;
+	in.delegateOutputValueTo(d1.output);
+	d1.delegateOutputValueTo(d2.output);
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_TRUE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d1.getExecutionManager());
+
+	EXPECT_TRUE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, d2.getExecutionManager());
+
+
+	in.undelegate();
+
+	EXPECT_TRUE(in.hasExecutionManager());
+	EXPECT_TRUE(in.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, in.getExecutionManager());
+
+	EXPECT_FALSE(d1.hasExecutionManager());
+	EXPECT_FALSE(d1.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d1.getExecutionManager());
+
+	EXPECT_FALSE(d2.hasExecutionManager());
+	EXPECT_FALSE(d2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, d2.getExecutionManager());
+}
+
 
 // death tests
 typedef SystemTest SystemDeathTest;
@@ -99,6 +187,14 @@ TEST_F(SystemDeathTest, InputGetValueDiesWhenUndefined) {
 	systems::connect(out.output, in.input);
 
 	ASSERT_DEATH(in.getInputValue(), "");
+}
+
+TEST_F(SystemDeathTest, OutputDelegateMixedEm) {
+	systems::ManualExecutionManager localMem(T_s);
+	localMem.startManaging(out);
+
+	EXPECT_DEATH(out.delegateOutputValueTo(in.output), "");
+	EXPECT_DEATH(in.delegateOutputValueTo(out.output), "");
 }
 
 

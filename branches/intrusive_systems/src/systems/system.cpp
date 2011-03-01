@@ -67,6 +67,11 @@ void System::setExecutionManager(ExecutionManager* newEm)
 		for (; i != iEnd; ++i) {
 			i->pushExecutionManager();
 		}
+
+		child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
+		for (; o != oEnd; ++o) {
+			o->pushExecutionManager();
+		}
 	}
 }
 
@@ -81,9 +86,9 @@ void System::unsetExecutionManager()
 		return;
 	}
 
-	child_output_list_type::const_iterator o(outputs.begin()), oEnd(outputs.end());
-	for (; o != oEnd; ++o) {
-		em = o->collectExecutionManager();
+	child_output_list_type::const_iterator oc(outputs.begin()), ocEnd(outputs.end());
+	for (; oc != ocEnd; ++oc) {
+		em = oc->collectExecutionManager();
 
 		if (hasExecutionManager()) {
 			return;
@@ -94,6 +99,11 @@ void System::unsetExecutionManager()
 	child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
 	for (; i != iEnd; ++i) {
 		i->unsetExecutionManager();
+	}
+
+	child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
+	for (; o != oEnd; ++o) {
+		o->unsetExecutionManager();
 	}
 }
 

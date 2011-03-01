@@ -134,7 +134,10 @@ public:
 
 	private:
 		virtual void setValueUndefined() = 0;
+
 		virtual ExecutionManager* collectExecutionManager() const = 0;
+		virtual void pushExecutionManager() = 0;
+		virtual void unsetExecutionManager() = 0;
 
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
 		child_hook_type childHook;
@@ -278,7 +281,10 @@ private:
 	virtual void setValueUndefined() {
 		value.setUndefined();
 	}
+
 	virtual ExecutionManager* collectExecutionManager() const;
+	virtual void pushExecutionManager();
+	virtual void unsetExecutionManager();
 
 
 	typename detail::IntrusiveDelegateFunctor<T>::hook_type delegateHook;
@@ -326,6 +332,8 @@ private:
 
 	struct UndelegateDisposer {
 		void operator() (Output<T>* output) {
+			// No need to update the ExecutionManager, this Disposer is only used in ~Output()
+			//output->unsetExecutionManager();
 			output->value.delegate = NULL;
 		}
 	};
