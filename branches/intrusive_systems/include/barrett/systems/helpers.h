@@ -50,6 +50,8 @@ void connect(System::Output<T>& output, System::Input<T>& input)
 
 	input.output = &output;
 	output.inputs.push_back(input);
+
+	input.pushExecutionManager();
 }
 
 template<typename T>
@@ -76,6 +78,7 @@ void disconnect(System::Input<T>& input)
 {
 	if (input.isConnected()) {
 		input.output->inputs.erase(System::Output<T>::connected_input_list_type::s_iterator_to(input));
+		input.unsetExecutionManager();
 		input.output = NULL;
 	}
 }
@@ -84,6 +87,7 @@ template<typename T>
 void disconnect(System::Output<T>& output)
 {
 	output.inputs.clear_and_dispose(typename System::Input<T>::DisconnectDisposer());
+	output.parentSys.unsetExecutionManager();
 }
 
 

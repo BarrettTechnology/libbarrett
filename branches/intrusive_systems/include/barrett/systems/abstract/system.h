@@ -109,7 +109,7 @@ public:
 		System& parentSys;
 
 	private:
-		virtual void pushExecutionManager(ExecutionManager* newEm) = 0;
+		virtual void pushExecutionManager() = 0;
 		virtual void unsetExecutionManager() = 0;
 
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
@@ -171,6 +171,7 @@ private:
 
 
 	friend class ExecutionManager;
+	DECLARE_HELPER_FRIENDS;
 
 
 	DISALLOW_COPY_AND_ASSIGN(System);
@@ -205,7 +206,7 @@ protected:
 	Output<T>* output;
 
 private:
-	virtual void pushExecutionManager(ExecutionManager* newEm);
+	virtual void pushExecutionManager();
 	virtual void unsetExecutionManager();
 
 	typedef boost::intrusive::list_member_hook<> connected_hook_type;

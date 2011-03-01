@@ -60,12 +60,12 @@ void System::setExecutionManager(ExecutionManager* newEm)
 {
 	if (hasExecutionManager()) {
 		assert(getExecutionManager() == newEm);
-	} else {
+	} else if (newEm != NULL) {
 		em = newEm;
 
 		child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
 		for (; i != iEnd; ++i) {
-			i->pushExecutionManager(newEm);
+			i->pushExecutionManager();
 		}
 	}
 }

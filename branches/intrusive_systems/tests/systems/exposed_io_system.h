@@ -10,6 +10,7 @@
 
 
 #include <barrett/detail/ca_macro.h>
+#include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/abstract/single_io.h>
 
 
@@ -67,7 +68,8 @@ private:
 
 
 template<typename T>
-void checkConnected(ExposedIOSystem<T>* outSys,
+void checkConnected(barrett::systems::ManualExecutionManager& mem,
+					ExposedIOSystem<T>* outSys,
 					const ExposedIOSystem<T>& inSys,
 					const T& value)
 {
@@ -76,23 +78,24 @@ void checkConnected(ExposedIOSystem<T>* outSys,
 
 	outSys->operateCalled = false;
 	outSys->setOutputValue(value);
+	mem.runExecutionCycle();
 
-	// cause a Output<>::Value::updateValue() call
 	EXPECT_TRUE(inSys.inputValueDefined()) << "input value undefined";
 	EXPECT_TRUE(outSys->operateCalled) << "System.operate() wasn't called";
 	EXPECT_EQ(value, inSys.getInputValue()) << "input has the wrong value";
 }
 
 template<typename T>
-void checkNotConnected(ExposedIOSystem<T>* outSys,
+void checkNotConnected(barrett::systems::ManualExecutionManager& mem,
+					   ExposedIOSystem<T>* outSys,
 					   const ExposedIOSystem<T>& inSys,
 					   const T& value)
 {
-	inSys.operateCalled = false;
+	outSys->operateCalled = false;
 	outSys->setOutputValue(value);
-	inSys.inputValueDefined();  // cause a Output<>::Value::updateValue() call
+	mem.runExecutionCycle();
 
-	EXPECT_FALSE(inSys.operateCalled) << "System.operate() was called";
+	EXPECT_FALSE(outSys->operateCalled) << "System.operate() was called";
 }
 
 template<typename T>

@@ -23,10 +23,10 @@ inline thread::Mutex& System::getEmMutex() const
 }
 
 template<typename T>
-void System::Input<T>::pushExecutionManager(ExecutionManager* newEm)
+void System::Input<T>::pushExecutionManager()
 {
 	if (isConnected()) {
-		output->parentSys.setExecutionManager(newEm);
+		output->parentSys.setExecutionManager(parentSys.em);
 	}
 }
 

@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/helpers.h>
+#include <barrett/systems/manual_execution_manager.h>
 #include "../exposed_io_system.h"
 
 
@@ -17,8 +18,15 @@ namespace {
 using namespace barrett;
 
 
+const double T_s = 0.002;
 class SystemTest : public ::testing::Test {
+public:
+	SystemTest() : mem(T_s) {
+		mem.startManaging(in);
+	}
+
 protected:
+	systems::ManualExecutionManager mem;
 	ExposedIOSystem<double> out;
 	ExposedIOSystem<double> in;
 };
@@ -29,14 +37,14 @@ TEST_F(SystemTest, GeneralIO) {
 	EXPECT_FALSE(in.inputValueDefined()) << "input value not initially undefined";
 
 	// set outputValue, then make sure value is defined and correct
-	checkConnected(&out, in, 12.2);
+	checkConnected(mem, &out, in, 12.2);
 
 	out.setOutputValueUndefined();
 	EXPECT_FALSE(in.inputValueDefined())
 		<< "input value defined after call to outputValue.setUndefined()";
 
 	// set outputValue, then make sure value is defined and correct
-	checkConnected(&out, in, 145.0);
+	checkConnected(mem, &out, in, 145.0);
 }
 
 TEST_F(SystemTest, OutputNotifyInputs) {
@@ -67,7 +75,7 @@ TEST_F(SystemTest, OutputDelegates) {
 	out.delegateOutputValueTo(d.output);
 
 	systems::connect(out.output, in.input);
-	checkConnected(&d, in, 34.8);
+	checkConnected(mem, &d, in, 34.8);
 }
 
 TEST_F(SystemTest, OutputDelegatesCanBeChained) {
@@ -76,7 +84,7 @@ TEST_F(SystemTest, OutputDelegatesCanBeChained) {
 	out.delegateOutputValueTo(d2.output);
 
 	systems::connect(out.output, in.input);
-	checkConnected(&d1, in, 38.234);
+	checkConnected(mem, &d1, in, 38.234);
 }
 
 
