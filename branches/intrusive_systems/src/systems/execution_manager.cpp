@@ -30,22 +30,25 @@ void ExecutionManager::startManaging(System& sys)
 {
 	BARRETT_SCOPED_LOCK(getMutex());
 
-	if (sys.hasExecutionManager()) {
+	if (sys.hasDirectExecutionManager()) {
 		sys.getExecutionManager()->stopManaging(sys);
 	}
+
+	sys.setExecutionManager(this);
+	sys.emDirect = true;
 	managedSystems.push_back(sys);
-	sys.em = this;
 }
 
-// this ExecutionManager must be currently managing sys, otherwise data is corrupted :(
+// this ExecutionManager must be currently managing sys
 void ExecutionManager::stopManaging(System& sys)
 {
 	BARRETT_SCOPED_LOCK(getMutex());
 
+	assert(sys.hasDirectExecutionManager());
 	assert(sys.getExecutionManager() == this);
 
-	sys.em = NULL;
 	managedSystems.erase(ExecutionManager::managed_system_list_type::s_iterator_to(sys));
+	sys.unsetDirectExecutionManager();
 }
 
 void ExecutionManager::runExecutionCycle() {

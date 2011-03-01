@@ -74,7 +74,7 @@ public:
 	void startManaging(System& sys);
 	void stopManaging(System& sys);
 
-	thread::Mutex& getMutex() { return *mutex; }
+	thread::Mutex& getMutex() const { return *mutex; }
 	double getPeriod() const {  return period;  }
 
 protected:

@@ -44,21 +44,25 @@ TEST_F(ManualExecutionManagerTest, Dtor) {
 
 	localMem->startManaging(eios);
 	EXPECT_TRUE(eios.hasExecutionManager());
+	EXPECT_TRUE(eios.hasDirectExecutionManager());
 
 	delete localMem;
 
 	EXPECT_FALSE(eios.hasExecutionManager());
+	EXPECT_FALSE(eios.hasDirectExecutionManager());
 }
 
 TEST_F(ManualExecutionManagerTest, StartManaging) {
 	ExposedIOSystem<double> eios2;
 	EXPECT_FALSE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
 
 	mem.runExecutionCycle();
 	EXPECT_FALSE(eios2.operateCalled);
 
 	mem.startManaging(eios2);
 	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
 	EXPECT_EQ(&mem, eios2.getExecutionManager());
 
 	mem.runExecutionCycle();
@@ -69,25 +73,216 @@ TEST_F(ManualExecutionManagerTest, StartManagingAlreadyManaged) {
 	systems::ManualExecutionManager localMem(T_s);
 
 	EXPECT_TRUE(eios.hasExecutionManager());
+	EXPECT_TRUE(eios.hasDirectExecutionManager());
 	EXPECT_EQ(&mem, eios.getExecutionManager());
 	localMem.startManaging(eios);
 	EXPECT_TRUE(eios.hasExecutionManager());
+	EXPECT_TRUE(eios.hasDirectExecutionManager());
 	EXPECT_EQ(&localMem, eios.getExecutionManager());
+}
+
+TEST_F(ManualExecutionManagerTest, StartManagingIndirect) {
+	ExposedIOSystem<double> eios2;
+	EXPECT_FALSE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios2.getExecutionManager());
+
+	ExposedIOSystem<double> eios3;
+	EXPECT_FALSE(eios3.hasExecutionManager());
+	EXPECT_FALSE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios3.getExecutionManager());
+
+	systems::connect(eios2.output, eios3.input);
+	mem.startManaging(eios3);
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_TRUE(eios3.hasExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios3.getExecutionManager());
+}
+
+TEST_F(ManualExecutionManagerTest, StartDirectlyManagingWhenAlreadyManaged) {
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+	ExposedIOSystem<double> eios3;
+
+	systems::connect(eios1.output, eios2.input);
+	systems::connect(eios2.output, eios3.input);
+
+	mem.startManaging(eios3);
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+
+	mem.startManaging(eios1);
+	EXPECT_TRUE(eios1.hasDirectExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+
+	mem.startManaging(eios2);
+	EXPECT_TRUE(eios1.hasDirectExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+}
+
+TEST_F(ManualExecutionManagerTest, StartManagingInMiddleOfChain) {
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+	ExposedIOSystem<double> eios3;
+
+	systems::connect(eios1.output, eios2.input);
+	systems::connect(eios2.output, eios3.input);
+
+	mem.startManaging(eios2);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_FALSE(eios3.hasExecutionManager());
+	EXPECT_FALSE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios3.getExecutionManager());
 }
 
 TEST_F(ManualExecutionManagerTest, StopManaging) {
 	EXPECT_TRUE(eios.hasExecutionManager());
+	EXPECT_TRUE(eios.hasDirectExecutionManager());
 
 	mem.runExecutionCycle();
 	EXPECT_TRUE(eios.operateCalled);
 
 	mem.stopManaging(eios);
 	EXPECT_FALSE(eios.hasExecutionManager());
+	EXPECT_FALSE(eios.hasDirectExecutionManager());
 	EXPECT_EQ(NULL, eios.getExecutionManager());
 
 	eios.operateCalled = false;
 	mem.runExecutionCycle();
 	EXPECT_FALSE(eios.operateCalled);
+}
+
+TEST_F(ManualExecutionManagerTest, StopManagingIndirect) {
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+	ExposedIOSystem<double> eios3;
+
+	systems::connect(eios1.output, eios2.input);
+	systems::connect(eios2.output, eios3.input);
+	mem.startManaging(eios3);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_TRUE(eios3.hasExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios3.getExecutionManager());
+
+
+	mem.stopManaging(eios3);
+
+	EXPECT_FALSE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios1.getExecutionManager());
+
+	EXPECT_FALSE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios2.getExecutionManager());
+
+	EXPECT_FALSE(eios3.hasExecutionManager());
+	EXPECT_FALSE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios3.getExecutionManager());
+}
+
+TEST_F(ManualExecutionManagerTest, StopDirectlyManaging) {
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+	ExposedIOSystem<double> eios3;
+
+	systems::connect(eios1.output, eios2.input);
+	systems::connect(eios2.output, eios3.input);
+
+
+	mem.startManaging(eios3);
+	mem.startManaging(eios2);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_TRUE(eios3.hasExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios3.getExecutionManager());
+
+
+	mem.stopManaging(eios2);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_FALSE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_TRUE(eios3.hasExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios3.getExecutionManager());
+}
+
+TEST_F(ManualExecutionManagerTest, StopManagingAtEndOfChain) {
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+	ExposedIOSystem<double> eios3;
+
+	systems::connect(eios1.output, eios2.input);
+	systems::connect(eios2.output, eios3.input);
+
+
+	mem.startManaging(eios3);
+	mem.startManaging(eios2);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_TRUE(eios3.hasExecutionManager());
+	EXPECT_TRUE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios3.getExecutionManager());
+
+
+	mem.stopManaging(eios3);
+
+	EXPECT_TRUE(eios1.hasExecutionManager());
+	EXPECT_FALSE(eios1.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios1.getExecutionManager());
+
+	EXPECT_TRUE(eios2.hasExecutionManager());
+	EXPECT_TRUE(eios2.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, eios2.getExecutionManager());
+
+	EXPECT_FALSE(eios3.hasExecutionManager());
+	EXPECT_FALSE(eios3.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, eios3.getExecutionManager());
 }
 
 TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
@@ -98,6 +293,27 @@ TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
 		mem.runExecutionCycle();
 		EXPECT_TRUE(eios.operateCalled);
 	}
+}
+
+
+// death tests
+typedef ManualExecutionManagerTest ManualExecutionManagerDeathTest;
+
+TEST_F(ManualExecutionManagerDeathTest, StartManagingMixedEm) {
+	systems::ManualExecutionManager localMem(T_s);
+	ExposedIOSystem<double> eios1;
+	ExposedIOSystem<double> eios2;
+
+	systems::connect(eios1.output, eios2.input);
+	mem.startManaging(eios2);
+
+	EXPECT_DEATH(localMem.startManaging(eios1), "");
+}
+
+TEST_F(ManualExecutionManagerDeathTest, StopManagingWhenUnmanaged) {
+	ExposedIOSystem<double> eios1;
+
+	EXPECT_DEATH(mem.stopManaging(eios1), "");
 }
 
 

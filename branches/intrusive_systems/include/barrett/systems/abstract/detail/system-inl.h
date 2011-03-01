@@ -5,7 +5,6 @@
  *      Author: dc
  */
 
-//#include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/thread/null_mutex.h>
 
@@ -16,7 +15,40 @@ namespace systems {
 
 inline thread::Mutex& System::getEmMutex() const
 {
-	return hasExecutionManager() ? getExecutionManager()->getMutex() : thread::NullMutex::aNullMutex;
+	if (hasExecutionManager()) {
+		return getExecutionManager()->getMutex();
+	} else {
+		return thread::NullMutex::aNullMutex;
+	}
+}
+
+template<typename T>
+void System::Input<T>::pushExecutionManager(ExecutionManager* newEm)
+{
+	if (isConnected()) {
+		output->parentSys.setExecutionManager(newEm);
+	}
+}
+
+template<typename T>
+void System::Input<T>::unsetExecutionManager()
+{
+	if (isConnected()) {
+		output->parentSys.unsetExecutionManager();
+	}
+}
+
+template<typename T>
+ExecutionManager* System::Output<T>::collectExecutionManager() const
+{
+	typename connected_input_list_type::const_iterator i(inputs.begin()), iEnd(inputs.end());
+	for (; i != iEnd; ++i) {
+		if (i->parentSys.hasExecutionManager()) {
+			return i->parentSys.getExecutionManager();
+		}
+	}
+
+	return NULL;
 }
 
 template<typename T>

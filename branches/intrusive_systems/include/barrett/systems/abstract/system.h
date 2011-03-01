@@ -69,13 +69,14 @@ public:
 
 
 	explicit System(const std::string& sysName = "System") :
-			name(sysName), em(NULL), ut(UT_NULL) {}
+			name(sysName), em(NULL), emDirect(false), ut(UT_NULL) {}
 	virtual ~System();
 
 	void setName(const std::string& newName) { name = newName; }
 	const std::string& getName() const { return name; }
 
 	bool hasExecutionManager() const { return getExecutionManager() != NULL; }
+	bool hasDirectExecutionManager() const { return emDirect; }
 	ExecutionManager* getExecutionManager() const { return em; }
 	thread::Mutex& getEmMutex() const;
 
@@ -89,6 +90,7 @@ protected:
 
 	std::string name;
 	ExecutionManager* em;
+	bool emDirect;
 
 
 public:
@@ -107,6 +109,9 @@ public:
 		System& parentSys;
 
 	private:
+		virtual void pushExecutionManager(ExecutionManager* newEm) = 0;
+		virtual void unsetExecutionManager() = 0;
+
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
 		child_hook_type childHook;
 
@@ -129,6 +134,7 @@ public:
 
 	private:
 		virtual void setValueUndefined() = 0;
+		virtual ExecutionManager* collectExecutionManager() const = 0;
 
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
 		child_hook_type childHook;
@@ -144,12 +150,16 @@ private:
 	update_token_type ut;
 
 
+	void setExecutionManager(ExecutionManager* newEm);
+	void unsetDirectExecutionManager();
+	void unsetExecutionManager();
+
 	typedef boost::intrusive::list_member_hook<> managed_hook_type;
 	managed_hook_type managedHook;
 
 	struct StopManagingDisposer {
 		void operator() (System* sys) {
-			sys->em = NULL;
+			sys->unsetDirectExecutionManager();
 		}
 	};
 
@@ -195,6 +205,9 @@ protected:
 	Output<T>* output;
 
 private:
+	virtual void pushExecutionManager(ExecutionManager* newEm);
+	virtual void unsetExecutionManager();
+
 	typedef boost::intrusive::list_member_hook<> connected_hook_type;
 	connected_hook_type connectedHook;
 
@@ -264,6 +277,7 @@ private:
 	virtual void setValueUndefined() {
 		value.setUndefined();
 	}
+	virtual ExecutionManager* collectExecutionManager() const;
 
 
 	typename detail::IntrusiveDelegateFunctor<T>::hook_type delegateHook;

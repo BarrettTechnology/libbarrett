@@ -15,7 +15,7 @@ namespace systems {
 
 
 System::~System() {
-	if (hasExecutionManager()) {
+	if (hasDirectExecutionManager()) {
 		getExecutionManager()->stopManaging(*this);
 	}
 }
@@ -23,7 +23,7 @@ System::~System() {
 void System::update(update_token_type updateToken)
 {
 	// Check if an update is needed
-	if (updateToken == UT_NULL  ||  updateToken != ut) {
+	if (hasExecutionManager()  &&  updateToken != ut) {
 		ut = updateToken;
 	} else {
 		return;
@@ -52,6 +52,48 @@ void System::invalidateOutputs()
 	child_output_list_type::iterator i(outputs.begin()), iEnd(outputs.end());
 	for (; i != iEnd; ++i) {
 		i->setValueUndefined();
+	}
+}
+
+
+void System::setExecutionManager(ExecutionManager* newEm)
+{
+	if (hasExecutionManager()) {
+		assert(getExecutionManager() == newEm);
+	} else {
+		em = newEm;
+
+		child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
+		for (; i != iEnd; ++i) {
+			i->pushExecutionManager(newEm);
+		}
+	}
+}
+
+void System::unsetDirectExecutionManager()
+{
+	emDirect = false;
+	unsetExecutionManager();
+}
+void System::unsetExecutionManager()
+{
+	if (hasDirectExecutionManager()) {
+		return;
+	}
+
+	child_output_list_type::const_iterator o(outputs.begin()), oEnd(outputs.end());
+	for (; o != oEnd; ++o) {
+		em = o->collectExecutionManager();
+
+		if (hasExecutionManager()) {
+			return;
+		}
+	}
+
+	// if no EM found...
+	child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
+	for (; i != iEnd; ++i) {
+		i->unsetExecutionManager();
 	}
 }
 
