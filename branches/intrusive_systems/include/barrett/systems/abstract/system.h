@@ -105,6 +105,8 @@ public:
 
 		virtual bool valueDefined() const = 0;
 
+		thread::Mutex& getEmMutex() const { return parentSys.getEmMutex(); }
+
 	protected:
 		System& parentSys;
 
@@ -128,6 +130,8 @@ public:
 		virtual ~AbstractOutput() {
 			parentSys.outputs.erase(System::child_output_list_type::s_iterator_to(*this));
 		}
+
+		thread::Mutex& getEmMutex() const { return parentSys.getEmMutex(); }
 
 	protected:
 		System& parentSys;
