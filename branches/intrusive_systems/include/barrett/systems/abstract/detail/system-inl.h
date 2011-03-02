@@ -141,7 +141,7 @@ void System::Output<T>::unsetExecutionManager()
 template<typename T>
 void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 {
-	BARRETT_SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(parentOutput.getEmMutex());
 
 	undelegate();
 	delegate = &(delegateOutput.value);
@@ -153,7 +153,7 @@ void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 template<typename T>
 void System::Output<T>::Value::undelegate()
 {
-	BARRETT_SCOPED_LOCK(getEmMutex());
+	BARRETT_SCOPED_LOCK(parentOutput.getEmMutex());
 
 	if (delegate != NULL) {
 		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
