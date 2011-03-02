@@ -97,9 +97,10 @@ template<typename T>
 void disconnect(System::Output<T>& output)
 {
 	BARRETT_SCOPED_LOCK(output.getEmMutex());
+	assert(output.parentSys != NULL);
 
 	output.inputs.clear_and_dispose(typename System::Input<T>::DisconnectDisposer());
-	output.parentSys.unsetExecutionManager();
+	output.parentSys->unsetExecutionManager();
 }
 
 

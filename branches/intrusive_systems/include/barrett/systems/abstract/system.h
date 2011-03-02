@@ -70,7 +70,7 @@ public:
 
 	explicit System(const std::string& sysName = "System") :
 			name(sysName), em(NULL), emDirect(false), ut(UT_NULL) {}
-	virtual ~System();
+	virtual ~System() { mandatoryCleanUp(); }
 
 	void setName(const std::string& newName) { name = newName; }
 	const std::string& getName() const { return name; }
@@ -81,6 +81,8 @@ public:
 	thread::Mutex& getEmMutex() const;
 
 protected:
+	void mandatoryCleanUp();
+
 	void update(update_token_type updateToken);
 
 	virtual bool inputsValid() const;
@@ -96,19 +98,17 @@ protected:
 public:
 	class AbstractInput {
 	public:
-		AbstractInput(System* parent) : parentSys(*parent) {
-			parentSys.inputs.push_back(*this);
-		}
-		virtual ~AbstractInput() {
-			parentSys.inputs.erase(System::child_input_list_type::s_iterator_to(*this));
-		}
+		AbstractInput(System* parent);
+		virtual ~AbstractInput();
 
 		virtual bool valueDefined() const = 0;
 
-		thread::Mutex& getEmMutex() const { return parentSys.getEmMutex(); }
+		thread::Mutex& getEmMutex() const;
 
 	protected:
-		System& parentSys;
+		virtual void mandatoryCleanUp();
+
+		System* parentSys;
 
 	private:
 		virtual void pushExecutionManager() = 0;
@@ -124,17 +124,15 @@ public:
 
 	class AbstractOutput {
 	public:
-		AbstractOutput(System* parent) : parentSys(*parent) {
-			parentSys.outputs.push_back(*this);
-		}
-		virtual ~AbstractOutput() {
-			parentSys.outputs.erase(System::child_output_list_type::s_iterator_to(*this));
-		}
+		AbstractOutput(System* parent);
+		virtual ~AbstractOutput();
 
-		thread::Mutex& getEmMutex() const { return parentSys.getEmMutex(); }
+		thread::Mutex& getEmMutex() const;
 
 	protected:
-		System& parentSys;
+		virtual void mandatoryCleanUp();
+
+		System* parentSys;
 
 	private:
 		virtual void setValueUndefined() = 0;
@@ -188,13 +186,12 @@ private:
 template<typename T> class System::Input : public System::AbstractInput {
 public:
 	Input(System* parent) : AbstractInput(parent), output(NULL) {}
-	virtual ~Input() {
-		disconnect(*this);
-	}
+	virtual ~Input();
 
 	bool isConnected() const { return output != NULL; }
 	virtual bool valueDefined() const {
-		return isConnected()  &&  output->getValueObject()->updateData(parentSys.ut);
+		assert(parentSys != NULL);  // TODO(dc): Is this assertion helpful?
+		return isConnected()  &&  output->getValueObject()->updateData(parentSys->ut);
 	}
 
 	const T& getValue() const {
@@ -203,13 +200,16 @@ public:
 		// valueDefined() calls Output<T>::Value::updateData() for us. Make
 		// sure it gets called even if NDEBUG is defined.
 #ifdef NDEBUG
-		output->getValueObject()->updateData(parentSys.ut);
+		assert(parentSys != NULL);  // TODO(dc): Is this assertion helpful?
+		output->getValueObject()->updateData(parentSys->ut);
 #endif
 
 		return *(output->getValueObject()->getData());
 	}
 
 protected:
+	virtual void mandatoryCleanUp();
+
 	Output<T>* output;
 
 private:
@@ -257,11 +257,7 @@ public:
 	Output(System* parent, Value** valueHandle) : AbstractOutput(parent), value(this) {
 		*valueHandle = &value;
 	}
-	virtual ~Output() {
-		disconnect(*this);
-		value.undelegate();
-		value.delegators.clear_and_dispose(typename Value::UndelegateDisposer());
-	}
+	virtual ~Output();
 
 	// TODO(dc): How should isConnected() treat delegation?
 	bool isConnected() const {
@@ -269,6 +265,8 @@ public:
 	}
 
 protected:
+	virtual void mandatoryCleanUp();
+
 	Value* getValueObject() {
 		// TODO(dc): check for cyclic delegation?
 		Value* v = &value;
@@ -327,7 +325,9 @@ private:
 	explicit Value(Output<T>* parent) : parentOutput(*parent), delegate(NULL), data(NULL) {}
 
 	bool updateData(update_token_type updateToken) {
-		parentOutput.parentSys.update(updateToken);
+		assert(parentOutput.parentSys != NULL);  // TODO(dc): Is this assertion helpful?
+
+		parentOutput.parentSys->update(updateToken);
 		return isDefined();
 	}
 

@@ -14,9 +14,19 @@ namespace barrett {
 namespace systems {
 
 
-System::~System() {
+void System::mandatoryCleanUp()
+{
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
 	if (hasDirectExecutionManager()) {
 		getExecutionManager()->stopManaging(*this);
+	}
+
+	while ( !outputs.empty() ) {
+		outputs.back().mandatoryCleanUp();
+	}
+	while ( !inputs.empty() ) {
+		inputs.back().mandatoryCleanUp();
 	}
 }
 
@@ -105,6 +115,54 @@ void System::unsetExecutionManager()
 	for (; o != oEnd; ++o) {
 		o->unsetExecutionManager();
 	}
+}
+
+
+System::AbstractInput::AbstractInput(System* parent) : parentSys(parent)
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->inputs.push_back(*this);
+}
+System::AbstractInput::~AbstractInput()
+{
+	if (parentSys != NULL) {
+		mandatoryCleanUp();
+	}
+}
+
+void System::AbstractInput::mandatoryCleanUp()
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->inputs.erase(System::child_input_list_type::s_iterator_to(*this));
+	parentSys = NULL;
+}
+
+
+System::AbstractOutput::AbstractOutput(System* parent) : parentSys(parent)
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->outputs.push_back(*this);
+}
+System::AbstractOutput::~AbstractOutput()
+{
+	if (parentSys != NULL) {
+		mandatoryCleanUp();
+	}
+}
+
+void System::AbstractOutput::mandatoryCleanUp()
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->outputs.erase(System::child_output_list_type::s_iterator_to(*this));
+	parentSys = NULL;
 }
 
 

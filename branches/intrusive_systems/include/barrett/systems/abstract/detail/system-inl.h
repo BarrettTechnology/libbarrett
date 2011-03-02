@@ -22,11 +22,52 @@ inline thread::Mutex& System::getEmMutex() const
 	}
 }
 
+
+inline thread::Mutex& System::AbstractInput::getEmMutex() const
+{
+	if (parentSys != NULL) {
+		return parentSys->getEmMutex();
+	} else {
+		return thread::NullMutex::aNullMutex;
+	}
+}
+
+
+inline thread::Mutex& System::AbstractOutput::getEmMutex() const
+{
+	if (parentSys != NULL) {
+		return parentSys->getEmMutex();
+	} else {
+		return thread::NullMutex::aNullMutex;
+	}
+}
+
+
+template<typename T>
+System::Input<T>::~Input() {
+	if (parentSys == NULL) {
+		assert( !isConnected() );
+	} else {
+		mandatoryCleanUp();
+	}
+}
+
+template<typename T>
+void System::Input<T>::mandatoryCleanUp()
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
+	disconnect(*this);
+	AbstractInput::mandatoryCleanUp();
+}
+
 template<typename T>
 void System::Input<T>::pushExecutionManager()
 {
 	if (isConnected()) {
-		output->parentSys.setExecutionManager(parentSys.em);
+		output->parentSys->setExecutionManager(parentSys->em);
 	}
 }
 
@@ -34,8 +75,31 @@ template<typename T>
 void System::Input<T>::unsetExecutionManager()
 {
 	if (isConnected()) {
-		output->parentSys.unsetExecutionManager();
+		output->parentSys->unsetExecutionManager();
 	}
+}
+
+
+template<typename T>
+System::Output<T>::~Output() {
+	if (parentSys == NULL) {
+		assert( !isConnected() );
+	} else {
+		mandatoryCleanUp();
+	}
+}
+
+template<typename T>
+void System::Output<T>::mandatoryCleanUp()
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
+	disconnect(*this);
+	value.undelegate();
+	value.delegators.clear_and_dispose(typename Value::UndelegateDisposer());
+	AbstractOutput::mandatoryCleanUp();
 }
 
 template<typename T>
@@ -43,15 +107,15 @@ ExecutionManager* System::Output<T>::collectExecutionManager() const
 {
 	typename connected_input_list_type::const_iterator i(inputs.begin()), iEnd(inputs.end());
 	for (; i != iEnd; ++i) {
-		if (i->parentSys.hasExecutionManager()) {
-			return i->parentSys.getExecutionManager();
+		if (i->parentSys->hasExecutionManager()) {
+			return i->parentSys->getExecutionManager();
 		}
 	}
 
 	typename Value::delegate_output_list_type::const_iterator o(value.delegators.begin()), oEnd(value.delegators.end());
 	for (; o != oEnd; ++o) {
-		if (o->parentSys.hasExecutionManager()) {
-			return o->parentSys.getExecutionManager();
+		if (o->parentSys->hasExecutionManager()) {
+			return o->parentSys->getExecutionManager();
 		}
 	}
 
@@ -62,7 +126,7 @@ template<typename T>
 void System::Output<T>::pushExecutionManager()
 {
 	if (value.delegate != NULL) {
-		value.delegate->parentOutput.parentSys.setExecutionManager(parentSys.em);
+		value.delegate->parentOutput.parentSys->setExecutionManager(parentSys->em);
 	}
 }
 
@@ -70,13 +134,15 @@ template<typename T>
 void System::Output<T>::unsetExecutionManager()
 {
 	if (value.delegate != NULL) {
-		value.delegate->parentOutput.parentSys.unsetExecutionManager();
+		value.delegate->parentOutput.parentSys->unsetExecutionManager();
 	}
 }
 
 template<typename T>
 void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 {
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
 	undelegate();
 	delegate = &(delegateOutput.value);
 	delegate->delegators.push_back(parentOutput);
@@ -87,6 +153,8 @@ void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
 template<typename T>
 void System::Output<T>::Value::undelegate()
 {
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
 	if (delegate != NULL) {
 		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
 		parentOutput.unsetExecutionManager();
