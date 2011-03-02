@@ -22,6 +22,7 @@ public:
 	ExposedIOSystem(const std::string& sysName = "ExposedIOSystem") :
 		barrett::systems::SingleIO<T, T>(sysName),
 		operateCalled(false) {}
+	virtual ~ExposedIOSystem() { this->mandatoryCleanUp(); }
 
 	const T& getInputValue() const {
 		return this->input.getValue();

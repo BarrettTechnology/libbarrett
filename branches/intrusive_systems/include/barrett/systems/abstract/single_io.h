@@ -80,7 +80,7 @@ public:
 	explicit SingleIO(const std::string& sysName = "SingleIO") :
 		System(sysName),
 		SingleInput<InputType>(this), SingleOutput<OutputType>(this) {}
-	virtual ~SingleIO() {}
+	virtual ~SingleIO() { mandatoryCleanUp(); }
 
 	virtual System::Input<InputType>* getConversionInput() {
 		return &(this->input);
