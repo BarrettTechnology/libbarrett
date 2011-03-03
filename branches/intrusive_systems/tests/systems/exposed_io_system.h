@@ -21,7 +21,7 @@ public:
 
 	ExposedIOSystem(const std::string& sysName = "ExposedIOSystem") :
 		barrett::systems::SingleIO<T, T>(sysName),
-		operateCalled(false) {}
+		operateCalled(false), data() {}
 	virtual ~ExposedIOSystem() { this->mandatoryCleanUp(); }
 
 	const T& getInputValue() const {
@@ -33,7 +33,8 @@ public:
 	}
 
 	void setOutputValue(const T& value) {
-		this->outputValue->setData(value);
+		data = value;
+		this->outputValue->setData(&data);
 	}
 
 	void setOutputValueUndefined() {
@@ -62,6 +63,8 @@ protected:
 	virtual void invalidateOutputs() {
 		/* do nothing */
 	}
+
+	T data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ExposedIOSystem);

@@ -306,7 +306,6 @@ private:
 template<typename T> class System::Output<T>::Value {
 public:
 	void setData(const T* newData) { data = newData; }
-	void setData(const T& newData) { data = &newData; }
 	void setUndefined() { data = NULL; }
 
 	bool isDefined() const { return data != NULL; }
