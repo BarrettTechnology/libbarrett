@@ -97,7 +97,11 @@ void System::unsetExecutionManager()
 		return;
 	}
 
+#ifndef NDEBUG
+	// This variable is only used in the assert() below.
 	ExecutionManager* oldEm = getExecutionManager();
+#endif
+
 	child_output_list_type::const_iterator oc(outputs.begin()), ocEnd(outputs.end());
 	for (; oc != ocEnd; ++oc) {
 		em = oc->collectExecutionManager();
