@@ -15,10 +15,9 @@
 namespace {
 using namespace barrett;
 
-const double T_s = 0.002;
 class SystemHelperTest : public ::testing::Test {
 public:
-	SystemHelperTest() : mem(T_s) {
+	SystemHelperTest() {
 		mem.startManaging(in);
 	}
 
@@ -203,7 +202,7 @@ TEST_F(SystemHelperDeathTest, ReconnectDiesIfInputNotConnected) {
 }
 
 TEST_F(SystemHelperDeathTest, NoMixedEm) {
-	systems::ManualExecutionManager localMem(T_s);
+	systems::ManualExecutionManager localMem;
 	localMem.startManaging(out);
 
 	EXPECT_DEATH(systems::connect(out.output, in.input), "");

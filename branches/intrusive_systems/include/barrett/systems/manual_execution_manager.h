@@ -44,6 +44,7 @@ namespace systems {
 
 class ManualExecutionManager : public ExecutionManager {
 public:
+	ManualExecutionManager() {}
 	explicit ManualExecutionManager(double period_s) :
 		ExecutionManager(period_s) {}
 	explicit ManualExecutionManager(const libconfig::Setting& setting) :

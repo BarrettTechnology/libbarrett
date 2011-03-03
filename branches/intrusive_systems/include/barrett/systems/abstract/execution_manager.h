@@ -62,7 +62,7 @@ public:
 // this isn't technically abstract, but neither does it have all the elements of a useful interface...
 class ExecutionManager {
 public:
-	explicit ExecutionManager(double period_s) :
+	explicit ExecutionManager(double period_s = -1.0) :
 		mutex(new thread::NullMutex), period(period_s), ut(System::UT_NULL) {}
 	explicit ExecutionManager(const libconfig::Setting& setting) :
 		mutex(new thread::NullMutex), period(), ut(System::UT_NULL)

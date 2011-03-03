@@ -14,11 +14,10 @@
 namespace {
 using namespace barrett;
 
-const double T_s = 0.002;
 
 class ManualExecutionManagerTest : public ::testing::Test {
 public:
-	ManualExecutionManagerTest() : mem(T_s) {
+	ManualExecutionManagerTest() {
 		mem.startManaging(eios);
 	}
 
@@ -28,8 +27,15 @@ protected:
 };
 
 
+TEST_F(ManualExecutionManagerTest, DefaultCtor) {
+	EXPECT_LT(mem.getPeriod(), 0.0);
+}
+
 TEST_F(ManualExecutionManagerTest, PeriodCtor) {
-	EXPECT_EQ(T_s, mem.getPeriod());
+	const double T_s = 0.002;
+	systems::ManualExecutionManager mem2(T_s);
+
+	EXPECT_EQ(T_s, mem2.getPeriod());
 }
 
 TEST_F(ManualExecutionManagerTest, ConfigCtor) {
@@ -40,7 +46,7 @@ TEST_F(ManualExecutionManagerTest, ConfigCtor) {
 }
 
 TEST_F(ManualExecutionManagerTest, Dtor) {
-	systems::ManualExecutionManager* localMem = new systems::ManualExecutionManager(T_s);
+	systems::ManualExecutionManager* localMem = new systems::ManualExecutionManager;
 
 	localMem->startManaging(eios);
 	EXPECT_TRUE(eios.hasExecutionManager());
@@ -70,7 +76,7 @@ TEST_F(ManualExecutionManagerTest, StartManaging) {
 }
 
 TEST_F(ManualExecutionManagerTest, StartManagingAlreadyManaged) {
-	systems::ManualExecutionManager localMem(T_s);
+	systems::ManualExecutionManager localMem;
 
 	EXPECT_TRUE(eios.hasExecutionManager());
 	EXPECT_TRUE(eios.hasDirectExecutionManager());
@@ -300,7 +306,7 @@ TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
 typedef ManualExecutionManagerTest ManualExecutionManagerDeathTest;
 
 TEST_F(ManualExecutionManagerDeathTest, StartManagingMixedEm) {
-	systems::ManualExecutionManager localMem(T_s);
+	systems::ManualExecutionManager localMem;
 	ExposedIOSystem<double> eios1;
 	ExposedIOSystem<double> eios2;
 

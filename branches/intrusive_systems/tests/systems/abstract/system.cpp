@@ -18,10 +18,9 @@ namespace {
 using namespace barrett;
 
 
-const double T_s = 0.002;
 class SystemTest : public ::testing::Test {
 public:
-	SystemTest() : mem(T_s) {
+	SystemTest() {
 		mem.startManaging(in);
 	}
 
@@ -190,7 +189,7 @@ TEST_F(SystemDeathTest, InputGetValueDiesWhenUndefined) {
 }
 
 TEST_F(SystemDeathTest, OutputDelegateMixedEm) {
-	systems::ManualExecutionManager localMem(T_s);
+	systems::ManualExecutionManager localMem;
 	localMem.startManaging(out);
 
 	EXPECT_DEATH(out.delegateOutputValueTo(in.output), "");
