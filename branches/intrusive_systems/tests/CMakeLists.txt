@@ -10,21 +10,21 @@ set(tests_SOURCES
 	log/verify_file_contents.cpp
 	log/writer.cpp
 
-#	math/first_order_filter.cpp
+	math/first_order_filter.cpp
 #	math/kinematics.cpp
-#	math/matrix.cpp
-#	math/spline.cpp
-#	math/traits.cpp
-#	math/utils.cpp
-#	math/vector.cpp
+	math/matrix.cpp
+	math/spline.cpp
+	math/traits.cpp
+	math/utils.cpp
+	math/vector.cpp
 
-#	systems/abstract/controller.cpp
+	systems/abstract/controller.cpp
 	systems/abstract/execution_manager.cpp
-#	systems/abstract/single_io.cpp
+	systems/abstract/single_io.cpp
 	systems/abstract/system.cpp
-#	systems/callback.cpp
-#	systems/constant.cpp
-#	systems/converter.cpp
+	systems/callback.cpp
+	systems/constant.cpp
+	systems/converter.cpp
 #	systems/first_order_filter.cpp
 #	systems/gain.cpp
 	systems/helpers.cpp

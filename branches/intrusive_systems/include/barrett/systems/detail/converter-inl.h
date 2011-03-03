@@ -51,6 +51,7 @@ namespace systems {
 template<typename OutputType>
 inline Converter<OutputType>::~Converter()
 {
+	mandatoryCleanUp();
 	barrett::detail::purge(conversions);
 }
 
@@ -92,8 +93,14 @@ bool Converter<OutputType>::connectInputTo(
 		return false;
 	}
 
-	forceConnect(output, *input);
-	this->outputValue->delegateTo(conversion->getConversionOutput());
+	{
+		// Make sure these two steps happen at the same time in case input is
+		// already connected to something else.
+		BARRETT_SCOPED_LOCK(input->getEmMutex());
+
+		this->outputValue->delegateTo(conversion->getConversionOutput());
+		forceConnect(output, *input);
+	}
 
 	return true;
 }

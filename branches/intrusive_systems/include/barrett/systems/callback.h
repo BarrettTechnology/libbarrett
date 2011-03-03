@@ -46,16 +46,18 @@ class Callback : public SingleIO<InputType, OutputType> {
 public:
 	typedef boost::function<OutputType (const InputType&)> callback_type;
 
-	explicit Callback(callback_type operateCallback, bool updateEveryExecutionCycle = false) :
-		SingleIO<InputType, OutputType>(updateEveryExecutionCycle), callback(operateCallback) {}
-	virtual ~Callback() {}
+	explicit Callback(callback_type operateCallback, const std::string& sysName = "Callback") :
+		SingleIO<InputType, OutputType>(sysName), callback(operateCallback), data() {}
+	virtual ~Callback() { this->mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
-		this->outputValue->setValue(callback(this->input.getValue()));
+		data = callback(this->input.getValue());
+		this->outputValue->setData(&data);
 	}
 
 	callback_type callback;
+	OutputType data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Callback);
