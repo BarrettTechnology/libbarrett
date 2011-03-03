@@ -43,24 +43,30 @@ namespace barrett {
 namespace systems {
 
 
-// TODO(dc): test!
-// TODO(dc): add a configuration file interface
-
 template<typename T>
-class FirstOrderFilter : public SingleIO<T, T>, public math::FirstOrderFilter<T> {
+class FirstOrderFilter : public SingleIO<T, T>, protected math::FirstOrderFilter<T> {
 public:
-	explicit FirstOrderFilter(bool updateEveryExecutionCycle = false);
-	explicit FirstOrderFilter(const libconfig::Setting& setting, bool updateEveryExecutionCycle = false);
-	virtual ~FirstOrderFilter() {}
+	explicit FirstOrderFilter(const std::string& sysName = "FirstOrderFilter");
+	explicit FirstOrderFilter(const libconfig::Setting& setting, const std::string& sysName = "FirstOrderFilter");
+	virtual ~FirstOrderFilter() { this->mandatoryCleanUp(); }
 
-	virtual void setExecutionManager(ExecutionManager* newEm);
+	using math::FirstOrderFilter<T>::setFromConfig;
+	using math::FirstOrderFilter<T>::setLowPass;
+	using math::FirstOrderFilter<T>::setHighPass;
+	using math::FirstOrderFilter<T>::setZPK;
+	using math::FirstOrderFilter<T>::setIntegrator;
+	using math::FirstOrderFilter<T>::setParameters;
 
 protected:
 	virtual void operate();
 
-private:
+	virtual void onExecutionManagerChanged() {
+		SingleIO<T, T>::onExecutionManagerChanged();  // First, call super
+		getSamplePeriodFromEM();
+	}
 	void getSamplePeriodFromEM();
 
+private:
 	DISALLOW_COPY_AND_ASSIGN(FirstOrderFilter);
 };
 

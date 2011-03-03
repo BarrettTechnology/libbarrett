@@ -29,6 +29,8 @@
  */
 
 
+#include <cassert>
+
 #include <libconfig.h++>
 
 #include <barrett/math/utils.h>
@@ -40,23 +42,27 @@ namespace systems {
 
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>::PIDController() :
-	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0), kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
+PIDController<InputType, OutputType, MathTraits>::PIDController(const std::string& sysName) :
+	Controller<InputType, OutputType>(sysName),
+	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0),
+	kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
 {
 	getSamplePeriodFromEM();
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>::PIDController(const libconfig::Setting& setting) :
-	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0), kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
+PIDController<InputType, OutputType, MathTraits>::PIDController(
+		const libconfig::Setting& setting, const std::string& sysName) :
+	Controller<InputType, OutputType>(sysName),
+	T_s(0.0), error(0.0), error_1(0.0), intError(0.0), intErrorLimit(0.0),
+	kp(0.0), ki(0.0), kd(0.0), controlSignal(0.0), controlSignalLimit(0.0)
 {
 	getSamplePeriodFromEM();
 	setFromConfig(setting);
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setFromConfig(const libconfig::Setting& setting)
+void PIDController<InputType, OutputType, MathTraits>::setFromConfig(const libconfig::Setting& setting)
 {
 	if (setting.exists("kp")) {
 		setKp(unitless_type(setting["kp"]));
@@ -73,69 +79,53 @@ PIDController<InputType, OutputType, MathTraits>::setFromConfig(const libconfig:
 	if (setting.exists("control_signal_limit")) {
 		setControlSignalLimit(unitless_type(setting["control_signal_limit"]));
 	}
-
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setSamplePeriod(double timeStep)
+void PIDController<InputType, OutputType, MathTraits>::setSamplePeriod(double timeStep)
 {
 	T_s = timeStep;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setKp(unitless_type proportionalGains)
+void PIDController<InputType, OutputType, MathTraits>::setKp(const unitless_type& proportionalGains)
 {
 	kp = proportionalGains;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setKi(unitless_type integralGains)
+void PIDController<InputType, OutputType, MathTraits>::setKi(const unitless_type& integralGains)
 {
 	ki = integralGains;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setKd(unitless_type derivitiveGains)
+void PIDController<InputType, OutputType, MathTraits>::setKd(const unitless_type& derivitiveGains)
 {
 	kd = derivitiveGains;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setIntegratorState(
-		unitless_type integratorState)
+void PIDController<InputType, OutputType, MathTraits>::setIntegratorState(
+		const unitless_type& integratorState)
 {
 	// intError is written and read in operate(), so it needs to be locked.
 	BARRETT_SCOPED_LOCK(this->getEmMutex());
 	intError = integratorState;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setIntegratorLimit(
-		unitless_type intSaturations)
+void PIDController<InputType, OutputType, MathTraits>::setIntegratorLimit(
+		const unitless_type& intSaturations)
 {
 	intErrorLimit = intSaturations;
-	return *this;
 }
 
 template<typename InputType, typename OutputType, typename MathTraits>
-PIDController<InputType, OutputType, MathTraits>&
-PIDController<InputType, OutputType, MathTraits>::setControlSignalLimit(
-		unitless_type csSaturations)
+void PIDController<InputType, OutputType, MathTraits>::setControlSignalLimit(
+		const unitless_type& csSaturations)
 {
 	controlSignalLimit = csSaturations;
-	return *this;
 }
 
 
@@ -143,13 +133,6 @@ template<typename InputType, typename OutputType, typename MathTraits>
 inline void PIDController<InputType, OutputType, MathTraits>::resetIntegrator()
 {
 	setIntegratorState(unitless_type(0.0));
-}
-
-template<typename InputType, typename OutputType, typename MathTraits>
-void PIDController<InputType, OutputType, MathTraits>::setExecutionManager(ExecutionManager* newEm)
-{
-	Controller<InputType, OutputType>::setExecutionManager(newEm);  // call super
-	getSamplePeriodFromEM();
 }
 
 
@@ -174,17 +157,18 @@ void PIDController<InputType, OutputType, MathTraits>::operate()
 
 	error_1 = error;
 
-	this->controlOutputValue->setValue(controlSignal);
+	this->controlOutputValue->setData(&controlSignal);
 }
 
 
 template<typename InputType, typename OutputType, typename MathTraits>
-inline void PIDController<InputType, OutputType, MathTraits>::getSamplePeriodFromEM()
+void PIDController<InputType, OutputType, MathTraits>::getSamplePeriodFromEM()
 {
-	if (this->isExecutionManaged()) {
-		T_s = this->getExecutionManager()->getPeriod();
+	if (this->hasExecutionManager()) {
+		assert(this->getExecutionManager()->getPeriod() > 0.0);
+		setSamplePeriod(this->getExecutionManager()->getPeriod());
 	} else {
-		T_s = 0.0;
+		setSamplePeriod(0.0);
 	}
 }
 

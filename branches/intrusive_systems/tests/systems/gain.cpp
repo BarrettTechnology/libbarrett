@@ -8,6 +8,8 @@
 #include <ostream>
 #include <gtest/gtest.h>
 #include <barrett/systems/gain.h>
+#include <barrett/systems/manual_execution_manager.h>
+#include <barrett/systems/helpers.h>
 #include "./exposed_io_system.h"
 
 
@@ -15,31 +17,42 @@ namespace {
 using namespace barrett;
 
 
-TEST(GainSystemTest, OutputInitiallyUndefined) {
-	systems::Gain<double> gainsys(12.5);
+class GainSystemTest : public ::testing::Test {
+public:
+	GainSystemTest() {
+		mem.startManaging(eios);
+	}
 
-	EXPECT_FALSE(gainsys.input.valueDefined())
+protected:
+	systems::ManualExecutionManager mem;
+	ExposedIOSystem<double> eios;
+};
+
+
+TEST_F(GainSystemTest, OutputInitiallyUndefined) {
+	systems::Gain<double> gainSys(12.5);
+
+	EXPECT_FALSE(gainSys.input.valueDefined())
 		<< "value defined without input";
 }
 
-TEST(GainSystemTest, ConnectsIO) {
-	systems::Gain<double> gainsys(1.0);
-	ExposedIOSystem<double> eios;
+TEST_F(GainSystemTest, ConnectsIO) {
+	systems::Gain<double> gainSys(1.0);
 
-	systems::connect(eios.output, gainsys.input);
-	systems::connect(gainsys.output, eios.input);
+	systems::connect(gainSys.output, eios.input);
+	systems::connect(eios.output, gainSys.input);
 
-	checkConnected(&eios, eios, 3463.2);
+	checkConnected(mem, &eios, eios, 3463.2);
 }
 
-TEST(GainSystemTest, MultipliesInput) {
-	systems::Gain<double> gainsys(14.2);
-	ExposedIOSystem<double> eios;
+TEST_F(GainSystemTest, MultipliesInput) {
+	systems::Gain<double> gainSys(14.2);
 
-	systems::connect(eios.output, gainsys.input);
-	systems::connect(gainsys.output, eios.input);
+	systems::connect(gainSys.output, eios.input);
+	systems::connect(eios.output, gainSys.input);
 
 	eios.setOutputValue(-38.52);
+	mem.runExecutionCycle();
 	EXPECT_EQ(14.2 * -38.52, eios.getInputValue());
 }
 
@@ -54,6 +67,7 @@ class A {
 private:
 	float value;
 public:
+	A() : value(0.0) {}
 	explicit A(float value) :
 		value(value) {}
 };
@@ -71,6 +85,7 @@ class C {
 private:
 	float value;
 public:
+	C() : value(0.0) {}
 	explicit C(float value) :
 		value(value) {}
 	bool operator== (const C& other) const {
@@ -86,16 +101,18 @@ ostream& operator<<(ostream& os, C c) {
 }
 
 // mostly, we just want this to compile
-TEST(GainSystemTest, IGOCanBeDifferentTypes) {
-	systems::Gain<A, B, C> gainsys(B(-3.0));
-	ExposedIOSystem<A> insys;
-	ExposedIOSystem<C> outsys;
+TEST_F(GainSystemTest, IGOCanBeDifferentTypes) {
+	systems::Gain<A, B, C> gainSys(B(-3.0));
+	ExposedIOSystem<A> out;
+	ExposedIOSystem<C> in;
 
-	systems::connect(insys.output, gainsys.input);
-	systems::connect(gainsys.output, outsys.input);
+	mem.startManaging(in);
+	systems::connect(out.output, gainSys.input);
+	systems::connect(gainSys.output, in.input);
 
-	insys.setOutputValue(A(9.0));
-	EXPECT_EQ(A(9.0) * B(-3.0), outsys.getInputValue())
+	out.setOutputValue(A(9.0));
+	mem.runExecutionCycle();
+	EXPECT_EQ(A(9.0) * B(-3.0), in.getInputValue())
 		<< "did multiplication wrong";
 }
 

@@ -46,15 +46,17 @@ template<typename InputType,
 		 typename OutputType = InputType>
 class Gain : public SingleIO<InputType, OutputType> {
 public:
-	explicit Gain(GainType gain) :
-		gain(gain) {}
-	virtual ~Gain() {}
+	explicit Gain(GainType gain, const std::string& sysName = "Gain") :
+		SingleIO<InputType, OutputType>(sysName), gain(gain) {}
+	virtual ~Gain() { this->mandatoryCleanUp(); }
 
 protected:
 	GainType gain;
+	OutputType data;
 
 	virtual void operate() {
-		this->outputValue->setValue(this->input.getValue() * gain);
+		data = this->input.getValue() * gain;
+		this->outputValue->setData(&data);
 	}
 
 private:

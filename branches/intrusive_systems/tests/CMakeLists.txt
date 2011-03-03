@@ -25,12 +25,12 @@ set(tests_SOURCES
 	systems/callback.cpp
 	systems/constant.cpp
 	systems/converter.cpp
-#	systems/first_order_filter.cpp
-#	systems/gain.cpp
+	systems/first_order_filter.cpp
+	systems/gain.cpp
 	systems/helpers.cpp
-#	systems/io_conversion.cpp
+	systems/io_conversion.cpp
 	systems/manual_execution_manager.cpp
-#	systems/pid_controller.cpp
+	systems/pid_controller.cpp
 #	systems/print_to_stream.cpp
 #	systems/summer-polarity.cpp
 #	systems/summer.cpp
