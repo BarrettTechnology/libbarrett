@@ -89,6 +89,9 @@ protected:
 	virtual void operate() = 0;
 	virtual void invalidateOutputs();
 
+	// If you redefine this method, make sure to call
+	// MyBaseClass::onExecutionManagerChanged() in the new version.
+	virtual void onExecutionManagerChanged() {}
 
 	std::string name;
 	ExecutionManager* em;

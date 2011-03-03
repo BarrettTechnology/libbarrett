@@ -72,6 +72,7 @@ void System::setExecutionManager(ExecutionManager* newEm)
 		assert(getExecutionManager() == newEm);
 	} else if (newEm != NULL) {
 		em = newEm;
+		onExecutionManagerChanged();
 
 		child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
 		for (; i != iEnd; ++i) {
@@ -96,16 +97,20 @@ void System::unsetExecutionManager()
 		return;
 	}
 
+	ExecutionManager* oldEm = getExecutionManager();
 	child_output_list_type::const_iterator oc(outputs.begin()), ocEnd(outputs.end());
 	for (; oc != ocEnd; ++oc) {
 		em = oc->collectExecutionManager();
 
 		if (hasExecutionManager()) {
+			assert(oldEm == getExecutionManager());
 			return;
 		}
 	}
 
 	// if no EM found...
+	onExecutionManagerChanged();
+
 	child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
 	for (; i != iEnd; ++i) {
 		i->unsetExecutionManager();

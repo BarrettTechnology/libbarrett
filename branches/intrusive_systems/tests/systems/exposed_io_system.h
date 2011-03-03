@@ -18,10 +18,11 @@ template<typename T>
 class ExposedIOSystem : public barrett::systems::SingleIO<T, T> {
 public:
 	mutable bool operateCalled;
+	mutable bool executionManagerChanged;
 
 	ExposedIOSystem(const std::string& sysName = "ExposedIOSystem") :
 		barrett::systems::SingleIO<T, T>(sysName),
-		operateCalled(false), data() {}
+		operateCalled(false), executionManagerChanged(false), data() {}
 	virtual ~ExposedIOSystem() { this->mandatoryCleanUp(); }
 
 	const T& getInputValue() const {
@@ -62,6 +63,13 @@ protected:
 	// This System's Outputs are not a function of its Inputs.
 	virtual void invalidateOutputs() {
 		/* do nothing */
+	}
+
+	virtual void onExecutionManagerChanged() {
+		// First, call super
+		barrett::systems::SingleIO<T, T>::onExecutionManagerChanged();
+
+		executionManagerChanged = true;
 	}
 
 	T data;

@@ -46,6 +46,38 @@ TEST_F(SystemTest, GeneralIO) {
 	checkConnected(mem, &out, in, 145.0);
 }
 
+TEST_F(SystemTest, OnExecutionManagerChanged) {
+	ExposedIOSystem<double> eios;
+	ASSERT_FALSE(eios.executionManagerChanged);
+
+	mem.startManaging(eios);
+	EXPECT_TRUE(eios.executionManagerChanged);
+	eios.executionManagerChanged = false;
+
+	ASSERT_FALSE(out.executionManagerChanged);
+	systems::connect(out.output, eios.input);
+	EXPECT_FALSE(eios.executionManagerChanged);
+	EXPECT_TRUE(out.executionManagerChanged);
+	out.executionManagerChanged = false;
+
+	mem.stopManaging(eios);
+	EXPECT_TRUE(eios.executionManagerChanged);
+	eios.executionManagerChanged = false;
+	EXPECT_TRUE(out.executionManagerChanged);
+	out.executionManagerChanged = false;
+
+	mem.startManaging(eios);
+	EXPECT_TRUE(eios.executionManagerChanged);
+	eios.executionManagerChanged = false;
+	EXPECT_TRUE(out.executionManagerChanged);
+	out.executionManagerChanged = false;
+
+	systems::disconnect(eios.input);
+	EXPECT_FALSE(eios.executionManagerChanged);
+	EXPECT_TRUE(out.executionManagerChanged);
+	out.executionManagerChanged = false;
+}
+
 TEST_F(SystemTest, OutputDelegates) {
 	ExposedIOSystem<double> d;
 	out.delegateOutputValueTo(d.output);
