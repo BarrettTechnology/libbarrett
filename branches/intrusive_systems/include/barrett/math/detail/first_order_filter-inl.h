@@ -101,7 +101,7 @@ void FirstOrderFilter<T, MathTraits>::setFromConfig(const libconfig::Setting& se
 }
 
 template<typename T, typename MathTraits>
-void FirstOrderFilter<T, MathTraits>::setLowPass(T omega_p, T dcGain)
+void FirstOrderFilter<T, MathTraits>::setLowPass(const T& omega_p, const T& dcGain)
 {
 	a = MT::zero();
 	b = MT::mult(dcGain, omega_p);
@@ -111,7 +111,7 @@ void FirstOrderFilter<T, MathTraits>::setLowPass(T omega_p, T dcGain)
 }
 
 template<typename T, typename MathTraits>
-void FirstOrderFilter<T, MathTraits>::setHighPass(T omega_p, T hfGain)
+void FirstOrderFilter<T, MathTraits>::setHighPass(const T& omega_p, const T& hfGain)
 {
 	a = hfGain;
 	b = MT::zero();
@@ -121,7 +121,7 @@ void FirstOrderFilter<T, MathTraits>::setHighPass(T omega_p, T hfGain)
 }
 
 template<typename T, typename MathTraits>
-void FirstOrderFilter<T, MathTraits>::setZPK(T omega_z, T omega_p, T dcGain)
+void FirstOrderFilter<T, MathTraits>::setZPK(const T& omega_z, const T& omega_p, const T& dcGain)
 {
 	a = MT::div(MT::mult(dcGain, omega_p), omega_z);
 	b = MT::mult(dcGain, omega_p);
@@ -131,7 +131,7 @@ void FirstOrderFilter<T, MathTraits>::setZPK(T omega_z, T omega_p, T dcGain)
 }
 
 template<typename T, typename MathTraits>
-void FirstOrderFilter<T, MathTraits>::setIntegrator(T gain)
+void FirstOrderFilter<T, MathTraits>::setIntegrator(const T& gain)
 {
 	a = MT::zero();
 	b = gain;
@@ -141,7 +141,7 @@ void FirstOrderFilter<T, MathTraits>::setIntegrator(T gain)
 }
 
 template<typename T, typename MathTraits>
-void FirstOrderFilter<T, MathTraits>::setParameters(T a_, T b_, T c_)
+void FirstOrderFilter<T, MathTraits>::setParameters(const T& a_, const T& b_, const T& c_)
 {
 	a = a_;
 	b = b_;
@@ -171,7 +171,7 @@ inline void FirstOrderFilter<T, MathTraits>::updateCoefficients()
 }
 
 template<typename T, typename MathTraits>
-inline T FirstOrderFilter<T, MathTraits>::eval(const T& x_0)
+inline const T& FirstOrderFilter<T, MathTraits>::eval(const T& x_0)
 {
 	// y_0 = c1*y_1 + c2*x_0 - c3*x_1;
 	y_0 = MT::sub(MT::add(MT::mult(c1,y_1), MT::mult(c2,x_0)), MT::mult(c3,x_1));

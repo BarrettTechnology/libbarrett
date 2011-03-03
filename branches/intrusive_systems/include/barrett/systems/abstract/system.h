@@ -361,5 +361,8 @@ private:
 // include template definitions
 #include <barrett/systems/abstract/detail/system-inl.h>
 
+// Always include helper definitions to avoid linker errors
+#include <barrett/systems/helpers.h>
+
 
 #endif /* BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_ */
