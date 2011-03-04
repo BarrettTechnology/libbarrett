@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include <barrett/detail/stl_utils.h>
+#include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/helpers.h>
 #include <barrett/systems/constant.h>
 #include <barrett/systems/summer.h>
@@ -37,8 +38,12 @@ void testSummer(systems::Summer<T,N>& summer, const std::vector<T>& inputs, T ex
 		systems::connect(constants[i]->output, summer.getInput(i));
 	}
 
+	systems::ManualExecutionManager mem;
 	ExposedIOSystem<T> eios;
+	mem.startManaging(eios);
 	systems::connect(summer.output, eios.input);
+
+	mem.runExecutionCycle();
 	EXPECT_EQ(expected, eios.getInputValue());
 
 	detail::purge(constants);

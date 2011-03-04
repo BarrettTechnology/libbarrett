@@ -72,7 +72,7 @@ throw(std::invalid_argument) :
 }
 
 template<typename T, size_t numInputs>
-const int Summer<T, numInputs>::Polarity::operator[] (const size_t i) const
+inline int Summer<T, numInputs>::Polarity::operator[] (const size_t i) const
 {
 	return polarity[i] ? 1 : -1;
 }

@@ -42,36 +42,36 @@ namespace systems {
 
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const Polarity& inputPolarity, bool undefinedIsZero) :
-	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+Summer<T, numInputs>::Summer(const Polarity& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::string& inputPolarity, bool undefinedIsZero) :
-	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+Summer<T, numInputs>::Summer(const std::string& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const char* inputPolarity, bool undefinedIsZero) :
-	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+Summer<T, numInputs>::Summer(const char* inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero) :
-	SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero)
+Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
 template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(bool undefinedIsZero) :
-	SingleOutput<T>(this), polarity(), strict(!undefinedIsZero)
+Summer<T, numInputs>::Summer(bool undefinedIsZero, const std::string& sysName) :
+	System(sysName), SingleOutput<T>(this), polarity(), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
@@ -79,6 +79,7 @@ Summer<T, numInputs>::Summer(bool undefinedIsZero) :
 template<typename T, size_t numInputs>
 inline Summer<T, numInputs>::~Summer()
 {
+	mandatoryCleanUp();
 	barrett::detail::purge(inputs);
 }
 
@@ -92,17 +93,17 @@ void Summer<T, numInputs>::operate()
 {
 	typedef math::Traits<T> Traits;
 
-	T sum = Traits::zero();
+	sum = Traits::zero();
 	for (size_t i = 0; i < numInputs; ++i) {
 		if (inputs[i]->valueDefined()) {
 			sum = Traits::add(sum, Traits::mult(polarity[i], inputs[i]->getValue()));
 		} else if (strict) {
-			this->outputValue->setValueUndefined();
+			this->outputValue->setUndefined();
 			return;
 		}
 	}
 
-	this->outputValue->setValue(sum);
+	this->outputValue->setData(&sum);
 }
 
 template<typename T, size_t numInputs>

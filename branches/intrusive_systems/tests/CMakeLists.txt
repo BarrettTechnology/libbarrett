@@ -31,9 +31,9 @@ set(tests_SOURCES
 	systems/io_conversion.cpp
 	systems/manual_execution_manager.cpp
 	systems/pid_controller.cpp
-#	systems/print_to_stream.cpp
-#	systems/summer-polarity.cpp
-#	systems/summer.cpp
+	systems/print_to_stream.cpp
+	systems/summer.cpp
+	systems/summer-polarity.cpp
 	#systems/tool_orientation.cpp
 )
 
