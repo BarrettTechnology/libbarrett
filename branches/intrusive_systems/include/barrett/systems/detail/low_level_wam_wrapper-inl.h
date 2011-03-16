@@ -45,14 +45,16 @@ namespace systems {
 
 template<size_t DOF>
 LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
+		ExecutionManager* em,
 		const std::vector<Puck*>& genericPucks,
 		SafetyModule* safetyModule,
 		const libconfig::Setting& setting,
-		std::vector<int> torqueGroupIds) :
+		std::vector<int> torqueGroupIds,
+		const std::string& sysName) :
 	input(sink.input),
 	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
 	llw(genericPucks, safetyModule, setting, torqueGroupIds),
-	sink(this), source(this)
+	sink(this, em, sysName + "::Sink"), source(this, em, sysName + "::Source")
 {
 }
 
@@ -75,8 +77,8 @@ void LowLevelWamWrapper<DOF>::Source::operate()
 		}
 	}
 
-	this->jpOutputValue->setValue(parent->llw.getJointPositions());
-	this->jvOutputValue->setValue(parent->llw.getJointVelocities());
+	this->jpOutputValue->setData( &(parent->llw.getJointPositions()) );
+	this->jvOutputValue->setData( &(parent->llw.getJointVelocities()) );
 }
 
 

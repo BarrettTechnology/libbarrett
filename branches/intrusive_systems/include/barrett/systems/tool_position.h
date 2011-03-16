@@ -47,17 +47,18 @@ template<size_t DOF>
 class ToolPosition : public System, public KinematicsInput<DOF>,
 					 public SingleOutput<units::CartesianPosition::type> {
 public:
-	ToolPosition() :
-		KinematicsInput<DOF>(this),
-		SingleOutput<units::CartesianPosition::type>(this) {}
-	virtual ~ToolPosition() {}
+	ToolPosition(const std::string& sysName = "ToolPosition") :
+		System(sysName), KinematicsInput<DOF>(this),
+		SingleOutput<units::CartesianPosition::type>(this), data() {}
+	virtual ~ToolPosition() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
-		this->outputValue->setValue(
-				units::CartesianPosition::type(
-						this->kinInput.getValue()->impl->tool->origin_pos));
+		data.copyFrom(this->kinInput.getValue().impl->tool->origin_pos);
+		this->outputValue->setData(&data);
 	}
+
+	units::CartesianPosition::type data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ToolPosition);

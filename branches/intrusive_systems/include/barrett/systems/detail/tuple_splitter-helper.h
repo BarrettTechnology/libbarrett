@@ -73,9 +73,9 @@ struct OutputHolder :
 			Index+1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>*>(this) )->output;
 	}
 
-	void setValues(const tuple_type& t) {
-		inherited_type::setValues(t);
-		outputValue->setValue(boost::get<N-1>(t));
+	void setData(const tuple_type* t) {
+		inherited_type::setData(t);
+		outputValue->setData( &(boost::get<N-1>(*t)) );
 	}
 
 	System::Output<data_type> output;
@@ -101,8 +101,8 @@ struct OutputHolder<1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 		return output;
 	}
 
-	void setValues(const tuple_type& t) {
-		outputValue->setValue(boost::get<0>(t));
+	void setData(const tuple_type* t) {
+		outputValue->setData( &(boost::get<0>(*t)) );
 	}
 
 	System::Output<data_type> output;

@@ -51,8 +51,8 @@ template<typename InputType,
 		 typename MathTraits = math::Traits<InputType> >
 class PIDController : public Controller<InputType, OutputType> {
 public:
-//	typedef typename InputType::unitless_type unitless_type;
-	typedef InputType unitless_type;
+	typedef typename InputType::unitless_type unitless_type;
+//	typedef InputType unitless_type;
 
 	explicit PIDController(const std::string& sysName = "PIDController");
 	explicit PIDController(const libconfig::Setting& setting, const std::string& sysName = "PIDController");
@@ -89,8 +89,8 @@ protected:
 	InputType error, error_1;
 	unitless_type intError, intErrorLimit;
 	unitless_type kp, ki, kd;
-//	OutputType controlSignal, controlSignalLimit;
-	unitless_type controlSignal, controlSignalLimit;
+	OutputType controlSignal, controlSignalLimit;
+//	unitless_type controlSignal, controlSignalLimit;
 
 	void getSamplePeriodFromEM();
 

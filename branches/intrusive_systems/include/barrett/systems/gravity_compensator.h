@@ -56,25 +56,28 @@ class GravityCompensator : public System,
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	explicit GravityCompensator(const libconfig::Setting& setting) :
-		KinematicsInput<DOF>(this), SingleOutput<jt_type>(this),
-		impl(NULL) {
+	explicit GravityCompensator(const libconfig::Setting& setting,
+			const std::string& sysName = "GravityCompensator") :
+		System(sysName), KinematicsInput<DOF>(this), SingleOutput<jt_type>(this), impl(NULL), data()
+	{
 		bt_calgrav_create(&impl, setting.getCSetting(), DOF);
 	}
 
 	virtual ~GravityCompensator() {
+		mandatoryCleanUp();
+
 		bt_calgrav_destroy(impl);
 		impl = NULL;
 	}
 
 protected:
 	virtual void operate() {
-		jt_type jt;
-		bt_calgrav_eval(impl, this->kinInput.getValue()->impl, jt.asGslType());
-		this->outputValue->setValue(jt);
+		bt_calgrav_eval(impl, this->kinInput.getValue().impl, data.asGslType());
+		this->outputValue->setData(&data);
 	}
 
 	struct bt_calgrav* impl;
+	jt_type data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(GravityCompensator);

@@ -59,10 +59,10 @@ namespace systems {
 // TODO(dc): some of these members should be inline
 
 template<size_t DOF>
-Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
-		const libconfig::Setting& setting,
-		std::vector<int> torqueGroupIds) :
-	llww(genericPucks, safetyModule, setting["low_level"], torqueGroupIds),
+Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
+		SafetyModule* safetyModule, const libconfig::Setting& setting,
+		std::vector<int> torqueGroupIds, const std::string& sysName) :
+	llww(em, genericPucks, safetyModule, setting["low_level"], torqueGroupIds, sysName + "::LowLevel"),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),
@@ -272,11 +272,8 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInS());
 
-	Ramp time(1.0, false);
+	Ramp time(NULL, 1.0);
 	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
-
-	// TODO(dc): Ramp should get this from the EM itself
-	time.setSamplePeriod(tf2jt.getExecutionManager()->getPeriod());  // get the EM from one of the Wam's Systems...
 
 	connect(time.output, trajectory.input);
 	trackReferenceSignal(trajectory.output);

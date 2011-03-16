@@ -42,6 +42,7 @@
 #include <barrett/products/low_level_wam.h>
 #include <barrett/products/safety_module.h>
 
+#include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 
@@ -61,9 +62,10 @@ public:		System::Output<jv_type>& jvOutput;
 
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	LowLevelWamWrapper(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
-			const libconfig::Setting& setting,
-			std::vector<int> torqueGroupIds = std::vector<int>());
+	LowLevelWamWrapper(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
+			SafetyModule* safetyModule, const libconfig::Setting& setting,
+			std::vector<int> torqueGroupIds = std::vector<int>(),
+			const std::string& sysName = "LowLevelWamWrapper");
 	~LowLevelWamWrapper() {}
 
 	LowLevelWam<DOF>& getLowLevelWam() { return llw; }
@@ -72,11 +74,18 @@ public:
 protected:
 	class Sink : public System, public SingleInput<jt_type> {
 	public:
-		Sink(LowLevelWamWrapper* parent) :
-			System(true),  // Update every execution cycle because this is a sink.
+		Sink(LowLevelWamWrapper* parent, ExecutionManager* em,
+				const std::string& sysName = "LowLevelWamWrapper::Sink") :
+			System(sysName),
 			SingleInput<jt_type>(this),
-			parent(parent) {}
-		virtual ~Sink() {}
+			parent(parent)
+		{
+			// Update every execution cycle because this is a sink.
+			if (em != NULL) {
+				em->startManaging(*this);
+			}
+		}
+		virtual ~Sink() { mandatoryCleanUp(); }
 
 	protected:
 		virtual void operate();
@@ -97,16 +106,23 @@ protected:
 
 
 	public:
-		Source(LowLevelWamWrapper* parent) :
-			System(true),  // Update every execution cycle to prevent heartbeat
-						   // faults. Depending on connections, this System
-						   // might not be called for a period of time. In this
-						   // situation, the pucks would stop reporting
-						   // positions and the safety system would assume they
-						   // had died.
+		Source(LowLevelWamWrapper* parent, ExecutionManager* em,
+				const std::string& sysName = "LowLevelWamWrapper::Sink") :
+			System(sysName),
 			jpOutput(this, &jpOutputValue), jvOutput(this, &jvOutputValue),
-			parent(parent) {}
-		virtual ~Source() {}
+			parent(parent)
+		{
+			// Update every execution cycle to prevent heartbeat
+			// faults. Depending on connections, this System
+			// might not be called for a period of time. In this
+			// situation, the pucks would stop reporting
+			// positions and the safety system would assume they
+			// had died.
+			if (em != NULL) {
+				em->startManaging(*this);
+			}
+		}
+		virtual ~Source() { mandatoryCleanUp(); }
 
 	protected:
 		virtual void operate();

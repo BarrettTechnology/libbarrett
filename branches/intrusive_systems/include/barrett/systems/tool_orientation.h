@@ -53,23 +53,21 @@ template<size_t DOF>
 class ToolOrientation : public System, public KinematicsInput<DOF>,
 						public SingleOutput<Eigen::Quaterniond> {
 public:
-	ToolOrientation() :
-		KinematicsInput<DOF>(this),
-		SingleOutput<Eigen::Quaterniond>(this) {}
-	virtual ~ToolOrientation() {}
+	ToolOrientation(const std::string& sysName = "ToolOrientation") :
+		System(sysName), KinematicsInput<DOF>(this),
+		SingleOutput<Eigen::Quaterniond>(this), rot(), data() {}
+	virtual ~ToolOrientation() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
-		Eigen::Matrix3d rot;
+		rot.copyFrom(this->kinInput.getValue().impl->tool->rot_to_world);
+		data = rot.transpose(); // Transpose to get world-to-tool rotation
 
-		for (size_t r = 0; r < 3; ++r) {
-			for (size_t c = 0; c < 3; ++c) {
-				rot(c,r) = gsl_matrix_get(this->kinInput.getValue()->impl->tool->rot_to_world, r,c);  // transpose to get tool to world transform
-			}
-		}
-
-		this->outputValue->setValue(Eigen::Quaterniond(rot));
+		this->outputValue->setData(&data);
 	}
+
+	math::Matrix<3,3> rot;
+	Eigen::Quaterniond data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ToolOrientation);

@@ -109,9 +109,10 @@ public:		System::Output<jv_type>& jvOutput;
 
 public:
 	// genericPucks must be ordered by joint and must break into torque groups as arranged
-	Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
-			const libconfig::Setting& setting,
-			std::vector<int> torqueGroupIds = std::vector<int>());
+	Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
+			SafetyModule* safetyModule, const libconfig::Setting& setting,
+			std::vector<int> torqueGroupIds = std::vector<int>(),
+			const std::string& sysName = "Wam");
 	~Wam();
 
 	template<typename T>
