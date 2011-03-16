@@ -44,6 +44,9 @@ TEST_F(SystemTest, GeneralIO) {
 
 	// set outputValue, then make sure value is defined and correct
 	checkConnected(mem, &out, in, 145.0);
+
+	mem.stopManaging(in);
+	EXPECT_FALSE(in.inputValueDefined());
 }
 
 TEST_F(SystemTest, OnExecutionManagerChanged) {
@@ -217,6 +220,22 @@ TEST_F(SystemDeathTest, InputGetValueDiesWhenNotConnected) {
 TEST_F(SystemDeathTest, InputGetValueDiesWhenUndefined) {
 	systems::connect(out.output, in.input);
 
+	ASSERT_DEATH(in.getInputValue(), "");
+}
+
+TEST_F(SystemDeathTest, InputGetValueDiesWhenNotManaged) {
+
+	systems::connect(out.output, in.input);
+	out.setOutputValue(12.3);
+
+	in.getInputValue();  // Shouldn't die
+
+
+	// Should die because in doesn't have an EM
+	mem.stopManaging(in);
+	ASSERT_DEATH(in.getInputValue(), "");
+
+	mem.startManaging(out);
 	ASSERT_DEATH(in.getInputValue(), "");
 }
 

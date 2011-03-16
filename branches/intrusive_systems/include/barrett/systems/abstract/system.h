@@ -193,8 +193,8 @@ public:
 
 	bool isConnected() const { return output != NULL; }
 	virtual bool valueDefined() const {
-		assert(parentSys != NULL);  // TODO(dc): Is this assertion helpful?
-		return isConnected()  &&  output->getValueObject()->updateData(parentSys->ut);
+		assert(parentSys != NULL);
+		return parentSys->hasExecutionManager()  &&  isConnected()  &&  output->getValueObject()->updateData(parentSys->ut);
 	}
 
 	const T& getValue() const {
@@ -203,7 +203,6 @@ public:
 		// valueDefined() calls Output<T>::Value::updateData() for us. Make
 		// sure it gets called even if NDEBUG is defined.
 #ifdef NDEBUG
-		assert(parentSys != NULL);  // TODO(dc): Is this assertion helpful?
 		output->getValueObject()->updateData(parentSys->ut);
 #endif
 
