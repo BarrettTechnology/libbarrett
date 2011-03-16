@@ -39,8 +39,8 @@ TEST_F(GainSystemTest, OutputInitiallyUndefined) {
 TEST_F(GainSystemTest, ConnectsIO) {
 	systems::Gain<double> gainSys(1.0);
 
-	systems::connect(gainSys.output, eios.input);
 	systems::connect(eios.output, gainSys.input);
+	systems::connect(gainSys.output, eios.input);
 
 	checkConnected(mem, &eios, eios, 3463.2);
 }
@@ -48,8 +48,8 @@ TEST_F(GainSystemTest, ConnectsIO) {
 TEST_F(GainSystemTest, MultipliesInput) {
 	systems::Gain<double> gainSys(14.2);
 
-	systems::connect(gainSys.output, eios.input);
 	systems::connect(eios.output, gainSys.input);
+	systems::connect(gainSys.output, eios.input);
 
 	eios.setOutputValue(-38.52);
 	mem.runExecutionCycle();
@@ -107,8 +107,8 @@ TEST_F(GainSystemTest, IGOCanBeDifferentTypes) {
 	ExposedIOSystem<C> in;
 
 	mem.startManaging(in);
-	systems::connect(out.output, gainSys.input);
 	systems::connect(gainSys.output, in.input);
+	systems::connect(out.output, gainSys.input);
 
 	out.setOutputValue(A(9.0));
 	mem.runExecutionCycle();

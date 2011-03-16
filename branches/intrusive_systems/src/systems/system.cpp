@@ -68,20 +68,22 @@ void System::invalidateOutputs()
 
 void System::setExecutionManager(ExecutionManager* newEm)
 {
-	if (hasExecutionManager()) {
-		assert(getExecutionManager() == newEm);
-	} else if (newEm != NULL) {
-		em = newEm;
-		onExecutionManagerChanged();
+	if (newEm != NULL) {
+		if (hasExecutionManager()) {
+			assert(getExecutionManager() == newEm);
+		} else {
+			em = newEm;
+			onExecutionManagerChanged();
 
-		child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
-		for (; i != iEnd; ++i) {
-			i->pushExecutionManager();
-		}
+			child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
+			for (; i != iEnd; ++i) {
+				i->pushExecutionManager();
+			}
 
-		child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
-		for (; o != oEnd; ++o) {
-			o->pushExecutionManager();
+			child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
+			for (; o != oEnd; ++o) {
+				o->pushExecutionManager();
+			}
 		}
 	}
 }

@@ -46,6 +46,21 @@ TEST_F(SystemHelperTest, ConnectPropagatesEm) {
 	EXPECT_EQ(&mem, out.getExecutionManager());
 }
 
+TEST_F(SystemHelperTest, ConnectAllowsInputWithNullEm) {
+	mem.startManaging(out);
+
+	EXPECT_FALSE(other.hasExecutionManager());
+	EXPECT_FALSE(other.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, other.getExecutionManager());
+
+	systems::connect(out.output, other.input);
+
+	EXPECT_FALSE(other.hasExecutionManager());
+	EXPECT_FALSE(other.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, other.getExecutionManager());
+
+}
+
 TEST_F(SystemHelperTest, ReconnectReconnects) {
 	systems::connect(out.output, in.input);
 	checkConnected(mem, &out, in, -8.6e4);
