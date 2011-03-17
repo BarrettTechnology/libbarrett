@@ -54,6 +54,9 @@ protected:
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
 	DISALLOW_COPY_AND_ASSIGN(FirstOrderFilter);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(MT::RequiresAlignment)
 };
 
 

@@ -80,6 +80,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(HapticBall);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

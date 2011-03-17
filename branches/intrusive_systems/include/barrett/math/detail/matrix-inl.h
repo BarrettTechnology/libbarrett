@@ -157,7 +157,7 @@ template<int R, int C, typename Units>
 inline size_t Matrix<R,C, Units>::serializedLength()
 {
 	// This method assumes a fixed-size Matrix.
-	BOOST_STATIC_ASSERT(R != Eigen::Dynamic  &&  C != Eigen::Dynamic);
+	BOOST_STATIC_ASSERT( !Traits<type>::IsDynamic );
 	return sizeof(double) * SIZE;
 }
 
@@ -255,7 +255,7 @@ inline const typename Matrix<R,C, Units>::gsl_type* Matrix<R,C, Units>::asGslTyp
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::resizeIfDynamic(int r, int c)
 {
-	if (R == Eigen::Dynamic  ||  C == Eigen::Dynamic) {
+	if (Traits<type>::IsDynamic) {
 		this->resize(r,c);
 	}
 }

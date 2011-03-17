@@ -37,6 +37,7 @@
 #include <stdexcept>
 
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 
@@ -47,7 +48,7 @@ namespace systems {
 
 // FIXME: it might be nice to have a Summer with the number of inputs
 //        determined at runtime
-template<typename T, size_t numInputs = 2>
+template<typename T, size_t numInputs = 2, bool RequiresAlignment = math::Traits<T>::RequiresAlignment>
 class Summer : public System, public SingleOutput<T> {
 // IO
 // protected because of variable number of inputs
@@ -93,6 +94,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Summer);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

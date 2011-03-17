@@ -43,19 +43,19 @@ namespace barrett {
 namespace systems {
 
 
-template<typename T>
-class FirstOrderFilter : public SingleIO<T, T>, protected math::FirstOrderFilter<T> {
+template<typename T, typename MathTraits = math::Traits<T> >
+class FirstOrderFilter : public SingleIO<T, T>, protected math::FirstOrderFilter<T,MathTraits> {
 public:
 	explicit FirstOrderFilter(const std::string& sysName = "FirstOrderFilter");
 	explicit FirstOrderFilter(const libconfig::Setting& setting, const std::string& sysName = "FirstOrderFilter");
 	virtual ~FirstOrderFilter() { this->mandatoryCleanUp(); }
 
-	using math::FirstOrderFilter<T>::setFromConfig;
-	using math::FirstOrderFilter<T>::setLowPass;
-	using math::FirstOrderFilter<T>::setHighPass;
-	using math::FirstOrderFilter<T>::setZPK;
-	using math::FirstOrderFilter<T>::setIntegrator;
-	using math::FirstOrderFilter<T>::setParameters;
+	using math::FirstOrderFilter<T,MathTraits>::setFromConfig;
+	using math::FirstOrderFilter<T,MathTraits>::setLowPass;
+	using math::FirstOrderFilter<T,MathTraits>::setHighPass;
+	using math::FirstOrderFilter<T,MathTraits>::setZPK;
+	using math::FirstOrderFilter<T,MathTraits>::setIntegrator;
+	using math::FirstOrderFilter<T,MathTraits>::setParameters;
 
 protected:
 	virtual void operate();
@@ -68,6 +68,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(FirstOrderFilter);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(MathTraits::RequiresAlignment)
 };
 
 

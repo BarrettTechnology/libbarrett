@@ -81,6 +81,9 @@ private:
 	static const enum Puck::Property props[];
 
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWam);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

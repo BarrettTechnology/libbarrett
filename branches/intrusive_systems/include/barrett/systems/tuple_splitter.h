@@ -33,9 +33,11 @@
 
 
 #include <boost/tuple/tuple.hpp>
+
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 #include <barrett/systems/detail/tuple_splitter-helper.h>
+
 
 namespace barrett {
 namespace systems {
@@ -79,6 +81,13 @@ protected:
 	virtual void operate() {
 		outputs.setData( &(this->input.getValue()) );
 	}
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(TupleSplitter);
+
+public:
+	// To be safe, assume that at least one of the input types needs to be aligned.
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

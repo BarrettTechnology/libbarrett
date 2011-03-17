@@ -17,6 +17,9 @@ namespace math {
 
 // Default designed for built-in arithmetic types.
 template<typename T> struct Traits {
+	static const bool RequiresAlignment = false;
+
+
 	static T zero() {
 		return T();
 	}

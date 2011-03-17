@@ -33,7 +33,9 @@
 
 
 #include <boost/function.hpp>
+
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/single_io.h>
 
 
@@ -41,7 +43,7 @@ namespace barrett {
 namespace systems {
 
 
-template<typename InputType, typename OutputType = InputType>
+template<typename InputType, typename OutputType = InputType, bool RequiresAlignment = math::Traits<OutputType>::RequiresAlignment>
 class Callback : public SingleIO<InputType, OutputType> {
 public:
 	typedef boost::function<OutputType (const InputType&)> callback_type;
@@ -61,6 +63,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Callback);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

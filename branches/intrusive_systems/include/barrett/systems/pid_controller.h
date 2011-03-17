@@ -96,6 +96,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(PIDController);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(MathTraits::RequiresAlignment)
 };
 
 

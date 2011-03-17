@@ -37,22 +37,22 @@ namespace barrett {
 namespace systems {
 
 
-template<typename T>
-FirstOrderFilter<T>::FirstOrderFilter(const std::string& sysName) :
+template<typename T, typename MathTraits>
+FirstOrderFilter<T,MathTraits>::FirstOrderFilter(const std::string& sysName) :
 	SingleIO<T, T>(sysName)
 {
 	getSamplePeriodFromEM();
 }
 
-template<typename T>
-FirstOrderFilter<T>::FirstOrderFilter(const libconfig::Setting& setting, const std::string& sysName) :
+template<typename T, typename MathTraits>
+FirstOrderFilter<T,MathTraits>::FirstOrderFilter(const libconfig::Setting& setting, const std::string& sysName) :
 	SingleIO<T, T>(sysName), math::FirstOrderFilter<T>(setting)
 {
 	getSamplePeriodFromEM();
 }
 
-template<typename T>
-void FirstOrderFilter<T>::operate()
+template<typename T, typename MathTraits>
+void FirstOrderFilter<T,MathTraits>::operate()
 {
 	eval(this->input.getValue());
 	this->outputValue->setData(&this->y_0);
@@ -60,8 +60,8 @@ void FirstOrderFilter<T>::operate()
 
 
 // TODO(dc): anyway to remove the code duplication with PIDController?
-template<typename T>
-void FirstOrderFilter<T>::getSamplePeriodFromEM()
+template<typename T, typename MathTraits>
+void FirstOrderFilter<T,MathTraits>::getSamplePeriodFromEM()
 {
 	if (this->hasExecutionManager()) {
 		assert(this->getExecutionManager()->getPeriod() > 0.0);

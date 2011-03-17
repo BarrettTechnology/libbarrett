@@ -167,6 +167,11 @@ template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> 
 	typedef Eigen::MatrixBase<TraitsDerived> MatrixBaseType;
 	typedef typename MatrixBaseType::ConstantReturnType ConstantReturnType;
 
+
+	static const bool IsDynamic = (MatrixBaseType::RowsAtCompileTime == Eigen::Dynamic  ||  MatrixBaseType::ColsAtCompileTime == Eigen::Dynamic);
+	static const bool RequiresAlignment = !IsDynamic;
+
+
 	static const ConstantReturnType zero() {
 		return MatrixBaseType::Zero();
 	}

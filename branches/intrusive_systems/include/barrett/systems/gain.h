@@ -33,6 +33,7 @@
 
 
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/single_io.h>
 
 
@@ -43,7 +44,8 @@ namespace systems {
 
 template<typename InputType,
 		 typename GainType = InputType,
-		 typename OutputType = InputType>
+		 typename OutputType = InputType,
+		 bool RequiresAlignment = (math::Traits<GainType>::RequiresAlignment || math::Traits<OutputType>::RequiresAlignment)>
 class Gain : public SingleIO<InputType, OutputType> {
 public:
 	explicit Gain(GainType gain, const std::string& sysName = "Gain") :
@@ -61,6 +63,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Gain);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

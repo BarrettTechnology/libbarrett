@@ -9,6 +9,7 @@
 #define BARRETT_PRODUCTS_FT_SENSOR_H_
 
 
+#include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
@@ -72,6 +73,11 @@ private:
 
 	static int twoByte2int(unsigned char lsb, unsigned char msb);
 	static int parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor);
+
+	DISALLOW_COPY_AND_ASSIGN(ForceTorqueSensor);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

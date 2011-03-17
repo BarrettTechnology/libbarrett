@@ -141,6 +141,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(LowLevelWamWrapper);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

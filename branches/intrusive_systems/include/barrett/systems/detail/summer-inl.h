@@ -41,55 +41,55 @@ namespace barrett {
 namespace systems {
 
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const Polarity& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Summer(const Polarity& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
 	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::string& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Summer(const std::string& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
 	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const char* inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Summer(const char* inputPolarity, bool undefinedIsZero, const std::string& sysName) :
 	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero, const std::string& sysName) :
 	System(sysName), SingleOutput<T>(this), polarity(inputPolarity), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Summer(bool undefinedIsZero, const std::string& sysName) :
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Summer(bool undefinedIsZero, const std::string& sysName) :
 	System(sysName), SingleOutput<T>(this), polarity(), strict(!undefinedIsZero), sum()
 {
 	initInputs();
 }
 
-template<typename T, size_t numInputs>
-inline Summer<T, numInputs>::~Summer()
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::~Summer()
 {
 	mandatoryCleanUp();
 	barrett::detail::purge(inputs);
 }
 
-template<typename T, size_t numInputs>
-inline System::Input<T>& Summer<T, numInputs>::getInput(const size_t i) {
+template<typename T, size_t numInputs, bool RequiresAlignment>
+inline System::Input<T>& Summer<T, numInputs, RequiresAlignment>::getInput(const size_t i) {
 	return *( inputs.at(i) );
 }
 
-template<typename T, size_t numInputs>
-void Summer<T, numInputs>::operate()
+template<typename T, size_t numInputs, bool RequiresAlignment>
+void Summer<T, numInputs, RequiresAlignment>::operate()
 {
 	typedef math::Traits<T> Traits;
 
@@ -106,8 +106,8 @@ void Summer<T, numInputs>::operate()
 	this->outputValue->setData(&sum);
 }
 
-template<typename T, size_t numInputs>
-void Summer<T, numInputs>::initInputs()
+template<typename T, size_t numInputs, bool RequiresAlignment>
+void Summer<T, numInputs, RequiresAlignment>::initInputs()
 {
 	for (size_t i = 0; i < numInputs; ++i) {
 		inputs[i] = new Input<T>(this);
