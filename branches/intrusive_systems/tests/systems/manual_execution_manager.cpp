@@ -291,6 +291,29 @@ TEST_F(ManualExecutionManagerTest, StopManagingAtEndOfChain) {
 	EXPECT_EQ(NULL, eios3.getExecutionManager());
 }
 
+TEST_F(ManualExecutionManagerTest, StopManagingWithNoOutputs) {
+	class NoOutputs : public systems::System, public systems::SingleInput<double> {
+	public:
+		NoOutputs() : systems::SingleInput<double>(this) {}
+	protected:
+		virtual void operate() {}
+	};
+
+
+	NoOutputs no;
+	mem.startManaging(no);
+
+	EXPECT_TRUE(no.hasExecutionManager());
+	EXPECT_TRUE(no.hasDirectExecutionManager());
+	EXPECT_EQ(&mem, no.getExecutionManager());
+
+	mem.stopManaging(no);
+
+	EXPECT_FALSE(no.hasExecutionManager());
+	EXPECT_FALSE(no.hasDirectExecutionManager());
+	EXPECT_EQ(NULL, no.getExecutionManager());
+}
+
 TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
 	EXPECT_TRUE(eios.hasExecutionManager());
 

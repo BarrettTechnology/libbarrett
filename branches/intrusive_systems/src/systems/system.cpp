@@ -104,6 +104,7 @@ void System::unsetExecutionManager()
 	ExecutionManager* oldEm = getExecutionManager();
 #endif
 
+	em = NULL;  // If there are no outputs, we can't collect an EM
 	child_output_list_type::const_iterator oc(outputs.begin()), ocEnd(outputs.end());
 	for (; oc != ocEnd; ++oc) {
 		em = oc->collectExecutionManager();
