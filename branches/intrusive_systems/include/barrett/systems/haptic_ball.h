@@ -34,6 +34,8 @@
 
 #include <cmath>
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/math.h>

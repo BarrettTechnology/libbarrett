@@ -33,6 +33,7 @@
 
 
 #include <boost/tuple/tuple.hpp>
+#include <Eigen/Core>
 
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>

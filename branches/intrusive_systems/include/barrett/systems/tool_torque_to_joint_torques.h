@@ -32,6 +32,7 @@
 #define BARRETT_SYSTEMS_TOOL_TORQUE_TO_JOINT_TORQUES_H_
 
 
+#include <Eigen/Core>
 #include <gsl/gsl_blas.h>
 
 #include <barrett/detail/ca_macro.h>

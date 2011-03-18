@@ -9,7 +9,9 @@
 #define BARRETT_MATH_FIRST_ORDER_FILTER_H_
 
 
+#include <Eigen/Core>
 #include <libconfig.h++>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/math/traits.h>
 

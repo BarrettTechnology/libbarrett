@@ -9,6 +9,8 @@
 #define BARRETT_PRODUCTS_FT_SENSOR_H_
 
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/bus/abstract/communications_bus.h>

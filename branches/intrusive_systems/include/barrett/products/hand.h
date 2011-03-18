@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/products/abstract/multi_puck_product.h>

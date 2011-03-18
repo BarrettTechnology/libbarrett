@@ -32,6 +32,7 @@
 #define BARRETT_SYSTEMS_PID_CONTROLLER_H_
 
 
+#include <Eigen/Core>
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>

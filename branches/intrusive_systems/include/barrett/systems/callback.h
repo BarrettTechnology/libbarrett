@@ -33,6 +33,7 @@
 
 
 #include <boost/function.hpp>
+#include <Eigen/Core>
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/math/traits.h>

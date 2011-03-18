@@ -32,6 +32,8 @@
 #define BARRETT_SYSTEMS_CONSTANT_H_
 
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/math/traits.h>
 #include <barrett/systems/abstract/system.h>

@@ -31,10 +31,12 @@
 #ifndef BARRETT_SYSTEMS_SUMMER_H_
 #define BARRETT_SYSTEMS_SUMMER_H_
 
-#include <boost/array.hpp>
 #include <bitset>
 #include <string>
 #include <stdexcept>
+
+#include <boost/array.hpp>
+#include <Eigen/Core>
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/math/traits.h>

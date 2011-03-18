@@ -11,9 +11,9 @@
 
 
 #include <vector>
-
 #include <native/timer.h>
 
+#include <Eigen/Core>
 #include <libconfig.h++>
 
 #include <barrett/units.h>

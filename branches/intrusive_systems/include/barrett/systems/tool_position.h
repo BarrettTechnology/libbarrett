@@ -32,6 +32,8 @@
 #define BARRETT_SYSTEMS_TOOL_POSITION_H_
 
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/systems/abstract/system.h>

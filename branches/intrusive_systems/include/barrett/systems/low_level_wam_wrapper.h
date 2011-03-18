@@ -34,6 +34,7 @@
 
 #include <vector>
 
+#include <Eigen/Core>
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
