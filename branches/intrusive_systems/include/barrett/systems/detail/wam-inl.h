@@ -282,7 +282,11 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	doneMoving = false;
 	*started = true;
 
-	while (trajectory.input.getValue() < profile.finalT()) {
+	// The value of trajectory.input will be undefined until the next execution cycle.
+	// It may become undefined again if trajectory.output is disconnected and this chain
+	// of Systems loses its ExecutionManager. We must check that the value is defined
+	// before calling getValue().
+	while ( !trajectory.input.valueDefined()  ||  trajectory.input.getValue() < profile.finalT()) {
 		// if the move is interrupted, clean up and end the thread
 		if ( !trajectory.output.isConnected() ) {
 			return;
