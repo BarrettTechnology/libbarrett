@@ -22,9 +22,6 @@
 
 using namespace barrett;
 using detail::waitForEnter;
-using systems::connect;
-using systems::reconnect;
-using systems::disconnect;
 
 
 template<size_t DOF>
@@ -39,16 +36,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	math::Kinematics<DOF> kin(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["kinematics"]);
 	kin.eval(wam.getHomePosition(), jv_type(0.0));
-	systems::Constant<units::CartesianPosition::type> tpPoint(
-			units::CartesianPosition::type(kin.impl->tool->origin_pos));
+	systems::Constant<cp_type> tpPoint(cp_type(kin.impl->tool->origin_pos));
 
-	Eigen::Matrix3d rot;
-	for (size_t r = 0; r < 3; ++r) {
-		for (size_t c = 0; c < 3; ++c) {
-			rot(c,r) = gsl_matrix_get(kin.impl->tool->rot_to_world, r,c);  // transpose to get tool-to-world transform
-		}
-	}
-	Eigen::Quaterniond q(rot);
+	math::Matrix<3,3> rot(kin.impl->tool->rot_to_world);
+	Eigen::Quaterniond q(rot.transpose());  // transpose to get world-to-tool transform
 	systems::Constant<Eigen::Quaterniond> toPoint(q);
 
 
