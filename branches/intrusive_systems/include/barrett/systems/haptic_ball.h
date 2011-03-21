@@ -47,38 +47,49 @@ namespace systems {
 
 
 class HapticBall : public HapticObject {
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
+
 public:
-	HapticBall(units::CartesianPosition::type center, double radius) :
-		c(center), r(radius), keepOutside(true) /* doesn't matter how this is initialized, it'll fix itself */ {}
-	virtual ~HapticBall() {}
+	HapticBall(cp_type center, double radius, const std::string& sysName = "HapticBall") :
+		HapticObject(sysName),
+		c(center), r(radius), keepOutside(true) /* doesn't matter how this is initialized, it'll fix itself */,
+		depth(0.0), error(0.0) {}
+	virtual ~HapticBall() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
-		units::CartesianForce::type error = input.getValue() - c;
+		error = input.getValue() - c;
 		double mag = error.norm();
 
 		bool outside = mag > r;
 
 		// if we are inside the ball and we shouldn't be, or we are outside the ball and we shouldn't be
-		if ((keepOutside && !outside)  || (!keepOutside && outside)) {
-			if (math::abs(r-mag) > 0.02) {
+		if ((keepOutside && !outside)  ||  (!keepOutside && outside)) {
+			depth = r - mag;
+			if (math::abs(depth) > 0.02) {
 				keepOutside = !keepOutside;
-			} else {
-				depthOutputValue->setValue(r-mag);
 
+				depth = 0.0;
+				error.setZero();
+			} else {
 				// unit vector pointing towards the surface of the ball
-				directionOutputValue->setValue(error/mag);
-				return;
+				error /= mag;
 			}
+		} else {
+			depth = 0.0;
+			error.setZero();
 		}
 
-		depthOutputValue->setValue(0.0);
-		directionOutputValue->setValue(units::CartesianForce::type(0.0));
+		depthOutputValue->setData(&depth);
+		directionOutputValue->setData(&error);
 	}
 
-	units::CartesianPosition::type c;
+	cp_type c;
 	double r;
 	bool keepOutside;
+
+	double depth;
+	cf_type error;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(HapticBall);
