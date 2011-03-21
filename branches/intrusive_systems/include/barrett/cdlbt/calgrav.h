@@ -120,12 +120,8 @@ int bt_calgrav_destroy(struct bt_calgrav * grav);
  *
  * This function is used in a control loop to calculate the gravity
  * compensation torques of the robot, given a particular configuration
- * (calculated in the kinematics object).  The torques are added into the
+ * (calculated in the kinematics object).  The torques are stored into the
  * jtorque vector.
- *
- * \note The calculated gravity compensation torques are \b added to the
- *       jtorque vector. Make sure to clear the vector first if you just
- *       want the gravity torque!
  *
  * \param[in] grav bt_calgrav object
  * \param[in] kin Previously-created bt_kinematics object describing robot
