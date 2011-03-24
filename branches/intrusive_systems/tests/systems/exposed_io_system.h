@@ -52,7 +52,7 @@ public:
 
 protected:
 	// This System has no invalid Input state.
-	virtual bool inputsValid() const {
+	virtual bool inputsValid() {
 		return true;
 	}
 

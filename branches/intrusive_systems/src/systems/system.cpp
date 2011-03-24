@@ -46,7 +46,7 @@ void System::update(update_token_type updateToken)
 	}
 }
 
-bool System::inputsValid() const
+bool System::inputsValid()
 {
 	child_input_list_type::const_iterator i(inputs.begin()), iEnd(inputs.end());
 	for (; i != iEnd; ++i) {

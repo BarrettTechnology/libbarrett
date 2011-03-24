@@ -85,7 +85,7 @@ public:
 	Input<T>& getInput(const size_t i);
 
 protected:
-	virtual bool inputsValid() const {  return true;  };
+	virtual bool inputsValid() {  return true;  };
 	virtual void operate();
 	virtual void invalidateOutputs() {}
 

@@ -85,7 +85,7 @@ protected:
 
 	void update(update_token_type updateToken);
 
-	virtual bool inputsValid() const;
+	virtual bool inputsValid() /* const */;
 	virtual void operate() = 0;
 	virtual void invalidateOutputs();
 
