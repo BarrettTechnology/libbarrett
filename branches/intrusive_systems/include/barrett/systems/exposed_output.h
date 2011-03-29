@@ -45,21 +45,24 @@ namespace systems {
 template <typename T>
 class ExposedOutput : public System, public SingleOutput<T> {
 public:
-	ExposedOutput() :
-		SingleOutput<T>(this) {}
-	explicit ExposedOutput(const T& initialValue) :
-		SingleOutput<T>(this)
+	explicit ExposedOutput(const std::string& sysName = "ExposedOutput") :
+		System(sysName), SingleOutput<T>(this), data() {}
+	explicit ExposedOutput(const T& initialValue, const std::string& sysName = "ExposedOutput") :
+		System(sysName), SingleOutput<T>(this), data(initialValue)
 	{
-		this->outputValue->setValue(initialValue);
+		this->outputValue->setData(&data);
 	}
+	virtual ~ExposedOutput() { mandatoryCleanUp(); }
 
 	void setValue(const T& value) {
 		BARRETT_SCOPED_LOCK(getEmMutex());
-		this->outputValue->setValue(value);
+
+		data = value;
+		this->outputValue->setData(&data);
 	}
 	void setValueUndefined() {
 		BARRETT_SCOPED_LOCK(getEmMutex());
-		this->outputValue->setValueUndefined();
+		this->outputValue->setUndefined();
 	}
 	void delegateTo(const System::Output<T>& delegate) {
 		BARRETT_SCOPED_LOCK(getEmMutex());
@@ -67,7 +70,11 @@ public:
 	}
 
 protected:
+	virtual bool inputsValid() { return true; }
 	virtual void operate() {  /* do nothing */  }
+	virtual void invalidateOutputs() {  /* do nothing */  }
+
+	T data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ExposedOutput);
