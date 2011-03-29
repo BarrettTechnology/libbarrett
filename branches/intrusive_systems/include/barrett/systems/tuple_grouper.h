@@ -70,9 +70,9 @@ private:	detail::InputHolder<
 
 
 public:
-	TupleGrouper() :
-		SingleOutput<tuple_type>(this), inputs(this) {}
-	virtual ~TupleGrouper() {}
+	TupleGrouper(const std::string& sysName = "TupleGrouper") :
+		System(sysName), SingleOutput<tuple_type>(this), inputs(this) {}
+	virtual ~TupleGrouper() { mandatoryCleanUp(); }
 
 	template<size_t N>
 	Input<typename boost::tuples::element<N, tuple_type>::type >& getInput() {
@@ -81,7 +81,7 @@ public:
 
 protected:
 	virtual void operate() {
-		this->outputValue->setValue(inputs.getValues());
+		this->outputValue->setData( &(inputs.getValues()) );
 	}
 
 private:
