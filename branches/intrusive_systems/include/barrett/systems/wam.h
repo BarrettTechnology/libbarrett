@@ -42,7 +42,7 @@
 #include <barrett/units.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
-#include <barrett/systems/abstract/system.h>
+#include <barrett/math/kinematics.h>
 
 #include <barrett/systems/low_level_wam_wrapper.h>
 #include <barrett/systems/first_order_filter.h>
@@ -135,10 +135,16 @@ public:
 	bool moveIsDone() const;
 	void idle();
 
+
+	thread::Mutex& getEmMutex() const { return llww.getEmMutex(); }
+
 protected:
 	template<typename T> void moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration, bool* started);
 
 	bool doneMoving;
+
+	// Used to calculate TP and TO if the values aren't already being calculated in the control loop.
+	mutable math::Kinematics<DOF> kin;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Wam);

@@ -72,6 +72,8 @@ public:
 	LowLevelWam<DOF>& getLowLevelWam() { return llw; }
 	const LowLevelWam<DOF>& getLowLevelWam() const { return llw; }
 
+	thread::Mutex& getEmMutex() const { return sink.getEmMutex(); }
+
 protected:
 	class Sink : public System, public SingleInput<jt_type> {
 	public:

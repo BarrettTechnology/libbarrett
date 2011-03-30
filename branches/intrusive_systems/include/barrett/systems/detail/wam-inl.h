@@ -90,7 +90,8 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 
 	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(jvFilter.output),
 
-	doneMoving(true)
+	doneMoving(true),
+	kin(setting["kinematics"])
 {
 	connect(llww.jpOutput, kinematicsBase.jpInput);
 	connect(jvOutput, kinematicsBase.jvInput);
@@ -169,8 +170,14 @@ inline const typename Wam<DOF>::jp_type& Wam<DOF>::getHomePosition() const
 template<size_t DOF>
 typename Wam<DOF>::jt_type Wam<DOF>::getJointTorques() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return llww.input.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (llww.input.valueDefined()) {
+			return llww.input.getValue();
+		}
+	}
+
+	return jt_type();
 }
 
 template<size_t DOF>
@@ -188,15 +195,30 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 template<size_t DOF>
 typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return tpController.feedbackInput.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (tpController.feedbackInput.valueDefined()) {
+			return tpController.feedbackInput.getValue();
+		}
+	}
+
+	kin.eval(getJointPositions(), getJointVelocities());
+	return cp_type(kin.impl->tool->origin_pos);
 }
 
 template<size_t DOF>
 Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return toController.feedbackInput.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (toController.feedbackInput.valueDefined()) {
+			return toController.feedbackInput.getValue();
+		}
+	}
+
+	kin.eval(getJointPositions(), getJointVelocities());
+	math::Matrix<3,3> rot(kin.impl->tool->rot_to_world);
+	return Eigen::Quaterniond(rot.transpose());
 }
 
 
