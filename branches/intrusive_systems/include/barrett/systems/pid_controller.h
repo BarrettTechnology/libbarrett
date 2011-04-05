@@ -70,11 +70,16 @@ public:
 	void resetIntegrator();
 
 	double getSamplePeriod() const {  return T_s;  }
+	unitless_type& getKp() {  return kp;  }
 	const unitless_type& getKp() const {  return kp;  }
+	unitless_type& getKi() {  return ki;  }
 	const unitless_type& getKi() const {  return ki;  }
+	unitless_type& getKd() {  return kd;  }
 	const unitless_type& getKd() const {  return kd;  }
 	const unitless_type& getIntegratorState() const {  return intError;  }
+	unitless_type& getIntegratorLimit() {  return intErrorLimit;  }
 	const unitless_type& getIntegratorLimit() const {  return intErrorLimit;  }
+	unitless_type& getControlSignalLimit() {  return controlSignalLimit;  }
 	const unitless_type& getControlSignalLimit() const {  return controlSignalLimit;  }
 
 protected:
