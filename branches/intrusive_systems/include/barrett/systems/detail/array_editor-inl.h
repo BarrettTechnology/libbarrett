@@ -38,22 +38,18 @@ namespace systems {
 
 
 template <typename T>
-ArrayEditor<T>::ArrayEditor() :
-	SingleIO<T, T>()
+ArrayEditor<T>::ArrayEditor(const std::string& sysName) :
+	SingleIO<T, T>(sysName), data()
 {
-	initInputs();
+	for (size_t i = 0; i < T::SIZE; ++i) {
+		elementInputs[i] = new System::Input<double>(this);
+	}
 }
 
 template <typename T>
-ArrayEditor<T>::ArrayEditor(const T& initialOutputValue) :
-	SingleIO<T, T>(initialOutputValue)
+ArrayEditor<T>::~ArrayEditor()
 {
-	initInputs();
-}
-
-template <typename T>
-inline ArrayEditor<T>::~ArrayEditor()
-{
+	this->mandatoryCleanUp();
 	barrett::detail::purge(elementInputs);
 }
 
@@ -67,14 +63,14 @@ inline System::Input<double>& ArrayEditor<T>::getElementInput(const size_t i)
 template <typename T>
 void ArrayEditor<T>::operate()
 {
-	T tmp = this->input.getValue();
+	data = this->input.getValue();
 	for (size_t i = 0; i < T::SIZE; ++i) {
 		if (elementInputs[i]->valueDefined()) {
-			tmp[i] = elementInputs[i]->getValue();
+			data[i] = elementInputs[i]->getValue();
 		}
 	}
 
-	this->outputValue->setValue(tmp);
+	this->outputValue->setData(&data);
 }
 
 template <typename T>
@@ -83,14 +79,6 @@ bool ArrayEditor<T>::inputsValid()
 	return this->input.valueDefined();
 }
 
-
-template<typename T>
-void ArrayEditor<T>::initInputs()
-{
-	for (size_t i = 0; i < T::SIZE; ++i) {
-		elementInputs[i] = new System::Input<double>(this);
-	}
-}
 
 
 }

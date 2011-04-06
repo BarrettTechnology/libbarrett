@@ -52,8 +52,7 @@ protected:	boost::array<System::Input<double>*, T::SIZE> elementInputs;
 
 
 public:
-	ArrayEditor();
-	explicit ArrayEditor(const T& initialOutputValue);
+	explicit ArrayEditor(const std::string& sysName = "ArrayEditor");
 	virtual ~ArrayEditor();
 
 	System::Input<double>& getElementInput(const size_t i);
@@ -62,7 +61,7 @@ protected:
 	virtual void operate();
 	virtual bool inputsValid();
 
-	void initInputs();
+	T data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ArrayEditor);
