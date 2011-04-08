@@ -11,7 +11,7 @@ set(tests_SOURCES
 	log/writer.cpp
 
 	math/first_order_filter.cpp
-#	math/kinematics.cpp
+	math/kinematics.cpp
 	math/matrix.cpp
 	math/spline.cpp
 	math/traits.cpp
