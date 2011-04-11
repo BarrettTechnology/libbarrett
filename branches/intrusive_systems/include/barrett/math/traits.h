@@ -17,6 +17,7 @@ namespace math {
 
 // Default designed for built-in arithmetic types.
 template<typename T> struct Traits {
+	typedef T unitless_type;
 	static const bool RequiresAlignment = false;
 
 

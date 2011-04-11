@@ -339,7 +339,9 @@ template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> 
 
 
 template<int R, int C, typename Units> struct Traits<Matrix<R,C, Units> > :
-		public Traits<Eigen::MatrixBase<typename Matrix<R,C, Units>::Base> > {};
+		public Traits<Eigen::MatrixBase<typename Matrix<R,C, Units>::Base> > {
+	typedef typename Matrix<R,C, Units>::unitless_type unitless_type;
+};
 
 
 }

@@ -52,8 +52,7 @@ template<typename InputType,
 		 typename MathTraits = math::Traits<InputType> >
 class PIDController : public Controller<InputType, OutputType> {
 public:
-	typedef typename InputType::unitless_type unitless_type;
-//	typedef InputType unitless_type;
+	typedef typename MathTraits::unitless_type unitless_type;
 
 	explicit PIDController(const std::string& sysName = "PIDController");
 	explicit PIDController(const libconfig::Setting& setting, const std::string& sysName = "PIDController");
