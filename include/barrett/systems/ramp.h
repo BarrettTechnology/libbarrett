@@ -48,14 +48,21 @@ namespace systems {
 
 class Ramp : public System, public SingleOutput<double> {
 public:
-	explicit Ramp(double slope = 1.0, bool updateEveryExecutionCycle = true) :
-		System(updateEveryExecutionCycle), SingleOutput<double>(this),
+	explicit Ramp(ExecutionManager* em, double slope = 1.0,
+			const std::string& sysName = "Ramp") :
+		System(sysName), SingleOutput<double>(this),
 		T_s(0.0), gain(slope), y(0.0), running(false)
 	{
-		outputValue->setValue(y);
-	}
+		// Update every execution cycle so the ramp stays current even if the
+		// data isn't used for a time.
+		if (em != NULL) {
+			em->startManaging(*this);
+		}
 
-	void setSamplePeriod(double timeStep) {  T_s = timeStep;  }
+		getSamplePeriodFromEM();
+	}
+	virtual ~Ramp() { mandatoryCleanUp(); }
+
 	void setSlope(double slope) {  gain = slope;  }
 
 	void start() {  running = true;  }
@@ -68,12 +75,30 @@ public:
 	}
 
 protected:
+	virtual void onExecutionManagerChanged() {
+		System::onExecutionManagerChanged();  // First, call super
+		getSamplePeriodFromEM();
+	}
+
 	virtual void operate() {
 		if (running) {
 			y += T_s * gain;
-			outputValue->setValue(y);
+		}
+
+		outputValue->setData(&y);
+	}
+
+
+	void getSamplePeriodFromEM()
+	{
+		if (this->hasExecutionManager()) {
+			assert(this->getExecutionManager()->getPeriod() > 0.0);
+			T_s = this->getExecutionManager()->getPeriod();
+		} else {
+			T_s = 0.0;
 		}
 	}
+
 
 	double T_s, gain, y;
 	bool running;

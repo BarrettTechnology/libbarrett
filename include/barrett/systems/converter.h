@@ -48,8 +48,8 @@ namespace systems {
 template<typename OutputType>
 class Converter : public System, public SingleOutput<OutputType> {
 public:
-	Converter() :
-		SingleOutput<OutputType>(this), conversions() {}
+	Converter(const std::string& sysName = "Converter") :
+		System(sysName), SingleOutput<OutputType>(this), conversions() {}
 	virtual ~Converter();
 
 	void registerConversion(

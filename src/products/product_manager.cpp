@@ -202,16 +202,8 @@ void ProductManager::cleanUpAfterEstop()
 }
 void ProductManager::destroyEstopProducts()
 {
-	if (rtem != NULL) {
-		if (rtem->isRunning()) {
-			rtem->stop();
-		}
-		if (systems::System::defaultExecutionManager == rtem) {
-			systems::System::defaultExecutionManager = NULL;
-		}
-		delete rtem;
-		rtem = NULL;
-	}
+	delete rtem;
+	rtem = NULL;
 	delete wam4;
 	wam4 = NULL;
 	delete wam7;
@@ -314,7 +306,6 @@ systems::Wam<4>* ProductManager::getWam4(bool waitForShiftActivate, const char* 
 		throw std::logic_error("ProductManager::getWam4(): No WAM4 was found on the bus.");
 	}
 
-	getExecutionManager();  // Make an RTEM if one doesn't already exist
 	if (wam4 == NULL) {
 		std::vector<Puck*> wam4Pucks = wamPucks;
 		wam4Pucks.resize(4);  // Discard all but the first 4 elements
@@ -322,7 +313,7 @@ systems::Wam<4>* ProductManager::getWam4(bool waitForShiftActivate, const char* 
 		if (configPath == NULL) {
 			configPath = getWamDefaultConfigPath();
 		}
-		wam4 = new systems::Wam<4>(wam4Pucks, getSafetyModule(), getConfig().lookup(configPath));
+		wam4 = new systems::Wam<4>(getExecutionManager(), wam4Pucks, getSafetyModule(), getConfig().lookup(configPath));
 		if (rtem != NULL  &&  !rtem->isRunning()) {
 			rtem->start();
 		}
@@ -347,7 +338,6 @@ systems::Wam<7>* ProductManager::getWam7(bool waitForShiftActivate, const char* 
 		throw std::logic_error("ProductManager::getWam7(): No WAM7 was found on the bus.");
 	}
 
-	getExecutionManager();  // Make an RTEM if one doesn't already exist
 	if (wam7 == NULL) {
 		std::vector<Puck*> wam7Pucks = wamPucks;
 		wam7Pucks.resize(7);  // Discard all but the first 7 elements
@@ -355,7 +345,7 @@ systems::Wam<7>* ProductManager::getWam7(bool waitForShiftActivate, const char* 
 		if (configPath == NULL) {
 			configPath = getWamDefaultConfigPath();
 		}
-		wam7 = new systems::Wam<7>(wam7Pucks, getSafetyModule(), getConfig().lookup(configPath));
+		wam7 = new systems::Wam<7>(getExecutionManager(), wam7Pucks, getSafetyModule(), getConfig().lookup(configPath));
 		if (rtem != NULL  &&  !rtem->isRunning()) {
 			rtem->start();
 		}
@@ -376,11 +366,8 @@ systems::Wam<7>* ProductManager::getWam7(bool waitForShiftActivate, const char* 
 
 systems::RealTimeExecutionManager* ProductManager::getExecutionManager(double period_s, int rt_priority)
 {
-	if (systems::System::defaultExecutionManager == NULL) {
-		if (rtem == NULL) {
-			rtem = new systems::RealTimeExecutionManager(period_s, rt_priority);
-		}
-		systems::System::defaultExecutionManager = rtem;
+	if (rtem == NULL) {
+		rtem = new systems::RealTimeExecutionManager(period_s, rt_priority);
 	}
 	return rtem;
 }

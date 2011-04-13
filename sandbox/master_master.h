@@ -30,8 +30,8 @@ class MasterMaster : public barrett::systems::SingleIO<typename barrett::units::
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	explicit MasterMaster(char* remoteHost, int port = 5555) :
-		barrett::systems::SingleIO<jp_type,jp_type>(true), sock(-1), linked(false), numMissed(NUM_MISSED_LIMIT), theirJp(0.0)
+	explicit MasterMaster(barrett::systems::ExecutionManager* em, char* remoteHost, int port = 5555, const std::string& sysName = "MasterMaster") :
+		barrett::systems::SingleIO<jp_type,jp_type>(sysName), sock(-1), linked(false), numMissed(NUM_MISSED_LIMIT), theirJp(0.0)
 	{
 		int err;
 		long flags;
@@ -119,9 +119,16 @@ public:
 			syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
 			throw std::runtime_error("(MasterMaster::MasterMaster): Ctor failed. Check /var/log/syslog.");
 		}
+
+
+		if (em != NULL) {
+			em->startManaging(*this);
+		}
 	}
 
 	virtual ~MasterMaster() {
+		this->mandatoryCleanUp();
+
 		close(sock);
 	}
 
@@ -140,28 +147,30 @@ protected:
 	static const int NUM_MISSED_LIMIT = 10;
 
 	virtual void operate() {
-		// send() and recv() cause switches to secondary mode. The socket is
-		// non-blocking, so this *probably* won't impact the control-loop
-		// timing that much...
-		barrett::thread::DisableSecondaryModeWarning dsmw;
+
+		{
+			// send() and recv() cause switches to secondary mode. The socket is
+			// non-blocking, so this *probably* won't impact the control-loop
+			// timing that much...
+			barrett::thread::DisableSecondaryModeWarning dsmw;
 
 
-		send(sock, this->input.getValue().data(), SIZE_OF_MSG, 0);
+			send(sock, this->input.getValue().data(), SIZE_OF_MSG, 0);
 
-
-		if (numMissed < NUM_MISSED_LIMIT) {  // prevent numMissed from wrapping
-			++numMissed;
+			if (numMissed < NUM_MISSED_LIMIT) {  // prevent numMissed from wrapping
+				++numMissed;
+			}
+			while (recv(sock, theirJp.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
+				numMissed = 0;
+			}
 		}
-		while (recv(sock, theirJp.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
-			numMissed = 0;
-		}
 
-		if (linked  &&  numMissed < NUM_MISSED_LIMIT) {
-			this->outputValue->setValue(theirJp);
-		} else {
+		if ( !linked  ||  numMissed >= NUM_MISSED_LIMIT) {
 			linked = false;
-			this->outputValue->setValue(this->input.getValue());
+			theirJp = this->input.getValue();
 		}
+
+		this->outputValue->setData(&theirJp);
 	}
 
 	int sock;

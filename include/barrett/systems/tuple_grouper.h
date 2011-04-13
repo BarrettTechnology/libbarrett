@@ -33,6 +33,9 @@
 
 
 #include <boost/tuple/tuple.hpp>
+#include <Eigen/Core>  // For aligned operator new
+
+#include <barrett/detail/ca_macro.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 #include <barrett/systems/detail/tuple_grouper-helper.h>
@@ -67,9 +70,9 @@ private:	detail::InputHolder<
 
 
 public:
-	TupleGrouper() :
-		SingleOutput<tuple_type>(this), inputs(this) {}
-	virtual ~TupleGrouper() {}
+	TupleGrouper(const std::string& sysName = "TupleGrouper") :
+		System(sysName), SingleOutput<tuple_type>(this), inputs(this) {}
+	virtual ~TupleGrouper() { mandatoryCleanUp(); }
 
 	template<size_t N>
 	Input<typename boost::tuples::element<N, tuple_type>::type >& getInput() {
@@ -78,8 +81,15 @@ public:
 
 protected:
 	virtual void operate() {
-		this->outputValue->setValue(inputs.getValues());
+		this->outputValue->setData( &(inputs.getValues()) );
 	}
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(TupleGrouper);
+
+public:
+	// To be safe, assume that at least one of the input types needs to be aligned.
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

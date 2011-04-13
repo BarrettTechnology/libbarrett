@@ -31,12 +31,15 @@
 #ifndef BARRETT_SYSTEMS_SUMMER_H_
 #define BARRETT_SYSTEMS_SUMMER_H_
 
-#include <boost/array.hpp>
 #include <bitset>
 #include <string>
 #include <stdexcept>
 
+#include <boost/array.hpp>
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 
@@ -47,7 +50,7 @@ namespace systems {
 
 // FIXME: it might be nice to have a Summer with the number of inputs
 //        determined at runtime
-template<typename T, size_t numInputs = 2>
+template<typename T, size_t numInputs = 2, bool RequiresAlignment = math::Traits<T>::RequiresAlignment>
 class Summer : public System, public SingleOutput<T> {
 // IO
 // protected because of variable number of inputs
@@ -55,7 +58,7 @@ protected:	boost::array<Input<T>*, numInputs> inputs;
 
 
 public:
-	class Polarity {  // FIXME: does this deserve a nested class?
+	class Polarity {
 	public:
 		Polarity();  // default: all positive
 		explicit Polarity(std::string polarityStr) throw(std::invalid_argument);
@@ -64,7 +67,7 @@ public:
 		virtual ~Polarity() {}
 
 		// TODO(dc): operator[]=
-		virtual const int operator[] (const size_t i) const;
+		int operator[] (const size_t i) const;
 
 	protected:
 		std::bitset<numInputs> polarity;
@@ -72,11 +75,11 @@ public:
 
 	Polarity polarity;
 
-	explicit Summer(const Polarity& inputPolarity = Polarity(), bool undefinedIsZero = false);
-	explicit Summer(const std::string& inputPolarity, bool undefinedIsZero = false);
-	explicit Summer(const char* inputPolarity, bool undefinedIsZero = false);  // Without this, a string literal argument calls the Summer(bool) overload.
-	explicit Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero = false);
-	explicit Summer(bool undefinedIsZero);
+	explicit Summer(const Polarity& inputPolarity = Polarity(), bool undefinedIsZero = false, const std::string& sysName = "Summer");
+	explicit Summer(const std::string& inputPolarity, bool undefinedIsZero = false, const std::string& sysName = "Summer");
+	explicit Summer(const char* inputPolarity, bool undefinedIsZero = false, const std::string& sysName = "Summer");  // Without this, a string literal argument calls the Summer(bool) overload.
+	explicit Summer(const std::bitset<numInputs>& inputPolarity, bool undefinedIsZero = false, const std::string& sysName = "Summer");
+	explicit Summer(bool undefinedIsZero, const std::string& sysName = "Summer");
 	virtual ~Summer();
 
 	Input<T>& getInput(const size_t i);
@@ -89,9 +92,13 @@ protected:
 	void initInputs();
 
 	bool strict;
+	T sum;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Summer);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

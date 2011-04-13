@@ -37,13 +37,21 @@ namespace systems {
 
 
 template<typename T, typename LogWriterType>
-PeriodicDataLogger<T, LogWriterType>::PeriodicDataLogger(LogWriterType* logWriter, size_t periodMultiplier) :
-	System(true), SingleInput<T>(this),
+PeriodicDataLogger<T, LogWriterType>::PeriodicDataLogger(ExecutionManager* em,
+		LogWriterType* logWriter, size_t periodMultiplier, const std::string& sysName) :
+	System(sysName), SingleInput<T>(this),
 	lw(logWriter), logging(true),
-	ecCount(0), ecCountRollover(periodMultiplier) {}
+	ecCount(0), ecCountRollover(periodMultiplier)
+{
+	if (em != NULL) {
+		em->startManaging(*this);
+	}
+}
 
 template<typename T, typename LogWriterType>
 PeriodicDataLogger<T, LogWriterType>::~PeriodicDataLogger() {
+	mandatoryCleanUp();
+
 	if (isLogging()) {
 		closeLog();
 	}

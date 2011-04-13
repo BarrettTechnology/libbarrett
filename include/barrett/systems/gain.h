@@ -32,7 +32,10 @@
 #define BARRETT_SYSTEMS_GAIN_H_
 
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/single_io.h>
 
 
@@ -43,22 +46,28 @@ namespace systems {
 
 template<typename InputType,
 		 typename GainType = InputType,
-		 typename OutputType = InputType>
+		 typename OutputType = InputType,
+		 bool RequiresAlignment = (math::Traits<GainType>::RequiresAlignment || math::Traits<OutputType>::RequiresAlignment)>
 class Gain : public SingleIO<InputType, OutputType> {
 public:
-	explicit Gain(GainType gain) :
-		gain(gain) {}
-	virtual ~Gain() {}
+	explicit Gain(GainType gain, const std::string& sysName = "Gain") :
+		SingleIO<InputType, OutputType>(sysName), gain(gain) {}
+	virtual ~Gain() { this->mandatoryCleanUp(); }
 
 protected:
 	GainType gain;
+	OutputType data;
 
 	virtual void operate() {
-		this->outputValue->setValue(this->input.getValue() * gain);
+		data = this->input.getValue() * gain;
+		this->outputValue->setData(&data);
 	}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Gain);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

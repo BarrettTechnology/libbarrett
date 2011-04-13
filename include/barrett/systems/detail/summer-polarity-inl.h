@@ -36,15 +36,15 @@ namespace barrett {
 namespace systems {
 
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Polarity::Polarity() :  // default: all positive
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Polarity::Polarity() :  // default: all positive
 	polarity()
 {
 	polarity.set();
 }
 
-template<typename T, size_t numInputs>
-Summer<T, numInputs>::Polarity::Polarity(std::string polarityStr)
+template<typename T, size_t numInputs, bool RequiresAlignment>
+Summer<T, numInputs, RequiresAlignment>::Polarity::Polarity(std::string polarityStr)
 throw(std::invalid_argument) :
 	polarity()
 {
@@ -71,8 +71,8 @@ throw(std::invalid_argument) :
 	}
 }
 
-template<typename T, size_t numInputs>
-const int Summer<T, numInputs>::Polarity::operator[] (const size_t i) const
+template<typename T, size_t numInputs, bool RequiresAlignment>
+inline int Summer<T, numInputs, RequiresAlignment>::Polarity::operator[] (const size_t i) const
 {
 	return polarity[i] ? 1 : -1;
 }

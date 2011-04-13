@@ -47,13 +47,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.gravityCompensate();
 
-	systems::Ramp time;
-	time.setSamplePeriod(T_s);
+	systems::Ramp time(pm.getExecutionManager());
 
 	systems::TupleGrouper<double, jp_type> jpLogTg;
 
 	// Record at 1/10th of the loop rate
-	systems::PeriodicDataLogger<jp_sample_type> jpLogger(
+	systems::PeriodicDataLogger<jp_sample_type> jpLogger(pm.getExecutionManager(),
 			new barrett::log::RealTimeWriter<jp_sample_type>(tmpFile, 10*T_s), 10);
 
 

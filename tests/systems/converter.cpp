@@ -14,6 +14,7 @@
 #include <barrett/units.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/converter.h>
+#include <barrett/systems/manual_execution_manager.h>
 
 #include "./abstract/conversion_impl.h"
 #include "./exposed_io_system.h"
@@ -27,7 +28,15 @@ typedef units::JointTorques<12>::type jt_type;
 
 
 class ConverterTest : public ::testing::Test {
+public:
+	ConverterTest() {
+		mem.startManaging(eios);
+		mem.startManaging(sc);
+	}
+
 protected:
+	systems::ManualExecutionManager mem;
+	ExposedIOSystem<jt_type> eios;
 	systems::Converter<jt_type> sc;
 };
 
@@ -46,14 +55,12 @@ TEST_F(ConverterTest, RegisterConversion) {
 }
 
 TEST_F(ConverterTest, ConnectInputToExplicit) {
-	ExposedIOSystem<jt_type> eios;
-
 	systems::connect(sc.output, eios.input);
 	EXPECT_TRUE(sc.connectInputTo(eios.output,
 			new ConversionImpl<jt_type, jt_type>()));
 
 	jt_type jt(jt_type::Random());
-	checkConnected(&eios, eios, jt);
+	checkConnected(mem, &eios, eios, jt);
 
 	// can't be connected because output and conversion input are
 	// different types
@@ -62,7 +69,6 @@ TEST_F(ConverterTest, ConnectInputToExplicit) {
 }
 
 TEST_F(ConverterTest, ConnectInputToAutomatic) {
-	ExposedIOSystem<jt_type> eios;
 	systems::connect(sc.output, eios.input);
 
 	// no conversions registered
@@ -79,20 +85,21 @@ TEST_F(ConverterTest, ConnectInputToAutomatic) {
 	EXPECT_NO_THROW(sc.connectInputTo(eios.output));
 
 	jt_type jt(jt_type::Random());
-	checkConnected(&eios, eios, jt);
+	checkConnected(mem, &eios, eios, jt);
 }
 
 TEST_F(ConverterTest, DisconnectInput) {
-	ExposedIOSystem<jt_type> eios;
+	ExposedIOSystem<jt_type> out;
 	systems::connect(sc.output, eios.input);
 
 	// compatible conversion registered
 	sc.registerConversion(
 			new ConversionImpl<jt_type, jt_type>());
-	EXPECT_NO_THROW(sc.connectInputTo(eios.output));
+	EXPECT_NO_THROW(sc.connectInputTo(out.output));
 
+	checkConnected(mem, &out, eios, jt_type(20.8));
 	sc.disconnectInput();
-	checkDisconnected(eios);
+	checkNotConnected(mem, &out, eios, jt_type(-62.2));
 }
 
 

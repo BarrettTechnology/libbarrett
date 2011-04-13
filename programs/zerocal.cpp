@@ -94,15 +94,6 @@ void magenc_thd_function(bool* going , const std::vector<MotorPuck>& motorPucks)
 	int i;
 	const int n = motorPucks.size();
 
-	/* Detect puck versions */
-	for (i = 0; i < n; i++) {
-		long vers = motorPucks[i].getPuck()->getVers();
-		long role = motorPucks[i].getPuck()->getRole();
-
-		mz_mechisset[i] = ((vers >= 118) && (role & 256)) ? 1 : 0;
-		mz_counts[i] = motorPucks[i].getCts();
-	}
-
 	while (*going) {
 
 		if (mz_magvals_get) {
@@ -144,14 +135,27 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	jp_type prev(wam.getJointPositions());
 	jp_type cur;
 
+	wam.moveTo(prev);  // Hold position. The next move assumes that the WAM is still at prev.
+
 
 	/* Spin off the magenc thread, which also detects Puck versions into mechset */
 	mz_mechisset = (int *) malloc(n * sizeof(int));
 	mz_counts = (int *) malloc(n * sizeof(int));
 	mz_magvals = (int *) calloc(n, sizeof(int));
-	mz_angles = (double *) malloc(n * sizeof(double));
+	mz_angles = (double *) calloc(n, sizeof(double));
 	mz_magvals_get = 0;
 	bool magencGoing = true;
+
+	/* Detect puck versions */
+	const std::vector<MotorPuck>& motorPucks = wam.llww.getLowLevelWam().getMotorPucks();
+	for (i = 0; i < motorPucks.size(); i++) {
+		long vers = motorPucks[i].getPuck()->getVers();
+		long role = motorPucks[i].getPuck()->getRole();
+
+		mz_mechisset[i] = ((vers >= 118) && (role & 256)) ? 1 : 0;
+		mz_counts[i] = motorPucks[i].getCts();
+	}
+
 	boost::thread magenc_thd(magenc_thd_function, &magencGoing, boost::ref(wam.llww.getLowLevelWam().getMotorPucks()));
 
 
@@ -384,7 +388,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				printf("\n");
 				break;
 			}
-		printf("Copy the following lines into your wam.config file,\n");
+		printf("Copy the following lines into your wam*.conf file,\n");
 //      printf("near the top, in the %s{} group.\n",wamname);
 		printf("Make sure it replaces the old home = ( ... ); definition.\n");
 		printf("--------\n");

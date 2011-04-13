@@ -14,11 +14,27 @@ namespace barrett {
 namespace systems {
 
 
-void System::update(uint_fast32_t ut)
+void System::mandatoryCleanUp()
+{
+	BARRETT_SCOPED_LOCK(getEmMutex());
+
+	if (hasDirectExecutionManager()) {
+		getExecutionManager()->stopManaging(*this);
+	}
+
+	while ( !outputs.empty() ) {
+		outputs.back().mandatoryCleanUp();
+	}
+	while ( !inputs.empty() ) {
+		inputs.back().mandatoryCleanUp();
+	}
+}
+
+void System::update(update_token_type updateToken)
 {
 	// Check if an update is needed
-	if (ut == UT_NULL  ||  ut != updateToken) {
-		updateToken = ut;
+	if (hasExecutionManager()  &&  updateToken != ut) {
+		ut = updateToken;
 	} else {
 		return;
 	}
@@ -30,7 +46,7 @@ void System::update(uint_fast32_t ut)
 	}
 }
 
-bool System::inputsValid() const
+bool System::inputsValid()
 {
 	child_input_list_type::const_iterator i(inputs.begin()), iEnd(inputs.end());
 	for (; i != iEnd; ++i) {
@@ -50,41 +66,115 @@ void System::invalidateOutputs()
 }
 
 
-template<typename T>
-void System::Output<T>::Value::delegateTo(Output<T>& delegateOutput)
+void System::setExecutionManager(ExecutionManager* newEm)
 {
-	undelegate();
-	delegate = &(delegateOutput.value);
-	delegate->delegators.push_back(&parentOutput);
+	if (newEm != NULL) {
+		if (hasExecutionManager()) {
+			assert(getExecutionManager() == newEm);
+		} else {
+			em = newEm;
+			onExecutionManagerChanged();
+
+			child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
+			for (; i != iEnd; ++i) {
+				i->pushExecutionManager();
+			}
+
+			child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
+			for (; o != oEnd; ++o) {
+				o->pushExecutionManager();
+			}
+		}
+	}
 }
 
-template<typename T>
-void System::Output<T>::Value::undelegate()
+void System::unsetDirectExecutionManager()
 {
-	if (delegate != NULL) {
-		delegate->delegators.erase(delegate_output_list_type::s_iterator_to(parentOutput));
-		delegate = NULL;
+	emDirect = false;
+	unsetExecutionManager();
+}
+void System::unsetExecutionManager()
+{
+	if (hasDirectExecutionManager()) {
+		return;
+	}
+
+#ifndef NDEBUG
+	// This variable is only used in the assert() below.
+	ExecutionManager* oldEm = getExecutionManager();
+#endif
+
+	em = NULL;  // If there are no outputs, we can't collect an EM
+	child_output_list_type::const_iterator oc(outputs.begin()), ocEnd(outputs.end());
+	for (; oc != ocEnd; ++oc) {
+		em = oc->collectExecutionManager();
+
+		if (hasExecutionManager()) {
+			assert(oldEm == getExecutionManager());
+			return;
+		}
+	}
+
+	// if no EM found...
+	onExecutionManagerChanged();
+
+	child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());
+	for (; i != iEnd; ++i) {
+		i->unsetExecutionManager();
+	}
+
+	child_output_list_type::iterator o(outputs.begin()), oEnd(outputs.end());
+	for (; o != oEnd; ++o) {
+		o->unsetExecutionManager();
 	}
 }
 
 
-namespace detail {
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(IntrusiveDelegateFunctor<T>::value_type &value)
+System::AbstractInput::AbstractInput(System* parent) : parentSys(parent)
 {
-	return &value.delegateHook;
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->inputs.push_back(*this);
 }
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_hook_ptr IntrusiveDelegateFunctor<T>::to_hook_ptr(const IntrusiveDelegateFunctor<T>::value_type &value)
+System::AbstractInput::~AbstractInput()
 {
-	return &value.delegateHook;
+	if (parentSys != NULL) {
+		mandatoryCleanUp();
+	}
 }
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::hook_ptr n)
+
+void System::AbstractInput::mandatoryCleanUp()
 {
-	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->inputs.erase(System::child_input_list_type::s_iterator_to(*this));
+	parentSys = NULL;
 }
-template<typename T> inline typename IntrusiveDelegateFunctor<T>::const_pointer IntrusiveDelegateFunctor<T>::to_value_ptr(IntrusiveDelegateFunctor<T>::const_hook_ptr n)
+
+
+System::AbstractOutput::AbstractOutput(System* parent) : parentSys(parent)
 {
-	return boost::intrusive::get_parent_from_member<System::Output<T> >(n, &System::Output<T>::delegateHook);
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->outputs.push_back(*this);
 }
+System::AbstractOutput::~AbstractOutput()
+{
+	if (parentSys != NULL) {
+		mandatoryCleanUp();
+	}
+}
+
+void System::AbstractOutput::mandatoryCleanUp()
+{
+	assert(parentSys != NULL);
+
+	BARRETT_SCOPED_LOCK(getEmMutex());
+	parentSys->outputs.erase(System::child_output_list_type::s_iterator_to(*this));
+	parentSys = NULL;
 }
 
 

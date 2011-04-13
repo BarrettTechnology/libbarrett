@@ -17,7 +17,9 @@ template<typename InputType, typename OutputType = InputType>
 class ControllerImpl :
 		public barrett::systems::Controller<InputType, OutputType> {
 public:
-	ControllerImpl() {}
+	ControllerImpl(const std::string& sysName = "ControllerImpl")
+		: barrett::systems::Controller<InputType, OutputType>(sysName) {}
+	virtual ~ControllerImpl() { this->mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {}

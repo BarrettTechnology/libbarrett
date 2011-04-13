@@ -32,6 +32,7 @@
 #define BARRETT_SYSTEMS_TOOL_FORCE_TO_JOINT_TORQUES_H_
 
 
+#include <Eigen/Core>
 #include <gsl/gsl_blas.h>
 
 #include <barrett/detail/ca_macro.h>
@@ -46,28 +47,35 @@ namespace systems {
 
 
 template<size_t DOF>
-class ToolForceToJointTorques : public SingleIO<units::CartesianForce::type, typename units::JointTorques<DOF>::type>, public KinematicsInput<DOF> {
+class ToolForceToJointTorques :
+	public SingleIO<units::CartesianForce::type, typename units::JointTorques<DOF>::type>,
+	public KinematicsInput<DOF>
+{
+
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	ToolForceToJointTorques() :
-		SingleIO<cf_type, jt_type>(), KinematicsInput<DOF>(this) {}
-	virtual ~ToolForceToJointTorques() {}
+	ToolForceToJointTorques(const std::string& sysName = "ToolForceToJointTorques") :
+		SingleIO<cf_type, jt_type>(sysName), KinematicsInput<DOF>(this) {}
+	virtual ~ToolForceToJointTorques() { this->mandatoryCleanUp(); }
 
 protected:
-	jt_type jt;
+	jt_type data;
 
 	virtual void operate() {
 		// Multiply by the Jacobian-transpose at the tool
 		gsl_blas_dgemv(CblasTrans, 1.0,
-				this->kinInput.getValue()->impl->tool_jacobian_linear,
-				this->input.getValue().asGslType(), 0.0, jt.asGslType());
+				this->kinInput.getValue().impl->tool_jacobian_linear,
+				this->input.getValue().asGslType(), 0.0, data.asGslType());
 
-		this->outputValue->setValue(jt);
+		this->outputValue->setData(&data);
 	}
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ToolForceToJointTorques);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

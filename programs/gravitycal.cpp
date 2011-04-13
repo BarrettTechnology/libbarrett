@@ -26,6 +26,8 @@
 #include <barrett/cdlbt/kinematics.h>
 #include <barrett/cdlbt/calgrav.h>
 
+#include <barrett/standard_main_function.h>
+
 
 using namespace barrett;
 
@@ -308,7 +310,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	// install callback
 	systems::TupleGrouper<jt_type, jp_type> tg;
-	systems::Callback<boost::tuple<jt_type, jp_type>, int> muCallback(mu_callback<DOF>, true);
+	systems::Callback<boost::tuple<jt_type, jp_type>, int> muCallback(mu_callback<DOF>);
+	pm.getExecutionManager()->startManaging(muCallback);  // make sure mu_callback() is called every execution cycle
 
 	systems::connect(wam.jtSum.output, tg.template getInput<0>());
 	systems::connect(wam.jpOutput, tg.template getInput<1>());
@@ -317,7 +320,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
 
 
-	/* Allow the user to shift-activate */
 	j = 4;
 	mvprintw(j++, 0, "IMPORTANT: Once gravity-calibration begins, the WAM will begin");
 	mvprintw(j++, 0, "to move to a set of %d predefined poses (defined in gravitycal.conf).", num_poses);
@@ -718,23 +720,4 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	free(mus);
 
 	return 0;
-}
-
-
-int main(int argc, char** argv) {
-	// Give us pretty stack-traces when things die
-	installExceptionHandler();
-
-	ProductManager pm;
-	pm.waitForWam();
-
-	if (pm.foundWam4()) {
-		return wam_main(argc, argv, pm, *pm.getWam4());
-	} else if (pm.foundWam7()) {
-		return wam_main(argc, argv, pm, *pm.getWam7());
-	} else {
-		printf(
-				">>> ERROR: No WAM was found. Perhaps you have found a bug in ProductManager::waitForWam().\n");
-		return 1;
-	}
 }

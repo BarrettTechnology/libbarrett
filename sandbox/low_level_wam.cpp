@@ -43,12 +43,11 @@ template<size_t DOF> int wam_main(ProductManager& pm) {
 
 
 	const libconfig::Setting& setting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
-	systems::RealTimeExecutionManager& rtem = *pm.getExecutionManager();
 
     // instantiate Systems
 	std::vector<Puck*> wamPucks = pm.getWamPucks();
 	wamPucks.resize(DOF);
-	systems::LowLevelWamWrapper<DOF> llww(wamPucks, pm.getSafetyModule(), setting["low_level"]);
+	systems::LowLevelWamWrapper<DOF> llww(pm.getExecutionManager(), wamPucks, pm.getSafetyModule(), setting["low_level"]);
 	systems::PIDController<jp_type, jt_type> jpController(setting["joint_position_control"]);
 	systems::Constant<jp_type> point(llww.getLowLevelWam().getHomePosition());
 
@@ -62,7 +61,7 @@ template<size_t DOF> int wam_main(ProductManager& pm) {
 
 
 	// start the main loop!
-	rtem.start();
+	pm.getExecutionManager()->start();
 	pm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
 
 	std::cout << "Press [Enter] to move to home position.\n";
@@ -75,7 +74,7 @@ template<size_t DOF> int wam_main(ProductManager& pm) {
 	jpController.resetIntegrator();
 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-	rtem.stop();
+	pm.getExecutionManager()->stop();
 
 	return 0;
 }

@@ -32,7 +32,10 @@
 #define BARRETT_SYSTEMS_CONSTANT_H_
 
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
+#include <barrett/math/traits.h>
 #include <barrett/systems/abstract/system.h>
 #include <barrett/systems/abstract/single_io.h>
 
@@ -42,21 +45,27 @@ namespace systems {
 
 // TODO(dc): add a configuration file interface
 
-template<typename T>
+template<typename T, bool RequiresAlignment = math::Traits<T>::RequiresAlignment>
 class Constant : public System, public SingleOutput<T> {
 public:
-	explicit Constant(const T& value) :
-		SingleOutput<T>(this)
+	explicit Constant(const T& value, const std::string& sysName = "Constant") :
+		System(sysName), SingleOutput<T>(this), data(value)
 	{
-		this->outputValue->setValue(value);
+		this->outputValue->setData(&data);
 	}
-	virtual ~Constant() {}
+	virtual ~Constant() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {  /* do nothing */  }
+	virtual void invalidateOutputs() { /* do nothing */ }
+
+	T data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Constant);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(RequiresAlignment)
 };
 
 

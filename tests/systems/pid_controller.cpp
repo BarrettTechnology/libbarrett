@@ -31,15 +31,17 @@ const double T_s = 0.002;
 class PIDControllerTest : public ::testing::Test {
 public:
 	PIDControllerTest() :
-		pid(), feedbackSignal(i_type()), eios(), a()
+		mem(T_s), pid(), feedbackSignal(i_type()), eios(), a()
 	{
-		pid.setSamplePeriod(T_s);
+		mem.startManaging(eios);
+
+		systems::connect(pid.controlOutput, eios.input);
 		systems::connect(feedbackSignal.output, pid.feedbackInput);
 		systems::connect(eios.output, pid.referenceInput);
-		systems::connect(pid.controlOutput, eios.input);
 	}
 
 protected:
+	systems::ManualExecutionManager mem;
 	systems::PIDController<i_type, i_type> pid;
 	systems::Constant<i_type> feedbackSignal;
 	ExposedIOSystem<i_type> eios;
@@ -47,43 +49,45 @@ protected:
 };
 
 TEST_F(PIDControllerTest, SamplePeriodZeroInitilized) {
-	systems::PIDController<i_type, i_type> pid;
-	EXPECT_EQ(0.0, pid.getSamplePeriod());
+	systems::PIDController<i_type, i_type> localPid;
+	EXPECT_EQ(0.0, localPid.getSamplePeriod());
 }
 
 TEST_F(PIDControllerTest, SamplePeriodMatchesDefaultExecutionManager) {
-	systems::ManualExecutionManager mem(5.8);
-	systems::System::defaultExecutionManager = &mem;
-	systems::PIDController<i_type, i_type> pid2;
-	EXPECT_EQ(5.8, pid2.getSamplePeriod());
+	EXPECT_EQ(T_s, pid.getSamplePeriod());
 }
 
 TEST_F(PIDControllerTest, SamplePeriodChangesWithExecutionManager) {
-	systems::PIDController<i_type, i_type> pid2;
-	EXPECT_EQ(0.0, pid2.getSamplePeriod());
+	systems::ManualExecutionManager localMem(5.8);
+	systems::PIDController<i_type, i_type> localPid;
 
-	systems::ManualExecutionManager mem(5.8);
-	pid2.setExecutionManager(&mem);
-	EXPECT_EQ(5.8, pid2.getSamplePeriod());
+	mem.startManaging(localPid);
+	EXPECT_EQ(T_s, localPid.getSamplePeriod());
 
-	pid2.setExecutionManager(NULL);
-	EXPECT_EQ(0.0, pid2.getSamplePeriod());
+	localMem.startManaging(localPid);
+	EXPECT_EQ(5.8, localPid.getSamplePeriod());
+
+	localMem.stopManaging(localPid);
+	EXPECT_EQ(0.0, localPid.getSamplePeriod());
 }
 
 TEST_F(PIDControllerTest, GainsZeroInitilized) {
 	// kp
 	a.setConstant(1);
 	eios.setOutputValue(a);
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(), eios.getInputValue());
 
 	// ki
 	a.setConstant(1);
 	eios.setOutputValue(a);
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(), eios.getInputValue());
 
 	// kd
 	a.setConstant(1e3);
 	eios.setOutputValue(a);
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(), eios.getInputValue());
 }
 
@@ -133,8 +137,9 @@ TEST_F(PIDControllerTest, SetKp) {
 	a.setConstant(38);
 	pid.setKp(a);
 
+	eios.setOutputValue(a);
 	for (size_t i = 0; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(a.cwise()*a, eios.getInputValue());
 	}
 }
@@ -144,8 +149,9 @@ TEST_F(PIDControllerTest, SetKi) {
 	pid.setKi(a);
 
 	a.setConstant(1);
+	eios.setOutputValue(a);
 	for (size_t i = 0; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(a*i, eios.getInputValue());
 	}
 }
@@ -157,10 +163,12 @@ TEST_F(PIDControllerTest, SetKd) {
 	size_t i = 0;
 	a.setConstant(i);
 	eios.setOutputValue(a);
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(0.0), eios.getInputValue());
 	for (i = 1; i < 10; ++i) {
 		a.setConstant(i);
 		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(i_type(10.0), eios.getInputValue());
 	}
 }
@@ -173,8 +181,9 @@ TEST_F(PIDControllerTest, SetIntegratorState) {
 	pid.setIntegratorState(a);
 
 	a.setConstant(0);
+	eios.setOutputValue(a);
 	for (size_t i = 0; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(i_type(1.0), eios.getInputValue());
 	}
 }
@@ -187,22 +196,24 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 	pid.setIntegratorLimit(a);
 
 	a.setConstant(1);
+	eios.setOutputValue(a);
 	for (size_t i = 0; i <= 5; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(a*i, eios.getInputValue());
 	}
 	for (size_t i = 6; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(i_type(5.8), eios.getInputValue());
 	}
 
 	a.setConstant(-1);
+	eios.setOutputValue(a);
 	for (size_t i = 0; i <= 11; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(5.8 + (a*i).cwise(), eios.getInputValue());
 	}
 	for (size_t i = 12; i < 15; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(i_type(-5.8), eios.getInputValue());
 	}
 
@@ -212,6 +223,7 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 
 	a.setConstant(-1);
 	eios.setOutputValue(a);
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(-505.8), eios.getInputValue());
 }
 
@@ -221,10 +233,15 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 	pid.setControlSignalLimit(a);
 
 	eios.setOutputValue(i_type(0.1));
+	mem.runExecutionCycle();
 	EXPECT_EQ(i_type(0.1).cwise() * a, eios.getInputValue());
+
 	eios.setOutputValue(i_type(2.0));
+	mem.runExecutionCycle();
 	EXPECT_EQ(a, eios.getInputValue());
+
 	eios.setOutputValue(i_type(-5.0));
+	mem.runExecutionCycle();
 	EXPECT_EQ(-a, eios.getInputValue());
 }
 
@@ -232,8 +249,9 @@ TEST_F(PIDControllerTest, ResetIntegrator) {
 	pid.setKi(i_type(500.0));
 
 	a.setConstant(1);
+	eios.setOutputValue(a);
 	for (size_t i = 0; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(a*i, eios.getInputValue());
 	}
 
@@ -242,7 +260,7 @@ TEST_F(PIDControllerTest, ResetIntegrator) {
 	// start at i=1 because (this time through) the previous input sample
 	// wasn't zero
 	for (size_t i = 1; i < 10; ++i) {
-		eios.setOutputValue(a);
+		mem.runExecutionCycle();
 		EXPECT_EQ(a*i, eios.getInputValue());
 	}
 }

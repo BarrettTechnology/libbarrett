@@ -59,10 +59,10 @@ namespace systems {
 // TODO(dc): some of these members should be inline
 
 template<size_t DOF>
-Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule,
-		const libconfig::Setting& setting,
-		std::vector<int> torqueGroupIds) :
-	llww(genericPucks, safetyModule, setting["low_level"], torqueGroupIds),
+Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
+		SafetyModule* safetyModule, const libconfig::Setting& setting,
+		std::vector<int> torqueGroupIds, const std::string& sysName) :
+	llww(em, genericPucks, safetyModule, setting["low_level"], torqueGroupIds, sysName + "::LowLevel"),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),
@@ -90,7 +90,8 @@ Wam<DOF>::Wam(const std::vector<Puck*>& genericPucks, SafetyModule* safetyModule
 
 	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(jvFilter.output),
 
-	doneMoving(true)
+	doneMoving(true),
+	kin(setting["kinematics"])
 {
 	connect(llww.jpOutput, kinematicsBase.jpInput);
 	connect(jvOutput, kinematicsBase.jvInput);
@@ -169,8 +170,14 @@ inline const typename Wam<DOF>::jp_type& Wam<DOF>::getHomePosition() const
 template<size_t DOF>
 typename Wam<DOF>::jt_type Wam<DOF>::getJointTorques() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return llww.input.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (llww.input.valueDefined()) {
+			return llww.input.getValue();
+		}
+	}
+
+	return jt_type();
 }
 
 template<size_t DOF>
@@ -188,15 +195,30 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 template<size_t DOF>
 typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return tpController.feedbackInput.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (tpController.feedbackInput.valueDefined()) {
+			return tpController.feedbackInput.getValue();
+		}
+	}
+
+	kin.eval(getJointPositions(), getJointVelocities());
+	return cp_type(kin.impl->tool->origin_pos);
 }
 
 template<size_t DOF>
 Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
-	BARRETT_SCOPED_LOCK(gravity.getEmMutex());
-	return toController.feedbackInput.getValue();
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (toController.feedbackInput.valueDefined()) {
+			return toController.feedbackInput.getValue();
+		}
+	}
+
+	kin.eval(getJointPositions(), getJointVelocities());
+	math::Matrix<3,3> rot(kin.impl->tool->rot_to_world);
+	return Eigen::Quaterniond(rot.transpose());
 }
 
 
@@ -272,11 +294,8 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
 //	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInS());
 
-	Ramp time(1.0, false);
+	Ramp time(NULL, 1.0);
 	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
-
-	// TODO(dc): Ramp should get this from the EM itself
-	time.setSamplePeriod(tf2jt.getExecutionManager()->getPeriod());  // get the EM from one of the Wam's Systems...
 
 	connect(time.output, trajectory.input);
 	trackReferenceSignal(trajectory.output);
@@ -285,7 +304,11 @@ void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type
 	doneMoving = false;
 	*started = true;
 
-	while (trajectory.input.getValue() < profile.finalT()) {
+	// The value of trajectory.input will be undefined until the next execution cycle.
+	// It may become undefined again if trajectory.output is disconnected and this chain
+	// of Systems loses its ExecutionManager. We must check that the value is defined
+	// before calling getValue().
+	while ( !trajectory.input.valueDefined()  ||  trajectory.input.getValue() < profile.finalT()) {
 		// if the move is interrupted, clean up and end the thread
 		if ( !trajectory.output.isConnected() ) {
 			return;

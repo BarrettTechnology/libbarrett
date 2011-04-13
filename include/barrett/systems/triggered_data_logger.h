@@ -50,11 +50,10 @@ public:	System::Input<bool> triggerInput;
 
 
 public:
-	TriggeredDataLogger(LogWriterType* logWriter) :
-			PeriodicDataLogger<T, LogWriterType>(logWriter),
+	TriggeredDataLogger(ExecutionManager* em, LogWriterType* logWriter, const std::string& sysName = "TriggeredDataLogger") :
+			PeriodicDataLogger<T, LogWriterType>(em, logWriter, 1, sysName),
 			triggerInput(this) {}
-
-	virtual ~TriggeredDataLogger() {}
+	virtual ~TriggeredDataLogger() { this->mandatoryCleanUp(); }
 
 protected:
 	virtual bool inputsValid() {

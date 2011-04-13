@@ -34,6 +34,8 @@
 
 #include <cmath>
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/math.h>
@@ -45,10 +47,15 @@ namespace systems {
 
 
 class HapticBox : public HapticObject {
+	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
+
 public:
-	HapticBox(units::CartesianPosition::type center, double xSize, double ySize, double zSize) :
-		c(center), size(xSize/2, ySize/2, zSize/2), inBox(false), index(-1), keepOutside(true) {}
-	virtual ~HapticBox() {}
+	HapticBox(cp_type center, double xSize, double ySize, double zSize,
+			const std::string& sysName = "HapticBox") :
+		HapticObject(sysName),
+		c(center), size(xSize/2, ySize/2, zSize/2), inBox(false), index(-1), keepOutside(true),
+		depth(0.0), dir(0.0) {}
+	virtual ~HapticBox() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
@@ -63,50 +70,62 @@ protected:
 				(size - pos.cwise().abs()).minCoeff(&index);
 			}
 
-			double depth = size[index] - math::abs(pos[index]);
+			depth = size[index] - math::abs(pos[index]);
 			if (depth > 0.02) {
 				keepOutside = !keepOutside;
+
+				depth = 0.0;
+				dir.setZero();
 			} else {
-				depthOutputValue->setValue(depth);
-				directionOutputValue->setValue(math::sign(pos[index]) * units::CartesianForce::type::Unit(index));
+				dir = math::sign(pos[index]) * cf_type::Unit(index);
 
 				inBox = true;
-				return;
 			}
-		}
-		inBox = false;
+		} else {
+			inBox = false;
 
-		// if we are outside the box and we shouldn't be
-		if (!keepOutside  &&  outside) {
-			units::CartesianForce::type dir = size - pos.cwise().abs();
-			dir = dir.cwise() * (dir.cwise() < 0.0).cast<double>();
-			dir = dir.cwise() * math::sign(pos);
+			// if we are outside the box and we shouldn't be
+			if (!keepOutside  &&  outside) {
+				dir = size - pos.cwise().abs();
+				dir = dir.cwise() * (dir.cwise() < 0.0).cast<double>();
+				dir = dir.cwise() * math::sign(pos);
 
-			double depth = dir.norm();
-			if (depth > 0.02) {
-				keepOutside = !keepOutside;
+				depth = dir.norm();
+				if (depth > 0.02) {
+					keepOutside = !keepOutside;
+
+					depth = 0.0;
+					dir.setZero();
+				} else {
+					dir /= depth;
+				}
 			} else {
-				depthOutputValue->setValue(depth);
-				directionOutputValue->setValue(dir/depth);
-				return;
+				depth = 0.0;
+				dir.setZero();
 			}
 		}
 
-		depthOutputValue->setValue(0.0);
-		directionOutputValue->setValue(units::CartesianForce::type(0.0));
+		depthOutputValue->setData(&depth);
+		directionOutputValue->setData(&dir);
 	}
 
-	units::CartesianPosition::type c;
+	cp_type c;
 	math::Vector<3>::type size;
 
 	// state & temporaries
-	units::CartesianForce::type pos;
+	cf_type pos;
 	bool inBox;
 	int index;
 	bool keepOutside;
 
+	double depth;
+	cf_type dir;
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(HapticBox);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

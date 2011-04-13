@@ -17,6 +17,7 @@
 #include <native/timer.h>
 
 #include <boost/thread.hpp>
+#include <boost/ref.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <barrett/detail/stacktrace.h>
@@ -97,7 +98,7 @@ int main(int argc, char** argv) {
 	char* outFile = NULL;
 	double T_s = 0.002;  // Default: 500Hz
 	bool fileMode = false;
-	int windowSize;
+	int windowSize = 0;
 
 	if (argc == 4) {
 		T_s = std::atof(argv[3]);
@@ -141,7 +142,7 @@ int main(int argc, char** argv) {
 		printf("ERROR: No Force-Torque Sensor found!\n");
 		return 1;
 	}
-	boost::thread ftThread(ftThreadEntryPoint, &g_Going, T_s, *pm.getForceTorqueSensor(), lw, windowSize, &numSamples, &sum);
+	boost::thread ftThread(ftThreadEntryPoint, &g_Going, T_s, boost::ref(*pm.getForceTorqueSensor()), lw, windowSize, &numSamples, &sum);
 
 	if (fileMode) {
 		printf(">>> Logging data. Press [Ctrl-C] to exit.\n");

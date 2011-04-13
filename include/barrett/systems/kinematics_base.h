@@ -47,7 +47,7 @@ namespace systems {
 template<size_t DOF>
 class KinematicsInput {  // not a System in order to avoid diamond inheritance
 // IO
-public:	System::Input<const math::Kinematics<DOF>*> kinInput;
+public:	System::Input<math::Kinematics<DOF> > kinInput;
 
 
 public:
@@ -64,20 +64,21 @@ class KinematicsBase : public System {
 // IO
 public:		Input<typename units::JointPositions<DOF>::type> jpInput;
 public:		Input<typename units::JointVelocities<DOF>::type> jvInput;
-public:		Output<const math::Kinematics<DOF>*> kinOutput;
-protected:	typename Output<const math::Kinematics<DOF>*>::Value* kinOutputValue;
+public:		Output<math::Kinematics<DOF> > kinOutput;
+protected:	typename Output<math::Kinematics<DOF> >::Value* kinOutputValue;
 
 
 public:
-	explicit KinematicsBase(const libconfig::Setting& setting) :
+	explicit KinematicsBase(const libconfig::Setting& setting, const std::string& sysName = "KinematicsBase") :
+		System(sysName),
 		jpInput(this), jvInput(this),
 		kinOutput(this, &kinOutputValue), kin(setting) {}
-	virtual ~KinematicsBase() {}
+	virtual ~KinematicsBase() { mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
 		kin.eval(jpInput.getValue(), jvInput.getValue());
-		kinOutputValue->setValue(&kin);
+		kinOutputValue->setData(&kin);
 	}
 
 	math::Kinematics<DOF> kin;
