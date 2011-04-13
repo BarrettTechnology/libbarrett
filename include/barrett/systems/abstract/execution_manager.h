@@ -32,9 +32,7 @@
 #define BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_
 
 
-#include <vector>
-#include <stdexcept>
-#include <string>
+#include <boost/intrusive/list.hpp>
 
 #include <libconfig.h++>
 
@@ -42,13 +40,11 @@
 #include <barrett/detail/libconfig_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/thread/null_mutex.h>
+#include <barrett/systems/abstract/system.h>
 
 
 namespace barrett {
 namespace systems {
-
-
-class System;
 
 
 // Thrown to indicate that the ExecutionManager should stop executing.
@@ -58,48 +54,44 @@ public:
 };
 
 
-// TODO(dc): prevent Systems managed by different EMs from being connected
 
 // this isn't technically abstract, but neither does it have all the elements of a useful interface...
 class ExecutionManager {
 public:
 	explicit ExecutionManager(double period_s) :
-		mutex(new thread::NullMutex), period(period_s),
-		managedSystems(), alwaysUpdatedSystems(), updatedSystems() {}
+		mutex(new thread::NullMutex), period(period_s), updateToken(System::UT_NULL) {}
 	explicit ExecutionManager(const libconfig::Setting& setting) :
-		mutex(new thread::NullMutex), period(),
-		managedSystems(), alwaysUpdatedSystems(), updatedSystems()
+		mutex(new thread::NullMutex), period(), updateToken(System::UT_NULL)
 	{
 		period = barrett::detail::numericToDouble(setting["control_loop_period"]);
 	}
-	virtual ~ExecutionManager();
+	~ExecutionManager();
 
-	virtual void startManaging(System* sys, bool alwaysUpdate = false);
-	virtual void stopManaging(System* sys);
+	void startManaging(System* sys);
+	void stopManaging(System* sys);
 
-	virtual thread::Mutex& getMutex();
-	virtual double getPeriod() const {  return period;  }
+	thread::Mutex& getMutex() { return *mutex; }
+	double getPeriod() const {  return period;  }
 
 protected:
-	void runExecutionCycle();
+	void runExecutionCycle() {
+		BARRETT_SCOPED_LOCK(getMutex());
 
-	void resetExecutionCycle();
-	void update();
-	template<template<typename T, typename = std::allocator<T> > class Container>
-		void update(const Container<System*>& systems);
-	void update(System* sys);
-	virtual bool updateNeeded(System* sys);
+		++updateToken;
+
+		managed_system_list_type::iterator i(managedSystems.begin()), iEnd(managedSystems.end());
+		for (; i != iEnd; ++i) {
+			i->update(updateToken);
+		}
+	}
 
 	thread::Mutex* mutex;
-
 	double period;
-
-	std::vector<System*> managedSystems;
-	std::vector<System*> alwaysUpdatedSystems;
-	std::vector<System*> updatedSystems;
+	uint_fast32_t updateToken;
 
 private:
-	friend class System;
+	typedef boost::intrusive::list<System, boost::intrusive::member_hook<System, System::managed_hook_type, &System::managedHook> > managed_system_list_type;
+	managed_system_list_type managedSystems;
 
 	DISALLOW_COPY_AND_ASSIGN(ExecutionManager);
 };
@@ -107,10 +99,6 @@ private:
 
 }
 }
-
-
-// include template definitions
-#include <barrett/systems/abstract/detail/execution_manager-inl.h>
 
 
 #endif /* BARRETT_SYSTEMS_ABSTRACT_EXECUTION_MANAGER_H_ */
