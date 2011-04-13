@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 #include <barrett/detail/ca_macro.h>
+#include <barrett/systems/manual_execution_manager.h>
 #include <barrett/systems/callback.h>
 
 #include "./exposed_io_system.h"
@@ -17,6 +18,7 @@
 
 namespace {
 using namespace barrett;
+
 
 double f1(const double& x) {
 	return 10.0 * x;
@@ -51,55 +53,67 @@ private:
 };
 
 
-TEST(CallbackTest, ExactFunctionPointer) {
+class CallbackTest : public ::testing::Test {
+public:
+	CallbackTest() {
+		mem.startManaging(eios);
+	}
+
+protected:
+	systems::ManualExecutionManager mem;
+	ExposedIOSystem<double> eios;
+};
+
+
+TEST_F(CallbackTest, ExactFunctionPointer) {
 	double (*fPtr)(const double&) = f1;
 
-	ExposedIOSystem<double> eios;
 	systems::Callback<double> cbs(fPtr);
 
-	systems::connect(eios.output, cbs.input);
 	systems::connect(cbs.output, eios.input);
+	systems::connect(eios.output, cbs.input);
 
 	eios.setOutputValue(5.0);
+	mem.runExecutionCycle();
 	EXPECT_EQ(f1(5.0), eios.getInputValue());
 }
 
-TEST(CallbackTest, EquivalentFunctionPointer) {
+TEST_F(CallbackTest, EquivalentFunctionPointer) {
 	double (*fPtr)(double) = f2;
 
-	ExposedIOSystem<double> eios;
 	systems::Callback<double> cbs(fPtr);
 
-	systems::connect(eios.output, cbs.input);
 	systems::connect(cbs.output, eios.input);
+	systems::connect(eios.output, cbs.input);
 
 	eios.setOutputValue(5.0);
+	mem.runExecutionCycle();
 	EXPECT_EQ(f2(5.0), eios.getInputValue());
 }
 
-TEST(CallbackTest, ExactFunctor) {
+TEST_F(CallbackTest, ExactFunctor) {
 	Functor1 fObj;
 
-	ExposedIOSystem<double> eios;
 	systems::Callback<double> cbs(boost::ref(fObj));
 
-	systems::connect(eios.output, cbs.input);
 	systems::connect(cbs.output, eios.input);
+	systems::connect(eios.output, cbs.input);
 
 	eios.setOutputValue(5.0);
+	mem.runExecutionCycle();
 	EXPECT_EQ(fObj(5.0), eios.getInputValue());
 }
 
-TEST(CallbackTest, EquivalentFunctor) {
+TEST_F(CallbackTest, EquivalentFunctor) {
 	Functor2 fObj;
 
-	ExposedIOSystem<double> eios;
 	systems::Callback<double> cbs(boost::ref(fObj));
 
-	systems::connect(eios.output, cbs.input);
 	systems::connect(cbs.output, eios.input);
+	systems::connect(eios.output, cbs.input);
 
 	eios.setOutputValue(5.0);
+	mem.runExecutionCycle();
 	EXPECT_EQ(fObj(5.0), eios.getInputValue());
 }
 

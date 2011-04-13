@@ -72,11 +72,11 @@ struct InputHolder :
 			Index+1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>*>(this) )->input;
 	}
 
-	bool valuesDefined() {
+	bool valuesDefined() const {
 		return input.valueDefined()  &&  inherited_type::valuesDefined();
 	}
 
-	tuple_type getValues() {
+	const tuple_type& getValues() {
 		collectValues();
 		return this->values;
 	}
@@ -98,8 +98,7 @@ struct InputHolder<1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 	typedef TupleGrouper<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> tg_type;
 	typedef typename tg_type::tuple_type tuple_type;
 
-	explicit InputHolder(
-			tg_type* parent) :
+	explicit InputHolder(tg_type* parent) :
 		input(parent), values() {}
 
 	template<size_t InputIndex>
@@ -107,12 +106,13 @@ struct InputHolder<1, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 		return input;
 	}
 
-	bool valuesDefined() {
+	bool valuesDefined() const {
 		return input.valueDefined();
 	}
 
-	tuple_type getValues() {
-		return tuple_type(input.getValue());
+	const tuple_type& getValues() {
+		collectValues();
+		return values;
 	}
 
 	System::Input<typename boost::tuples::element<0, tuple_type>::type> input;

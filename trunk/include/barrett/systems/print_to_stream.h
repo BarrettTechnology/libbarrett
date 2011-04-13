@@ -47,10 +47,17 @@ namespace systems {
 template<typename T>
 class PrintToStream : public System, public SingleInput<T> {
 public:
-	explicit PrintToStream(const std::string& prependedLabel = std::string(),
-	                       std::ostream& ostream = std::cout) :
-		System(true), SingleInput<T>(this), label(prependedLabel), os(ostream) {}
-	virtual ~PrintToStream() {}
+	explicit PrintToStream(ExecutionManager* em, const std::string& prependedLabel = "",
+			std::ostream& ostream = std::cout, const std::string& sysName = "PrintToStream") :
+		System(sysName), SingleInput<T>(this), label(prependedLabel), os(ostream)
+	{
+		if (em != NULL) {
+			em->startManaging(*this);
+		}
+	}
+	virtual ~PrintToStream() {
+		mandatoryCleanUp();
+	}
 
 protected:
 	std::string label;

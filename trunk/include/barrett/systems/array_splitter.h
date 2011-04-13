@@ -53,13 +53,12 @@ protected:	boost::array<Output<double>::Value*, T::SIZE> outputValues;
 
 
 public:
-	ArraySplitter();
+	ArraySplitter(const std::string& sysName = "ArraySplitter");
 	virtual ~ArraySplitter();
 
 	Output<double>& getOutput(const size_t i);
 
 protected:
-	void initOutputs();
 	virtual void operate();
 
 private:
@@ -73,7 +72,6 @@ private:
 
 // include template definitions
 #include <barrett/systems/detail/array_splitter-inl.h>
-
 
 
 #endif /* BARRETT_SYSTEMS_ARRAY_SPLITTER_H_ */

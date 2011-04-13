@@ -54,12 +54,16 @@
 #include <barrett/systems/wam.h>
 
 
-#ifndef BARRETT_SMF_NO_DECLARE
-	template<size_t DOF> int wam_main(int argc, char** argv, ::barrett::ProductManager& pm, ::barrett::systems::Wam<DOF>& wam);
-#endif
-
 #ifdef BARRETT_SMF_VALIDATE_ARGS
 	bool validate_args(int argc, char** argv);
+#endif
+
+#ifdef BARRETT_SMF_CONFIGURE_PM
+	bool configure_pm(int argc, char** argv, ::barrett::ProductManager& pm);
+#endif
+
+#ifndef BARRETT_SMF_NO_DECLARE
+	template<size_t DOF> int wam_main(int argc, char** argv, ::barrett::ProductManager& pm, ::barrett::systems::Wam<DOF>& wam);
 #endif
 
 #ifndef BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
@@ -86,6 +90,12 @@ int main(int argc, char** argv) {
 
 
 	::barrett::ProductManager pm;
+#ifdef BARRETT_SMF_CONFIGURE_PM
+	if ( !configure_pm(argc, argv, pm) ) {
+		return 1;
+	}
+#endif
+
 	pm.waitForWam();
 	pm.wakeAllPucks();
 

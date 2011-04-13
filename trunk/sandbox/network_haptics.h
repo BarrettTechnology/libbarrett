@@ -30,8 +30,8 @@ class NetworkHaptics : public barrett::systems::SingleIO<barrett::units::Cartesi
 public:
 	static const int SIZE_OF_MSG = 3 * sizeof(double);
 
-	explicit NetworkHaptics(char* remoteHost, int port = 5555) :
-		barrett::systems::SingleIO<cp_type, cf_type>(true), sock(-1), cp(), numMissed(0), cf(0.0)
+	explicit NetworkHaptics(barrett::systems::ExecutionManager* em, char* remoteHost, int port = 5555, const std::string& sysName = "NetworkHaptics") :
+		barrett::systems::SingleIO<cp_type, cf_type>(sysName), sock(-1), cp(0.0), numMissed(0), cf(0.0)
 	{
 		int err;
 		long flags;
@@ -119,9 +119,15 @@ public:
 			syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
 			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
 		}
+
+
+		if (em != NULL) {
+			em->startManaging(*this);
+		}
 	}
 
 	virtual ~NetworkHaptics() {
+		mandatoryCleanUp();
 		close(sock);
 	}
 
@@ -146,7 +152,7 @@ protected:
 			}
 		}
 
-		outputValue->setValue(cf);
+		outputValue->setData(&cf);
 	}
 
 	int sock;

@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include <Eigen/Core>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/products/abstract/multi_puck_product.h>
@@ -85,6 +87,9 @@ private:
 	static const enum Puck::Property props[];
 
 	DISALLOW_COPY_AND_ASSIGN(Hand);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

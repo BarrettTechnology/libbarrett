@@ -53,7 +53,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	const jp_type SYNC_POS(0.0);  // the position each WAM should move to before linking
 
 
-	MasterMaster<DOF> mm(argv[1]);
+	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);
 
 

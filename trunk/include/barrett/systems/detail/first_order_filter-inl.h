@@ -29,6 +29,7 @@
  */
 
 
+#include <cassert>
 #include <barrett/systems/abstract/single_io.h>
 
 
@@ -36,40 +37,34 @@ namespace barrett {
 namespace systems {
 
 
-template<typename T>
-FirstOrderFilter<T>::FirstOrderFilter(bool updateEveryExecutionCycle) :
-	SingleIO<T, T>(updateEveryExecutionCycle)
+template<typename T, typename MathTraits>
+FirstOrderFilter<T,MathTraits>::FirstOrderFilter(const std::string& sysName) :
+	SingleIO<T, T>(sysName)
 {
 	getSamplePeriodFromEM();
 }
 
-template<typename T>
-FirstOrderFilter<T>::FirstOrderFilter(const libconfig::Setting& setting, bool updateEveryExecutionCycle) :
-	SingleIO<T, T>(updateEveryExecutionCycle), math::FirstOrderFilter<T>(setting)
+template<typename T, typename MathTraits>
+FirstOrderFilter<T,MathTraits>::FirstOrderFilter(const libconfig::Setting& setting, const std::string& sysName) :
+	SingleIO<T, T>(sysName), math::FirstOrderFilter<T>(setting)
 {
 	getSamplePeriodFromEM();
 }
 
-// TODO(dc): anyway to remove the code duplication with PIDController?
-template<typename T>
-void FirstOrderFilter<T>::setExecutionManager(ExecutionManager* newEm)
+template<typename T, typename MathTraits>
+void FirstOrderFilter<T,MathTraits>::operate()
 {
-	SingleIO<T, T>::setExecutionManager(newEm);  // call super
-	getSamplePeriodFromEM();
-}
-
-template<typename T>
-void FirstOrderFilter<T>::operate()
-{
-	this->outputValue->setValue(eval(this->input.getValue()));
+	eval(this->input.getValue());
+	this->outputValue->setData(&this->y_0);
 }
 
 
 // TODO(dc): anyway to remove the code duplication with PIDController?
-template<typename T>
-inline void FirstOrderFilter<T>::getSamplePeriodFromEM()
+template<typename T, typename MathTraits>
+void FirstOrderFilter<T,MathTraits>::getSamplePeriodFromEM()
 {
-	if (this->isExecutionManaged()) {
+	if (this->hasExecutionManager()) {
+		assert(this->getExecutionManager()->getPeriod() > 0.0);
 		this->setSamplePeriod(this->getExecutionManager()->getPeriod());
 	} else {
 		this->setSamplePeriod(0.0);

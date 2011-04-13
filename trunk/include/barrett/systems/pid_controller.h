@@ -32,6 +32,7 @@
 #define BARRETT_SYSTEMS_PID_CONTROLLER_H_
 
 
+#include <Eigen/Core>
 #include <libconfig.h++>
 
 #include <barrett/detail/ca_macro.h>
@@ -51,47 +52,58 @@ template<typename InputType,
 		 typename MathTraits = math::Traits<InputType> >
 class PIDController : public Controller<InputType, OutputType> {
 public:
-//	typedef typename InputType::unitless_type unitless_type;
-	typedef InputType unitless_type;
+	typedef typename MathTraits::unitless_type unitless_type;
 
-	PIDController();
-	explicit PIDController(const libconfig::Setting& setting);
+	explicit PIDController(const std::string& sysName = "PIDController");
+	explicit PIDController(const libconfig::Setting& setting, const std::string& sysName = "PIDController");
+	virtual ~PIDController() { this->mandatoryCleanUp(); }
 
-	PIDController& setSamplePeriod(double timeStep);
-	PIDController& setFromConfig(const libconfig::Setting& setting);
-	PIDController& setKp(unitless_type proportionalGains);
-	PIDController& setKi(unitless_type integralGains);
-	PIDController& setKd(unitless_type derivitiveGains);
-	PIDController& setIntegratorState(unitless_type integratorState);
-	PIDController& setIntegratorLimit(unitless_type intSaturations);
-	PIDController& setControlSignalLimit(unitless_type csSaturations);
+	void setFromConfig(const libconfig::Setting& setting);
+	void setKp(const unitless_type& proportionalGains);
+	void setKi(const unitless_type& integralGains);
+	void setKd(const unitless_type& derivitiveGains);
+	void setIntegratorState(const unitless_type& integratorState);
+	void setIntegratorLimit(const unitless_type& intSaturations);
+	void setControlSignalLimit(const unitless_type& csSaturations);
 
 	void resetIntegrator();
 
 	double getSamplePeriod() const {  return T_s;  }
-	unitless_type getKp() const {  return kp;  }
-	unitless_type getKi() const {  return ki;  }
-	unitless_type getKd() const {  return kd;  }
-	unitless_type getIntegratorState() const {  return intError;  }
-	unitless_type getIntegratorLimit() const {  return intErrorLimit;  }
-	unitless_type getControlSignalLimit() const {  return controlSignalLimit;  }
-
-	virtual void setExecutionManager(ExecutionManager* newEm);
+	unitless_type& getKp() {  return kp;  }
+	const unitless_type& getKp() const {  return kp;  }
+	unitless_type& getKi() {  return ki;  }
+	const unitless_type& getKi() const {  return ki;  }
+	unitless_type& getKd() {  return kd;  }
+	const unitless_type& getKd() const {  return kd;  }
+	const unitless_type& getIntegratorState() const {  return intError;  }
+	unitless_type& getIntegratorLimit() {  return intErrorLimit;  }
+	const unitless_type& getIntegratorLimit() const {  return intErrorLimit;  }
+	unitless_type& getControlSignalLimit() {  return controlSignalLimit;  }
+	const unitless_type& getControlSignalLimit() const {  return controlSignalLimit;  }
 
 protected:
+	void setSamplePeriod(double timeStep);
+
 	virtual void operate();
+	virtual void onExecutionManagerChanged() {
+		Controller<InputType, OutputType>::onExecutionManagerChanged();  // First, call super
+		getSamplePeriodFromEM();
+	}
 
 	double T_s;
 	InputType error, error_1;
 	unitless_type intError, intErrorLimit;
 	unitless_type kp, ki, kd;
-//	OutputType controlSignal, controlSignalLimit;
-	unitless_type controlSignal, controlSignalLimit;
+	OutputType controlSignal, controlSignalLimit;
+//	unitless_type controlSignal, controlSignalLimit;
 
-private:
 	void getSamplePeriodFromEM();
 
+private:
 	DISALLOW_COPY_AND_ASSIGN(PIDController);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(MathTraits::RequiresAlignment)
 };
 
 

@@ -57,6 +57,9 @@ class ExecutionManager;
 
 
 class System {
+private:
+	typedef uint_fast32_t update_token_type;
+
 public:
 	// Forward decls
 	class AbstractInput;
@@ -65,44 +68,55 @@ public:
 	template<typename T> class Output;
 
 
-	explicit System(const std::string& sysName = "System") : name(sysName), em(NULL), updateToken(UT_NULL) {}
-	virtual ~System() {}
+	explicit System(const std::string& sysName = "System") :
+			name(sysName), em(NULL), emDirect(false), ut(UT_NULL) {}
+	virtual ~System() { mandatoryCleanUp(); }
 
 	void setName(const std::string& newName) { name = newName; }
 	const std::string& getName() const { return name; }
 
-	bool hasExecutionManager() const { return em != NULL; }
+	bool hasExecutionManager() const { return getExecutionManager() != NULL; }
+	bool hasDirectExecutionManager() const { return emDirect; }
 	ExecutionManager* getExecutionManager() const { return em; }
 	thread::Mutex& getEmMutex() const;
 
 protected:
-	void update(uint_fast32_t ut);
+	void mandatoryCleanUp();
 
-	virtual bool inputsValid() const;
+	void update(update_token_type updateToken);
+
+	virtual bool inputsValid() /* const */;
 	virtual void operate() = 0;
 	virtual void invalidateOutputs();
 
+	// If you redefine this method, make sure to call
+	// MyBaseClass::onExecutionManagerChanged() in the new version.
+	virtual void onExecutionManagerChanged() {}
 
 	std::string name;
 	ExecutionManager* em;
+	bool emDirect;
 
 
 public:
 	class AbstractInput {
 	public:
-		AbstractInput(System* parent) : parentSys(*parent) {
-			parentSys.inputs.push_back(*this);
-		}
-		virtual ~AbstractInput() {
-			parentSys.inputs.erase(System::child_input_list_type::s_iterator_to(*this));
-		}
+		AbstractInput(System* parent);
+		virtual ~AbstractInput();
 
 		virtual bool valueDefined() const = 0;
 
+		thread::Mutex& getEmMutex() const;
+
 	protected:
-		System& parentSys;
+		virtual void mandatoryCleanUp();
+
+		System* parentSys;
 
 	private:
+		virtual void pushExecutionManager() = 0;
+		virtual void unsetExecutionManager() = 0;
+
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
 		child_hook_type childHook;
 
@@ -113,18 +127,22 @@ public:
 
 	class AbstractOutput {
 	public:
-		AbstractOutput(System* parent) : parentSys(*parent) {
-			parentSys.outputs.push_back(*this);
-		}
-		virtual ~AbstractOutput() {
-			parentSys.outputs.erase(System::child_output_list_type::s_iterator_to(*this));
-		}
+		AbstractOutput(System* parent);
+		virtual ~AbstractOutput();
+
+		thread::Mutex& getEmMutex() const;
 
 	protected:
-		System& parentSys;
+		virtual void mandatoryCleanUp();
+
+		System* parentSys;
 
 	private:
 		virtual void setValueUndefined() = 0;
+
+		virtual ExecutionManager* collectExecutionManager() const = 0;
+		virtual void pushExecutionManager() = 0;
+		virtual void unsetExecutionManager() = 0;
 
 		typedef boost::intrusive::list_member_hook<> child_hook_type;
 		child_hook_type childHook;
@@ -136,12 +154,22 @@ public:
 
 
 private:
-	static const uint_fast32_t UT_NULL = 0;
-	uint_fast32_t updateToken;
+	static const update_token_type UT_NULL = 0;
+	update_token_type ut;
 
+
+	void setExecutionManager(ExecutionManager* newEm);
+	void unsetDirectExecutionManager();
+	void unsetExecutionManager();
 
 	typedef boost::intrusive::list_member_hook<> managed_hook_type;
 	managed_hook_type managedHook;
+
+	struct StopManagingDisposer {
+		void operator() (System* sys) {
+			sys->unsetDirectExecutionManager();
+		}
+	};
 
 	typedef boost::intrusive::list<AbstractInput, boost::intrusive::member_hook<AbstractInput, AbstractInput::child_hook_type, &AbstractInput::childHook> > child_input_list_type;
 	child_input_list_type inputs;
@@ -151,6 +179,7 @@ private:
 
 
 	friend class ExecutionManager;
+	DECLARE_HELPER_FRIENDS;
 
 
 	DISALLOW_COPY_AND_ASSIGN(System);
@@ -160,13 +189,12 @@ private:
 template<typename T> class System::Input : public System::AbstractInput {
 public:
 	Input(System* parent) : AbstractInput(parent), output(NULL) {}
-	virtual ~Input() {
-		disconnect(*this);
-	}
+	virtual ~Input();
 
 	bool isConnected() const { return output != NULL; }
 	virtual bool valueDefined() const {
-		return isConnected()  &&  output->getValueObject()->updateData(parentSys.updateToken);
+		assert(parentSys != NULL);
+		return parentSys->hasExecutionManager()  &&  isConnected()  &&  output->getValueObject()->updateData(parentSys->ut);
 	}
 
 	const T& getValue() const {
@@ -175,16 +203,21 @@ public:
 		// valueDefined() calls Output<T>::Value::updateData() for us. Make
 		// sure it gets called even if NDEBUG is defined.
 #ifdef NDEBUG
-		output->getValueObject()->updateData(parentSys.updateToken);
+		output->getValueObject()->updateData(parentSys->ut);
 #endif
 
 		return *(output->getValueObject()->getData());
 	}
 
 protected:
+	virtual void mandatoryCleanUp();
+
 	Output<T>* output;
 
 private:
+	virtual void pushExecutionManager();
+	virtual void unsetExecutionManager();
+
 	typedef boost::intrusive::list_member_hook<> connected_hook_type;
 	connected_hook_type connectedHook;
 
@@ -226,16 +259,16 @@ public:
 	Output(System* parent, Value** valueHandle) : AbstractOutput(parent), value(this) {
 		*valueHandle = &value;
 	}
-	virtual ~Output() {
-		disconnect(*this);
-		value.undelegate();
-	}
+	virtual ~Output();
 
+	// TODO(dc): How should isConnected() treat delegation?
 	bool isConnected() const {
-		return !inputs.empty();
+		return !inputs.empty()  ||  !value.delegators.empty();
 	}
 
 protected:
+	virtual void mandatoryCleanUp();
+
 	Value* getValueObject() {
 		// TODO(dc): check for cyclic delegation?
 		Value* v = &value;
@@ -252,6 +285,10 @@ private:
 	virtual void setValueUndefined() {
 		value.setUndefined();
 	}
+
+	virtual ExecutionManager* collectExecutionManager() const;
+	virtual void pushExecutionManager();
+	virtual void unsetExecutionManager();
 
 
 	typename detail::IntrusiveDelegateFunctor<T>::hook_type delegateHook;
@@ -271,7 +308,6 @@ private:
 template<typename T> class System::Output<T>::Value {
 public:
 	void setData(const T* newData) { data = newData; }
-	void setData(const T& newData) { data = &newData; }
 	void setUndefined() { data = NULL; }
 
 	bool isDefined() const { return data != NULL; }
@@ -289,13 +325,23 @@ protected:
 private:
 	explicit Value(Output<T>* parent) : parentOutput(*parent), delegate(NULL), data(NULL) {}
 
-	bool updateData(uint_fast32_t updateToken) {
-		parentOutput.parentSys.update(updateToken);
+	bool updateData(update_token_type updateToken) {
+		assert(parentOutput.parentSys != NULL);  // TODO(dc): Is this assertion helpful?
+
+		parentOutput.parentSys->update(updateToken);
 		return isDefined();
 	}
 
 	typedef boost::intrusive::list<Output<T>, boost::intrusive::function_hook<typename detail::IntrusiveDelegateFunctor<T> > > delegate_output_list_type;
 	delegate_output_list_type delegators;
+
+	struct UndelegateDisposer {
+		void operator() (Output<T>* output) {
+			// No need to update the ExecutionManager, this Disposer is only used in ~Output()
+			//output->unsetExecutionManager();
+			output->value.delegate = NULL;
+		}
+	};
 
 	friend class Input<T>;
 	friend class Output<T>;
@@ -309,6 +355,13 @@ private:
 
 }
 }
+
+
+// include template definitions
+#include <barrett/systems/abstract/detail/system-inl.h>
+
+// Always include helper definitions to avoid linker errors
+#include <barrett/systems/helpers.h>
 
 
 #endif /* BARRETT_SYSTEMS_ABSTRACT_SYSTEM_H_ */

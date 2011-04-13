@@ -233,7 +233,7 @@ int bt_calgrav_eval(struct bt_calgrav * grav,
                      grav->t[j], 0.0, grav->pt[j]);
       /* Add into the torque vector the z component */
       if (jtorque)
-         *gsl_vector_ptr(jtorque,j) += gsl_vector_get(grav->pt[j],2);
+         *gsl_vector_ptr(jtorque,j) = gsl_vector_get(grav->pt[j],2);
    }
    return 0;
 }

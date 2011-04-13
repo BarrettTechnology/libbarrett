@@ -9,7 +9,9 @@
 #define BARRETT_MATH_FIRST_ORDER_FILTER_H_
 
 
+#include <Eigen/Core>
 #include <libconfig.h++>
+
 #include <barrett/detail/ca_macro.h>
 #include <barrett/math/traits.h>
 
@@ -29,15 +31,15 @@ public:
 
 	void setSamplePeriod(double timeStep);
 	void setFromConfig(const libconfig::Setting& setting);
-	void setLowPass(T omega_p, T dcGain = T(1.0));
-	void setHighPass(T omega_p, T hfGain = T(1.0));
-	void setZPK(T omega_z, T omega_p, T dcGain = T(1.0));
-	void setIntegrator(T gain = T(1.0));
-	void setParameters(T a, T b, T c);
+	void setLowPass(const T& omega_p, const T& dcGain = T(1.0));
+	void setHighPass(const T& omega_p, const T& hfGain = T(1.0));
+	void setZPK(const T& omega_z, const T& omega_p, const T& dcGain = T(1.0));
+	void setIntegrator(const T& gain = T(1.0));
+	void setParameters(const T& a, const T& b, const T& c);
 
-	T eval(const T& input);
+	const T& eval(const T& input);
 
-	typedef T result_type;  ///< For use with boost::bind().
+	typedef const T& result_type;  ///< For use with boost::bind().
 	result_type operator() (const T& input) {
 		return eval(input);
 	}
@@ -54,6 +56,9 @@ protected:
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
 	DISALLOW_COPY_AND_ASSIGN(FirstOrderFilter);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(MT::RequiresAlignment)
 };
 
 

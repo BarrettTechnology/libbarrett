@@ -44,16 +44,15 @@ namespace systems {
 
 class ManualExecutionManager : public ExecutionManager {
 public:
+	ManualExecutionManager() {}
 	explicit ManualExecutionManager(double period_s) :
 		ExecutionManager(period_s) {}
 	explicit ManualExecutionManager(const libconfig::Setting& setting) :
 		ExecutionManager(setting) {}
 
-	virtual ~ManualExecutionManager() {}
+	~ManualExecutionManager() {}
 
 	using ExecutionManager::runExecutionCycle;
-	using ExecutionManager::resetExecutionCycle;
-	using ExecutionManager::update;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ManualExecutionManager);

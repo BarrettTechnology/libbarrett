@@ -53,12 +53,12 @@ protected:	typename Output<OutputType>::Value* controlOutputValue;
 
 
 public:
-	explicit Controller(bool updateEveryExecutionCycle = false) :
-		System(updateEveryExecutionCycle),
+	explicit Controller(const std::string& sysName = "Controller") :
+		System(sysName),
 		referenceInput(this),
 		feedbackInput(this),
 		controlOutput(this, &controlOutputValue) {}
-	virtual ~Controller() {}
+	virtual ~Controller() { mandatoryCleanUp(); }
 
 	virtual System::Input<InputType>* getConversionInput() {
 		return &referenceInput;

@@ -34,18 +34,8 @@ public:
 	void close();
 
 protected:
-	class Runnable {
-	public:
-		Runnable(RealTimeWriter<T, Traits>* writer) :
-			writer(writer) {}
-		void operator() ();
-
-	private:
-		RealTimeWriter<T, Traits>* writer;
-	};
-
-
 	void init(size_t recordsInSingleBuffer);
+	void writeToDiskEntryPoint();
 
 	size_t period, singleBufferSize;
 	char* inBuff;

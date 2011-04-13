@@ -56,8 +56,12 @@ class ToolOrientationController : public Controller<Eigen::Quaterniond,
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	explicit ToolOrientationController(const libconfig::Setting& setting) :
-		KinematicsInput<DOF>(this), kp(barrett::detail::numericToDouble(setting["kp"])), kd(barrett::detail::numericToDouble(setting["kd"])) {}
+	explicit ToolOrientationController(const libconfig::Setting& setting,
+			const std::string& sysName = "ToolOrientationController") :
+		Controller<Eigen::Quaterniond, ct_type>(sysName), KinematicsInput<DOF>(this),
+		kp(barrett::detail::numericToDouble(setting["kp"])),
+		kd(barrett::detail::numericToDouble(setting["kd"])) {}
+	virtual ~ToolOrientationController() { mandatoryCleanUp(); }
 
 protected:
 	Eigen::AngleAxisd error;
@@ -79,9 +83,9 @@ protected:
 			ct = this->referenceInput.getValue().inverse() * (error.axis() * angle * kp);
 		}
 
-		gsl_blas_daxpy( -kd, this->kinInput.getValue()->impl->tool_velocity_angular, ct.asGslType());
+		gsl_blas_daxpy( -kd, this->kinInput.getValue().impl->tool_velocity_angular, ct.asGslType());
 
-		this->controlOutputValue->setValue(ct);
+		this->controlOutputValue->setData(&ct);
 	}
 
 	double kp;
@@ -89,6 +93,9 @@ protected:
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ToolOrientationController);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 

@@ -20,13 +20,17 @@ template<typename InputType, typename OutputType>
 class ConversionImpl :
 		public barrett::systems::SingleIO<InputType, OutputType> {
 public:
-	ConversionImpl() {}
-	virtual ~ConversionImpl() {}
+	ConversionImpl(const std::string& sysName = "ConversionImpl") :
+		barrett::systems::SingleIO<InputType, OutputType>(sysName) {}
+	virtual ~ConversionImpl() { this->mandatoryCleanUp(); }
 
 protected:
 	virtual void operate() {
-		this->outputValue->setValue(this->input.getValue());
+		data = static_cast<typename OutputType::Base>(this->input.getValue());
+		this->outputValue->setData(&data);
 	}
+
+	OutputType data;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ConversionImpl);

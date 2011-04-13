@@ -35,7 +35,7 @@
 
 #include <cassert>
 
-//#include <barrett/thread/abstract/mutex.h>
+#include <barrett/thread/abstract/mutex.h>
 #include <barrett/systems/abstract/system.h>
 
 
@@ -46,15 +46,23 @@ namespace systems {
 template<typename T>
 void connect(System::Output<T>& output, System::Input<T>& input)
 {
+	boost::lock_guard<thread::Mutex> inputLg(input.getEmMutex());
+	boost::lock_guard<thread::Mutex> outputLg(output.getEmMutex());
+
+
 	assert( !input.isConnected() );
 
 	input.output = &output;
 	output.inputs.push_back(input);
+
+	input.pushExecutionManager();
 }
 
 template<typename T>
 void reconnect(System::Output<T>& newOutput, System::Input<T>& input)
 {
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
+
 	assert(input.isConnected());
 
 	disconnect(input);
@@ -64,6 +72,8 @@ void reconnect(System::Output<T>& newOutput, System::Input<T>& input)
 template<typename T>
 void forceConnect(System::Output<T>& output, System::Input<T>& input)
 {
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
+
 	if (input.isConnected()) {
 		reconnect(output, input);
 	} else {
@@ -74,8 +84,11 @@ void forceConnect(System::Output<T>& output, System::Input<T>& input)
 template<typename T>
 void disconnect(System::Input<T>& input)
 {
+	BARRETT_SCOPED_LOCK(input.getEmMutex());
+
 	if (input.isConnected()) {
 		input.output->inputs.erase(System::Output<T>::connected_input_list_type::s_iterator_to(input));
+		input.unsetExecutionManager();
 		input.output = NULL;
 	}
 }
@@ -83,7 +96,11 @@ void disconnect(System::Input<T>& input)
 template<typename T>
 void disconnect(System::Output<T>& output)
 {
+	BARRETT_SCOPED_LOCK(output.getEmMutex());
+	assert(output.parentSys != NULL);
+
 	output.inputs.clear_and_dispose(typename System::Input<T>::DisconnectDisposer());
+	output.parentSys->unsetExecutionManager();
 }
 
 

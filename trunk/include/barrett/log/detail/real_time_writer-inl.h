@@ -12,7 +12,7 @@
 
 #include <unistd.h>  // usleep
 
-#include <boost/ref.hpp>
+#include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
 
@@ -67,7 +67,7 @@ void RealTimeWriter<T, Traits>::init(size_t recordsInSingleBuffer) {
 	writeToDisk = false;
 
 	// start writing thread
-	boost::thread tmpThread(Runnable(this));
+	boost::thread tmpThread(boost::bind(&RealTimeWriter<T, Traits>::writeToDiskEntryPoint, this));
 	thread.swap(tmpThread);
 }
 
@@ -115,14 +115,14 @@ void RealTimeWriter<T, Traits>::close()
 }
 
 template<typename T, typename Traits>
-void RealTimeWriter<T, Traits>::Runnable::operator() ()
+void RealTimeWriter<T, Traits>::writeToDiskEntryPoint()
 {
-	while ( !writer->stopRunning ) {
-		usleep(writer->period);
+	while ( !stopRunning ) {
+		usleep(period);
 
-		if (writer->writeToDisk) {
-			writer->file.write(writer->outBuff, writer->singleBufferSize);
-			writer->writeToDisk = false;
+		if (writeToDisk) {
+			this->file.write(outBuff, singleBufferSize);
+			writeToDisk = false;
 		}
 	}
 }
