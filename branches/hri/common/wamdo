@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Like sudo, but on the active WAM.
-
-scriptpath=`dirname $0`
-
-echo $* | ssh root@`cat $scriptpath/wam-ip.txt`
-
