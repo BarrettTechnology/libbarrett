@@ -26,7 +26,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include/")
 ### Options
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system (NOT FULLY IMPLEMENTED YET)" OFF)
-option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that can be copied to other machines" OFF)
+option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
 
 
 if (OPTIMIZE_FOR_PROCESSOR)
@@ -52,14 +52,18 @@ else()
 
 	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
 	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
-		message(FATAL_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
+		message(SEND_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
+		unset(Xeno_CONFIGEXE CACHE)
 	endif()
 
 	execute_process(COMMAND ${Xeno_CONFIGEXE} --version OUTPUT_VARIABLE Xeno_VERSION)
 	string(STRIP ${Xeno_VERSION} Xeno_VERSION)
 	string(SUBSTRING ${Xeno_VERSION} 0 4 Xeno_SHORTVERSION)
 	if (NOT (${Xeno_SHORTVERSION} VERSION_EQUAL ${Xeno_TARGETVERSION}))
-		message(FATAL_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
+		message(SEND_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
+		unset(Xeno_CONFIGEXE CACHE)
+		unset(Xeno_VERSION CACHE)
+		unset(Xeno_SHORTVERSION CACHE)
 	endif()
 
 	execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --cflags OUTPUT_VARIABLE Xeno_CFLAGS)
@@ -77,13 +81,16 @@ set(GSL_MINVERSION "1.14")
 
 find_program(GSL_CONFIGEXE "gsl-config")
 if (${GSL_CONFIGEXE} STREQUAL "GSL_CONFIGEXE-NOTFOUND")
-	message(FATAL_ERROR "Could not find GSL installation with version ${GSL_MINVERSION}. (http://www.gnu.org/software/gsl/)")
+	message(SEND_ERROR "Could not find GSL installation with version ${GSL_MINVERSION}. (http://www.gnu.org/software/gsl/)")
+	unset(GSL_CONFIGEXE CACHE)
 endif()
 
 execute_process(COMMAND ${GSL_CONFIGEXE} --version OUTPUT_VARIABLE GSL_VERSION)
 string(STRIP ${GSL_VERSION} GSL_VERSION)
 if (NOT ( (${GSL_VERSION} VERSION_GREATER ${GSL_MINVERSION}) OR (${GSL_VERSION} VERSION_EQUAL ${GSL_MINVERSION})))
-	message(FATAL_ERROR "Found incompatible version of GSL. Found: ${GSL_VERSION}, Need >=${GSL_MINVERSION}")
+	message(SEND_ERROR "Found incompatible version of GSL. Found: ${GSL_VERSION}, Need >=${GSL_MINVERSION}")
+	unset(GSL_CONFIGEXE CACHE)
+	unset(GSL_VERSION CACHE)
 endif()
 
 execute_process(COMMAND ${GSL_CONFIGEXE} --cflags OUTPUT_VARIABLE GSL_CFLAGS)
@@ -96,10 +103,10 @@ message(STATUS "GSL version: ${GSL_VERSION} (${GSL_CONFIGEXE})")
 
 ## Boost
 # Python code to generate version list:
-#for minor in range(40, 60):
+#for minor in range(45, 60):
 #	print '"1.%d" "1.%d.0"' % (minor, minor),
-set(Boost_ADDITIONAL_VERSIONS "1.40" "1.40.0" "1.41" "1.41.0" "1.42" "1.42.0" "1.43" "1.43.0" "1.44" "1.44.0" "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0" "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0" "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0" "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0" "1.57" "1.57.0" "1.58" "1.58.0" "1.59" "1.59.0")
-find_package(Boost 1.40.0 REQUIRED thread)
+set(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0" "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0" "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0" "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0" "1.57" "1.57.0" "1.58" "1.58.0" "1.59" "1.59.0")
+find_package(Boost 1.45.0 REQUIRED thread)
 include_directories(${Boost_INCLUDE_DIRS})
 
 
