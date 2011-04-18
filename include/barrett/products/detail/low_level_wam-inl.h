@@ -188,6 +188,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 				     0,    0, 1;
 	}
 	jv.setZero();
+	ja.setZero();
 }
 
 template<size_t DOF>
