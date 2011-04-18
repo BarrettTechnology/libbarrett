@@ -108,6 +108,18 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	j2pt = ipnm.asDiagonal() * j2mt;
 
 
+	// Init velocity/acceration Kalman filter
+	double dt = 0.0;  // Place holder for clarity only. The values of these elements are calculated in update().
+	A << 1, dt, 0.5 * dt*dt,
+		 0,  1,          dt,
+		 0,  0,           1;
+	C << 1, 0, 0;
+	Q << 0, 0,   0,
+		 0, 0,   0,
+		 0, 0, 100;
+	R = 5e-5;
+
+
 	// Zero the WAM?
 	if (safetyModule == NULL) {
 		syslog(LOG_ERR, "  No safetyModule: WAM may not be zeroed");
@@ -163,8 +175,18 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	}
 
 
-	// Get good initial values for jp_1 and lastUpdate
+	// Get good initial value for jp and lastUpdate...
 	update();
+
+	// ... then reset state.
+	for (size_t i = 0; i < DOF; ++i) {
+		X_1[i] << jp[i],
+				      0,
+				      0;
+		P_1[i] << 1e-9,    0, 0,
+				     0, 5e-4, 0,
+				     0,    0, 1;
+	}
 	jv.setZero();
 }
 
@@ -178,13 +200,32 @@ template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
 	RTIME now = rt_timer_read();
+
 	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
 
 	jp = p2jp * pp;  // Convert from Puck positions to joint positions
-	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
-	// TODO(dc): Detect unreasonably large velocities
 
-	jp_1 = jp;
+
+	// Kalman filter
+	double dt = 1e-9 * (now - lastUpdate);
+	A(0,1) = dt;
+	A(0,2) = 0.5 * dt*dt;
+	A(1,2) = dt;
+
+	for (size_t i = 0; i < DOF; ++i) {
+		X_priori = A * X_1[i];
+		P_priori = A * P_1[i] * A.transpose() + Q;
+
+		// Hard-coded C
+		Kal = P_priori.col(0) / (P_priori(0,0) + R);
+		X_1[i] = X_priori + Kal * (jp[i] - X_priori[0]);
+		P_1[i] = P_priori - Kal * C * P_priori;
+
+		jv[i] = X_1[i][1];
+		ja[i] = X_1[i][2];
+	}
+
+
 	lastUpdate = now;
 }
 
