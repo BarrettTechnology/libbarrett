@@ -23,7 +23,7 @@ typename units::JointTorques<DOF>::type calcJt(double time) {
 //	jt[3] = -4.0;
 
 	// sine
-	jt[3] = -1*sin(time * 1.0);
+	jt[3] = -2*sin(time * 4.0);
 
 	return jt;
 }
@@ -35,7 +35,7 @@ typename units::JointPositions<DOF>::type calcJp(double time) {
 	jp[2] = -M_PI_2;
 
 	// sine
-	jp[3] = 1.0 - 0.1*sin(0.1*time);
+	jp[3] = 1.0 - 1*sin(1*time);
 
 	return jp;
 }
@@ -52,15 +52,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	systems::ExecutionManager* em = pm.getExecutionManager();
 
-	typedef boost::tuple<jt_type, jp_type> tuple_type;
+	typedef boost::tuple<jt_type, jp_type, jv_type, ja_type> tuple_type;
 
-	systems::TupleGrouper<jt_type, jp_type> tg;
+	systems::TupleGrouper<jt_type, jp_type, jv_type, ja_type> tg;
 	systems::PeriodicDataLogger<tuple_type> logger(em,
 			new log::RealTimeWriter<tuple_type>(BIN_FILE, em->getPeriod()),
 			1);
 
 	systems::connect(wam.jtSum.output, tg.template getInput<0>());
 	systems::connect(wam.jpOutput, tg.template getInput<1>());
+	systems::connect(wam.jvOutput, tg.template getInput<2>());
+	systems::connect(wam.jaOutput, tg.template getInput<3>());
 	systems::connect(tg.output, logger.input);
 
 
@@ -75,10 +77,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	startPos[3] = 1.0;
 	wam.moveTo(startPos);
 
-//	wam.jpController.getKp()[3] = 0.0;
-//	wam.jpController.getKi()[3] = 0.0;
-//	wam.jpController.getKd()[3] = 0.0;
-//	wam.jpController.resetIntegrator();
+	wam.jpController.getKp()[3] = 0.0;
+	wam.jpController.getKi()[3] = 0.0;
+	wam.jpController.getKd()[3] = 0.0;
+	wam.jpController.resetIntegrator();
 	sleep(1);
 
 	// adjust velocity fault limit
@@ -91,17 +93,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	systems::Ramp time(em);
 
-//	systems::Callback<double, jt_type> jtCalc(calcJt<DOF>);
-//	systems::connect(time.output, jtCalc.input);
+	systems::Callback<double, jt_type> jtCalc(calcJt<DOF>);
+	systems::connect(time.output, jtCalc.input);
 
-	systems::Callback<double, jp_type> jpCalc(calcJp<DOF>);
-	systems::connect(time.output, jpCalc.input);
+//	systems::Callback<double, jp_type> jpCalc(calcJp<DOF>);
+//	systems::connect(time.output, jpCalc.input);
 
 	{
 		BARRETT_SCOPED_LOCK(em->getMutex());
 
-//		systems::connect(jtCalc.output, wam.input);
-		wam.trackReferenceSignal(jpCalc.output);
+		systems::connect(jtCalc.output, wam.input);
+//		wam.trackReferenceSignal(jpCalc.output);
 		time.start();
 	}
 
