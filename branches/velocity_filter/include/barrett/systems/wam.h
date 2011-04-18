@@ -76,7 +76,6 @@ public:
 	LowLevelWamWrapper<DOF> llww;
 	KinematicsBase<DOF> kinematicsBase;
 	GravityCompensator<DOF> gravity;
-	FirstOrderFilter<jv_type> jvFilter;
 	ToolPosition<DOF> toolPosition;
 	ToolOrientation<DOF> toolOrientation;
 
@@ -106,6 +105,7 @@ public:
 public:		System::Input<jt_type>& input;
 public:		System::Output<jp_type>& jpOutput;
 public:		System::Output<jv_type>& jvOutput;
+public:		System::Output<ja_type>& jaOutput;
 
 
 public:
@@ -123,6 +123,7 @@ public:
 	jt_type getJointTorques() const;
 	jp_type getJointPositions() const;
 	jv_type getJointVelocities() const;
+	ja_type getJointAccelerations() const;
 	cp_type getToolPosition() const;
 	Eigen::Quaterniond getToolOrientation() const;
 

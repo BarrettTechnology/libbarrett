@@ -65,7 +65,6 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	llww(em, genericPucks, safetyModule, setting["low_level"], torqueGroupIds, sysName + "::LowLevel"),
 	kinematicsBase(setting["kinematics"]),
 	gravity(setting["gravity_compensation"]),
-	jvFilter(setting["joint_velocity_filter"]),
 	toolPosition(),
 	toolOrientation(),
 
@@ -88,7 +87,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 
 	jtSum(true),
 
-	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(jvFilter.output),
+	input(jtSum.getInput(JT_INPUT)), jpOutput(llww.jpOutput), jvOutput(llww.jvOutput), jaOutput(llww.jaOutput),
 
 	doneMoving(true),
 	kin(setting["kinematics"])
@@ -107,8 +106,6 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	connect(kinematicsBase.kinOutput, tpoTf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, tpoToController.kinInput);
 	connect(kinematicsBase.kinOutput, tpoTt2jt.kinInput);
-
-	connect(llww.jvOutput, jvFilter.input);
 
 	supervisoryController.registerConversion(makeIOConversion(
 			jtPassthrough.input, jtPassthrough.output));
@@ -190,6 +187,12 @@ template<size_t DOF>
 inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 {
 	return llww.getLowLevelWam().getJointVelocities();
+}
+
+template<size_t DOF>
+inline typename Wam<DOF>::ja_type Wam<DOF>::getJointAccelerations() const
+{
+	return llww.getLowLevelWam().getJointAccelerations();
 }
 
 template<size_t DOF>

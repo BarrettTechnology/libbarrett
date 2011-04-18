@@ -41,6 +41,7 @@ public:
 
 	const jp_type& getJointPositions() const { return jp; }
 	const jv_type& getJointVelocities() const { return jv; }
+	const ja_type& getJointAccelerations() const { return ja; }
 
 
 	const jp_type& getHomePosition() const { return home; }
@@ -71,8 +72,22 @@ protected:
 
 	RTIME lastUpdate;
 	v_type pp;
-	jp_type jp, jp_1;
+	jp_type jp;
 	jv_type jv;
+	ja_type ja;
+
+	math::Matrix<3,3> A;
+	math::Matrix<1,3> C;
+	math::Matrix<3,3> Q;
+	double R;
+//	std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> > X_1;
+//	std::vector<Eigen::Matrix3d, Eigen::aligned_allocator<Eigen::Matrix3d> > P_1;
+	math::Vector<3>::type X_1[DOF];
+	math::Matrix<3,3> P_1[DOF];
+	math::Vector<3>::type X_priori;
+	math::Matrix<3,3> P_priori;
+	math::Vector<3>::type Kal;
+
 
 	v_type pt;
 	int torquePropId;

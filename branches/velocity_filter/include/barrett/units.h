@@ -92,6 +92,7 @@
  *   - \c jt_type  The barrett::units::JointTorques::type of the given \c dimension
  *   - \c jp_type  The barrett::units::JointPositions::type of the given \c dimension
  *   - \c jv_type  The barrett::units::JointVelocities::type of the given \c dimension
+ *   - \c ja_type  The barrett::units::JointAccelerations::type of the given \c dimension
  *   - all \c typedefs from BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
  *
  * @see BARRETT_UNITS_TEMPLATE_TYPEDEFS
@@ -103,6 +104,7 @@
 	typedef ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef ::barrett::units::JointVelocities<dimension>::type jv_type;  \
+	typedef ::barrett::units::JointAccelerations<dimension>::type ja_type;  \
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
 
 /** Used in place of #BARRETT_UNITS_TYPEDEFS when \c dimension is dependent on a template parameter of the containing class.
@@ -117,7 +119,9 @@
 	typedef typename ::barrett::units::JointTorques<dimension>::type jt_type;  \
 	typedef typename ::barrett::units::JointPositions<dimension>::type jp_type;  \
 	typedef typename ::barrett::units::JointVelocities<dimension>::type jv_type;  \
+	typedef typename ::barrett::units::JointAccelerations<dimension>::type ja_type;  \
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
+
 
 #include <libconfig.h++>
 #include <barrett/math/matrix.h>
@@ -149,6 +153,14 @@ template<int R> struct JointPositions {
 template<int R> struct JointVelocities {
 	/// Result of the metafunction
 	typedef typename math::Vector<R, JointVelocities<R> >::type type;
+};
+
+/** Template metafunction yielding the R-element math::Vector used to represent joint accelerations.\ Result available in the nested #type \c typedef.
+ * @tparam R The number of rows in the resulting math::Vector
+ */
+template<int R> struct JointAccelerations {
+	/// Result of the metafunction
+	typedef typename math::Vector<R, JointAccelerations<R> >::type type;
 };
 
 

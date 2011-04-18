@@ -59,6 +59,7 @@ class LowLevelWamWrapper {
 public:		System::Input<jt_type>& input;
 public:		System::Output<jp_type>& jpOutput;
 public:		System::Output<jv_type>& jvOutput;
+public:		System::Output<ja_type>& jaOutput;
 
 
 public:
@@ -106,6 +107,8 @@ protected:
 	protected:	typename Output<jp_type>::Value* jpOutputValue;
 	public:		Output<jv_type> jvOutput;
 	protected:	typename Output<jv_type>::Value* jvOutputValue;
+	public:		Output<ja_type> jaOutput;
+	protected:	typename Output<ja_type>::Value* jaOutputValue;
 
 
 	public:
@@ -113,7 +116,7 @@ protected:
 				const std::string& sysName = "LowLevelWamWrapper::Sink") :
 			System(sysName),
 			jpOutput(this, &jpOutputValue), jvOutput(this, &jvOutputValue),
-			parent(parent)
+			jaOutput(this, &jaOutputValue), parent(parent)
 		{
 			// Update every execution cycle to prevent heartbeat
 			// faults. Depending on connections, this System

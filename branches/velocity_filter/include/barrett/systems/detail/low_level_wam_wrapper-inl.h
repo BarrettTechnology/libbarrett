@@ -52,7 +52,7 @@ LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
 		std::vector<int> torqueGroupIds,
 		const std::string& sysName) :
 	input(sink.input),
-	jpOutput(source.jpOutput), jvOutput(source.jvOutput),
+	jpOutput(source.jpOutput), jvOutput(source.jvOutput), jaOutput(source.jaOutput),
 	llw(genericPucks, safetyModule, setting, torqueGroupIds),
 	sink(this, em, sysName + "::Sink"), source(this, em, sysName + "::Source")
 {
@@ -79,6 +79,7 @@ void LowLevelWamWrapper<DOF>::Source::operate()
 
 	this->jpOutputValue->setData( &(parent->llw.getJointPositions()) );
 	this->jvOutputValue->setData( &(parent->llw.getJointVelocities()) );
+	this->jaOutputValue->setData( &(parent->llw.getJointAccelerations()) );
 }
 
 
