@@ -405,7 +405,7 @@ Hand* ProductManager::getHand()
 
 bool ProductManager::foundGimbalsHandController() const
 {
-	return foundWam7Gimbals();
+	return wamPucks[5] != NULL  &&  wamPucks[6] != NULL  &&  !foundWam7Wrist();
 }
 GimbalsHandController* ProductManager::getGimbalsHandController()
 {
