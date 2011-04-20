@@ -81,6 +81,38 @@ template<> struct Traits<unsigned long>			: public PODTraits<unsigned long> {};
 template<> struct Traits<unsigned long long>	: public PODTraits<unsigned long long> {};
 
 
+template<typename T, size_t N> struct Traits< ::boost::array<T,N> > {
+	typedef const ::boost::array<T,N>& parameter_type;
+
+	static size_t serializedLength() {
+		return N * Traits<T>::serializedLength();
+	}
+
+	static void serialize(parameter_type source, char* dest) {
+		for (size_t i = 0; i < N; ++i) {
+			Traits<T>::serialize(source[i], dest);
+			dest += Traits<T>::serializedLength();
+		}
+	}
+
+	static ::boost::array<T,N> unserialize(char* source) {
+		::boost::array<T,N> dest;
+		for (size_t i = 0; i < N; ++i) {
+			dest[i] = Traits<T>::unserialize(source);
+			source += Traits<T>::serializedLength();
+		}
+		return dest;
+	}
+
+	static void asCSV(parameter_type source, std::ostream& os) {
+		for (size_t i = 0; i < (N - 1); ++i) {
+			os << source[i] << ",";
+		}
+		os << source[N - 1];
+	}
+};
+
+
 //template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> > :
 //		public DefaultTraits<Eigen::MatrixBase<TraitsDerived> > {
 //	typedef typename DefaultTraits<Eigen::MatrixBase<TraitsDerived> >::parameter_type parameter_type;
