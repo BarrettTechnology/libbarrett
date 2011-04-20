@@ -10,6 +10,7 @@
 
 
 #include <ostream>
+#include <cstring>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -42,24 +43,43 @@ template<typename T> struct DefaultTraits {
 	}
 };
 
-
 template<typename T> struct Traits : public DefaultTraits<T> {};
 
-template<> struct Traits<double> : public DefaultTraits<double> {
-	typedef double parameter_type;
+
+template<typename T> struct PODTraits {
+	typedef const T& parameter_type;
 
 	static size_t serializedLength() {
-		return sizeof(double);
+		return sizeof(T);
 	}
 
 	static void serialize(parameter_type source, char* dest) {
-		*reinterpret_cast<double*>(dest) = source;
+		std::memcpy(dest, &source, serializedLength());
 	}
 
-	static double unserialize(char* source) {
-		return *reinterpret_cast<double*>(source);
+	static T unserialize(char* source) {
+		return *reinterpret_cast<T*>(source);
+	}
+
+	static void asCSV(parameter_type source, std::ostream& os) {
+		os << source;
 	}
 };
+
+template<> struct Traits<bool>					: public PODTraits<bool> {};
+template<> struct Traits<float>					: public PODTraits<float> {};
+template<> struct Traits<double>				: public PODTraits<double> {};
+template<> struct Traits<signed char>			: public PODTraits<signed char> {};
+template<> struct Traits<short>					: public PODTraits<short> {};
+template<> struct Traits<int>					: public PODTraits<int> {};
+template<> struct Traits<long>					: public PODTraits<long> {};
+template<> struct Traits<long long>				: public PODTraits<long long> {};
+template<> struct Traits<unsigned char>			: public PODTraits<unsigned char> {};
+template<> struct Traits<unsigned short>		: public PODTraits<unsigned short> {};
+template<> struct Traits<unsigned int>			: public PODTraits<unsigned int> {};
+template<> struct Traits<unsigned long>			: public PODTraits<unsigned long> {};
+template<> struct Traits<unsigned long long>	: public PODTraits<unsigned long long> {};
+
 
 //template<typename TraitsDerived> struct Traits<Eigen::MatrixBase<TraitsDerived> > :
 //		public DefaultTraits<Eigen::MatrixBase<TraitsDerived> > {
