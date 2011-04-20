@@ -109,7 +109,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 
 	// Init velocity/acceration Kalman filter
-	double dt = 0.0;  // Place holder for clarity only. The values of these elements are calculated in update().
+	double dt = 0.000;  // Place holder for clarity only. The values of these elements are calculated in update().
 	A << 1, dt, 0.5 * dt*dt,
 		 0,  1,          dt,
 		 0,  0,           1;
@@ -117,7 +117,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	Q << 0, 0,   0,
 		 0, 0,   0,
 		 0, 0, 100;
-	R = 5e-5;
+	R = 5e-6;
 
 
 	// Zero the WAM?
