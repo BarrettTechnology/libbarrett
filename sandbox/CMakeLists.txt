@@ -24,6 +24,7 @@ set(programs
 	log_ft_data
 	log_hand_jp
 #	log_sg_data
+	log_temp_data
 #	log_velocity
 	low_level_wam
 	master_master
