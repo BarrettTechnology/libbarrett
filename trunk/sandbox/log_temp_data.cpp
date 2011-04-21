@@ -151,10 +151,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	// Wait for the user to press Shift-idle
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-	return 0;
-
 
 	printf("Recording stopped.\n");
 	logThread.interrupt();
 	logThread.join();
+
+	return 0;
 }
