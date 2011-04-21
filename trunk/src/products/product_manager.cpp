@@ -42,6 +42,9 @@ ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configF
 	pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF),
 	sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), ghc(NULL)
 {
+	int ret;
+
+
 	char* cf1 = strdup(configFile);
 	if (cf1 == NULL) {
 		throw std::runtime_error("Out of memory.");
@@ -63,7 +66,13 @@ ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configF
 	char* configBase = basename(cf2);
 
 	// make @include paths in configFile relative to the containing directory
-	chdir(configDir);
+	ret = chdir(configDir);
+	if (ret != 0) {
+		free(cf1);
+		free(cf2);
+		free(origWd);
+		throw std::runtime_error("Couldn't change to the config directory.");
+	}
 
 	try {
 		config.readFile(configBase);
@@ -78,23 +87,26 @@ ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configF
 	} catch (libconfig::ParseException pe) {
 		printf("(%s:%d) %s\n", configFile, pe.getLine(), pe.getError());
 
-		chdir(origWd);
+		ret = chdir(origWd);  // Ignore ret value
 		free(cf1);
 		free(cf2);
 		free(origWd);
 		throw;
 	} catch (...) {
-		chdir(origWd);
+		ret = chdir(origWd);  // Ignore ret value
 		free(cf1);
 		free(cf2);
 		free(origWd);
 		throw;
 	}
 
-	chdir(origWd);
+	ret = chdir(origWd);
 	free(cf1);
 	free(cf2);
 	free(origWd);
+	if (ret != 0) {
+		throw std::runtime_error("Couldn't change back to the original working directory.");
+	}
 
 	enumerate();
 }
