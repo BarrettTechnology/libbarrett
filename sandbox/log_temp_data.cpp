@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <vector>
 
+#include <signal.h>
 #include <native/timer.h>
 
 #include <boost/thread.hpp>
@@ -19,7 +20,6 @@
 #include <barrett/products/product_manager.h>
 
 #define BARRETT_SMF_VALIDATE_ARGS
-//#define BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
 #include <barrett/standard_main_function.h>
 
 
@@ -37,7 +37,7 @@ bool validate_args(int argc, char** argv) {
 }
 
 void logEntryPoint(const PuckGroup& pg, const char* outFile) {
-	const size_t MAX_PG_SIZE = 11;
+	const size_t MAX_PG_SIZE = ProductManager::MAX_WAM_DOF;
 	typedef boost::tuple<double, boost::array<int, MAX_PG_SIZE>, boost::array<int, MAX_PG_SIZE> > tuple_type;
 
 	char tmpFile[L_tmpnam];
@@ -68,17 +68,18 @@ void logEntryPoint(const PuckGroup& pg, const char* outFile) {
 	std::remove(tmpFile);
 }
 
+bool going = true;
+void sigint(int) {
+	going = false;
+	printf("\nStopping...\n");
+}
+
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
-//	pm.getExecutionManager()->stop();
 
 	// Disable torque saturation
-	wam.jpController.setControlSignalLimit(v_type(0.0));
-
-
-	boost::thread logThread(logEntryPoint, boost::ref(wam.llww.getLowLevelWam().getGroup()), argv[1]);
-	printf("Recording!\n");
+//	wam.jpController.setControlSignalLimit(v_type(0.0));
 
 
 	jp_type tmp;
@@ -129,31 +130,51 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	poses.push_back(tmp);
 
 
+	boost::thread logThread(logEntryPoint, boost::ref(wam.llww.getLowLevelWam().getGroup()), argv[1]);
+	signal(SIGINT, sigint);
+	printf("Recording!\n");
+
+	const size_t NUM_REPS = 30;
+	printf("Total reps: %d\n", NUM_REPS);
+	printf("REP    PROGRESS\n");
+
 	size_t i;
 	jp_type a, b;
 	jp_type prev = wam.getJointPositions();
-	for (size_t reps = 0; reps < 30; ++reps) {
+	for (size_t reps = 0; going  &&  reps < NUM_REPS; ++reps) {
+		printf("%3d    ", reps + 1);
+		fflush(stdout);
+
 		i = 0;
-		while (i < poses.size()) {
+		while (going  &&  i < poses.size()) {
 			a = poses[i++];
 			b = poses[i++];
-			for (size_t j = 0; j < 4; ++j) {
+			for (size_t j = 0; going  &&  j < 4; ++j) {
+				printf(".");
+				fflush(stdout);
+
 				wam.moveTo(prev, jv_type(), a, true, 0.5, 0.5);
 				prev = a;
+
+				if ( !going ) {
+					break;
+				}
+
 				wam.moveTo(prev, jv_type(), b, true, 0.5, 0.5);
 				prev = b;
 			}
 			wam.moveTo(prev, jv_type(), wam.getHomePosition(), true, 0.5, 0.5);
 			prev = wam.getHomePosition();
 		}
-	}
 
+		printf("\n");
+	}
 
 	// Wait for the user to press Shift-idle
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
-	printf("Recording stopped.\n");
 	logThread.interrupt();
+	printf("Recording stopped.\n");
 	logThread.join();
 
 	return 0;
