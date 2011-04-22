@@ -18,7 +18,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "network_haptics.h"
+#include "ex11_haptics.h"
 
 
 using namespace barrett;

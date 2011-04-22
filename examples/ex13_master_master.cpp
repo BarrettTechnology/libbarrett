@@ -24,7 +24,7 @@
 //#define BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
 #include <barrett/standard_main_function.h>
 
-#include "master_master.h"
+#include "ex13_master_master.h"
 
 
 using namespace barrett;
