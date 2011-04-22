@@ -13,6 +13,7 @@
 #include <cstring>
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/array.hpp>
 
 #include <barrett/math/matrix.h>
 #include <barrett/log/detail/tuple_traits-helper.h>
