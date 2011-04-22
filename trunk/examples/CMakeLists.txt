@@ -13,9 +13,13 @@ endfunction()
 
 
 add_programs(
-	hold_joint_position
-	polynomial_evaluator
+	ex01_initialize_wam
+	ex03_hold_position
+	ex04_simple_move
+	#ex06_systems_intro
+	ex09_teach_and_play
+	ex11_haptics
+	ex13_master_master
 	seven_dof_only
-	zero_torque
 )
 

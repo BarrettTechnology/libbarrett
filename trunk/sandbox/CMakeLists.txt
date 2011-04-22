@@ -17,7 +17,6 @@ set(programs
 	full_system_test
 	gimbals_hand_controller
 	hand
-	haptics
 	high_level_wam
 	load_ft_cal
 #	log_ft_data_with_wam
@@ -27,14 +26,10 @@ set(programs
 	log_temp_data
 #	log_velocity
 	low_level_wam
-	master_master
-	move_to
-#	network_haptics
 	puck_terminal
 	safety_module
 	tactile_test
 	teach_with_hand
-	teach
 	two_wams
 )
 
