@@ -32,8 +32,8 @@ TEST(LogReaderTest, CtorThrows) {
 }
 
 TEST(LogReaderTest, Double) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double d = -23425.0000001;
 
@@ -53,8 +53,8 @@ TEST(LogReaderTest, Double) {
 TEST(LogReaderTest, TupleA) {
 	typedef boost::tuple<double, double> tuple_type;
 
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	tuple_type d(7.2, 803.0);
 
@@ -74,8 +74,8 @@ TEST(LogReaderTest, TupleA) {
 TEST(LogReaderTest, TupleB) {
 	typedef boost::tuple<math::Vector<15>::type, double, double, units::JointTorques<3>::type> tuple_type;
 
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	tuple_type d;
 	d.get<0>() <<	23,	54,		34,		4,		25,
@@ -100,8 +100,8 @@ TEST(LogReaderTest, TupleB) {
 }
 
 TEST(LogReaderTest, Array) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	math::Vector<15>::type d;
 	d <<	23,	54,		34,		4,		25,
@@ -122,8 +122,8 @@ TEST(LogReaderTest, Array) {
 }
 
 TEST(LogReaderTest, SeveralRecords) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double ds[] = {3e7, -12, 432, 8.888};
 	size_t n = sizeof(ds)/sizeof(double);
@@ -146,11 +146,11 @@ TEST(LogReaderTest, SeveralRecords) {
 }
 
 TEST(LogReaderTest, ExportCSVDouble) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
-	char tmpFile2[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile2) != NULL);
+	char tmpFile2[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile2) != -1);
 
 	double ds[] = {3e7, -12, 432, 8.888};
 	size_t n = sizeof(ds)/sizeof(double);
@@ -173,11 +173,11 @@ TEST(LogReaderTest, ExportCSVDouble) {
 }
 
 TEST(LogReaderTest, ExportCSVArray) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
-	char tmpFile2[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile2) != NULL);
+	char tmpFile2[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile2) != -1);
 
 	math::Vector<15>::type d;
 
@@ -207,11 +207,11 @@ TEST(LogReaderTest, ExportCSVArray) {
 TEST(LogReaderTest, ExportCSVTupleB) {
 	typedef boost::tuple<math::Vector<15>::type, double, double, units::JointTorques<3>::type> tuple_type;
 
-	char tmpFile2[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile2) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile2[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile2) != -1);
 
 	tuple_type d;
 

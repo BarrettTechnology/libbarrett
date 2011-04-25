@@ -41,8 +41,8 @@ bool validate_args(int argc, char** argv) {
 void logEntryPoint(Hand& hand, const char* outFile) {
 	typedef boost::tuple<double, Hand::jp_type, Hand::jp_type> tuple_type;
 
-	char tmpFile[L_tmpnam];
-	if (std::tmpnam(tmpFile) == NULL) {
+	char tmpFile[] = "/tmp/btXXXXXX";
+	if (mkstemp(tmpFile) == -1) {
 		printf("ERROR: Couldn't create temporary file!\n");
 		exit(1);
 	}

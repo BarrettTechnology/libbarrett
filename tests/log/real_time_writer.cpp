@@ -38,8 +38,8 @@ typedef log::RealTimeWriter<double, BigLogTraits> big_log_t;
 
 
 void fillLogVerify(size_t n, size_t period) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double* ds = new double[n];
 	log::RealTimeWriter<double> lw(tmpFile, 10000, 100);
@@ -62,8 +62,8 @@ void fillLogVerify(size_t n, size_t period) {
 
 
 TEST(RealTimeLogWriterTest, RecordRateCtorThrows) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	EXPECT_THROW(big_log_t lw1(tmpFile, 500.0), std::logic_error);  // too big
 	EXPECT_THROW(log::RealTimeWriter<double> lw2(tmpFile, 3.6e-6), std::logic_error);  // too fast
