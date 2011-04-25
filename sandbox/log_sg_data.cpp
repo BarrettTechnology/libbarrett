@@ -10,8 +10,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <sys/mman.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include <boost/thread.hpp>
@@ -20,25 +18,14 @@
 #include <native/task.h>
 #include <native/timer.h>
 
-#include <barrett/cdlbt/bus.h>
-#include <barrett/cdlbt/bus_can.h>
+#include <barrett/products/product_manager.h>
 #include <barrett/log.h>
-#include <barrett/detail/stacktrace.h>
+#include <barrett/detail/stl_utils.h>
+
 
 using namespace barrett;
+using detail::waitForEnter;
 
-
-void waitForEnter() {
-	static std::string line;
-	std::getline(std::cin, line);
-}
-
-void warnOnSwitchToSecondaryMode(int)
-{
-	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
-	detail::syslog_stacktrace();
-	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
-}
 
 RTIME secondsToRTIME(double s) {
 	return static_cast<RTIME>(s * 1e9);
@@ -47,10 +34,6 @@ RTIME secondsToRTIME(double s) {
 void canThread();
 
 double T_s = 0.002;
-const int ID = BT_BUS_PUCK_ID_FT;
-const int CAN_PORT = 1;
-const RTIME FLIGHT_TIME = 75000;
-const int FW_VERS = 148;  // bogus value until the F/T firmware implements VERS
 const int NUM_SENSORS = 9;  // 6 strain gauges, 3 thermistors
 
 bool going = true;
@@ -61,6 +44,7 @@ struct bt_bus_can* dev = NULL;
 
 typedef boost::tuple<double, math::Vector<NUM_SENSORS>::type> tuple_type;
 barrett::log::RealTimeWriter<tuple_type>* lw;
+ForceTorqueSensor* fts = NULL;
 
 
 int main(int argc, char** argv) {
@@ -89,13 +73,12 @@ int main(int argc, char** argv) {
 	printf("\n");
 
 
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
-
-	if (bt_bus_can_create(&dev, CAN_PORT)) {
-		printf("Couldn't open the CAN bus on port %d.\n", CAN_PORT);
-		return -1;
+	ProductManager pm;
+	if ( !pm.foundForceTorqueSensor() ) {
+		printf("ERROR: No Force-Torque Sensor found!\n");
+		return 1;
 	}
+	fts = pm.getForceTorqueSensor();
 
 	if (fileMode) {
 		printf(">>> Press [Enter] to start collecting data.\n");
@@ -144,21 +127,12 @@ int main(int argc, char** argv) {
 
 
 void canThread() {
-	struct bt_bus_properties* plist;
-	int id, property;
-	long value;
 	tuple_type t;
 
+	int id = fts->getPuck()->getId();
+	const bus::CommunicationsBus& bus = fts->getPuck()->getBus();
+
 	rt_task_shadow(new RT_TASK, NULL, 10, 0);
-
-	// init sensor
-	bt_bus_can_set_property(dev, ID, 5, 2);
-	usleep(1000000);
-
-	if (bt_bus_properties_create(&plist, FW_VERS)) {
-		printf("Couldn't create property list.\n");
-		exit(-1);
-	}
 
 
 	// collect data
@@ -169,42 +143,26 @@ void canThread() {
 	RTIME t_1 = t_0;
 
 	while (going) {
-		// strain gauges
-		bt_bus_can_async_get_property(dev, ID, plist->SG1);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG2);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG3);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG4);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG5);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->SG6);
-
-		// temp sensors
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T1);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T2);
-		rt_timer_spin(FLIGHT_TIME);
-		bt_bus_can_async_get_property(dev, ID, plist->T3);
-
 		rt_task_wait_period(NULL);
 
 		t_0 = rt_timer_read();
 		boost::get<0>(t) = ((double) t_0 - t_1) * 1e-9;
 		t_1 = t_0;
 
-		for (int i = 0; i < NUM_SENSORS; ++i) {
-			bt_bus_can_async_read(dev, &id, &property, &value, NULL, NULL, 1, 1);
 
-			if (property >= plist->SG1  &&  property <= plist->SG6) {
-				boost::get<1>(t)[property - plist->SG1] = value;
-			} else {
-				boost::get<1>(t)[property - plist->T1 + 6] = value;
-			}
-		}
+		// strain gauges
+		boost::get<1>(t)[0] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG1, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[1] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG2, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[2] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG3, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[3] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG4, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[4] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG5, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[5] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::SG6, Puck::PT_ForceTorque, 0), true);
+
+		// temp sensors
+		boost::get<1>(t)[6] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::T1, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[7] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::T2, Puck::PT_ForceTorque, 0), true);
+		boost::get<1>(t)[8] = fts->getPuck()->getProperty(bus, id, Puck::getPropertyId(Puck::T3, Puck::PT_ForceTorque, 0), true);
+
 
 		if (fileMode) {
 			lw->putRecord(t);
@@ -220,6 +178,4 @@ void canThread() {
 	}
 
 	rt_task_set_mode(T_WARNSW, 0, NULL);
-
-	bt_bus_properties_destroy(plist);
 }
