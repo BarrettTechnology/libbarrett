@@ -123,12 +123,12 @@ int main(int argc, char** argv) {
 
 	signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "/tmp/btXXXXXX";
 	log::RealTimeWriter<tuple_type>* lw = NULL;
 	if (fileMode) {
 		signal(SIGINT, &stopThreads);
 
-		if (std::tmpnam(tmpFile) == NULL) {
+		if (mkstemp(tmpFile) == -1) {
 			printf("ERROR: Couldn't create temporary file!\n");
 			return 1;
 		}

@@ -23,8 +23,8 @@ TEST(LogWriterTest, CtorThrows) {
 }
 
 TEST(LogWriterTest, Double) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double d = 345823230823.2222;
 
@@ -39,8 +39,8 @@ TEST(LogWriterTest, Double) {
 TEST(LogWriterTest, Tuple) {
 	typedef boost::tuple<double, double> tuple_type;
 
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	tuple_type d(-287.2, 8e3);
 
@@ -53,8 +53,8 @@ TEST(LogWriterTest, Tuple) {
 }
 
 TEST(LogWriterTest, Array) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	math::Vector<15>::type d;
 	d <<	23,	54,		34,		4,		25,
@@ -70,8 +70,8 @@ TEST(LogWriterTest, Array) {
 }
 
 TEST(LogWriterTest, SeveralRecords) {
-	char tmpFile[L_tmpnam];
-	ASSERT_TRUE(std::tmpnam(tmpFile) != NULL);
+	char tmpFile[] = "/tmp/btXXXXXX";
+	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double ds[] = {3e7, -12, 432, 8.888};
 

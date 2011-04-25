@@ -101,9 +101,9 @@ int main(int argc, char** argv) {
 		printf(">>> Press [Enter] to start collecting data.\n");
 		waitForEnter();
 
-		char tmpFile[L_tmpnam];
-		if (std::tmpnam(tmpFile) == NULL) {
-			printf("Couldn't create temporary file!\n");
+		char tmpFile[] = "/tmp/btXXXXXX";
+		if (mkstemp(tmpFile) == -1) {
+			printf("ERROR: Couldn't create temporary file!\n");
 			return 1;
 		}
 		lw = new barrett::log::RealTimeWriter<tuple_type>(tmpFile, T_s);

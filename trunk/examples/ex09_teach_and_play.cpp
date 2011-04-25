@@ -36,9 +36,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 	typedef boost::tuple<double, jp_type> jp_sample_type;
 
-	char tmpFile[L_tmpnam];
-	if (std::tmpnam(tmpFile) == NULL) {
-		printf("Couldn't create temporary file!\n");
+	char tmpFile[] = "/tmp/btXXXXXX";
+	if (mkstemp(tmpFile) == -1) {
+		printf("ERROR: Couldn't create temporary file!\n");
 		return 1;
 	}
 

@@ -40,8 +40,8 @@ void logEntryPoint(const PuckGroup& pg, const char* outFile) {
 	const size_t MAX_PG_SIZE = ProductManager::MAX_WAM_DOF;
 	typedef boost::tuple<double, boost::array<int, MAX_PG_SIZE>, boost::array<int, MAX_PG_SIZE> > tuple_type;
 
-	char tmpFile[L_tmpnam];
-	if (std::tmpnam(tmpFile) == NULL) {
+	char tmpFile[] = "/tmp/btXXXXXX";
+	if (mkstemp(tmpFile) == -1) {
 		printf("ERROR: Couldn't create temporary file!\n");
 		exit(1);
 	}
