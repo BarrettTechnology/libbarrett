@@ -29,17 +29,22 @@ const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, P
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"),
-	tactilePucks(), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0)
+	hasSg(false), hasTact(false), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0), tactilePucks()
 {
-	// Make TactilePucks
-	int numTact = 0;
+	// Check for TACT and SG options.
+	int numSg = 0;
 	for (size_t i = 0; i < DOF; ++i) {
+		if (pucks[i]->hasOption(Puck::RO_Strain)) {
+			++numSg;
+			hasSg = true;
+		}
 		if (pucks[i]->hasOption(Puck::RO_Tact)) {
-			++numTact;
 			tactilePucks.push_back(new TactilePuck(pucks[i]));
+			hasTact = true;
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Tactile arrays", numTact);
+	syslog(LOG_ERR, "  Found %d Strain-gauge sensors", numSg);
+	syslog(LOG_ERR, "  Found %d Tactile arrays", tactilePucks.size());
 
 	// record HOLD values
 	group.getProperty(Puck::HOLD, holds);
@@ -149,13 +154,17 @@ void Hand::updatePosition(bool realtime)
 }
 void Hand::updateStrain(bool realtime)
 {
-	group.getProperty(Puck::SG, sg.data(), realtime);
+	if (hasStrainSensors()) {
+		group.getProperty(Puck::SG, sg.data(), realtime);
+	}
 }
 void Hand::updateTactFull(bool realtime)
 {
-	group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
-	for (size_t i = 0; i < tactilePucks.size(); ++i) {
-		tactilePucks[i]->receiveFull(realtime);
+	if (hasTactSensors()) {
+		group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
+		for (size_t i = 0; i < tactilePucks.size(); ++i) {
+			tactilePucks[i]->receiveFull(realtime);
+		}
 	}
 }
 

@@ -56,9 +56,11 @@ public:
 	const std::vector<int>& getPrimaryEncoderPosition() const { return primaryEncoder; }
 	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
 
+	bool hasStrainSensors() const { return hasSg; }
 	void updateStrain(bool realtime = false);
 	const std::vector<int>& getStrain() const { return sg; }
 
+	bool hasTactSensors() const { return hasTact; }
 	void updateTactFull(bool realtime = false);
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
@@ -72,7 +74,9 @@ protected:
 	static const double SPREAD_RATIO = 17.5;
 
 
-	std::vector<TactilePuck*> tactilePucks;
+	bool hasSg;
+	bool hasTact;
+
 	int holds[DOF];
 	v_type j2pp, j2pt;
 	mutable v_type pt;
@@ -81,6 +85,7 @@ protected:
 	std::vector<int> primaryEncoder, secondaryEncoder;
 	jp_type innerJp, outerJp;
 	std::vector<int> sg;
+	std::vector<TactilePuck*> tactilePucks;
 
 private:
 	static const int CMD_HI = 13;
