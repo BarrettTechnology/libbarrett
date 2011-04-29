@@ -14,9 +14,9 @@ endfunction()
 
 add_programs(
 	ex01_initialize_wam
-	ex02_display_basic_info
-	ex03_hold_position
-	ex04_simple_move
+	ex02_hold_position
+	ex03_simple_move
+	ex04_display_basic_info
 	#ex06_systems_intro
 	ex09_teach_and_play
 	ex11_haptics
@@ -26,4 +26,4 @@ add_programs(
 
 
 # ex02 uses the ncurses library
-target_link_libraries(ex02_display_basic_info ${CURSES_LIBRARIES})
+target_link_libraries(ex04_display_basic_info ${CURSES_LIBRARIES})
