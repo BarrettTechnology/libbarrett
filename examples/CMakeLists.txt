@@ -25,5 +25,5 @@ add_programs(
 )
 
 
-# ex02 uses the ncurses library
+# ex04 uses the ncurses library
 target_link_libraries(ex04_display_basic_info ${CURSES_LIBRARIES})
