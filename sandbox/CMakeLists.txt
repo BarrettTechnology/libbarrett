@@ -13,6 +13,7 @@ endfunction()
 
 set(programs
 	can_terminal
+	can_timing
 	ft_persistent_tare
 	full_system_test
 	gimbals_hand_controller
