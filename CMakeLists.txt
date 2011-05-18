@@ -123,7 +123,11 @@ include_directories(${EIGEN2_INCLUDE_DIR})
 
 # Targets
 add_subdirectory(src)
-add_subdirectory(programs)
+if (NON_REALTIME)
+	add_subdirectory(programs EXCLUDE_FROM_ALL)
+else()
+	add_subdirectory(programs)
+endif()
 
 add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
