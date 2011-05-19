@@ -32,6 +32,7 @@ set(tests_SOURCES
 	systems/manual_execution_manager.cpp
 	systems/pid_controller.cpp
 	systems/print_to_stream.cpp
+	systems/ramp.cpp
 	systems/summer.cpp
 	systems/summer-polarity.cpp
 	#systems/tool_orientation.cpp

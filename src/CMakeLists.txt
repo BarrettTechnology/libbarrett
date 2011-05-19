@@ -1,6 +1,6 @@
 # If NON_REALTIME build option is enabled, don't build sources that depend on Xenomai.
 if (NOT NON_REALTIME)
-	set(barrett_SOURCES
+	set(barrett_RT_SOURCES
 		bus/bus_manager.cpp
 		bus/can_socket.cpp
 		
@@ -24,7 +24,7 @@ if (NOT NON_REALTIME)
 endif()
 
 set(barrett_SOURCES
-	${barrett_SOURCES}  # Maybe include RT sources
+	${barrett_RT_SOURCES}  # Maybe include RT sources
 	
 	bus/communications_bus.cpp
 	
@@ -39,6 +39,7 @@ set(barrett_SOURCES
 	math/trapezoidal_velocity_profile.cpp
 
 	systems/execution_manager.cpp
+	systems/ramp.cpp
 	systems/system.cpp
 
 	thread/null_mutex.cpp
