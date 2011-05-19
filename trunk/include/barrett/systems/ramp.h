@@ -42,66 +42,40 @@ namespace barrett {
 namespace systems {
 
 
-// TODO(dc): test this!
 // TODO(dc): add a configuration file interface
 
 
 class Ramp : public System, public SingleOutput<double> {
 public:
 	explicit Ramp(ExecutionManager* em, double slope = 1.0,
-			const std::string& sysName = "Ramp") :
-		System(sysName), SingleOutput<double>(this),
-		T_s(0.0), gain(slope), y(0.0), running(false)
-	{
-		// Update every execution cycle so the ramp stays current even if the
-		// data isn't used for a time.
-		if (em != NULL) {
-			em->startManaging(*this);
-		}
+			const std::string& sysName = "Ramp");
+	virtual ~Ramp();
 
-		getSamplePeriodFromEM();
-	}
-	virtual ~Ramp() { mandatoryCleanUp(); }
+	bool isRunning();
 
-	void setSlope(double slope) {  gain = slope;  }
+	void start();
+	void stop();
+	void setSlope(double slope);
 
-	void start() {  running = true;  }
-	void stop() {  running = false;  }
-	void reset() {  setOutput(0.0);  }
-	void setOutput(double newOutput) {
-		// y is written and read in operate(), so it needs to be locked.
-		BARRETT_SCOPED_LOCK(getEmMutex());
-		y = newOutput;
-	}
+	void reset();
+	void setOutput(double newOutput);
+
+	void smoothStart(double transitionDuration);
+	void smoothStop(double transitionDuration);
+	void smoothSetSlope(double slope, double transitionDuration);
 
 protected:
-	virtual void onExecutionManagerChanged() {
-		System::onExecutionManagerChanged();  // First, call super
-		getSamplePeriodFromEM();
-	}
+	virtual void onExecutionManagerChanged();
+	void getSamplePeriodFromEM();
 
-	virtual void operate() {
-		if (running) {
-			y += T_s * gain;
-		}
+	virtual void operate();
 
-		outputValue->setData(&y);
-	}
+	void setCurvature(double transitionDuration);
 
 
-	void getSamplePeriodFromEM()
-	{
-		if (this->hasExecutionManager()) {
-			assert(this->getExecutionManager()->getPeriod() > 0.0);
-			T_s = this->getExecutionManager()->getPeriod();
-		} else {
-			T_s = 0.0;
-		}
-	}
-
-
-	double T_s, gain, y;
-	bool running;
+	double T_s;
+	double gain, finalGain, curGain, curvature;
+	double y;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Ramp);
@@ -110,6 +84,10 @@ private:
 
 }
 }
+
+
+// include template definitions
+#include <barrett/systems/detail/ramp-inl.h>
 
 
 #endif /* BARRETT_SYSTEMS_RAMP_H_ */
