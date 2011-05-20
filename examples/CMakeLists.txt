@@ -18,6 +18,7 @@ add_programs(
 	ex03_simple_move
 	ex04_display_basic_info
 	#ex06_systems_intro
+	ex07_realtime_move
 	ex09_teach_and_play
 	ex11_haptics
 	ex13_master_master
