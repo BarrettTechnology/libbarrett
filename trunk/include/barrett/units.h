@@ -69,11 +69,12 @@
  * Many classes use this macro to define internal short-hand names for the barrett::units they use frequently.
  *
  * The following \c typedefs are defined:
- *   - \c cf_type  The barrett::units::CartesianForce::type
- *   - \c ct_type  The barrett::units::CartesianTorque::type
- *   - \c cp_type  The barrett::units::CartesianPosition::type
- *   - \c cv_type  The barrett::units::CartesianVelocity::type
- *   - \c ca_type  The barrett::units::CartesianAcceleration::type
+ *   - \c cf_type    The barrett::units::CartesianForce::type
+ *   - \c ct_type    The barrett::units::CartesianTorque::type
+ *   - \c cp_type    The barrett::units::CartesianPosition::type
+ *   - \c cv_type    The barrett::units::CartesianVelocity::type
+ *   - \c ca_type    The barrett::units::CartesianAcceleration::type
+ *   - \c pose_type  A boost::tuple<> type containing a cp_type and an Eigen::Quaterniond
  *
  * @see BARRETT_UNITS_TYPEDEFS
  */
@@ -82,7 +83,8 @@
 	typedef ::barrett::units::CartesianTorque::type ct_type;  \
 	typedef ::barrett::units::CartesianPosition::type cp_type;  \
 	typedef ::barrett::units::CartesianVelocity::type cv_type;  \
-	typedef ::barrett::units::CartesianAcceleration::type ca_type
+	typedef ::barrett::units::CartesianAcceleration::type ca_type;  \
+	typedef ::boost::tuple<cp_type, ::Eigen::Quaterniond> pose_type
 
 /** Creates a standard set of \c typedefs in the local scope for all built-in barrett::units.
  *
@@ -126,7 +128,10 @@
 	typedef typename ::barrett::units::JointAccelerations<dimension>::type ja_type;  \
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS
 
-#include <libconfig.h++>
+
+#include <boost/tuple/tuple.hpp>
+#include <Eigen/Geometry>
+
 #include <barrett/math/matrix.h>
 
 

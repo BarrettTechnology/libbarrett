@@ -68,6 +68,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	jvFilter(setting["joint_velocity_filter"]),
 	toolPosition(),
 	toolOrientation(),
+	toolPose(),
 
 	supervisoryController(),
 	jtPassthrough(1.0),
@@ -107,6 +108,9 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	connect(kinematicsBase.kinOutput, tpoTf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, tpoToController.kinInput);
 	connect(kinematicsBase.kinOutput, tpoTt2jt.kinInput);
+
+	connect(toolPosition.output, toolPose.getInput<0>());
+	connect(toolOrientation.output, toolPose.getInput<1>());
 
 	connect(llww.jvOutput, jvFilter.input);
 
@@ -219,6 +223,12 @@ Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 	kin.eval(getJointPositions(), getJointVelocities());
 	math::Matrix<3,3> rot(kin.impl->tool->rot_to_world);
 	return Eigen::Quaterniond(rot.transpose());
+}
+
+template<size_t DOF>
+inline typename Wam<DOF>::pose_type Wam<DOF>::getToolPose() const
+{
+	return boost::make_tuple(getToolPosition(), getToolOrientation());
 }
 
 
