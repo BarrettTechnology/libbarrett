@@ -49,6 +49,7 @@
 #include <barrett/systems/converter.h>
 #include <barrett/systems/summer.h>
 #include <barrett/systems/gain.h>
+#include <barrett/systems/tuple_grouper.h>
 #include <barrett/systems/tuple_splitter.h>
 
 #include <barrett/systems/kinematics_base.h>
@@ -79,6 +80,7 @@ public:
 	FirstOrderFilter<jv_type> jvFilter;
 	ToolPosition<DOF> toolPosition;
 	ToolOrientation<DOF> toolOrientation;
+	TupleGrouper<cp_type, Eigen::Quaterniond> toolPose;
 
 	Converter<jt_type> supervisoryController;
 	Gain<jt_type, double> jtPassthrough;
@@ -125,6 +127,7 @@ public:
 	jv_type getJointVelocities() const;
 	cp_type getToolPosition() const;
 	Eigen::Quaterniond getToolOrientation() const;
+	pose_type getToolPose() const;
 
 
 	void gravityCompensate(bool compensate = true);
