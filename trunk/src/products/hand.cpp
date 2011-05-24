@@ -5,6 +5,7 @@
  *      Author: dc
  */
 
+#include <stdexcept>
 #include <vector>
 #include <algorithm>
 #include <limits>
@@ -39,8 +40,11 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			hasSg = true;
 		}
 		if (pucks[i]->hasOption(Puck::RO_Tact)) {
-			tactilePucks.push_back(new TactilePuck(pucks[i]));
-			hasTact = true;
+			try {
+				// The TactilePuck ctor might throw if there was an initialization error
+				tactilePucks.push_back(new TactilePuck(pucks[i]));
+				hasTact = true;
+			} catch (std::runtime_error e) {}
 		}
 	}
 	syslog(LOG_ERR, "  Found %d Strain-gauge sensors", numSg);
