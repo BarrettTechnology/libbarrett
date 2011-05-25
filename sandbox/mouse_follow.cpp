@@ -55,11 +55,17 @@ public:
 			baseQ = data.get<1>();
 			comAA.axis() = baseQ.inverse() * Eigen::Vector3d::UnitZ();
 			comAA.angle() = 0.0;
+
+			comPos.setZero();
+			inputPos_1.setZero();
 		}
-		comPos[0] = inputs[0];
-		comPos[1] = inputs[1];
-		comPos[2] = inputs[2];
-		comPos = baseQ.inverse() * comPos;
+
+		inputPos[0] = inputs[0];
+		inputPos[1] = inputs[1];
+		inputPos[2] = inputs[2];
+
+		comPos += data.get<1>().inverse() * (inputPos - inputPos_1);
+		inputPos_1 = inputPos;
 
 		comAngle = inputs[3];
 
@@ -72,7 +78,7 @@ protected:
 	static const double ANGLE_RATE_LIMIT = 0.001;
 
 	int numMissed;
-	cp_type basePos, comPos;
+	cp_type basePos, comPos, inputPos, inputPos_1;
 	Eigen::Quaterniond baseQ;
 	Eigen::AngleAxisd comAA;
 	double comAngle;
