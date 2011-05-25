@@ -27,6 +27,7 @@ set(programs
 	log_temp_data
 #	log_velocity
 	low_level_wam
+	mouse_follow
 	puck_terminal
 	safety_module
 	tactile_test
