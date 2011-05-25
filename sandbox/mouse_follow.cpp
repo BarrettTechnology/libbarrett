@@ -128,12 +128,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.gravityCompensate();
 
 	Hand* hand = NULL;
+	int ot, ct;
 	if (pm.foundHand()) {
 		hand = pm.getHand();
 
 		printf("Press [Enter] to initialize Hand. (Make sure it has room!)");
 		waitForEnter();
 		hand->initialize();
+
+		ot = hand->getPucks()[3]->getProperty(Puck::OT);
+		ct = hand->getPucks()[3]->getProperty(Puck::CT);
 	}
 
 	MouseFollowSystem mfs(pm.getExecutionManager());
@@ -146,7 +150,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	int sock = openSocket(argv[1]);
 	math::Vector<NUM_DOUBLES>::type inputs;
-	Hand::jv_type hjv(0.0), hjv_1(0.0);
+	Hand::jv_type hjv(0.0);
+	double fv_1 = 0.0, sv_1 = 0.0;
 	while (true) {
 		bool received = false;
 		while (recv(sock, inputs.data(), SIZE_OF_MSG, 0) == SIZE_OF_MSG) {
@@ -157,12 +162,22 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //			std::cout << inputs << "\n";
 			mfs.command(inputs.data());
 
-			hjv.setConstant(inputs[4]);
-			hjv[3] = inputs[5];
+			if (hand != NULL) {
+				if (fv_1 != inputs[4]  ||  sv_1 != inputs[5]) {
+					hjv.setConstant(inputs[4]);
+					hjv[3] = inputs[5];
 
-			if (hjv != hjv_1) {
-				hand->setVelocity(hjv);
-				hjv_1 = hjv;
+					hand->updatePosition();
+					int s = hand->getPrimaryEncoderPosition()[3];
+					if (ct - s > 5000  &&  s - ot > 5000) {
+						hjv[2] = 0.0;
+					}
+
+					hand->setVelocity(hjv);
+
+					fv_1 = inputs[4];
+					sv_1 = inputs[5];
+				}
 			}
 		}
 		usleep(10000);
