@@ -26,9 +26,10 @@ protected:
 	jp_type jp;
 	double j3_0, j4_0;
 	double amp, omega;
+	double theta;
 
 	virtual void operate() {
-		double theta = omega * this->input.getValue();
+		theta = omega * this->input.getValue();
 
 		jp[2] = amp * std::sin(theta) + j3_0;
 		jp[3] = amp * (std::cos(theta) - 1.0) + j4_0;
@@ -53,9 +54,10 @@ protected:
 	cp_type cp;
 	double x_0, y_0;
 	double amp, omega;
+	double theta;
 
 	virtual void operate() {
-		double theta = omega * this->input.getValue();
+		theta = omega * this->input.getValue();
 
 		cp[0] = amp * (std::cos(theta) - 1.0) + x_0;
 		cp[1] = amp * std::sin(theta) + y_0;
