@@ -20,6 +20,7 @@ add_programs(
 	#ex06_systems_intro
 	ex07_realtime_move
 	ex09_teach_and_play
+	ex10_torque_control
 	ex11_haptics
 	ex13_master_master
 	seven_dof_only
