@@ -1,8 +1,10 @@
 #include <vector>
+#include <string>
+
 #include <barrett/systems/abstract/system.h>  // our base class
 #include <barrett/systems.h>  // includes all non-abstract Systems
 
-using namespace std;
+
 using namespace barrett;
 
 
@@ -16,46 +18,48 @@ public:		Output<double> output;
 protected:	Output<double>::Value* outputValue;
 
 public:
-	explicit PolynomialEvaluator(const vector<double>& coefficients) :
-		input(this), output(this, &outputValue), coeff(coefficients) {}
-	virtual ~PolynomialEvaluator() {}
+	explicit PolynomialEvaluator(const std::vector<double>& coefficients, const std::string& sysName = "PolynomialEvaluator") :
+		systems::System(sysName), input(this), output(this, &outputValue), coeff(coefficients) {}
+	virtual ~PolynomialEvaluator() { mandatoryCleanUp(); }
 
 protected:
+	double x, result;
+
 	// implement System::operate()
 	virtual void operate() {
-		double x = input.getValue();  // read our input
-		double result = 0.0;
+		x = input.getValue();  // read our input
+		result = 0.0;
 
         // operate on our input value and state
 		for (int i = coeff.size()-1; i >= 0; --i) {
 			result = coeff[i] + x*result;
 		}
 
-		outputValue->setValue(result);  // update our output
+		outputValue->setData(&result);  // update our output
 	}
 
-	vector<double> coeff;
+	std::vector<double> coeff;
 };
 
 
 int main() {
 	// make vector of coefficients
 	double coeffArray[] = { 1, 2, 3 };
-	vector<double> coeff(coeffArray,
+	std::vector<double> coeff(coeffArray,
 			coeffArray + sizeof(coeffArray) / sizeof(double));
 
-	// install execution manager
+	// create execution manager
 	systems::ManualExecutionManager mem(0.0);
-	systems::System::defaultExecutionManager = &mem;
 
 	// instantiate Systems
 	systems::ExposedOutput<double> eoSys;
 	PolynomialEvaluator peSys(coeff);
-	systems::PrintToStream<double> printSys("Result: ");
+	systems::PrintToStream<double> printSys(&mem, "Result: ");
 
 	// make connections between Systems
 	systems::connect(eoSys.output, peSys.input);
 	systems::connect(peSys.output, printSys.input);
+
 
     // push data into peSys' input and run an execution cycle,
 	// causing peSys::operate() to be called
@@ -70,5 +74,6 @@ int main() {
 	eoSys.setValue(1);
 	mem.runExecutionCycle();
 	
+
 	return 0;
 }
