@@ -30,7 +30,7 @@
 
 #include <algorithm>
 #include <cmath>
-
+#include <cassert>
 
 namespace barrett {
 namespace math {
@@ -111,13 +111,13 @@ inline double max(double a, double b)
 
 namespace detail {
 template<typename Scalar> struct CwiseUnarySaturateOp {
-	CwiseUnarySaturateOp(Scalar limit) : limit(limit) {}
+	CwiseUnarySaturateOp(Scalar lowerLimit, Scalar upperLimit) : lowerLimit(lowerLimit), upperLimit(upperLimit) {}
 
 	inline const Scalar operator() (const Scalar& x) const {
-		return saturate(x, limit);
+		return saturate(x, lowerLimit, upperLimit);
 	}
 
-	Scalar limit;
+	Scalar lowerLimit, upperLimit;
 };
 
 template<typename Scalar> struct CwiseBinarySaturateOp {
@@ -133,7 +133,7 @@ inline const Eigen::CwiseUnaryOp<
 	Derived
 > saturate(const Eigen::MatrixBase<Derived>& x, double limit)
 {
-	return x.unaryExpr(detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>(limit));
+	return x.unaryExpr(detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>(-limit, limit));
 }
 
 template<typename Derived1, typename Derived2>
@@ -148,10 +148,27 @@ inline const Eigen::CwiseBinaryOp<
 
 inline double saturate(double x, double limit)
 {
-	if (x > limit) {
-		return limit;
-	} else if (x < -limit) {
-		return -limit;
+	return saturate(x, -limit, limit);
+}
+
+
+template<typename Derived>
+inline const Eigen::CwiseUnaryOp<
+	detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> saturate(const Eigen::MatrixBase<Derived>& x, double lowerLimit, double upperLimit)
+{
+	return x.unaryExpr(detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>(lowerLimit, upperLimit));
+}
+
+inline double saturate(double x, double lowerLimit, double upperLimit)
+{
+	assert(lowerLimit < upperLimit);
+
+	if (x > upperLimit) {
+		return upperLimit;
+	} else if (x < lowerLimit) {
+		return lowerLimit;
 	} else {
 		return x;
 	}

@@ -80,24 +80,37 @@ TEST_F(MathUtilsTest, ScalarMaxTest) {
 	EXPECT_EQ(10.3, math::max(5, 10.3));
 }
 
-TEST_F(MathUtilsTest, VectorVectorSaturateTest) {
+TEST_F(MathUtilsTest, VectorVectorSaturateTest1) {
 	a << -1, -0.5, -8, 5, 10;
 	b << 0.75, 0.75, 7, 7, 7;
 	e << -0.75, -0.5, -7, 5, 7;
 	EXPECT_EQ(e, math::saturate(a, b));
 }
 
-TEST_F(MathUtilsTest, VectorScalarSaturateTest) {
+TEST_F(MathUtilsTest, VectorScalarSaturateTest1) {
 	a << -1, -0.5, -8, 5, 10;
 	e << -1, -0.5, -6, 5, 6;
 	EXPECT_EQ(e, math::saturate(a, 6));
 }
 
-TEST_F(MathUtilsTest, ScalarScalarSaturateTest) {
+TEST_F(MathUtilsTest, ScalarScalarSaturateTest1) {
 	EXPECT_EQ(5, math::saturate(10.3, 5.0));
 	EXPECT_EQ(1.6, math::saturate(1.6, 5.0));
 	EXPECT_EQ(-1.6, math::saturate(-1.6, 5.0));
 	EXPECT_EQ(-5, math::saturate(-12342.0, 5.0));
+}
+
+TEST_F(MathUtilsTest, VectorScalarSaturateTest2) {
+	a << -1, -0.5, -8, 5, 10;
+	e << 0.0, 0.0, 0.0, 5, 6;
+	EXPECT_EQ(e, math::saturate(a, 0, 6));
+}
+
+TEST_F(MathUtilsTest, ScalarScalarSaturateTest2) {
+	EXPECT_EQ(5, math::saturate(10.3, -1.0, 5.0));
+	EXPECT_EQ(1.6, math::saturate(1.6, -1.0, 5.0));
+	EXPECT_EQ(-1.0, math::saturate(-1.6, -1.0, 5.0));
+	EXPECT_EQ(-1.0, math::saturate(-12342.0, -1.0, 5.0));
 }
 
 TEST_F(MathUtilsTest, VectorVectorDeadbandTest) {
