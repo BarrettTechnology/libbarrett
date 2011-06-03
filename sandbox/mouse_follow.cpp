@@ -134,7 +134,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.gravityCompensate();
 
 	Hand* hand = NULL;
-	int ot, ct;
+	int ot = 0, ct = 0;
 	if (pm.foundHand()) {
 		hand = pm.getHand();
 
