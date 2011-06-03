@@ -18,6 +18,22 @@
 namespace barrett {
 
 
+SafetyModule::SafetyModule(Puck* puck) :
+	SpecialPuck(Puck::PT_Safety)
+{
+	setPuck(puck);
+
+	// Load safety parameters from EEPROM so they won't be affected by previous
+	// programs that may have adjusted these values.
+	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::VL1));
+	p->getPropertyId(Puck::STAT);  // Make sure the LOAD has completed so we don't flood the Puck's receive buffer
+	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::VL2));
+	p->getPropertyId(Puck::STAT);
+	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::TL1));
+	p->getPropertyId(Puck::STAT);
+	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::TL2));
+}
+
 enum SafetyModule::SafetyMode SafetyModule::getMode(bool realtime) const {
 	int mode = p->getProperty(Puck::MODE, realtime);
 	if (mode < 0  ||  mode > 2) {
