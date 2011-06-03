@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	installExceptionHandler();
 
 	ProductManager pm0;
-	ProductManager pm1(NULL, "/etc/barrett/bus1/default.conf");
+	ProductManager pm1("/etc/barrett/bus1/default.conf");
 
 	printf("Starting the WAM on Bus 0...\n");
 	boost::thread wt0 = startWam(pm0, wamThread0<4>, wamThread0<7>);
