@@ -147,8 +147,14 @@ inline const Eigen::CwiseBinaryOp<
 
 double saturate(double x, double limit);
 
-//template<typename T> T saturate(const T& x,
-//		const T& lowerLimit, const T& upperLimit);
+
+template<typename Derived>
+const Eigen::CwiseUnaryOp<
+	detail::CwiseUnarySaturateOp<typename Eigen::ei_traits<Derived>::Scalar>,
+	Derived
+> saturate(const Eigen::MatrixBase<Derived>& x, double lowerLimit, double upperLimit);
+
+double saturate(double x, double lowerLimit, double upperLimit);
 
 
 /** Maps input values smaller than the given cutoff to zero.
