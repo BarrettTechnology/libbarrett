@@ -27,7 +27,9 @@ bool parseDoubles(math::Matrix<R,C, Units>* dest, const std::string& str) {
 	}
 
 	// Make sure there are no extra numbers in the string.
-	double tmp = strtod(cur, (char**) &next);
+	double ignore = strtod(cur, (char**) &next);
+	(void)ignore;  // Prevent unused variable warnings
+
 	if (cur != next) {
 		return false;
 	}
