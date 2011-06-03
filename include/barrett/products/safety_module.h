@@ -23,7 +23,7 @@ public:
 	};
 
 
-	SafetyModule(Puck* puck = NULL) : SpecialPuck(Puck::PT_Safety) { setPuck(puck); }
+	SafetyModule(Puck* puck = NULL);
 	~SafetyModule() {}
 
 	enum SafetyMode getMode(bool realtime = false) const;
