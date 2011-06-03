@@ -164,8 +164,8 @@ void readHand(Hand& hand) {
 		hand.updateStrain();
 		hand.updateTactFull();
 
-//		hand.getGroup().getProperty(Puck::TEMP, puckTemp);
-//		hand.getGroup().getProperty(Puck::THERM, motorTemp);
+//		hand.getPuckGroup().getProperty(Puck::TEMP, puckTemp);
+//		hand.getPuckGroup().getProperty(Puck::THERM, motorTemp);
 
 		rp.update();
 		usleep(10000);
