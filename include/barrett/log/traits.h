@@ -14,6 +14,7 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/array.hpp>
+#include <Eigen/Geometry>
 
 #include <barrett/math/matrix.h>
 #include <barrett/log/detail/traits-helper.h>
@@ -107,6 +108,30 @@ template<typename T, size_t N> struct Traits< ::boost::array<T,N> > {
 
 	static void asCSV(parameter_type source, std::ostream& os) {
 		detail::arrayAsCSV(os, source, N);
+	}
+};
+
+
+template<typename Scalar> struct Traits<Eigen::Quaternion<Scalar> > {
+	typedef Eigen::Quaternion<Scalar> T;
+	typedef const T& parameter_type;
+
+	static size_t serializedLength() {
+		return sizeof(Scalar) * 4;
+	}
+
+	static void serialize(parameter_type source, char* dest) {
+		std::memcpy(dest, source.coeffs().data(), serializedLength());
+	}
+
+	static T unserialize(char* source) {
+		T q;
+		std::memcpy(q.coeffs().data(), source, serializedLength());
+		return q;
+	}
+
+	static void asCSV(parameter_type source, std::ostream& os) {
+		os << source.w() << "," << source.x() << "," << source.y() << "," << source.z();
 	}
 };
 
