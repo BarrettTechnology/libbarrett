@@ -467,7 +467,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	/* Stop ncurses ... */
 	clear();
 	endwin();
-	freopen(NULL, "w", stdout);  // restore stdout's line buffering
+	if (freopen(NULL, "w", stdout) == NULL) {  // restore stdout's line buffering
+		syslog(LOG_ERR, "%s:%d freopen(stdout) failed.", __FILE__, __LINE__);
+	}
 
 	/* Re-fold, print, and exit */
 	printf("Beginning move back to the home location...\n");

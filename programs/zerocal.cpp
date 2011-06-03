@@ -115,7 +115,6 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	int i; /* For iterating through the pucks */
 	int n = DOF;
 	int done;
 
@@ -148,7 +147,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	/* Detect puck versions */
 	const std::vector<MotorPuck>& motorPucks = wam.llww.getLowLevelWam().getMotorPucks();
-	for (i = 0; i < motorPucks.size(); i++) {
+	for (size_t i = 0; i < motorPucks.size(); i++) {
 		long vers = motorPucks[i].getPuck()->getVers();
 		long role = motorPucks[i].getPuck()->getRole();
 
@@ -350,18 +349,18 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		gsl_vector_memcpy(vec, wam.getHomePosition().asGslType());
 		gsl_vector_sub(vec, jangle);
 		sprintf(newhome, "( %05.3f", gsl_vector_get(vec, 0));
-		for (i = 1; i < n; i++)
+		for (int i = 1; i < n; i++)
 			sprintf(newhome + strlen(newhome), ", %05.3f", gsl_vector_get(vec,
 					i));
 		sprintf(newhome + strlen(newhome), " );");
 		gsl_vector_free(vec);
 
 		/* Save the zeromag values */
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 			if (!mz_mechisset[i])
 				mz_angles[i] = -1.0;
 		sprintf(zeromag, "( %05.3f", mz_angles[0]);
-		for (i = 1; i < n; i++)
+		for (int i = 1; i < n; i++)
 			sprintf(zeromag + strlen(zeromag), ", %05.3f", mz_angles[i]);
 		sprintf(zeromag + strlen(zeromag), " );");
 	}
@@ -369,7 +368,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	/* Stop ncurses ... */
 	clear();
 	endwin();
-	freopen(NULL, "w", stdout);  // restore stdout's line buffering
+	if (freopen(NULL, "w", stdout) == NULL) {  // restore stdout's line buffering
+		syslog(LOG_ERR, "%s:%d freopen(stdout) failed.", __FILE__, __LINE__);
+	}
 
 	/* Re-fold, print, and exit */
 	printf("Beginning move back to the home location...\n");
@@ -380,7 +381,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		printf("\n");
 		printf("Zeroing calibration ended.\n");
 		printf("\n");
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 			if (!mz_mechisset[i]) {
 				printf("Note: Some (or all) of your pucks do not support absolute\n");
 				printf("position measurement, either because they do not use magnetic\n");
@@ -394,7 +395,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		printf("--------\n");
 		printf("      # Calibrated zero values ...\n");
 		printf("      home = %s\n", newhome);
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 			if (mz_mechisset[i]) {
 				printf("      zeroangle = %s\n", zeromag);
 				break;
