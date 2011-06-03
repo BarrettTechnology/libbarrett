@@ -49,7 +49,7 @@ int main() {
 			coeffArray + sizeof(coeffArray) / sizeof(double));
 
 	// create execution manager
-	systems::ManualExecutionManager mem(0.0);
+	systems::ManualExecutionManager mem;
 
 	// instantiate Systems
 	systems::ExposedOutput<double> eoSys;
