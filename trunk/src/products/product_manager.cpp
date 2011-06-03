@@ -8,13 +8,11 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 
 #include <string.h>
 #include <syslog.h>
 #include <libgen.h>
-
-#include <boost/thread/locks.hpp>
-#include <boost/circular_buffer.hpp>
 
 #include <libconfig.h++>
 
@@ -37,12 +35,27 @@ namespace barrett {
 
 const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
 
-ProductManager::ProductManager(bus::CommunicationsBus* _bus, const char* configFile) :
+ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _bus) :
 	config(), bus(_bus), deleteBus(false),
 	pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF),
 	sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), ghc(NULL)
 {
 	int ret;
+
+
+	syslog(LOG_ERR, "ProductManager::ProductManager()");
+
+	char cfSource[8] = "param";
+	if (configFile == NULL  ||  configFile[0] == '\0') {
+		configFile = std::getenv("BARRETT_CONFIG_FILE");
+		if (configFile == NULL  ||  configFile[0] == '\0') {
+			configFile = DEFAULT_CONFIG_FILE;
+			strcpy(cfSource, "default");
+		} else {
+			strcpy(cfSource, "env");
+		}
+	}
+	syslog(LOG_ERR, "  Config file (from %s): %s", cfSource, configFile);
 
 
 	char* cf1 = strdup(configFile);

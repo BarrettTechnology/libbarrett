@@ -39,7 +39,7 @@ class ProductManager {
 public:
 	static const char DEFAULT_CONFIG_FILE[];  // = "/etc/barrett/default.conf"
 
-	ProductManager(bus::CommunicationsBus* bus = NULL, const char* configFile = DEFAULT_CONFIG_FILE);
+	explicit ProductManager(const char* configFile = NULL, bus::CommunicationsBus* bus = NULL);
 	virtual ~ProductManager();
 
 	void enumerate();
