@@ -16,7 +16,7 @@
 #include <boost/array.hpp>
 
 #include <barrett/math/matrix.h>
-#include <barrett/log/detail/tuple_traits-helper.h>
+#include <barrett/log/detail/traits-helper.h>
 
 
 namespace barrett {
@@ -106,10 +106,7 @@ template<typename T, size_t N> struct Traits< ::boost::array<T,N> > {
 	}
 
 	static void asCSV(parameter_type source, std::ostream& os) {
-		for (size_t i = 0; i < (N - 1); ++i) {
-			os << source[i] << ",";
-		}
-		os << source[N - 1];
+		detail::arrayAsCSV(os, source, N);
 	}
 };
 
@@ -131,12 +128,10 @@ template<int R, int C, typename Units> struct Traits<math::Matrix<R,C, Units> > 
 	typedef typename DefaultTraits<math::Matrix<R,C, Units> >::parameter_type parameter_type;
 
 	static void asCSV(parameter_type source, std::ostream& os) {
-		for (int i = 0; i < (source.size() - 1); ++i) {
-			os << source[i] << ",";
-		}
-		os << source[source.size() - 1];
+		detail::arrayAsCSV(os, source, source.size());
 	}
 };
+
 
 template<
 	typename T0, typename T1, typename T2, typename T3, typename T4,
