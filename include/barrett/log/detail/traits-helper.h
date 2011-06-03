@@ -1,14 +1,15 @@
 /*
- * tuple_traits-helper.h
+ * traits-helper.h
  *
  *  Created on: Jan 5, 2010
  *      Author: dc
  */
 
-#ifndef BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_
-#define BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_
+#ifndef BARRETT_LOG_DETAIL_TRAITS_HELPER_H_
+#define BARRETT_LOG_DETAIL_TRAITS_HELPER_H_
 
 
+#include <ostream>
 #include <boost/tuple/tuple.hpp>
 
 
@@ -21,6 +22,16 @@ template<typename T> struct Traits;
 
 
 namespace detail {
+
+
+template<typename T>
+inline void arrayAsCSV(std::ostream& os, const T& array, const size_t size)
+{
+	for (size_t i = 0; i < (size - 1); ++i) {
+		os << array[i] << ",";
+	}
+	os << array[size - 1];
+}
 
 
 template<size_t N, typename TraitsType>
@@ -77,4 +88,4 @@ struct TupleTraitsHelper<0, TraitsType> {
 }
 
 
-#endif /* BARRETT_LOG_DETAIL_TUPLE_TRAITS_HELPER_H_ */
+#endif /* BARRETT_LOG_DETAIL_TRAITS_HELPER_H_ */
