@@ -28,7 +28,7 @@ public:
 
 	const std::vector<Puck*>& getPucks() const { return pucks; }
 	const std::vector<MotorPuck>& getMotorPucks() const { return motorPucks; }
-	const PuckGroup& getGroup() const { return group; }
+	const PuckGroup& getPuckGroup() const { return group; }
 
 protected:
 	const bus::CommunicationsBus& bus;
