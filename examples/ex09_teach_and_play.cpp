@@ -95,9 +95,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	time.stop();
 	time.setOutput(spline.initialS());
 
-	double (*saturatePtr)(double,double) = math::saturate;  // Cast needed because math::saturate is overloaded
-	systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(saturatePtr, _1, spline.finalS())));
-
+	systems::Callback<double, jp_type> trajectory(boost::ref(spline));
 	connect(time.output, trajectory.input);
 	wam.trackReferenceSignal(trajectory.output);
 
