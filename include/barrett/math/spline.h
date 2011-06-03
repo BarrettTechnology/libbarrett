@@ -31,11 +31,11 @@ public:
 	typedef boost::tuple<double, T> tuple_type;
 
 	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<tuple_type>& samples);
+	Spline(const Container<tuple_type>& samples, bool saturateS = true);
 
 	// initialDirection will be normalized internally
 	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<T>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0));
+	Spline(const Container<T>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0), bool saturateS = true);
 
 	~Spline();
 
@@ -52,7 +52,8 @@ public:
 
 protected:
 	struct bt_spline* impl;
-	double s_0;
+	bool sat;
+	double s_0, s_f;
 
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
