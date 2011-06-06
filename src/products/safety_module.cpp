@@ -7,6 +7,7 @@
 
 #include <stdexcept>
 #include <cstdio>
+#include <cassert>
 
 #include <syslog.h>
 #include <unistd.h>
@@ -25,13 +26,7 @@ SafetyModule::SafetyModule(Puck* puck) :
 
 	// Load safety parameters from EEPROM so they won't be affected by previous
 	// programs that may have adjusted these values.
-	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::VL1));
-	p->getPropertyId(Puck::STAT);  // Make sure the LOAD has completed so we don't flood the Puck's receive buffer
-	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::VL2));
-	p->getPropertyId(Puck::STAT);
-	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::TL1));
-	p->getPropertyId(Puck::STAT);
-	p->setProperty(Puck::LOAD, p->getPropertyId(Puck::TL2));
+	setDefaultSafetyLimits();
 }
 
 enum SafetyModule::SafetyMode SafetyModule::getMode(bool realtime) const {
@@ -59,14 +54,50 @@ void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int poll
 
 enum SafetyModule::SafetyMode SafetyModule::waitForModeChange(int pollingPeriod_us)
 {
-	enum SafetyMode originalMode = getMode();
+	const enum SafetyMode originalMode = getMode();
 	enum SafetyMode currentMode;
 
 	do {
 		usleep(pollingPeriod_us);
-	} while ( (currentMode = getMode()) == originalMode );
+		currentMode = getMode();
+	} while (currentMode == originalMode);
 
 	return currentMode;
+}
+
+void SafetyModule::setDefaultSafetyLimits()
+{
+	p->resetProperty(Puck::VL1);
+	p->resetProperty(Puck::VL2);
+	p->resetProperty(Puck::TL1);
+	p->resetProperty(Puck::TL2);
+}
+
+void SafetyModule::setTorqueLimit(double fault, double warning, int ipnm)
+{
+	assert(fault > 0.0);
+	if (warning < 0.0) {
+		warning = 0.9 * fault;
+	}
+
+	p->setProperty(Puck::TL2, (int)(fault*ipnm));
+	p->setProperty(Puck::TL1, (int)(warning*ipnm));
+}
+
+void SafetyModule::setVelocityLimit(double fault, double warning)
+{
+	assert(fault >= 0.0);  // 0 is a special value meaning "never velocity fault"
+	if (warning < 0.0) {
+		warning = 0.9 * fault;
+	}
+
+	p->setProperty(Puck::VL2, (int)(fault*0x1000));
+	p->setProperty(Puck::VL1, (int)(warning*0x1000));
+}
+
+void SafetyModule::ignoreNextVelocityFault()
+{
+	p->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
 }
 
 
