@@ -123,7 +123,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	// adjust velocity fault limit
-	pm.getSafetyModule()->getPuck()->setProperty(Puck::VL2, (int)(1.5*0x1000));
+	pm.getSafetyModule()->setVelocityLimit(1.5);
 
 	// block until the user Shift-idles
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);

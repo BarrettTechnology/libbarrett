@@ -33,10 +33,19 @@ public:
 	void waitForMode(enum SafetyMode mode, bool printMessage = true, int pollingPeriod_us = 250000);
 	enum SafetyMode waitForModeChange(int pollingPeriod_us = 250000);
 
+	void setDefaultSafetyLimits();
+	void ignoreNextVelocityFault();
+
+	// Measured in Newton*meters at each motor, assuming equal IPNM.
+	void setTorqueLimit(double fault, double warning = -1.0, int ipnm = Puck::DEFAULT_IPNM);
+
+	// Measured in meters/second at the elbow and 4-DOF end-point.
+	void setVelocityLimit(double fault, double warning = -1.0);
+
 
 	static const char* getSafetyModeStr(enum SafetyMode mode) { return safetyModeStrs[mode]; }
 
-
+protected:
 	static const int VELOCITY_FAULT_HISTORY_BUFFER_SIZE = 5;
 
 private:
