@@ -110,7 +110,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// Zero the WAM?
 	if (safetyModule == NULL) {
-		syslog(LOG_ERR, "  No safetyModule: WAM may not be zeroed");
+		syslog(LOG_ERR, "  No safetyModule: WAM might not be zeroed");
 	} else if (safetyModule->wamIsZeroed()) {
 		syslog(LOG_ERR, "  WAM was already zeroed");
 	} else if (zeroCompensation) {
@@ -163,6 +163,12 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	}
 
 
+	// Prevent velocity faults on startup due to WAM motion while no program was running.
+	if (safetyModule != NULL) {
+		safetyModule->ignoreNextVelocityFault();
+	}
+
+
 	// Get good initial values for jp_1 and lastUpdate
 	update();
 	jv.setZero();
@@ -206,10 +212,10 @@ void LowLevelWam<DOF>::setTorques(const jt_type& jt)
 template<size_t DOF>
 void LowLevelWam<DOF>::definePosition(const jp_type& jp)
 {
-	// Tell the safety logic to ignore the next several velocity faults
+	// Tell the safety logic to ignore the next velocity fault
 	// (the position will appear to change rapidly)
 	if (safetyModule != NULL) {
-		safetyModule->getPuck()->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
+		safetyModule->ignoreNextVelocityFault();
 	}
 
 	pp = j2pp * jp;  // Convert from joint positions to Puck positions
