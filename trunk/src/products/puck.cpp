@@ -40,6 +40,17 @@ void Puck::wake()
 	wake(std::vector<Puck*>(1, this));
 }
 
+void Puck::saveProperty(enum Property prop) const
+{
+	setProperty(SAVE, getPropertyId(prop), true);
+}
+void Puck::resetProperty(enum Property prop) const
+{
+	setProperty(DEF, getPropertyId(prop));
+	setProperty(LOAD, getPropertyId(prop), true);
+}
+
+
 void Puck::updateRole()
 {
 	role = getProperty(ROLE);

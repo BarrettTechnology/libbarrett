@@ -58,9 +58,12 @@ public:
 			typename Parser::result_type* result, bool realtime = false) const;
 	template<typename Parser> int tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_ns = 1000000) const;
 
-	void setProperty(enum Property prop, int value) const {
-		setProperty(bus, id, getPropertyId(prop), value);
+	void setProperty(enum Property prop, int value, bool blocking = false) const {
+		setProperty(bus, id, getPropertyId(prop), value, blocking);
 	}
+
+	void saveProperty(enum Property prop) const;
+	void resetProperty(enum Property prop) const;
 
 	bool respondsToProperty(enum Property prop) const {
 		return respondsToProperty(prop, effectiveType, vers);
@@ -95,7 +98,7 @@ public:
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
 			int timeout_ns = 1000000);
 	static void setProperty(const bus::CommunicationsBus& bus, int id, int propId,
-			int value);
+			int value, bool blocking = false);
 
 	static int sendGetPropertyRequest(const bus::CommunicationsBus& bus, int id, int propId);
 	static int receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int propId,
@@ -110,6 +113,8 @@ public:
 			throw(std::runtime_error);
 	static int getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers);
 
+
+	static const int DEFAULT_IPNM = 2700;
 
 	static const int MIN_ID = 1;
 	static const int MAX_ID = 31;
