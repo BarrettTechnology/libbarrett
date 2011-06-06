@@ -86,7 +86,7 @@ int Puck::getPropertyHelper(const bus::CommunicationsBus& bus, int id, int propI
 	return receiveGetPropertyReply<Parser>(bus, id, propId, result, blocking, realtime);
 }
 
-inline void Puck::setProperty(const bus::CommunicationsBus& bus, int id, int propId, int value)
+inline void Puck::setProperty(const bus::CommunicationsBus& bus, int id, int propId, int value, bool blocking)
 {
 	static const size_t MSG_LEN = 6;
 
@@ -102,6 +102,11 @@ inline void Puck::setProperty(const bus::CommunicationsBus& bus, int id, int pro
 	if (ret != 0) {
 		syslog(LOG_ERR, "%s: bus::CommunicationsBus::send() returned error %d.", __func__, ret);
 		throw std::runtime_error("Puck::setProperty(): Failed to send SET message. Check /var/log/syslog for details.");
+	}
+
+	if (blocking) {
+		// Make sure the command has completed so we don't overflow the Puck's receive buffer.
+		getProperty(bus, id, getPropertyId(STAT, PT_Unknown, 0));
 	}
 }
 
