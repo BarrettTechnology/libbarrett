@@ -193,6 +193,13 @@ inline typename Wam<DOF>::jp_type Wam<DOF>::getJointPositions() const
 template<size_t DOF>
 inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 {
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (jvController1.feedbackInput.valueDefined()) {
+			return jvController1.feedbackInput.getValue();
+		}
+	}
+
 	return llww.getLowLevelWam().getJointVelocities();
 }
 
