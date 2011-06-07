@@ -65,9 +65,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	int line = 0;
 
 	mvprintw(line++,0, "WAM");
-	mvprintw(line++,0, "  Joint Positions (rad): ");
+	mvprintw(line++,0, "     Joint Positions (rad): ");
 	getyx(stdscr, wamY, wamX);
-	mvprintw(line++,0, "    Joint Torques (N*m): ");
+	mvprintw(line++,0, "  Joint Velocities (rad/s): ");
+	mvprintw(line++,0, "       Joint Torques (N*m): ");
 	line++;
 
 	if (fts != NULL) {
@@ -104,6 +105,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	jp_type jp;
+	jv_type jv;
 	jt_type jt;
 	cf_type cf;
 	ct_type ct;
@@ -126,6 +128,13 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		mvprintw(line++,wamX, "[%7.4f", jp[0]);
 		for (size_t i = 1; i < DOF; ++i) {
 			printw(", %7.4f", jp[i]);
+		}
+		printw("]");
+
+		jv = math::saturate(wam.getJointVelocities(), 9.9999);
+		mvprintw(line++,wamX, "[%7.4f", jv[0]);
+		for (size_t i = 1; i < DOF; ++i) {
+			printw(", %7.4f", jv[i]);
 		}
 		printw("]");
 
