@@ -19,6 +19,7 @@ add_programs(
 	ex04_display_basic_info
 	ex06_systems_intro
 	ex07_realtime_move
+	ex08_realtime_data_logging
 	ex09_teach_and_play
 	ex10_torque_control
 	ex11_haptics
