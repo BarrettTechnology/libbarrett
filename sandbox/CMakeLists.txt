@@ -29,6 +29,7 @@ set(programs
 	low_level_wam
 	mouse_follow
 	puck_terminal
+	rt_mutex_test
 	safety_module
 	tactile_test
 	teach_with_hand
