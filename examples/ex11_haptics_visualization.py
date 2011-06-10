@@ -1,6 +1,5 @@
 import sys
 from socket import *
-from fcntl import *
 from time import sleep
 import struct
 from visual import *
