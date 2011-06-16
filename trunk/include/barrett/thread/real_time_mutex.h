@@ -41,7 +41,7 @@ protected:
 
 	RT_MUTEX* mutex;
 	int lockCount;
-	int clearAfterUnlock;
+	bool leaveWarnSwitchOn;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(RealTimeMutex);
