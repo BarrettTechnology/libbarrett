@@ -20,6 +20,10 @@ using namespace barrett;
 using detail::waitForEnter;
 
 
+const double T_s = 0.001;
+const double USLEEP_TIME = 100;
+
+
 double velCommand(bool open, bool close, double speed = 1.25) {
 	if (open  &&  !close) {
 		return -speed;
@@ -29,6 +33,99 @@ double velCommand(bool open, bool close, double speed = 1.25) {
 		return 0.0;
 	}
 }
+
+class Button {
+	enum STATE {
+		UP,
+		LONG_UP,
+		DOWN,
+		LONG_DOWN
+	};
+
+
+	static const double DEBOUNCE = 0.01;
+	static const double HOLD = 0.08;
+
+	bool pressed_1;
+	double sinceLastTransition;
+
+	STATE state/*, state_1*/;
+	int transitions;
+
+	bool dc;
+
+public:
+	Button() :
+		pressed_1(false), sinceLastTransition(0.0), state(LONG_UP)/*, state_1(LONG_UP)*/, transitions(0), dc(false) {}
+
+	bool update(bool pressed) {
+		if (pressed != pressed_1) {
+			sinceLastTransition = 0.0;
+			pressed_1 = pressed;
+		} else {
+			sinceLastTransition += T_s;
+		}
+
+		if (sinceLastTransition >= DEBOUNCE) {
+			switch (state) {
+			case UP:
+				if (pressed) {
+					state = DOWN;
+					++transitions;
+				} else if (sinceLastTransition >= HOLD) {
+					state = LONG_UP;
+					transitions = 0;
+				}
+				break;
+
+			case LONG_UP:
+				if (pressed) {
+					state = DOWN;
+					++transitions;
+				}
+				break;
+
+			case DOWN:
+				if ( !pressed ) {
+					state = UP;
+					if (transitions != 0) {
+						++transitions;
+					}
+				} else if (sinceLastTransition >= HOLD) {
+					state = LONG_DOWN;
+					transitions = 0;
+				}
+				break;
+
+			case LONG_DOWN:
+				if ( !pressed ) {
+					state = UP;
+				}
+
+				break;
+			}
+
+//			if (state != state_1) {
+//				printf("%d\n", state);
+//				state_1 = state;
+//			}
+			if (transitions == 4) {
+				dc = true;
+				transitions = 0;
+//				printf("double!\n");
+			}
+		}
+
+		return state == DOWN  ||  state == LONG_DOWN;
+	}
+
+	bool doubleClick() {
+		bool ret = dc;
+		dc = false;
+		return ret;
+	}
+};
+
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
@@ -60,34 +157,53 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	set_pin(LP_PIN01);
 
 
-	unsigned char data = 0, data_1 = 0;
-	Hand::jv_type hjv;
+	Button a,b,c,d;
+	Hand::jp_type hjp;
+	Hand::jv_type hjv, hjv_1(0.0);
 
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
-		data = ((pin_is_set(LP_PIN02) ? 0 : 1) << 0) +
-			   ((pin_is_set(LP_PIN03) ? 0 : 1) << 1) +
-			   ((pin_is_set(LP_PIN04) ? 0 : 1) << 2) +
-			   ((pin_is_set(LP_PIN05) ? 0 : 1) << 3) +
-			   ((pin_is_set(LP_PIN06) ? 0 : 1) << 4) +
-			   ((pin_is_set(LP_PIN07) ? 0 : 1) << 5) +
-			   ((pin_is_set(LP_PIN08) ? 0 : 1) << 6) +
-			   ((pin_is_set(LP_PIN09) ? 0 : 1) << 7);
+//		unsigned char data = ((pin_is_set(LP_PIN02) ? 0 : 1) << 0) +
+//			   ((pin_is_set(LP_PIN03) ? 0 : 1) << 1) +
+//			   ((pin_is_set(LP_PIN04) ? 0 : 1) << 2) +
+//			   ((pin_is_set(LP_PIN05) ? 0 : 1) << 3) +
+//			   ((pin_is_set(LP_PIN06) ? 0 : 1) << 4) +
+//			   ((pin_is_set(LP_PIN07) ? 0 : 1) << 5) +
+//			   ((pin_is_set(LP_PIN08) ? 0 : 1) << 6) +
+//			   ((pin_is_set(LP_PIN09) ? 0 : 1) << 7);
+//		printf("%x\n", data);
 
-		// If things havn't changed, just wait and loop
-		if (data != data_1) {
-			printf("%x\n", data);
-			hjv[0] = velCommand(data & (1<<6), data & (1<<7));
-			hjv[1] = velCommand(data & (1<<6), data & (1<<7));
-			hjv[2] = velCommand(data & (1<<6), data & (1<<7));
-			hjv[3] = velCommand(data & (1<<5), data & (1<<4));
+		hjv[0] = velCommand(d.update( !pin_is_set(LP_PIN06) ), c.update( !pin_is_set(LP_PIN07) ));
+		hjv[1] = hjv[0];
+		hjv[2] = hjv[0];
+		hjv[3] = velCommand(b.update( !pin_is_set(LP_PIN08) ), a.update( !pin_is_set(LP_PIN09) ));
 
+		if (a.doubleClick()) {
+			hand.updatePosition();
+			hjp = hand.getInnerLinkPosition();
+			hjp[3] = M_PI_2;
+			hand.trapezoidalMove(hjp);
+		} else if (b.doubleClick()) {
+			hand.updatePosition();
+			hjp = hand.getInnerLinkPosition();
+			hjp[3] = 0.0;
+			hand.trapezoidalMove(hjp);
+		} else if (c.doubleClick()) {
+			hand.updatePosition();
+			hjp = hand.getInnerLinkPosition();
+			hjp[0] = hjp[1] = hjp[2] = 2 * M_PI;
+			hand.trapezoidalMove(hjp);
+		} else if (d.doubleClick()) {
+			hand.updatePosition();
+			hjp = hand.getInnerLinkPosition();
+			hjp[0] = hjp[1] = hjp[2] = 0.0;
+			hand.trapezoidalMove(hjp);
+		} else if (hjv != hjv_1) {  // If things haven't changed, just wait and loop
 			hand.setVelocity(hjv);
 			std::cout << "Velocity: " << hjv << std::endl;
-
-			data_1 = data;
+			hjv_1 = hjv;
 		}
 
-		usleep(10000);
+		usleep(USLEEP_TIME);
 	}
 
 
