@@ -18,6 +18,7 @@ set(programs
 	full_system_test
 	gimbals_hand_controller
 	hand
+	hand_buttons_test
 	high_level_wam
 	load_ft_cal
 #	log_ft_data_with_wam
@@ -36,6 +37,8 @@ set(programs
 )
 
 add_programs(${programs})
+
+target_link_libraries(hand_buttons_test parapin)
 
 
 #set(libs "")
