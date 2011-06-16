@@ -10,7 +10,6 @@
 
 #include <syslog.h>
 #include <signal.h>
-#include <sys/mman.h>
 
 #include <native/task.h>
 #include <native/mutex.h>
@@ -38,10 +37,8 @@ void warnOnSwitchToSecondaryMode(int)
 
 
 RealTimeMutex::RealTimeMutex() :
-	mutex(NULL), lockCount(0), clearAfterUnlock(0)
+	mutex(NULL), lockCount(0), leaveWarnSwitchOn(false)
 {
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-
 	mutex = new RT_MUTEX;
 	int ret = rt_mutex_create(mutex, NULL);
 	if (ret) {
@@ -82,7 +79,7 @@ bool RealTimeMutex::try_lock()
 void RealTimeMutex::unlock()
 {
 	--lockCount;
-	bool changeMode = (lockCount == 0  &&  clearAfterUnlock);
+	bool changeMode = lockCount == 0 && !leaveWarnSwitchOn;
 
 	int ret = rt_mutex_release(mutex);
 	if (ret) {
@@ -91,9 +88,9 @@ void RealTimeMutex::unlock()
 	}
 
 	if (changeMode) {
-		ret = rt_task_set_mode(clearAfterUnlock, 0, NULL);
+		ret = rt_task_set_mode(T_WARNSW, 0, NULL);
 		if (ret != 0) {
-			throw std::runtime_error("thread::RealTimeMutex::unlock(): Could not clear T_WARNSW or T_PRIMARY mode.");
+			throw std::runtime_error("thread::RealTimeMutex::unlock(): Could not clear T_WARNSW mode.");
 		}
 	}
 }
@@ -126,14 +123,10 @@ void RealTimeMutex::relock(int lc)
 int RealTimeMutex::acquireWrapper(RTIME timeout)
 {
 	int ret;
-	int oldMode;
 
-	// TODO(dc): This doesn't actually detect when a thread is in secondary
-	// mode (see 2.3.2 header on http://www.xenomai.org/index.php/Xenomai:News).
-	// I'm not sure how to do that correctly...
-	ret = rt_task_set_mode(0, 0, &oldMode);
+	ret = rt_mutex_acquire(mutex, timeout);
 	if (ret == -EPERM) {
-		// Become real-time, then proceed...
+		// become real-time, then try again
 
 		// Allocate a new RT_TASK struct, and then forget the pointer. This
 		// leak allows us to avoid ownership issues for the RT_TASK, which
@@ -141,37 +134,22 @@ int RealTimeMutex::acquireWrapper(RTIME timeout)
 		// the mutex is deleted, etc.. It is a small overhead that happens (at
 		// most) once per thread. If needed, we can always get the pointer back
 		// by calling rt_task_self().
-		ret = rt_task_shadow(new RT_TASK, NULL, 10, 0);
-		if (ret != 0) {
-			throw std::runtime_error("thread::RealTimeMutex::acquireWrapper(): Could not rt_task_shadow().");
-		}
+		rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
-		// The thread was not a real-time task, so T_PRIMARY and T_WARNSW were
-		// effectively off.
-		oldMode = 0;
-	} else if (ret !=0) {
-		throw std::runtime_error("thread::RealTimeMutex::acquireWrapper(): Could not retrieve oldMode.");
-	}
-
-	ret = rt_mutex_acquire(mutex, timeout);
-	if (ret != 0) {
-		return ret;
+		ret = rt_mutex_acquire(mutex, timeout);
 	}
 
 	if (lockCount == 0) {
-		// The T_PRIMARY mode bit is set by rt_mutex_acquire() and the T_WARNSW
-		// bit is set below. After fully releasing a mutex, both bits should be
-		// returned to the state they were in before the mutex was first acquired.
-		clearAfterUnlock = (~oldMode)  &  (T_WARNSW | T_PRIMARY);
-
-		ret = rt_task_set_mode(0, T_WARNSW, NULL);
+		int oldMode;
+		ret = rt_task_set_mode(0, T_WARNSW, &oldMode);
 		if (ret != 0) {
 			throw std::runtime_error("thread::RealTimeMutex::acquireWrapper(): Could not set T_WARNSW mode.");
 		}
+		leaveWarnSwitchOn = oldMode & T_WARNSW;
 	}
 	++lockCount;
 
-	return 0;
+	return ret;
 }
 
 
