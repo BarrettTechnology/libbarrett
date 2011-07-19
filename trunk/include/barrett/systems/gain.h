@@ -26,6 +26,7 @@
  *
  *  Created on: Sep 12, 2009
  *      Author: dc
+ *              CJ Valle
  */
 
 #ifndef BARRETT_SYSTEMS_GAIN_H_
@@ -59,7 +60,7 @@ protected:
 	OutputType data;
 
 	virtual void operate() {
-		data = this->input.getValue() * gain;
+		data = gain * this->input.getValue();
 		this->outputValue->setData(&data);
 	}
 
