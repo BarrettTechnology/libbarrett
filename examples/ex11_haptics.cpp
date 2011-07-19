@@ -71,8 +71,6 @@ template <size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	wam.gravityCompensate();
-
 
     // instantiate Systems
 	NetworkHaptics nh(pm.getExecutionManager(), remoteHost);
@@ -119,14 +117,24 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(tg.output, mult.input);
 	connect(mult.output, tf2jt.input);
 	connect(tf2jt.output, jtSat.input);
-	connect(jtSat.output, wam.input);
 
 
 	// adjust velocity fault limit
 	pm.getSafetyModule()->setVelocityLimit(1.5);
 
-	// block until the user Shift-idles
-	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	while (true) {
+		wam.gravityCompensate();
+		connect(jtSat.output, wam.input);
+
+		// block until the user Shift-idles
+		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+
+		systems::disconnect(wam.input);
+		wam.gravityCompensate(false);
+
+		// block until the user Shift-activates
+		pm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
+	}
 
 	return 0;
 }
