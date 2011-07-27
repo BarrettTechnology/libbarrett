@@ -56,6 +56,23 @@ TEST_F(GainSystemTest, MultipliesInput) {
 	EXPECT_EQ(14.2 * -38.52, eios.getInputValue());
 }
 
+TEST_F(GainSystemTest, SetGain) {
+	systems::Gain<double> gainSys(14.2);
+
+	systems::connect(eios.output, gainSys.input);
+	systems::connect(gainSys.output, eios.input);
+
+	eios.setOutputValue(-38.52);
+	mem.runExecutionCycle();
+	EXPECT_EQ(14.2 * -38.52, eios.getInputValue());
+
+	gainSys.setGain(-3.8);
+	mem.runExecutionCycle();
+	EXPECT_EQ(-3.8 * -38.52, eios.getInputValue());
+}
+
+
+
 
 using std::ostream;
 class A;
@@ -63,7 +80,7 @@ class B;
 class C;
 
 class A {
-	friend const C operator * (const A& a, const B& b);
+	friend const C operator * (const B& b, const A& a);
 private:
 	float value;
 public:
@@ -73,7 +90,7 @@ public:
 };
 
 class B {
-	friend const C operator * (const A& a, const B& b);
+	friend const C operator * (const B& b, const A& a);
 private:
 	float value;
 public:
@@ -92,7 +109,7 @@ public:
 		return value == other.value;
 	}
 };
-const C operator* (const A& a, const B& b) {
+const C operator* (const B& b, const A& a) {
 	return C(a.value * b.value);
 }
 ostream& operator<<(ostream& os, C c) {
@@ -112,7 +129,7 @@ TEST_F(GainSystemTest, IGOCanBeDifferentTypes) {
 
 	out.setOutputValue(A(9.0));
 	mem.runExecutionCycle();
-	EXPECT_EQ(A(9.0) * B(-3.0), in.getInputValue())
+	EXPECT_EQ(B(-3.0) * A(9.0), in.getInputValue())
 		<< "did multiplication wrong";
 }
 
