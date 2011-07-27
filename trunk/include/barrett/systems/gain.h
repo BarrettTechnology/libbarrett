@@ -55,6 +55,11 @@ public:
 		SingleIO<InputType, OutputType>(sysName), gain(gain) {}
 	virtual ~Gain() { this->mandatoryCleanUp(); }
 
+	void setGain(const GainType& g) {
+		BARRETT_SCOPED_LOCK(this->getEmMutex());
+		gain = g;
+	}
+
 protected:
 	GainType gain;
 	OutputType data;
