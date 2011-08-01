@@ -42,6 +42,7 @@
  * @file standard_main_function.h
  * @date Nov 5, 2010
  * @author Dan Cody
+ * @author CJ Valle
  */
 
 
@@ -72,6 +73,12 @@
 #  define BARRETT_SMF_WAIT_FOR_SHIFT_ACTIVATE false
 #endif
 
+#ifndef BARRETT_SMF_DONT_PROMPT_ON_ZEROING
+#  define BARRETT_SMF_PROMPT_ON_ZEROING true
+#else
+#  define BARRETT_SMF_PROMPT_ON_ZEROING false
+#endif
+
 #ifndef BARRETT_SMF_WAM_CONFIG_PATH
 #  define BARRETT_SMF_WAM_CONFIG_PATH NULL
 #endif
@@ -96,7 +103,7 @@ int main(int argc, char** argv) {
 	}
 #endif
 
-	pm.waitForWam();
+	pm.waitForWam(BARRETT_SMF_PROMPT_ON_ZEROING);
 	pm.wakeAllPucks();
 
 	if (pm.foundWam4()) {
