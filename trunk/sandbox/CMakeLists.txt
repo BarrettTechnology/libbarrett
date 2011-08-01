@@ -12,6 +12,7 @@ function(add_programs)
 endfunction()
 
 set(programs
+	autohome
 	can_terminal
 	can_timing
 	ft_persistent_tare
