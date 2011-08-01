@@ -5,12 +5,6 @@
  *      Author: CJ Valle
  */
 
-/* NOTE: For this program to run properly, the Wam's config file should have
- * the joint 2 limit set to at least 50 and the joint 7 limit set to no more
- * than 3 on the joint_position_control:control_signal_limit line to avoid
- * torque faults and unpredictable behavior.
- */
-
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -38,9 +32,10 @@ private:
 	systems::Wam<DOF>& wam;
 
 	// Wraps usleep to guarantee it returns on time, and to provide SECONDS as an input
-	void myUsleep(unsigned long total) {
+	void sleep(double duration) {
+		unsigned long total = duration*1000000;
 		unsigned long passed = 0;
-		unsigned long remaining = total*1000000;
+		unsigned long remaining = total;
 		RTIME start = rt_timer_read();
 		while (true) {
 			usleep(remaining);
@@ -53,11 +48,11 @@ private:
 	// Watches the given joint in the WAM for a stop and returns the final (stopped) position
 	double monitor(int joint) {
 		jp_type last = wam.getJointPositions();
-		myUsleep(1);
+		sleep(1);
 		while(fabs(last[joint]-wam.getJointPositions()[joint]) > .0001)
 		{
 			last = wam.getJointPositions();
-			myUsleep(.5);
+			sleep(.5);
 		}
 		return last[joint];
 	}
@@ -97,6 +92,15 @@ public:
 		pm(p), wam(w) {
 		setPoint = wam.getJointPositions();
 
+		// Set control signal limits in the WAM.  These values prevent erratic behavior.
+		/* TODO(cj): fix PIDController::getControlSignalLimit() to work here
+		// For the time being, the Control Signal Limit in the config file
+			must have a value of at least 50 for joint 2 and no more than 3 for joint 7.
+		wam.jpController.getControlSignalLimit()[1] = 50;
+		if (DOF > 4) {
+			wam.jpController.getControlSignalLimit()[6] = 3;
+		}*/
+
 		// Set up expected joint ranges
 		jointRange[0] = 5.2;
 		jointRange[1] = 4.0;
@@ -135,7 +139,7 @@ public:
 		{
 			// Do joint 7
 			goToZero(6);
-			// Move joint 5 to positive stop, pull back 1/4 turn
+			// Do joint 5
 			goToZero(4);
 			// Do joint 6
 			goToZero(5);
@@ -150,7 +154,11 @@ public:
 
 		// Check to be sure we zeroed successfully
 		int err = 0;
-		for(size_t i=0; i<DOF; i++) if (fabs(max[i]-min[i]) < jointRange[i]) err += 2^i;
+		for(size_t i=0; i<DOF; i++) {
+			if (fabs(max[i]-min[i]) < jointRange[i]) {
+				err |= 1 << i;
+			}
+		}
 
 		// Now go home and tell the next program to recalibrate for zero
 		for(size_t i=0; i<DOF; i++) setPoint[i] += wam.getHomePosition()[i];
