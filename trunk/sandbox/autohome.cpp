@@ -90,6 +90,10 @@ public:
 	// Constructor for Autohome object
 	Autohome(ProductManager& p, systems::Wam<DOF>& w) :
 		pm(p), wam(w) {
+
+		// Assume the WAM is not properly zeroed.
+		pm.getSafetyModule()->setWamZeroed(false);
+
 		setPoint = wam.getJointPositions();
 
 		// Set control signal limits in the WAM.  These values prevent erratic behavior.
@@ -120,19 +124,12 @@ public:
 		double temp = monitor(3);
 		moveTheWAM(3, temp+0.9, true, true);
 
-        	// If there's a hand, move it into a "fist" orientation
+       	// If there's a hand, move it into a "fist" orientation
 		if (pm.foundHand()) {
 			Hand* hand = pm.getHand();
 			hand->initialize();
-			Hand::jp_type handPos(1.6);
-			handPos[3] = 3.14;
-			hand->trapezoidalMove(handPos, false);
+			hand->trapezoidalMove(Hand::jp_type(M_PI), false);
 		}
-
-		// Do joint 2
-		goToZero(1);
-		// Do joint 4
-		goToZero(3);
 
 		// Handle the wrist if it's present
 		if (DOF > 4)
@@ -144,6 +141,11 @@ public:
 			// Do joint 6
 			goToZero(5);
 		}
+
+		// Do joint 2
+		goToZero(1);
+		// Do joint 4
+		goToZero(3);
 
 		//Do joint 3
 		goToZero(2);
@@ -160,13 +162,19 @@ public:
 			}
 		}
 
-		// Now go home and tell the next program to recalibrate for zero
-		for(size_t i=0; i<DOF; i++) setPoint[i] += wam.getHomePosition()[i];
-		wam.moveTo(setPoint);
-		pm.getSafetyModule()->setWamZeroed(false);
+		// Now move to the home position
+		if (pm.foundHand()) {
+			Hand::jp_type handPos(1.6);
+			handPos[3] = 3.14;
+			pm.getHand()->trapezoidalMove(handPos, false);
+		}
+
+		jp_type home = setPoint + wam.getHomePosition();
+		wam.moveTo(setPoint, jv_type(0.0), home, true, 0.5, 0.5);
 
 		// Pause at the end for idle
 		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
+
 		return err;
 	}
 };
