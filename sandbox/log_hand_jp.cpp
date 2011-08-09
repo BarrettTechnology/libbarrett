@@ -39,7 +39,7 @@ bool validate_args(int argc, char** argv) {
 }
 
 void logEntryPoint(Hand& hand, const char* outFile) {
-	typedef boost::tuple<double, Hand::jp_type, Hand::jp_type> tuple_type;
+	typedef boost::tuple<double, Hand::jp_type, Hand::jp_type, boost::tuple<double, double, double, double, double, double, double, double> > tuple_type;
 
 	char tmpFile[] = "/tmp/btXXXXXX";
 	if (mkstemp(tmpFile) == -1) {
@@ -55,12 +55,25 @@ void logEntryPoint(Hand& hand, const char* outFile) {
 	log::Writer<tuple_type> logWriter(tmpFile);
 	while ( !boost::this_thread::interruption_requested() ) {
 		boost::get<0>(data) = (rt_timer_read() - start) * 1e-9;
+
 		hand.updatePosition();
+		hand.updateStrain();
+		hand.updateTactFull();
+
 		boost::get<1>(data) = hand.getInnerLinkPosition();
 		boost::get<2>(data) = hand.getOuterLinkPosition();
-		logWriter.putRecord(data);
 
-		usleep(10000);
+		boost::get<0>(boost::get<3>(data)) = hand.getPrimaryEncoderPosition()[0];
+		boost::get<1>(boost::get<3>(data)) = hand.getPrimaryEncoderPosition()[1];
+		boost::get<2>(boost::get<3>(data)) = hand.getPrimaryEncoderPosition()[2];
+		boost::get<3>(boost::get<3>(data)) = hand.getPrimaryEncoderPosition()[3];
+		boost::get<4>(boost::get<3>(data)) = hand.getSecondaryEncoderPosition()[0];
+		boost::get<5>(boost::get<3>(data)) = hand.getSecondaryEncoderPosition()[1];
+		boost::get<6>(boost::get<3>(data)) = hand.getSecondaryEncoderPosition()[2];
+		boost::get<7>(boost::get<3>(data)) = hand.getSecondaryEncoderPosition()[3];
+
+		logWriter.putRecord(data);
+		usleep(1000);
 	}
 	logWriter.close();
 
