@@ -48,27 +48,32 @@ protected:
 	i_type a;
 };
 
-TEST_F(PIDControllerTest, SamplePeriodZeroInitilized) {
-	systems::PIDController<i_type, i_type> localPid;
-	EXPECT_EQ(0.0, localPid.getSamplePeriod());
-}
+TEST_F(PIDControllerTest, GetPeriodFromEm) {
+	a.setConstant(1.0);
+	pid.setKi(a);
 
-TEST_F(PIDControllerTest, SamplePeriodMatchesDefaultExecutionManager) {
-	EXPECT_EQ(T_s, pid.getSamplePeriod());
-}
+	a.setConstant(1.0);
+	eios.setOutputValue(a);
 
-TEST_F(PIDControllerTest, SamplePeriodChangesWithExecutionManager) {
-	systems::ManualExecutionManager localMem(5.8);
-	systems::PIDController<i_type, i_type> localPid;
+	for (size_t i = 0; i < 9; ++i) {
+		mem.runExecutionCycle();
+		EXPECT_EQ(a*i*T_s, eios.getInputValue());
+	}
 
-	mem.startManaging(localPid);
-	EXPECT_EQ(T_s, localPid.getSamplePeriod());
 
-	localMem.startManaging(localPid);
-	EXPECT_EQ(5.8, localPid.getSamplePeriod());
+	systems::ManualExecutionManager localMem(1.0);
+	ExposedIOSystem<i_type> localEios;
 
-	localMem.stopManaging(localPid);
-	EXPECT_EQ(0.0, localPid.getSamplePeriod());
+	localMem.startManaging(localEios);
+	mem.stopManaging(eios);
+	systems::disconnect(pid.controlOutput);
+	systems::connect(pid.controlOutput, localEios.input);
+
+	for (size_t i = 0; i < 10; ++i) {
+		localMem.runExecutionCycle();
+//		EXPECT_EQ(a*9.0*T_s + a*(i+1)*1.0, localEios.getInputValue());
+		EXPECT_TRUE(localEios.getInputValue().isApprox(a*8*T_s + a*(i+1)*1.0));
+	}
 }
 
 TEST_F(PIDControllerTest, GainsZeroInitilized) {
@@ -210,7 +215,8 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 	eios.setOutputValue(a);
 	for (size_t i = 0; i <= 11; ++i) {
 		mem.runExecutionCycle();
-		EXPECT_EQ(5.8 + (a*i).cwise(), eios.getInputValue());
+//		EXPECT_EQ(5.8 + (a*i).cwise(), eios.getInputValue());
+		EXPECT_TRUE(eios.getInputValue().isApprox(5.8 + (a*i).cwise()));
 	}
 	for (size_t i = 12; i < 15; ++i) {
 		mem.runExecutionCycle();
@@ -234,7 +240,8 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 
 	eios.setOutputValue(i_type(0.1));
 	mem.runExecutionCycle();
-	EXPECT_EQ(i_type(0.1).cwise() * a, eios.getInputValue());
+//	EXPECT_EQ(i_type(0.1).cwise() * a, eios.getInputValue());
+	EXPECT_TRUE(eios.getInputValue().isApprox(i_type(0.1).cwise() * a));
 
 	eios.setOutputValue(i_type(2.0));
 	mem.runExecutionCycle();

@@ -68,7 +68,6 @@ public:
 
 	void resetIntegrator();
 
-	double getSamplePeriod() const {  return T_s;  }
 	unitless_type& getKp() {  return kp;  }
 	const unitless_type& getKp() const {  return kp;  }
 	unitless_type& getKi() {  return ki;  }
