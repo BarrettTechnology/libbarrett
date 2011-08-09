@@ -56,14 +56,33 @@ class ToolOrientationController : public Controller<Eigen::Quaterniond,
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
+	explicit ToolOrientationController(const std::string& sysName = "ToolOrientationController") :
+		Controller<Eigen::Quaterniond, ct_type>(sysName), KinematicsInput<DOF>(this),
+		kp(0.0), kd(0.0) {}
 	explicit ToolOrientationController(const libconfig::Setting& setting,
 			const std::string& sysName = "ToolOrientationController") :
 		Controller<Eigen::Quaterniond, ct_type>(sysName), KinematicsInput<DOF>(this),
-		kp(barrett::detail::numericToDouble(setting["kp"])),
-		kd(barrett::detail::numericToDouble(setting["kd"])) {}
+		kp(0.0), kd(0.0)
+	{
+		setFromConfig(setting);
+	}
 	virtual ~ToolOrientationController() { mandatoryCleanUp(); }
 
+
+	void setFromConfig(const libconfig::Setting& setting) {
+		setKp(barrett::detail::numericToDouble(setting["kp"]));
+		setKd(barrett::detail::numericToDouble(setting["kd"]));
+	}
+	void setKp(double proportionalGain) { kp = proportionalGain; }
+	void setKd(double derivitiveGain) { kd = derivitiveGain; }
+
+	double getKp() const { return kp; }
+	double getKd() const { return kd; }
+
 protected:
+	double kp;
+	double kd;
+
 	Eigen::AngleAxisd error;
 	ct_type ct;
 
@@ -87,9 +106,6 @@ protected:
 
 		this->controlOutputValue->setData(&ct);
 	}
-
-	double kp;
-	double kd;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(ToolOrientationController);
