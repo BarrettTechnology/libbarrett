@@ -25,6 +25,7 @@ set(programs
 #	log_ft_data_with_wam
 	log_ft_data
 	log_hand_jp
+	log_hand_tact
 	log_sg_data
 	log_temp_data
 #	log_velocity
@@ -35,15 +36,9 @@ set(programs
 	tactile_test
 	teach_with_hand
 	two_wams
+	vibrate_wam
 )
 
 add_programs(${programs})
 
 target_link_libraries(hand_buttons_test parapin)
-
-
-#set(libs "")
-#set(cflags "")
-#set(ldflags "")
-#add_programs(${programs})
-
