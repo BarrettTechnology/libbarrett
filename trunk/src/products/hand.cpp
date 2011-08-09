@@ -30,7 +30,7 @@ const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, P
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"),
-	hasSg(false), hasTact(false), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0), tactilePucks()
+	hasSg(false), hasTact(false), useSecondaryEncoders(true), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0), tactilePucks()
 {
 	// Check for TACT and SG options.
 	int numSg = 0;
@@ -141,8 +141,8 @@ void Hand::updatePosition(bool realtime)
 
 	// For the fingers
 	for (size_t i = 0; i < DOF-1; ++i) {
-		// If we got a reading from the secondary encoder...
-		if (secondaryEncoder[i] != std::numeric_limits<int>::max()) {
+		// If we got a reading from the secondary encoder and it's enabled...
+		if (useSecondaryEncoders  &&  secondaryEncoder[i] != std::numeric_limits<int>::max()) {
 			innerJp[i] = motorPucks[i].counts2rad(secondaryEncoder[i]) / J2_ENCODER_RATIO;
 			outerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) * (1.0/J2_RATIO + 1.0/J3_RATIO) - innerJp[i];
 		} else {

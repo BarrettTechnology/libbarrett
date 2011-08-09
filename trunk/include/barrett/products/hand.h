@@ -55,6 +55,7 @@ public:
 	const jp_type& getOuterLinkPosition() const { return outerJp; }
 	const std::vector<int>& getPrimaryEncoderPosition() const { return primaryEncoder; }
 	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
+	void enableBreakawayEncoders(bool enable) { useSecondaryEncoders = enable; }
 
 	bool hasStrainSensors() const { return hasSg; }
 	void updateStrain(bool realtime = false);
@@ -76,6 +77,7 @@ protected:
 
 	bool hasSg;
 	bool hasTact;
+	bool useSecondaryEncoders;
 
 	int holds[DOF];
 	v_type j2pp, j2pt;
