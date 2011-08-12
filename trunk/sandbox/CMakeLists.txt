@@ -13,6 +13,7 @@ endfunction()
 
 set(programs
 	autohome
+	autotensioner
 	can_terminal
 	can_timing
 	ft_persistent_tare
