@@ -3,11 +3,18 @@
  *
  *  Created on: Jun 28, 2011
  *      Author: CJ Valle
+ *
+ * >>> INSTRUCTIONS <<<
+ *  The utility may be run with one of three "types" of arguments:
+ *    1 - No arguments.  In this case the WAM will tension all of its joints
+ *    2 - With the argument 'w'.  In this case the WAM will tension the wrist. (./autotensioner w)
+ *    3 - With a list of numeric arguments representing motor ID's.  In this case the WAM
+ *        will tension the joints given as arguments. (./autotensioner 2 4)
  */
 
 #include <iostream>
 #include <string>
-#include <cmath>
+#include <signal.h>
 
 #include <barrett/units.h>
 #include <barrett/systems.h>
@@ -28,6 +35,13 @@ const double WIGGLE = 5.0; // Max allowable difference between iterations (micro
 const double TENSION_TORQUES[7] = {0.85, 0.85, 0.85, 0.5, 0.23, 0.23, 0.0};
 		// Torques we'll apply to tension (newton-meters)
 
+bool notCanceled = true; // to handle CTRL-C interrupts
+void sigint_handler(int steve) {
+	notCanceled = false;
+	std::cout << "\nCancel Signal received. Further operations on this motor have been cancelled.\n";
+	signal(SIGINT, &sigint_handler);
+}
+
 template<size_t DOF>
 class Autotensioner
 {	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
@@ -37,7 +51,7 @@ private:
 	systems::Wam<DOF>& wam; // The WAM!!!
 	std::vector<Puck*> pucks; // Pucks
 	sqm_type m2jp, j2mp, m2jt, j2mt; // Transforms
-	jp_type setPoint, tangPositions;
+	jp_type setPoint, tangPositions; // to keep track of positions
 
 	// Systems
 	systems::Gain<jt_type, sqm_type, jt_type> j2mtSys;
@@ -160,6 +174,7 @@ private:
 		}
 	}
 
+	// Rolls the given motor forward until it encounters a stop (hopefully the tang) or until it times out
 	void rollForward(int motor, double timeout = 30.0) {
 		holdSetPoint.setValue(setPoint); // Tell it to hold position
 		watcher.activate(motor, 0.5); // Start watching for the torque spike
@@ -177,6 +192,7 @@ private:
 		setPoint = wam.getJointPositions();
 	}
 
+	// finds the tang locations for the wrist
 	void findTangs() {
 		if (DOF > 4) {
 			moveTheWAM(jp_type(0.0));
@@ -206,6 +222,7 @@ private:
 		}
 	}
 
+	// Performs a single iteration on the given motor and returns the amount of slack taken up in Rads
 	double iterate(int motor) {
 		int tangMotor = motor; // declares that the tang we want is attached to the motor we are using
 		if (motor == 5) tangMotor = 4; // handles the wrist case
@@ -220,7 +237,7 @@ private:
 		wam.moveTo(wam.getJointPositions()); // tell it to stay still
 		torqueSetPoint.setValue(TENSION_TORQUES[motor]); // set the torque
 		connect(torqueSetPoint.output, torqueSetter.getElementInput(motor)); // apply the torque
-		std::cout << "Applying torque now!\n";
+		//std::cout << "Applying torque now!\n";
 		sleep(5.0); // wait a few seconds
 		double endPos = (j2mp*wam.getJointPositions())[motor]; //record our ending point
 		tangLoc = fabs(tangLoc - wam.getJointPositions()[motor]);
@@ -237,26 +254,70 @@ private:
 		tangPositions[motor] += tangLoc;
 		return fabs(startPos-endPos); // Return how much slack we've taken up
 	}
-	
-public:
-	// Run the tensioning procedure
-	int tension()
-	{
-		if (DOF>4) findTangs(); // find the tangs for the wrist if it's there
-		for (size_t i=0; i<DOF; i++)
-		{
-			double multiplier = 9000;
-			if (i>4) multiplier = 6600;
 
-			std::cout << "Doing motor " << i+1 << " now...\n";			
+public:
+
+	// Run the tensioning procedure
+	int tension(int argc, char** argv)
+	{	//std::cout << argc << " " << argv[1][0] << " " << argv[1][1] << "\n";
+		bool toDo[DOF] = {false}; // = {false, false, false, false, false, false, false};
+		if (argc > 1) {
+			if (argv[1][0] == 'w') { // If the 1st argument is 'w', do the wrist only
+				toDo[4] = true;
+				toDo[5] = true;
+				std::cout << "Tensioning wrist ONLY\n";
+			}
+			else { // If there is a list of motors for arguments, do those
+				std::cout << "Tensioning motors: ";
+				for (int i=1; i<argc; i++) {
+					size_t num = strtol(argv[i], 0, 10);
+					if (num <= DOF && num > 0) {
+						toDo[num-1] = true;
+						std::cout << num << " ";
+					}
+				}
+				std::cout << "\n";
+			}
+		}
+		else { // If there are no arguments just do the entire WAM
+			for (size_t i=0; i<DOF-1; i++) {
+				toDo[i] = true;
+			}
+			std::cout << "Tensioning entire WAM";
+		}
+
+		if (DOF>4) {
+			std::cout << "Finding the Wrist tang locations now\n";
+			findTangs(); // find the tangs for the wrist if it's there
+		}
+		for (size_t j = 0; j<DOF; j++)
+		{
+			int motor;
+			if (toDo[j]) {
+				motor = j;
+			}
+			else {
+				continue;
+			}
+			notCanceled = true;
+			double multiplier = 9000;
+			if (motor>4) multiplier = 6600;
+
+			std::cout << "Doing motor " << motor+1 << " now...\n";			
 			double slackTaken = 1.0, last = 2.0;
 			int totalRuns = 0;
-			while((fabs(slackTaken-last) > WIGGLE/multiplier || totalRuns < 3) && totalRuns < 10) 
+			/* There are three exit cases for each motor's tensioning process:
+			 *  1 - The same amount of "slack" is pulled twice AND it's had at least 3 iterations
+			 *  2 - The total number of iterations is greater than or equal to 10
+			 *  3 - The CTRL-C interrupt takes place
+			 * In all cases, the program progresses on to the next motor in the sequence
+			*/
+			while((fabs(slackTaken-last) > WIGGLE/multiplier || totalRuns < 3) && totalRuns < 10 && notCanceled) 
 			{
 				last = slackTaken;
-				slackTaken = iterate(i);
+				slackTaken = iterate(motor);
 				totalRuns++;
-				std::cout << "Slack removed this iteration: " << slackTaken*multiplier << " micrometers\n";
+				std::cout << slackTaken*multiplier << " micrometers slack removed\n";
 			}
 		}
 
@@ -294,12 +355,15 @@ public:
 		connect(torqueSetter.output, m2jtSys.input);
 		wam.supervisoryController.registerConversion(
 				makeIOConversion(wam.jpController.referenceInput, m2jtSys.output));
+
+		notCanceled = true;
 	}
 };
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& p, systems::Wam<DOF>& w)
 {
-	Autotensioner<DOF> myTensioner(p, w);
-	return myTensioner.tension();
+	Autotensioner<DOF> myTensioner(p, w); // Create tensioner object
+	signal(SIGINT, &sigint_handler); // Register sigint handler
+	return myTensioner.tension(argc, argv); // Start the process!!
 }
