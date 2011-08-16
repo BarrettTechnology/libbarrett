@@ -172,12 +172,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //			   ((pin_is_set(LP_PIN09) ? 0 : 1) << 7);
 //		printf("%x\n", data);
 
-		hjv[0] = velCommand(d.update( !pin_is_set(LP_PIN06) ), c.update( !pin_is_set(LP_PIN07) ));
+		hjv[0] = velCommand(a.update( !pin_is_set(LP_PIN09) ), d.update( !pin_is_set(LP_PIN06) ));
 		hjv[1] = hjv[0];
 		hjv[2] = hjv[0];
-		hjv[3] = velCommand(b.update( !pin_is_set(LP_PIN08) ), a.update( !pin_is_set(LP_PIN09) ));
+		hjv[3] = velCommand(b.update( !pin_is_set(LP_PIN08) ), c.update( !pin_is_set(LP_PIN07) ));
 
-		if (a.doubleClick()) {
+		if (c.doubleClick()) {
 			hand.updatePosition();
 			hjp = hand.getInnerLinkPosition();
 			hjp[3] = M_PI_2;
@@ -187,12 +187,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			hjp = hand.getInnerLinkPosition();
 			hjp[3] = 0.0;
 			hand.trapezoidalMove(hjp);
-		} else if (c.doubleClick()) {
+		} else if (d.doubleClick()) {
 			hand.updatePosition();
 			hjp = hand.getInnerLinkPosition();
 			hjp[0] = hjp[1] = hjp[2] = 2 * M_PI;
 			hand.trapezoidalMove(hjp);
-		} else if (d.doubleClick()) {
+		} else if (a.doubleClick()) {
 			hand.updatePosition();
 			hjp = hand.getInnerLinkPosition();
 			hjp[0] = hjp[1] = hjp[2] = 0.0;
