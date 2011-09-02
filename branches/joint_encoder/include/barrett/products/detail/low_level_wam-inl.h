@@ -9,12 +9,15 @@
 
 #include <stdexcept>
 #include <vector>
+#include <limits>
 #include <cmath>
+#include <cassert>
 
 #include <syslog.h>
 
 #include <native/timer.h>
 
+#include <boost/static_assert.hpp>
 #include <Eigen/LU>
 #include <libconfig.h++>
 
@@ -39,7 +42,7 @@ const enum Puck::Property LowLevelWam<DOF>::props[] = { Puck::P, Puck::T };
 template<size_t DOF>
 LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_WAM, props, sizeof(props)/sizeof(props[0]), "LowLevelWam::LowLevelWam()"),
-	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
+	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), noJointEncoders(true), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
 {
 	syslog(LOG_ERR, "  Config setting: %s => \"%s\"", setting.getSourceFile(), setting.getPath().c_str());
 
@@ -163,6 +166,31 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	}
 
 
+	// Joint encoders
+	useJointEncoder.assign(false);
+	int numJe = 0;
+	int numInitializedJe = 0;
+
+	for (size_t i = 0; i < DOF; ++i) {
+		if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)) {
+			++numJe;
+			if (motorPucks[i].foundIndexPulse()) {
+				useJointEncoder[i] = true;
+				noJointEncoders = false;
+				++numInitializedJe;
+			}
+		}
+	}
+
+	// If there are joint encoders, look up counts per revolution from the config file
+	if (numJe != 0) {
+		syslog(LOG_ERR, "  Found %d joint encoders (%d are initialized)", numJe, numInitializedJe);
+
+		v_type e_cpr(setting["joint_encoder_counts"]);
+		e2jp = 2*M_PI * e_cpr.cwise().inverse();
+	}
+
+
 	// Prevent velocity faults on startup due to WAM motion while no program was running.
 	if (safetyModule != NULL) {
 		safetyModule->ignoreNextVelocityFault();
@@ -184,9 +212,31 @@ template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
 	RTIME now = rt_timer_read();
-	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
 
-	jp = p2jp * pp;  // Convert from Puck positions to joint positions
+	if (noJointEncoders) {
+		group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
+		jp = p2jp * pp;  // Convert from Puck positions to joint positions
+	} else {
+		// Make sure the reinterpret_cast below makes sense.
+		BOOST_STATIC_ASSERT(sizeof(MotorPuck::CombinedPositionParser<double>::result_type) == 2*sizeof(double));
+
+		// PuckGroup::getProperty() will fill pp_jep.data() with 2*DOF doubles:
+		// Primary Encoder 1, Secondary Encoder 1, Primary Encoder 2, Secondary Encoder 2, ...
+		group.getProperty<MotorPuck::CombinedPositionParser<double> >(
+				Puck::P,
+				reinterpret_cast<MotorPuck::CombinedPositionParser<double>::result_type*>(pp_jep.data()),
+				true);
+
+		for (size_t i = 0; i < DOF; ++i) {
+			if (useJointEncoder[i]) {
+				assert(pp_jep(i,1) != std::numeric_limits<double>::max());
+				jp[i] = e2jp[i] * pp_jep(i,1);
+			} else {
+				jp[i] = (p2jp.row(i) * pp_jep.col(0))[0];
+			}
+		}
+	}
+
 	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
 	// TODO(dc): Detect unreasonably large velocities
 

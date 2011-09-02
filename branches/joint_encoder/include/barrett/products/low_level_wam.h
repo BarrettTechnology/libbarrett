@@ -13,6 +13,7 @@
 #include <vector>
 #include <native/timer.h>
 
+#include <boost/array.hpp>
 #include <Eigen/Core>
 #include <libconfig.h++>
 
@@ -68,9 +69,14 @@ protected:
 	jp_type home;
 	sqm_type j2mp, m2jp, j2mt;
 	sqm_type j2pp, p2jp, j2pt;
+	v_type e2jp;
+
+	bool noJointEncoders;
+	boost::array<bool, DOF> useJointEncoder;
 
 	RTIME lastUpdate;
 	v_type pp;
+	math::Matrix<DOF,2> pp_jep;
 	jp_type jp, jp_1;
 	jv_type jv;
 
