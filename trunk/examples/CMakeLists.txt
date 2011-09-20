@@ -24,7 +24,6 @@ add_programs(
 	ex10_torque_control
 	ex11_haptics
 	ex13_master_master
-	seven_dof_only
 )
 
 
