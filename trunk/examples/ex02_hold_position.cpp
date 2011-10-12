@@ -1,4 +1,4 @@
-/* ex01_initialize_wam.cpp
+/* ex02_hold_position.cpp
  *
  * This example turns on gravity compensation and then allows the user to
  * constrain the position of the arm using various controllers.
@@ -11,7 +11,7 @@
  * the other control strategies make it do something interesting. Unless you
  * have a specific reason not to, you should turn gravity compensation on at
  * the beginning of a WAM program and leave it on for the duration. (Feel free
- * to experiment with how turning gravity compensation on and off effects the
+ * to experiment with how turning gravity compensation on and off affects the
  * WAM's behavior!)
  *
  * If you change the WAM's mass distribution (for instance, by attaching a tool
