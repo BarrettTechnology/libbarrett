@@ -6,11 +6,11 @@
  * Before running this program, make sure the WAM is powered on and connected
  * to the Control PC. It can be either E-stopped or Idled.
  *
- * This code initializes the arm, allows the user to Shift-activate (there by
+ * This code initializes the arm, allows the user to Shift-activate (thereby
  * giving the robot permission to apply torques), and then (with a loop rate of
  * 500 Hz) commands the WAM to apply zero torque to all of its joints. Since
  * the motors aren't applying any torques, it will be easy to move the WAM by
- * pushing it. The arm won't move on its own, but, if it's not already reseting
+ * pushing it. The arm won't move on its own, but, if it's not already resting
  * on its joint stops, gravity will cause it to fall. The program waits until
  * the user Shift-idles the WAM and then exits.
  *
@@ -33,6 +33,7 @@
 #include <barrett/standard_main_function.h>
 
 
+// The root namespace for libbarrett
 using namespace barrett;
 
 
