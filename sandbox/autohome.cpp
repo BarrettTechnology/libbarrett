@@ -97,13 +97,10 @@ public:
 		setPoint = wam.getJointPositions();
 
 		// Set control signal limits in the WAM.  These values prevent erratic behavior.
-		/* TODO(cj): fix PIDController::getControlSignalLimit() to work here
-		// For the time being, the Control Signal Limit in the config file
-			must have a value of at least 50 for joint 2 and no more than 3 for joint 7.
 		wam.jpController.getControlSignalLimit()[1] = 50;
-		if (DOF > 4) {
+		if (DOF >= 7) {
 			wam.jpController.getControlSignalLimit()[6] = 3;
-		}*/
+		}
 
 		// Set up expected joint ranges
 		jointRange[0] = 5.2;
