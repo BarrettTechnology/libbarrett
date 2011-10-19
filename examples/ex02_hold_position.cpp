@@ -49,6 +49,7 @@ void printMenu() {
 	printf("  j  Hold joint positions\n");
 	printf("  p  Hold tool position (in Cartesian space)\n");
 	printf("  o  Hold tool orientation\n");
+	printf("  b  Hold both tool position and orientation\n");
 	printf("  i  Idle (release position/orientation constraints)\n");
 	printf("  q  Quit\n");
 }
@@ -57,6 +58,7 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	// See note on "Holding tool orientation" below
 	systems::ExposedOutput<Eigen::Quaterniond> orientationSetPoint;
+	systems::ExposedOutput<typename systems::Wam<DOF>::pose_type> poseSetPoint;
 
 	wam.gravityCompensate();
 	printMenu();
@@ -89,8 +91,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			// of the Wam::moveTo() function, you'll see that it makes use of
 			// the same Wam::trackReferenceSignal() function that we use
 			// below.)
-			orientation.setValue(wam.getToolOrientation());
-			wam.trackReferenceSignal(orientation.output);
+			orientationSetPoint.setValue(wam.getToolOrientation());
+			wam.trackReferenceSignal(orientationSetPoint.output);
+			break;
+
+		case 'b':
+			printf("Holding both tool position and orientation.\n");
+			poseSetPoint.setValue(wam.getToolPose());
+			wam.trackReferenceSignal(poseSetPoint.output);
 			break;
 
 		case 'i':
