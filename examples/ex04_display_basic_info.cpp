@@ -1,22 +1,40 @@
-#include <cstdlib>
+/* ex04_display_basic_info.cpp
+ *
+ * This example uses the ncurses library to display information about the WAM,
+ * and (if present) the Barrett Force-Torque Sensor (FTS) and BarrettHand. The
+ * ProductManager is used to check for these products and get handles to
+ * objects that allow us to interact with them.
+ */
 
-#include <unistd.h>
 
+#include <iostream>  // For std::cin
+#include <string>  // For std::string and std::getline()
+#include <cstdlib>  // For std::atexit()
+
+#include <unistd.h>  // For usleep()
+
+// The ncurses library allows us to write text to any location on the screen
 #include <curses.h>
 
-#include <barrett/math.h>
+#include <barrett/math.h>  // For barrett::math::saturate()
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
-#include <barrett/detail/stl_utils.h>
 
 #include <barrett/standard_main_function.h>
 
 
 using namespace barrett;
-using detail::waitForEnter;
 
 
+void waitForEnter() {
+	std::string line;
+	std::getline(std::cin, line);
+}
+
+// Functions that help display data from the Hand's (optional) tactile sensors.
+// Note that the palm tactile sensor has a unique cell layout that these
+// functions do not print  correctly.
 const int TACT_CELL_HEIGHT = 3;
 const int TACT_CELL_WIDTH = 6;
 const int TACT_BOARD_ROWS = 8;
@@ -24,7 +42,8 @@ const int TACT_BOARD_COLS = 3;
 const int TACT_BOARD_STRIDE = TACT_BOARD_COLS * TACT_CELL_WIDTH + 2;
 void drawBoard(WINDOW *win, int starty, int startx, int rows, int cols,
 		int tileHeight, int tileWidth);
-void graphPressures(WINDOW *win, int starty, int startx, const TactilePuck::v_type& pressures);
+void graphPressures(WINDOW *win, int starty, int startx,
+		const TactilePuck::v_type& pressures);
 
 
 template<size_t DOF>
@@ -35,12 +54,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.gravityCompensate();
 
 
+	// Is an FTS attached?
 	ForceTorqueSensor* fts = NULL;
 	if (pm.foundForceTorqueSensor()) {
 		fts = pm.getForceTorqueSensor();
 		fts->tare();
 	}
 
+	// Is a Hand attached?
 	Hand* hand = NULL;
 	std::vector<TactilePuck*> tps;
 	if (pm.foundHand()) {
@@ -52,13 +73,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 
 
+	// Set up the ncurses environment
 	initscr();
 	curs_set(0);
 	noecho();
 	timeout(0);
+
+	// Make sure we cleanup after ncurses when the program exits
 	std::atexit((void (*)())endwin);
 
 
+	// Set up the static text on the screen
 	int wamY = 0, wamX = 0;
 	int ftsY = 0, ftsX = 0;
 	int handY = 0, handX = 0;
@@ -104,6 +129,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 
 
+	// Display loop!
 	jp_type jp;
 	jv_type jv;
 	jt_type jt;
@@ -111,19 +137,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	ct_type ct;
 	Hand::jp_type hjp;
 
+	// Fall out of the loop once the user Shift-idles
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
-		switch(getch()) {
-		case 'p':
-			break;
-
-		default:
-			break;
-		}
-
-
 		// WAM
 		line = wamY;
 
+		// math::saturate() prevents the absolute value of the joint positions
+		// from exceeding 9.9999. This puts an upper limit on the length of the
+		// string that gets printed to the screen below. We do this to make sure
+		// that the string will fit properly on the screen.
 		jp = math::saturate(wam.getJointPositions(), 9.9999);
 		mvprintw(line++,wamX, "[%7.4f", jp[0]);
 		for (size_t i = 1; i < DOF; ++i) {
@@ -188,15 +210,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 
-		refresh();
-		usleep(200000);
+
+		refresh();  // Ask ncurses to display the new text
+		usleep(200000);  // Slow the loop rate down to roughly 5 Hz
 	}
 
 	return 0;
 }
 
 
-void drawBoard(WINDOW *win, int starty, int startx, int rows, int cols, int tileHeight, int tileWidth) {
+void drawBoard(WINDOW *win, int starty, int startx, int rows, int cols,
+		int tileHeight, int tileWidth) {
 	int endy, endx, i, j;
 
 	endy = starty + rows * tileHeight;
@@ -253,10 +277,12 @@ void graphCell(WINDOW *win, int starty, int startx, double pressure) {
 	}
 }
 
-void graphPressures(WINDOW *win, int starty, int startx, const TactilePuck::v_type& pressures) {
+void graphPressures(WINDOW *win, int starty, int startx,
+		const TactilePuck::v_type& pressures) {
 	for (int i = 0; i < pressures.size(); ++i) {
 		graphCell(win,
-				starty + 1 + TACT_CELL_HEIGHT * (TACT_BOARD_ROWS - 1 - (i / 3 /* integer division */)),
+				starty + 1 + TACT_CELL_HEIGHT *
+						(TACT_BOARD_ROWS - 1 - (i / 3 /* integer division */)),
 				startx + 1 + TACT_CELL_WIDTH * (i % TACT_BOARD_COLS),
 				pressures[i]);
 	}

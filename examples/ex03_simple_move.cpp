@@ -8,20 +8,21 @@
  *
  * Target positions are specified using "barrett::units". These types are used
  * by libbarrett to distinguish between different kinds of data. For example, a
- * vector containing joint positions is different than a vector containing joint
+ * vector containing joint positions is different from a vector containing joint
  * torques because they have different units. barrett::units provide an easy
  * mechanism to increase code clarity by labeling one vector as containing joint
  * positions (barrett::units::JointPositions<DOF>::type) and another vector as
  * containing joint torques (barrett::units::JointTorques<DOF>::type).
  *
  * All of the built-in barrett::units types are actually just specializations of
- * barrett::math::Matrix. math::Matrix is the class libbarrett uses to represent
- * vectors and matrices. math::Matrix inherits from Eigen::Matrix, so you can
- * use barrett::units in the same ways you would use an Eigen::Matrix. (There's
- * no runtime penalty for using barrett::units, though there is some additional
- * memory allocated by math::Matrix in order to allow interoperation with the
- * GSL math library.) Check out barrett/units.h to see what units are
- * predefined, and feel free to create your own barrett::units as you see fit!
+ * barrett::math::Matrix. math::Matrix is the class template that libbarrett
+ * uses to represent vectors and matrices. math::Matrix inherits from
+ * Eigen::Matrix, so you can use barrett::units in the same ways you would use
+ * an Eigen::Matrix. (There's no runtime penalty for using barrett::units,
+ * though there is some additional memory allocated by math::Matrix in order to
+ * allow interoperation with the GSL math library.) Check out barrett/units.h to
+ * see what units are predefined, and feel free to create your own
+ * barrett::units as you see fit!
  */
 
 
