@@ -43,3 +43,21 @@ set(programs
 add_programs(${programs})
 
 target_link_libraries(hand_buttons_test parapin)
+
+
+if (WITH_PYTHON)
+	find_package(Boost 1.40.0 REQUIRED python)
+	include_directories(${Boost_INCLUDE_DIRS})
+	link_directories(${Boost_LIBRARY_DIRS})
+	
+	find_package(PythonLibs REQUIRED)
+	include_directories(${PYTHON_INCLUDE_PATH})
+	link_directories(${PYTHON_LIBRARIES})
+	
+	add_library(btpy SHARED python.cpp)
+	target_link_libraries(btpy barrett ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+	set_target_properties(btpy PROPERTIES
+		COMPILE_FLAGS "${Xeno_CFLAGS} ${GSL_CFLAGS}"
+		LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
+	)
+endif()
