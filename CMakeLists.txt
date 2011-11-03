@@ -25,8 +25,9 @@ include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 ### Options
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
-option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system (NOT FULLY IMPLEMENTED YET)" OFF)
+option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system" OFF)
 option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
+option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett (EXPERIMENTAL)" OFF)
 
 
 if (OPTIMIZE_FOR_PROCESSOR)
