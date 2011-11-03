@@ -2,9 +2,9 @@
  *
  * This example expands on the previous one by allowing users to enter target
  * positions that the WAM will move to. Starting at whatever location it happens
- * to be in, the WAM will accelerate smoothly, move at a constant velocity,
- * and then come to a stop at the target location. Once
- * there, it will hold position until the next command.
+ * to be in, the WAM will accelerate smoothly, move at a constant velocity, and
+ * then come to a stop at the target location. Once there, it will hold position
+ * until the next command.
  *
  * Target positions are specified using "barrett::units". These types are used
  * by libbarrett to distinguish between different kinds of data. For example, a

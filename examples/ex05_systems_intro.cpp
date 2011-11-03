@@ -46,7 +46,7 @@
 #include <vector>
 #include <string>
 
-// Our base class: barrett::systems::System
+// Base class: barrett::systems::System
 #include <barrett/systems/abstract/system.h>
 
 // Includes the rest of the barrett::systems namespace, which contains all

@@ -2,8 +2,8 @@
  *
  * This example uses the ncurses library to display information about the WAM,
  * and (if present) the Barrett Force-Torque Sensor (FTS) and BarrettHand. The
- * ProductManager is used to check for these products and get handles to
- * objects that allow us to interact with them.
+ * ProductManager is used to check for these products and get handles to objects
+ * that allow us to interact with them.
  */
 
 
