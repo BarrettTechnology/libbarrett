@@ -28,7 +28,7 @@
 
 #include <iostream>
 #include <string>
-#include <cstdlib>
+#include <cstdlib>  // For strtod()
 
 // The file below provides access to the barrett::units namespace.
 #include <barrett/units.h>
