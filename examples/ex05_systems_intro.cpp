@@ -3,7 +3,12 @@
  * This example introduces libbarrett's concept of "Systems". Systems are used
  * to describe the calculations that are performed in the real time control-loop
  * that runs the WAM. The code below defines and uses a simple System. For
- * clarity, this example does not execute any code in real time;
+ * clarity, this example does not execute any code in real time.
+ *
+ * Systems are designed to make it easy to have low level control over the
+ * behavior of the WAM's control loop with out getting bogged down in the
+ * details of real time programming. It's not necessary to understand Systems if
+ * you don't need this functionality.
  *
  * Systems are analogous to blocks in a block diagram. They have zero or more
  * System::Inputs and zero or more System::Outputs. Inputs and Outputs are pipes
@@ -18,26 +23,35 @@
  * Systems that live in the barrett/systems/ folder, such as:
  *   - systems::Callback for quickly wrapping a function in a System
  *   - systems::ExposedOutput for taking a piece of data and making it available
- *     to other Systems (see example below) - systems::FirstOrderFilter for
- *     filtering a stream of data - systems::Gain for multiplying by a constant
+ *     to other Systems (see example below)
+ *   - systems::FirstOrderFilter for filtering a stream of data
+ *   - systems::Gain for multiplying by a constant
  *   - systems::PIDController for making simple feedback control systems
  *   - systems::Summer for adding two or more streams of data
  *   - systems::Wam for interacting with a WAM in real time (can also be used to
  *     interact asynchronously, as shown in Examples 1 through 4)
  *
- * A System's operate() function is never called directly. Instead, a systems::ExecutionManager handles the task of figuring out which
- * operate() functions need to be called and making sure that the necessary Input data is valid and updated in time. (Much of this
- * default behavior can be controlled by re-implementing virtual functions from the systems::System class.) There are multiple kinds
- * of ExecutionManager, the main ones being systems::ManualExecutionManager and systems::RealTimeExectuionManager. The simple example below uses
- * a ManualExecutionManager. The WAM's real time control loop uses a RealTimeExecutionManager.
+ * A System's operate() function is never called directly. Instead, a
+ * systems::ExecutionManager handles the task of figuring out which operate()
+ * functions need to be called and making sure that the necessary Input data is
+ * valid and updated in time. (Much of this default behavior can be controlled
+ * by re-implementing virtual functions from the systems::System class.) There
+ * are multiple kinds of ExecutionManager, the main ones being
+ * systems::ManualExecutionManager and systems::RealTimeExectuionManager. The
+ * simple example below uses a ManualExecutionManager. The WAM's real time
+ * control loop uses a RealTimeExecutionManager.
  */
 
 
 #include <vector>
 #include <string>
 
-#include <barrett/systems/abstract/system.h>  // Our base class: barrett::systems::System
-#include <barrett/systems.h>  // Includes the rest of the barrett::systems namespace, which contains all non-abstract Systems
+// Our base class: barrett::systems::System
+#include <barrett/systems/abstract/system.h>
+
+// Includes the rest of the barrett::systems namespace, which contains all
+// non-abstract Systems
+#include <barrett/systems.h>
 
 
 using namespace barrett;
@@ -58,7 +72,7 @@ public:		Output<double> output;
 protected:	Output<double>::Value* outputValue;
 
 public:
-	// Every System has a human readable name. It's good practice to provide a
+	// Every System has a human readable name. It's good practice to provide an
 	// appropriate default. Notice that outputValue is associated with output
 	// via output's constructor.
 	explicit PolynomialEvaluator(const std::vector<double>& coefficients,
@@ -98,7 +112,7 @@ protected:
 
 int main() {
 	// Make vector of coefficients
-	double coeffArray[] = { 1, 2, 3 };
+	double coeffArray[] = { 1.0, 2.0, 3.0 };
 	std::vector<double> coeff(coeffArray,
 			coeffArray + sizeof(coeffArray) / sizeof(double));
 
@@ -117,15 +131,15 @@ int main() {
 
     // Push data into peSys' input and run an execution cycle,
 	// causing peSys::operate() to be called
-	eoSys.setValue(-1);
+	eoSys.setValue(-1.0);
 	mem.runExecutionCycle();
 	eoSys.setValue(-0.5);
 	mem.runExecutionCycle();
-	eoSys.setValue(0);
+	eoSys.setValue(0.0);
 	mem.runExecutionCycle();
 	eoSys.setValue(0.5);
 	mem.runExecutionCycle();
-	eoSys.setValue(1);
+	eoSys.setValue(1.0);
 	mem.runExecutionCycle();
 	
 
