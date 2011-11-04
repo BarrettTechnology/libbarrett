@@ -22,28 +22,36 @@ template<typename Parser> void PuckGroup::getProperty(enum Puck::Property prop, 
 		ul.lock();
 	}
 
-	int ret;
 	int propId = getPropertyId(prop);
-
-	ret = Puck::sendGetPropertyRequest(bus, id, propId);
-	if (ret != 0) {
-		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
-		throw std::runtime_error("PuckGroup::getProperty(): Failed to send request. Check /var/log/syslog for details.");
-	}
-
-	for (size_t i = 0; i < numPucks(); ++i) {
-		ret = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, &results[i], true, realtime);
-		if (ret != 0) {
-			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving message %d of %d for ID=%d.",
-					__func__, ret, i+1, numPucks(), pucks[i]->getId());
-			throw std::runtime_error("PuckGroup::getProperty(): Failed to receive reply. Check /var/log/syslog for details.");
-		}
-	}
+	sendGetPropertyRequest(propId);
+	receiveGetPropertyReply<Parser>(propId, results, realtime);
 }
 
 inline void PuckGroup::setProperty(enum Puck::Property prop, int value) const
 {
 	Puck::setProperty(bus, id, getPropertyId(prop), value);
+}
+
+inline void PuckGroup::sendGetPropertyRequest(int propId) const
+{
+	int ret = Puck::sendGetPropertyRequest(bus, id, propId);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
+		throw std::runtime_error("PuckGroup::sendGetPropertyRequest(): Failed to send request. Check /var/log/syslog for details.");
+	}
+}
+template<typename Parser>
+void PuckGroup::receiveGetPropertyReply(int propId, typename Parser::result_type results[], bool realtime) const
+{
+	int ret;
+	for (size_t i = 0; i < numPucks(); ++i) {
+		ret = Puck::receiveGetPropertyReply<Parser>(bus, pucks[i]->getId(), propId, &results[i], true, realtime);
+		if (ret != 0) {
+			syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving message %d of %d for ID=%d.",
+					__func__, ret, i+1, numPucks(), pucks[i]->getId());
+			throw std::runtime_error("PuckGroup::receiveGetPropertyReply(): Failed to receive reply. Check /var/log/syslog for details.");
+		}
+	}
 }
 
 

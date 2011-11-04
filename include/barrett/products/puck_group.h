@@ -44,6 +44,11 @@ public:
 	}
 
 
+	void sendGetPropertyRequest(int propId) const;
+	template<typename Parser> void receiveGetPropertyReply(
+			int propId, typename Parser::result_type results[], bool realtime = false) const;
+
+
 	enum BroadcastGroup {
 		BGRP_WHOLE_BUS = Puck::GROUP_MASK | 0,  // Everything but the Safety Puck
 
