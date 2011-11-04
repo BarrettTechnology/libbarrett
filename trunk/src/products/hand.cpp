@@ -13,6 +13,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include <boost/thread/locks.hpp>
+
 #include <barrett/detail/stl_utils.h>
 #include <barrett/products/abstract/multi_puck_product.h>
 #include <barrett/products/puck.h>
@@ -128,6 +130,62 @@ void Hand::setTorqueCommand(const jt_type& jt) const
 {
 	pt = j2pt.cwise() * jt;
 	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, pt.data(), DOF);
+}
+
+void Hand::update(unsigned int sensors, bool realtime)
+{
+	// Do we need to lock?
+	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
+	if (realtime) {
+		ul.lock();
+	}
+
+
+	// Send requests
+	if (sensors & S_POSITION) {
+		group.sendGetPropertyRequest(group.getPropertyId(Puck::P));
+	}
+	if (hasStrainSensors()  &&  sensors & S_FINGER_TIP_TORQUE) {
+		group.sendGetPropertyRequest(group.getPropertyId(Puck::SG));
+	}
+	if (hasTactSensors()  &&  sensors & S_TACT_FULL) {
+		group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
+	}
+
+
+	// Receive replies
+	if (sensors & S_POSITION) {
+		group.receiveGetPropertyReply<MotorPuck::CombinedPositionParser<int> >(group.getPropertyId(Puck::P), encoderTmp.data(), realtime);
+
+		for (size_t i = 0; i < DOF; ++i) {
+			primaryEncoder[i] = encoderTmp[i].get<0>();
+			secondaryEncoder[i] = encoderTmp[i].get<1>();
+		}
+
+		// For the fingers
+		for (size_t i = 0; i < DOF-1; ++i) {
+			// If we got a reading from the secondary encoder and it's enabled...
+			if (useSecondaryEncoders  &&  secondaryEncoder[i] != std::numeric_limits<int>::max()) {
+				innerJp[i] = motorPucks[i].counts2rad(secondaryEncoder[i]) / J2_ENCODER_RATIO;
+				outerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) * (1.0/J2_RATIO + 1.0/J3_RATIO) - innerJp[i];
+			} else {
+				// These calculations are only valid before breakaway!
+				innerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) / J2_RATIO;
+				outerJp[i] = innerJp[i] * J2_RATIO / J3_RATIO;
+			}
+		}
+
+		// For the spread
+		innerJp[SPREAD_INDEX] = outerJp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].counts2rad(primaryEncoder[SPREAD_INDEX]) / SPREAD_RATIO;
+	}
+	if (hasStrainSensors()  &&  sensors & S_FINGER_TIP_TORQUE) {
+		group.receiveGetPropertyReply<Puck::StandardParser>(group.getPropertyId(Puck::SG), sg.data(), realtime);
+	}
+	if (hasTactSensors()  &&  sensors & S_TACT_FULL) {
+		for (size_t i = 0; i < tactilePucks.size(); ++i) {
+			tactilePucks[i]->receiveFull(realtime);
+		}
+	}
 }
 
 void Hand::updatePosition(bool realtime)

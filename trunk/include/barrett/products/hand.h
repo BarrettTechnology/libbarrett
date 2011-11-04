@@ -29,7 +29,7 @@ public:
 	static const size_t DOF = 4;
 	BARRETT_UNITS_TYPEDEFS(DOF);
 
-public:
+
 	Hand(const std::vector<Puck*>& pucks);
 	~Hand();
 
@@ -49,6 +49,12 @@ public:
 	void setTorqueMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_TORQUE); }
 	void setTorqueCommand(const jt_type& jt) const;
 
+
+	static const unsigned int S_POSITION          = 1 << 0;
+	static const unsigned int S_FINGER_TIP_TORQUE = 1 << 1;
+	static const unsigned int S_TACT_FULL         = 1 << 2;
+	static const unsigned int S_ALL = S_POSITION | S_FINGER_TIP_TORQUE | S_TACT_FULL;
+	void update(unsigned int sensors = S_ALL, bool realtime = false);
 
 	void updatePosition(bool realtime = false);
 	const jp_type& getInnerLinkPosition() const { return innerJp; }
