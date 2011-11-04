@@ -287,4 +287,3 @@ void graphPressures(WINDOW *win, int starty, int startx,
 				pressures[i]);
 	}
 }
-
