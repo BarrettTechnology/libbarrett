@@ -92,8 +92,8 @@ public:
 protected:
 	double result;
 
-	// Implement System::operate(). The operate() function must be declared
-	// with the "protected" access specifier.
+	// Implement System::operate(). The operate() function must be declared with
+	// the "protected" access specifier.
 	virtual void operate() {
 		const double& x = input.getValue();  // Pull data from the input
 		result = 0.0;

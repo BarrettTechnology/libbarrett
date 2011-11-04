@@ -95,8 +95,8 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	// The macro below makes a number of typedefs that allow convenient access
 	// to commonly used barrett::units. For example, the typedefs establish
-	// "jp_type" as a synonym for "units::JointPositions<DOF>::type". This
-	// macro (along with a few others) is defined in barrett/units.h.
+	// "jp_type" as a synonym for "units::JointPositions<DOF>::type". This macro
+	// (along with a few others) is defined in barrett/units.h.
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	// These vectors are fixed sized, stack allocated, and zero-initialized.
