@@ -21,6 +21,7 @@ set(programs
 	gimbals_hand_controller
 	hand
 	hand_buttons_test
+	hand_self_preservation
 	high_level_wam
 	load_ft_cal
 #	log_ft_data_with_wam
