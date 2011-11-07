@@ -5,7 +5,7 @@ import sys, re, subprocess, string
 FILE_NAME = "PARSE.H"
 MAIN_URL = "http://web.barrett.com/svn/puck2/trunk/source/"
 MON_URL = "http://web.barrett.com/svn/puck2mon/source/"
-FT_URL = "http://web.barrett.com/svn/forcetorque/trunk/source/"
+FT_URL = "http://web.barrett.com/svn/forcetorque/trunk/firmware/source/"
 
 WC_DIR = "__property_list_tmp_dir/"
 OUTPUT_H_FILE = "../../include/barrett/products/detail/property_list.h"
