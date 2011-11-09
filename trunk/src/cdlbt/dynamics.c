@@ -156,7 +156,7 @@ int bt_dynamics_create(struct bt_dynamics ** dynptr,
        ||  (config_setting_length(moving) != ndofs)
    ) {
       syslog(LOG_ERR,"%s: dyn:moving not a list with %d elements.",__func__,ndofs);
-      bt_kinematics_destroy(kin);
+      bt_dynamics_destroy(dyn);
       return -1;
    }
    
