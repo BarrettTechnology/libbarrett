@@ -23,6 +23,7 @@ set(programs
 	hand_buttons_test
 	hand_self_preservation
 	high_level_wam
+	inverse_dynamics_test
 	load_ft_cal
 #	log_ft_data_with_wam
 	log_ft_data
