@@ -52,13 +52,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	const jp_type endPos(config.lookup("end_pos"));
 
 
+	wam.jpController.setControlSignalLimit(jt_type(0.0));  // Turn off saturation
+
 	systems::PIDController<jp_type, ja_type> pid(config.lookup("control_joint"));
 	systems::InverseDynamics<DOF> id(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["dynamics"]);
 	connect(wam.jpOutput, pid.feedbackInput);
 	connect(wam.jvOutput, id.jvInput);
 	connect(wam.kinematicsBase.kinOutput, id.kinInput);
 	connect(pid.controlOutput, id.input);
-	wam.supervisoryController.registerConversion(systems::makeIOConversion(pid.referenceInput, id.output));
+//	wam.supervisoryController.registerConversion(systems::makeIOConversion(pid.referenceInput, id.output));
 
 
 	wam.gravityCompensate();
