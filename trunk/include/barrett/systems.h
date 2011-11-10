@@ -63,6 +63,7 @@
 
 // operators
 #include <barrett/systems/kinematics_base.h>
+#include <barrett/systems/inverse_dynamics.h>
 #include <barrett/systems/gravity_compensator.h>
 #include <barrett/systems/tool_position.h>
 #include <barrett/systems/tool_orientation.h>
