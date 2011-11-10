@@ -49,6 +49,7 @@
 #include <barrett/math/trapezoidal_velocity_profile.h>
 
 #include <barrett/math/kinematics.h>
+#include <barrett/math/dynamics.h>
 
 
 #endif /* BARRETT_MATH_H_ */
