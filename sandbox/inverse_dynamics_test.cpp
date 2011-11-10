@@ -49,9 +49,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	config.readFile("inverse_dynamics_test.conf");
 
 	const jp_type startPos(config.lookup("start_pos"));
-//	startPos << -M_PI_2, -M_PI_2, 0.0, 2.0, 0.0, 0.0, 0.0;
 	const jp_type endPos(config.lookup("end_pos"));
-//	endPos[3] = endPos[3] - 0.1;
+
+
+	systems::PIDController<jp_type, ja_type> pid(config.lookup("control_joint"));
+	systems::InverseDynamics<DOF> id(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["dynamics"]);
+	connect(wam.jpOutput, pid.feedbackInput);
+	connect(wam.jvOutput, id.jvInput);
+	connect(wam.kinematicsBase.kinOutput, id.kinInput);
+	connect(pid.controlOutput, id.input);
+	wam.supervisoryController.registerConversion(systems::makeIOConversion(pid.referenceInput, id.output));
+
 
 	wam.gravityCompensate();
 	usleep(250000);
