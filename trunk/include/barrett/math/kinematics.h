@@ -16,7 +16,7 @@
 #include <barrett/units.h>
 
 
-// forward declaration from <barrett/kinematics/kinematics.h>
+// forward declaration from <barrett/cdlbt/kinematics.h>
 struct bt_kinematics;
 
 
