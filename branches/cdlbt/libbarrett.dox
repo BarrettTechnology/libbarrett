@@ -1,0 +1,44 @@
+/** \mainpage
+
+\section sec_intro Introduction
+
+The is the documentation for the \b libbarrett robot control library, written
+and maintained by Barrett Technology, Inc.  For more details about the
+library, see the development page at <http://wiki.barrett.com/libbarrett>.
+For questions, send an email to <support@barrett.com>.
+
+\section sec_modules Modules
+
+The libbarrett library is separated into several modules, that look like
+this:
+
+\dot
+   digraph modules {
+      node [shape=box, fontname=FreeSans, fontsize=9];
+      bt_wam -> bt_control -> bt_dynamics;
+                bt_control -> bt_kinematics;
+                bt_control -> bt_gsl;
+      bt_wam -> bt_refgen -> bt_kinematics;
+                bt_refgen -> bt_spline -> bt_interp;
+                bt_refgen -> bt_profile;
+                bt_refgen -> bt_log;
+      bt_wam -> bt_dynamics -> bt_kinematics;
+      bt_wam -> bt_gravity -> bt_kinematics;
+      bt_wam -> bt_kinematics;
+      bt_wam -> bt_log;
+      bt_wam -> bt_os;
+      bt_wam -> bt_wambot -> bt_bus -> bt_os;
+      bt_discover;
+      bt_rpc;
+   }
+\enddot
+
+\section sec_using Using libbarrett in Your Programs
+
+There are several example programs in the \b examples directory.
+
+\section sec_license License Notes
+
+See <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes> for more details.
+
+*/

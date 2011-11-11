@@ -1,0 +1,8 @@
+<package>
+<description>A simple cpp WAM test node.</description>
+<author>vw</author>
+<license>BSD????</license>
+<depend package="roscpp" />
+<depend package="std_msgs" />
+</package>
+

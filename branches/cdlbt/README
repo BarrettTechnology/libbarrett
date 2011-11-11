@@ -1,0 +1,23 @@
+libbt Development Readme
+2008-09-30 cd
+
+Contains experimental libbt sources.
+
+Should consist only of configure.ac and a Makefile.am for each directory.  Do
+not check in any autotools-generated files!  For example, do not check in:
+ ./aclocal.m4
+ ./autom4te.cache/
+ ./config.guess
+ ./config.h.in
+ ./config.sub
+ ./configure
+ ./depcomp
+ ./install-sh
+ ./ltmain.sh
+ ./Makefile.in
+ ./missing
+
+To generate these files upon checkout, run autoreconf -i.
+
+To re-generate these files upon editing configure.ac or any Makefile.am's,
+run autoreconf.
