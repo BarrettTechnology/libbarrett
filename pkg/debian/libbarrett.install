@@ -1,0 +1,10 @@
+usr/bin
+usr/include/*
+usr/lib/lib*.a
+usr/lib/lib*.so
+usr/lib/lib*.so*
+usr/lib/*.la
+#usr/lib/python*/site-packages/*
+usr/lib/python*/*-packages/*
+#usr/lib/pkgconfig/*
+#usr/share/pkgconfig/*

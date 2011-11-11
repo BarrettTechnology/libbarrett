@@ -1,0 +1,14 @@
+Source: libbarrett
+Priority: extra
+Maintainer: Chris Dellin <cd@barrett.com>
+Build-Depends: debhelper (>= 5), autotools-dev
+Standards-Version: 3.7.2
+Section: libs
+
+Package: libbarrett
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Barrett libbarrett control library
+ This is Barrett's libbarrett control library, used for this, that,
+ and the other thing.

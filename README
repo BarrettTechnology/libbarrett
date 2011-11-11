@@ -1,29 +1,23 @@
-libbarrett
-Barrett Technology
-2010-09-30
+libbt Development Readme
+2008-09-30 cd
 
+Contains experimental libbt sources.
 
-**** Support ****
+Should consist only of configure.ac and a Makefile.am for each directory.  Do
+not check in any autotools-generated files!  For example, do not check in:
+ ./aclocal.m4
+ ./autom4te.cache/
+ ./config.guess
+ ./config.h.in
+ ./config.sub
+ ./configure
+ ./depcomp
+ ./install-sh
+ ./ltmain.sh
+ ./Makefile.in
+ ./missing
 
-For support, please email support@barrett.com.
+To generate these files upon checkout, run autoreconf -i.
 
-
-**** Installation ****
-
-To build and install libbarrett, run:
-	cd build
-	cmake ..
-	make && sudo make install
-
-
-**** Documentation ****
-
-libbarrett is documented using in-code doxygen comments. doxygen (http://www.stack.nl/~dimitri/doxygen/index.html) is a source code documentation generator tool. To generate HTML documentation, run the 'doxgygen' utility from this directory. The documentation will be in 'doc/html/index.html'.
-
-
-**** Eclipse projects ****
-
-It is possible to use CMake to generate several output formats, including Eclipse CTD4 project files. (See http://www.paraview.org/Wiki/Eclipse_CDT4_Generator for details.) From this directory, run:
-	cmake . -G"Eclipse CDT4 - Unix Makefiles"
-Then import the generated project into your Eclipse workspace using File -> Import -> General -> "Existing Projects into Workspace".
-
+To re-generate these files upon editing configure.ac or any Makefile.am's,
+run autoreconf.
