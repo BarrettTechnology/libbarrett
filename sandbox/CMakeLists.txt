@@ -37,6 +37,7 @@ set(programs
 	low_level_wam
 	mouse_follow
 	puck_terminal
+	quaternion_interpolation
 	safety_module
 	tactile_test
 	teach_with_hand
