@@ -1,5 +1,5 @@
 /*
- * inverse_dynamics_test.cpp
+ * inverse_dynamics_test_teach_and_play_accel.cpp
  *
  *  Created on: Nov 8, 2011
  *      Author: dc
@@ -35,41 +35,6 @@ bool validate_args(int argc, char** argv) {
 
 
 template<size_t DOF>
-class FeedForward : public systems::SingleIO<typename units::JointPositions<DOF>::type, typename units::JointTorques<DOF>::type> {
-	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
-
-	bool going;
-
-public:
-	explicit FeedForward() : going(false) {}
-
-	void start() {
-		going = true;
-	}
-
-protected:
-	jt_type data;
-
-	virtual void operate() {
-		if (going) {
-			double angle = this->input.getValue()[3];
-			if (angle > 1.95) {
-				data[3] = -10.0;
-			} else if (angle < 1.8) {
-				data[3] = 0.0;
-				going = false;
-			} else {
-				data[3] = 8.0;
-			}
-		} else {
-			data[3] = 0.0;
-		}
-
-		this->outputValue->setData(&data);
-	}
-};
-
-template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
@@ -83,11 +48,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	libconfig::Config config;
 	config.readFile("inverse_dynamics_test.conf");
 
-	const jp_type startPos(config.lookup("start_pos"));
-	const jp_type endPos(config.lookup("end_pos"));
-
-
-	wam.jpController.setControlSignalLimit(jt_type(0.0));  // Turn off saturation
+//	wam.jpController.setControlSignalLimit(jt_type(0.0));  // Turn off saturation
 
 //	systems::PIDController<jp_type, ja_type> pid(config.lookup("control_joint"));
 //	systems::InverseDynamics<DOF> id(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["dynamics"]);
@@ -98,41 +59,33 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //	wam.supervisoryController.registerConversion(systems::makeIOConversion(pid.referenceInput, id.output));
 
 
-//	FeedForward<DOF> ff;
-//	connect(wam.jpOutput, ff.input);
-//	connect(ff.output, wam.input);
-
-
 	wam.gravityCompensate();
 	usleep(250000);
+	pm.getSafetyModule()->setVelocityLimit(1.5);
 
-//	detail::waitForEnter();
-//	wam.moveTo(jp_type(0.0));
-//	detail::waitForEnter();
-//	wam.moveTo(jp_type(1.0));
-//	detail::waitForEnter();
-//	wam.moveHome();
-//	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-//	return 0;
 
-	wam.moveTo(startPos);
-
-//	systems::ExposedOutput<jp_type> reference(startPos);
-	std::vector<jp_type> vec;
-	vec.push_back(startPos);
-	vec.push_back(endPos);
-	math::Spline<jp_type> spline(vec, jv_type(0.0));
-	math::TrapezoidalVelocityProfile profile(5.0, 100.0, 0.0, spline.changeInS());
-//	math::TrapezoidalVelocityProfile profile(0.5, 0.5, 0.0, spline.changeInS());
-
+	// Build spline between recorded points
+	typedef boost::tuple<double, jp_type> jp_sample_type;
 	systems::Ramp moveTime(pm.getExecutionManager(), 1.0);
-	systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+	log::Reader<jp_sample_type> inputLr("/home/robot/libbarrett/sandbox/fastMove.bin");
+	std::vector<jp_sample_type> vec;
+	for (size_t i = 0; i < inputLr.numRecords(); ++i) {
+		vec.push_back(inputLr.getRecord());
+	}
+	math::Spline<jp_type> spline(vec);
 
+	// First, move to the starting position
+	wam.moveTo(spline.eval(spline.initialS()));
+
+	// Then play back the recorded motion
+	moveTime.setOutput(spline.initialS());
+
+	systems::Callback<double, jp_type> trajectory(boost::ref(spline));
 	connect(moveTime.output, trajectory.input);
 	wam.trackReferenceSignal(trajectory.output);
 
 
-	double omega_p = 1000.0;
+	double omega_p = 180.0;
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(omega_p), jp_type(omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
@@ -147,7 +100,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(hp1.output, hp2.input);
 	connect(hp2.output, changeUnits.input);
 	pm.getExecutionManager()->startManaging(hp2);
-	sleep(1);
 
 	connect(changeUnits.output, id.input);
 	connect(changeUnits.output, driveInertias.input);
@@ -155,14 +107,31 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(wam.kinematicsBase.kinOutput, id.kinInput);
 	connect(id.output, idSum.getInput(0));
 	connect(driveInertias.output, idSum.getInput(1));
-	connect(idSum.output, wam.input);
 
 	wam.jpController.getKp() *= 1.0;
 	wam.jpController.getKi() *= 1.0;
 	wam.jpController.getKd() *= 1.0;
 
+
+	systems::FirstOrderFilter<jv_type> hp3;
+	omega_p = 100.0;
+	wam.jvFilter.setLowPass(jv_type(omega_p));
+	hp3.setHighPass(jp_type(omega_p), jp_type(omega_p));
+	pm.getExecutionManager()->startManaging(hp3);
+	systems::Gain<jv_type, double, ja_type> changeUnits2(1.0);
+	systems::PIDController<ja_type, jt_type> jaController(config.lookup("joint_acceleration_control"));
+
+	connect(wam.jvOutput, hp3.input);
+	connect(hp3.output, changeUnits2.input);
+	connect(changeUnits2.output, jaController.feedbackInput);
+	wam.supervisoryController.registerConversion(&jaController);
+
 //	wam.trackReferenceSignal(reference.output);
-	sleep(2);
+	sleep(1);
+	connect(idSum.output, wam.input);
+	wam.trackReferenceSignal(changeUnits.output);
+	sleep(1);
+
 //	wam.jpController.getKp()[1] = 0.0;
 //	wam.jpController.getKi()[1] = 0.0;
 //	wam.jpController.getKd()[1] = 0.0;
@@ -174,7 +143,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(time.output, tg.template getInput<0>());
 	connect(trajectory.output, tg.template getInput<1>());
 	connect(wam.jpOutput, tg.template getInput<2>());
-	connect(wam.jtSum.output, tg.template getInput<3>());
+//	connect(changeUnits.output, tg.template getInput<1>());
+//	connect(changeUnits2.output, tg.template getInput<2>());
+//	connect(wam.jtSum.output, tg.template getInput<3>());
+	connect(jaController.controlOutput, tg.template getInput<3>());
 //	connect(hp2.output, tg.template getInput<2>());
 //	connect(id.output, tg.template getInput<3>());
 
@@ -194,9 +166,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //	reference.setValue(endPos);
 //	wam.moveTo(startPos, v_type(0.0), endPos, false, 2.667, 0.2);
 	moveTime.start();
-//	wam.idle();
-//	ff.start();
-	sleep(2);
+
+	while (trajectory.input.getValue() < spline.finalS()) {
+		usleep(100000);
+	}
+
+	usleep(500000);
 
 
 	logger.closeLog();

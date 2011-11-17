@@ -1,5 +1,5 @@
 /*
- * inverse_dynamics_test.cpp
+ * inverse_dynamics_test_teach_and_play.cpp
  *
  *  Created on: Nov 8, 2011
  *      Author: dc
@@ -83,11 +83,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	libconfig::Config config;
 	config.readFile("inverse_dynamics_test.conf");
 
-	const jp_type startPos(config.lookup("start_pos"));
-	const jp_type endPos(config.lookup("end_pos"));
-
-
-	wam.jpController.setControlSignalLimit(jt_type(0.0));  // Turn off saturation
+//	wam.jpController.setControlSignalLimit(jt_type(0.0));  // Turn off saturation
 
 //	systems::PIDController<jp_type, ja_type> pid(config.lookup("control_joint"));
 //	systems::InverseDynamics<DOF> id(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["dynamics"]);
@@ -105,6 +101,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.gravityCompensate();
 	usleep(250000);
+	pm.getSafetyModule()->setVelocityLimit(1.5);
 
 //	detail::waitForEnter();
 //	wam.moveTo(jp_type(0.0));
@@ -115,24 +112,29 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 //	return 0;
 
-	wam.moveTo(startPos);
 
-//	systems::ExposedOutput<jp_type> reference(startPos);
-	std::vector<jp_type> vec;
-	vec.push_back(startPos);
-	vec.push_back(endPos);
-	math::Spline<jp_type> spline(vec, jv_type(0.0));
-	math::TrapezoidalVelocityProfile profile(5.0, 100.0, 0.0, spline.changeInS());
-//	math::TrapezoidalVelocityProfile profile(0.5, 0.5, 0.0, spline.changeInS());
-
+	// Build spline between recorded points
+	typedef boost::tuple<double, jp_type> jp_sample_type;
 	systems::Ramp moveTime(pm.getExecutionManager(), 1.0);
-	systems::Callback<double, jp_type> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+	log::Reader<jp_sample_type> inputLr("/home/robot/libbarrett/sandbox/fastMove.bin");
+	std::vector<jp_sample_type> vec;
+	for (size_t i = 0; i < inputLr.numRecords(); ++i) {
+		vec.push_back(inputLr.getRecord());
+	}
+	math::Spline<jp_type> spline(vec);
 
+	// First, move to the starting position
+	wam.moveTo(spline.eval(spline.initialS()));
+
+	// Then play back the recorded motion
+	moveTime.setOutput(spline.initialS());
+
+	systems::Callback<double, jp_type> trajectory(boost::ref(spline));
 	connect(moveTime.output, trajectory.input);
 	wam.trackReferenceSignal(trajectory.output);
 
 
-	double omega_p = 1000.0;
+	double omega_p = 300.0;
 	systems::FirstOrderFilter<jp_type> hp1;
 	hp1.setHighPass(jp_type(omega_p), jp_type(omega_p));
 	systems::FirstOrderFilter<jp_type> hp2;
@@ -194,9 +196,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 //	reference.setValue(endPos);
 //	wam.moveTo(startPos, v_type(0.0), endPos, false, 2.667, 0.2);
 	moveTime.start();
+
+	while (trajectory.input.getValue() < spline.finalS()) {
+		usleep(100000);
+	}
+
 //	wam.idle();
 //	ff.start();
-	sleep(2);
+	usleep(500000);
 
 
 	logger.closeLog();

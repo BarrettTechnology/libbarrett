@@ -24,6 +24,8 @@ set(programs
 	hand_self_preservation
 	high_level_wam
 	inverse_dynamics_test
+	inverse_dynamics_test_teach_and_play
+	inverse_dynamics_test_teach_and_play_accel
 	load_ft_cal
 #	log_ft_data_with_wam
 	log_ft_data
