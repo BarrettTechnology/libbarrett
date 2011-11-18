@@ -389,7 +389,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			gsl_blas_daxpy(1.0, angle_diff, moveto_vec);
 			syslog(LOG_ERR, "Moving to: %s", bt_gsl_vector_sprintf(buf, moveto_vec));
 			cur.copyFrom(moveto_vec);
-			wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+			wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
 			prev = cur;
 			phase = (enum PHASE) ((int) phase + 1);
 			break;
@@ -404,7 +404,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 			mvprintw(9, 3, "Moving to position (from above) ...    ");
 			cur.copyFrom(poses[pose]);
-			wam.moveTo(prev, jv_type(0.0), cur, false, 0.05, 0.05);
+			wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.05, 0.05);
 			prev = cur;
 			phase = (enum PHASE) ((int) phase + 1);
 		case MU_P_FROM_TOP:
@@ -422,7 +422,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			gsl_blas_dcopy(poses[pose], moveto_vec);
 			gsl_blas_daxpy(-1.0, angle_diff, moveto_vec);
 			cur.copyFrom(moveto_vec);
-			wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+			wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
 			prev = cur;
 			phase = (enum PHASE) ((int) phase + 1);
 			break;
@@ -431,7 +431,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				break;
 			mvprintw(9, 3, "Moving to position (from below) ...    ");
 			cur.copyFrom(poses[pose]);
-			wam.moveTo(prev, jv_type(0.0), cur, false, 0.05, 0.05);
+			wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.05, 0.05);
 			prev = cur;
 			phase = (enum PHASE) ((int) phase + 1);
 			break;
@@ -480,7 +480,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0, M_PI/2.0, M_PI/2.0, M_PI));
 	}
 //	wam.moveHome(false);
-	wam.moveTo(prev, jv_type(0.0), wam.getHomePosition(), false, 0.5, 0.5);
+	wam.moveTo(prev, /*jv_type(0.0),*/ wam.getHomePosition(), false, 0.5, 0.5);
 
 	/* Free unneeded variables */
 	for (j = 0; j < n; j++) {

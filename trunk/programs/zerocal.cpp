@@ -273,7 +273,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				case MODE_TOZERO:
 					gsl_vector_set_zero(jangle);
 					cur.copyFrom(jangle);
-					wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+					wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
 					prev = cur;
 					break;
 				case MODE_CANCEL:
@@ -328,13 +328,13 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			case BTKEY_UP:
 				*(gsl_vector_ptr(jangle, joint)) += pow(10, -decplace);
 				cur.copyFrom(jangle);
-				wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+				wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
 				prev = cur;
 				break;
 			case BTKEY_DOWN:
 				*(gsl_vector_ptr(jangle, joint)) -= pow(10, -decplace);
 				cur.copyFrom(jangle);
-				wam.moveTo(prev, jv_type(0.0), cur, false, 0.5, 0.5);
+				wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
 				prev = cur;
 				break;
 			default:

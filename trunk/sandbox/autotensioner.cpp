@@ -139,7 +139,7 @@ private:
 
 	// Moves the WAM to the given position, handling high torques against stops smoothly
 	void moveTheWAM(jp_type position, bool blocking = true) {
-		wam.moveTo(setPoint, jv_type(0.0), position, blocking, SPEED, SPEED);
+		wam.moveTo(setPoint, /*jv_type(0.0),*/ position, blocking, SPEED, SPEED);
 		for(size_t i=0; i<DOF; i++) setPoint[i] = position[i];
 	}
 
