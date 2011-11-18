@@ -67,8 +67,8 @@ private:
 			else other[joint] = wam.getJointPositions()[joint]-0.2;
 		}
 		setPoint[joint] = position;
-		if (joint==6) wam.moveTo(other, jv_type(0.0), setPoint, blocking, 2*SPEED, 3*SPEED);
-		else wam.moveTo(other, jv_type(0.0), setPoint, blocking, SPEED, SPEED);
+		if (joint==6) wam.moveTo(other, /*jv_type(0.0),*/ setPoint, blocking, 2*SPEED, 3*SPEED);
+		else wam.moveTo(other, /*jv_type(0.0),*/ setPoint, blocking, SPEED, SPEED);
 	}
 
 	// Figures out the zero position for the given joint
@@ -167,7 +167,7 @@ public:
 		}
 
 		jp_type home = setPoint + wam.getHomePosition();
-		wam.moveTo(setPoint, jv_type(0.0), home, true, 0.5, 0.5);
+		wam.moveTo(setPoint, /*jv_type(0.0),*/ home, true, 0.5, 0.5);
 
 		// Pause at the end for idle
 		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);

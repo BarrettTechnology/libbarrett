@@ -132,10 +132,14 @@ public:
 
 	void gravityCompensate(bool compensate = true);
 	bool isGravityCompensated();
-	void moveHome(bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
+
+	void moveHome(bool blocking = true);
+	void moveHome(bool blocking, double velocity);
+	void moveHome(bool blocking, double velocity, double acceleration);
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const cp_type& destination, bool blocking = true, double velocity = 0.1, double acceleration = 0.2);
-	template<typename T> void moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration);
+	void moveTo(const Eigen::Quaterniond& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
+	template<typename T> void moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration);
 	bool moveIsDone() const;
 	void idle();
 
@@ -143,7 +147,7 @@ public:
 	thread::Mutex& getEmMutex() const { return llww.getEmMutex(); }
 
 protected:
-	template<typename T> void moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration, bool* started);
+	template<typename T> void moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started);
 
 	bool doneMoving;
 
