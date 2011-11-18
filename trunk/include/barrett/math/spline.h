@@ -11,7 +11,12 @@
 
 
 #include <vector>
+
 #include <boost/tuple/tuple.hpp>
+
+#define EIGEN_USE_NEW_STDVECTOR
+#include<Eigen/StdVector>
+#include <Eigen/Geometry>
 
 #include <barrett/detail/ca_macro.h>
 
@@ -24,23 +29,22 @@ namespace barrett {
 namespace math {
 
 
-// TODO(dc): add an option to saturate s if it is outside the range of [initialS, finalS].
 template<typename T>
 class Spline {
 public:
 	typedef boost::tuple<double, T> tuple_type;
 
-	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<tuple_type>& samples, bool saturateS = true);
+	template<template<typename, typename> class Container, typename Allocator>
+	Spline(const Container<tuple_type, Allocator>& samples, bool saturateS = true);
 
 	// initialDirection will be normalized internally
-	template<template<typename U, typename = std::allocator<U> > class Container>
-	Spline(const Container<T>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0), bool saturateS = true);
+	template<template<typename, typename> class Container, typename Allocator>
+	Spline(const Container<T, Allocator>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0), bool saturateS = true);
 
 	~Spline();
 
-	double initialS() const;
-	double finalS() const;
+	double initialS() const { return s_0; }
+	double finalS() const { return s_f; }
 	double changeInS() const;
 
 	T eval(double s) const;
@@ -58,6 +62,47 @@ protected:
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
 	DISALLOW_COPY_AND_ASSIGN(Spline);
+};
+
+
+// Specialization for Eigen::Quaternion<>  types
+template<typename Scalar>
+class Spline<Eigen::Quaternion<Scalar> > {
+public:
+	typedef Eigen::Quaternion<Scalar> T;
+	typedef boost::tuple<double, T> tuple_type;
+
+	template<template<typename, typename> class Container, typename Allocator>
+	Spline(const Container<tuple_type, Allocator>& samples, bool saturateS = true);
+
+	// initialDirection is ignored for quaternion types
+	template<template<typename, typename> class Container, typename Allocator>
+	Spline(const Container<T, Allocator>& points, bool saturateS = true);
+
+	double initialS() const { return boost::get<0>(data.front()); }
+	double finalS() const { return boost::get<0>(data.back()); }
+	double changeInS() const { return finalS() - initialS(); }
+
+	T eval(double s) const;
+
+	typedef T result_type;  ///< For use with boost::bind().
+	result_type operator() (double s) const {
+		return eval(s);
+	}
+
+protected:
+	std::vector<tuple_type, Eigen::aligned_allocator<tuple_type> > data;
+	bool sat;
+
+	mutable size_t index;
+	mutable double rate;
+
+private:
+	// TODO(dc): write a real copy constructor and assignment operator?
+	DISALLOW_COPY_AND_ASSIGN(Spline);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
 
 
