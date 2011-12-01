@@ -62,7 +62,7 @@ void ForceTorqueSensor::update(bool realtime)
 
 int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor)
 {
-	if (len != 6) {
+	if (len != 6  &&  len != 7) {
 		syslog(LOG_ERR, "%s: expected message length of 6, got message length of %d", __func__, len);
 		return 1;
 	}
