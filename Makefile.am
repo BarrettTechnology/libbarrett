@@ -3,6 +3,7 @@
 #  - @BT_OS_CPP@
 #  - @BT_OS_LDFLAGS@
 #  - @BT_OS_LIBS@
+#  - @BT_BUS_CPP@
 #  - @BT_BUS_CANTYPE@
 #  - @BT_BUS_LIBS@
 # Contitionals:
@@ -51,8 +52,9 @@ pkginclude_HEADERS += src/bus/bus.h \
                       src/bus/bus_can.h
 
 # Source files to complile
-src_libbtbus_la_CPPFLAGS = -Isrc/os -D@BT_BUS_CANTYPE@
-src_libbtbus_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtbus_la_CPPFLAGS = -Isrc/os @BT_BUS_CPP@ -D@BT_BUS_CANTYPE@
+#src_libbtbus_la_CFLAGS = -std=c89 -pedantic-errors -Wall -Werror -Wno-long-long
+src_libbtbus_la_CFLAGS = -Wall
 src_libbtbus_la_SOURCES = src/bus/bus.c \
                           src/bus/bus_can.c
 src_libbtbus_la_LIBADD = @BT_BUS_LIBS@
@@ -495,12 +497,12 @@ include pkg/debian.mk
 
 # Make the bindings
 
-pyexec_LTLIBRARIES = bindings/python/libbarrett.la
-bindings_python_libbarrett_la_SOURCES = bindings/python/libbarrett.c
-bindings_python_libbarrett_la_LDFLAGS = -Lsrc/.libs \
-                                        -avoid-version -module
-bindings_python_libbarrett_la_CPPFLAGS = -I@BT_PYINCDIR@ \
-                                         -Isrc/wam \
-                                         -Isrc/discover \
-                                         -Isrc/file
-bindings_python_libbarrett_la_LIBADD = -lbarrett
+#pyexec_LTLIBRARIES = bindings/python/libbarrett.la
+#bindings_python_libbarrett_la_SOURCES = bindings/python/libbarrett.c
+#bindings_python_libbarrett_la_LDFLAGS = -Lsrc/.libs \
+#                                        -avoid-version -module
+#bindings_python_libbarrett_la_CPPFLAGS = -I@BT_PYINCDIR@ \
+#                                         -Isrc/wam \
+#                                         -Isrc/discover \
+#                                         -Isrc/file
+#bindings_python_libbarrett_la_LIBADD = -lbarrett

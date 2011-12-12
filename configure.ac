@@ -11,8 +11,8 @@ AC_ARG_WITH([async-only],
    [],[with_async_only=no])
 
 AC_ARG_WITH([xenomai],
-   [AS_HELP_STRING([--with-xenomai],[Xenomai Real-Time Support])],
-   [],[with_xenomai=no])
+   [AS_HELP_STRING([--with-xenomai],[Xenomai Real-Time Support (Def:yes)])],
+   [],[with_xenomai=yes])
 AC_ARG_WITH([rtai],
    [AS_HELP_STRING([--with-rtai],[RTAI Real-Time Support])],
    [],[with_rtai=no])
@@ -36,13 +36,20 @@ AC_ARG_WITH([can-peak-pci],
 AC_ARG_WITH([can-peak-isa],
    [AS_HELP_STRING([--with-can-peak-isa],[Peak CAN / ISA Bus (Def:no)])],
    [],[with_can_peak_isa=no])
+AC_ARG_WITH([can-socket],
+   [AS_HELP_STRING([--with-can-socket],[Xenomai Socket CAN (Def:yes)])],
+   [],[with_can_socket=yes])
 
 # Initialize config variables
 bt_os_cpp=""
 bt_os_ldflags=""
 bt_os_libs=""
+bt_bus_cpp=""
 bt_bus_cantype=""
 bt_bus_libs=""
+
+xeno_cppflags=""
+xeno_libs=""
 
 # Make sure the user picks at least one
 AS_IF(
@@ -132,7 +139,13 @@ AS_IF(
             bt_bus_cantype="CANTYPE_PEAKISA"
             bt_bus_libs="-lpcan"
          ],
-         [AC_MSG_FAILURE([one of --with-can-esd, --with-can-peak-pci, --with-can-peak-isa, or --without-wambot-physical required])]
+         [test "$with_can_socket" = yes],
+         [
+            bt_bus_cpp="$xeno_cppflags"
+            bt_bus_cantype="CANTYPE_SOCKET"
+            bt_bus_libs="$xeno_libs -lrtdm"
+         ],
+         [AC_MSG_FAILURE([one of --with-can-esd, --with-can-peak-pci, --with-can-peak-isa, --with-can-socket, or --without-wambot-physical required])]
       )
    ]
 )
@@ -149,6 +162,7 @@ AC_SUBST([BT_PYINCDIR],["$pyincdir"])
 AC_SUBST([BT_OS_CPP],["$bt_os_cpp"])
 AC_SUBST([BT_OS_LDFLAGS],["$bt_os_ldflags"])
 AC_SUBST([BT_OS_LIBS],["$bt_os_libs"])
+AC_SUBST([BT_BUS_CPP],["$bt_bus_cpp"])
 AC_SUBST([BT_BUS_CANTYPE],["$bt_bus_cantype"])
 AC_SUBST([BT_BUS_LIBS],["$bt_bus_libs"])
 
