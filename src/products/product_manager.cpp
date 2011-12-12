@@ -339,9 +339,7 @@ systems::Wam<4>* ProductManager::getWam4(bool waitForShiftActivate, const char* 
 			configPath = getWamDefaultConfigPath();
 		}
 		wam4 = new systems::Wam<4>(getExecutionManager(), wam4Pucks, getSafetyModule(), getConfig().lookup(configPath));
-		if (rtem != NULL  &&  !rtem->isRunning()) {
-			rtem->start();
-		}
+		startExecutionManager();
 	}
 
 	if (waitForShiftActivate) {
@@ -371,9 +369,7 @@ systems::Wam<7>* ProductManager::getWam7(bool waitForShiftActivate, const char* 
 			configPath = getWamDefaultConfigPath();
 		}
 		wam7 = new systems::Wam<7>(getExecutionManager(), wam7Pucks, getSafetyModule(), getConfig().lookup(configPath));
-		if (rtem != NULL  &&  !rtem->isRunning()) {
-			rtem->start();
-		}
+		startExecutionManager();
 	}
 
 	if (waitForShiftActivate) {
@@ -395,6 +391,12 @@ systems::RealTimeExecutionManager* ProductManager::getExecutionManager(double pe
 		rtem = new systems::RealTimeExecutionManager(period_s, rt_priority);
 	}
 	return rtem;
+}
+void ProductManager::startExecutionManager() {
+	getExecutionManager();
+	if ( !rtem->isRunning() ) {
+		rtem->start();
+	}
 }
 
 

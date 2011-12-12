@@ -60,8 +60,10 @@ public:
 	const char* getWamDefaultConfigPath();
 	systems::Wam<4>* getWam4(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
+
 	systems::RealTimeExecutionManager* getExecutionManager(
 			double period_s = DEFAULT_LOOP_PERIOD, int rt_priority = 50);
+	void startExecutionManager();
 
 	bool foundForceTorqueSensor() const;
 	ForceTorqueSensor* getForceTorqueSensor();
