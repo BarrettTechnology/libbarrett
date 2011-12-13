@@ -159,8 +159,8 @@ print "### Collecting property information from 3 repositories..."
 mungeRepo(MAIN_URL, mainParseFunc, 32)  # versions 1 through 31 were never released
 mungeRepo(MON_URL, monParseFunc)
 
-# the FT's VERS command isn't yet implemented... not sure how to handle this robustly
-mungeRepo(FT_URL, ftParseFunc, 5)
+# the FTS's VERS command isn't yet implemented... not sure how to handle this robustly
+mungeRepo(FT_URL, ftParseFunc, 12)
 
 # remove version-adjacent, duplicate porperty lists
 # (the cause of the revision change might have been outside the property enum(s))
