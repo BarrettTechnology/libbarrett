@@ -28,10 +28,10 @@
  *      Author: dc
  */
 
-
 #include <utility>
 #include <list>
 #include <stdexcept>
+#include <cassert>
 
 #include <barrett/detail/stl_utils.h>
 #include <barrett/systems/abstract/system.h>
@@ -68,27 +68,19 @@ void Converter<OutputType>::connectInputTo(
 		System::Output<T>& output)
 throw(std::invalid_argument)
 {
-	typename std::list<Conversion<OutputType>*>::iterator i;
-	for (i = conversions.begin(); i != conversions.end(); ++i) {
-		if (connectInputTo(output, *i)) {
-			return;
-		}
+	if ( !connectInputToNoThrow(output) ) {
+		throw std::invalid_argument(
+				"(systems::Converter::connectInputTo): No systems::Conversion "
+				"is registered that matches the output's type.");
 	}
-
-	throw std::invalid_argument(
-			"(systems::Converter::connectInputTo): No systems::Conversion is "
-			"registered that matches the output's type.");
 }
 
 template<typename OutputType>
 template<typename T>
-bool Converter<OutputType>::connectInputTo(
-		System::Output<T>& output,
-		Conversion<OutputType>* conversion)
+bool Converter<OutputType>::connectInputToNoThrow(System::Output<T>& output)
 {
-	System::Input<T>* input = dynamic_cast<System::Input<T>*>(  //NOLINT: see RTTI note above
-			conversion->getConversionInput() );
-
+	System::Input<T>* input = NULL;
+	Conversion<OutputType>* conversion = getInput(&input);
 	if (input == NULL) {
 		return false;
 	}
@@ -103,6 +95,25 @@ bool Converter<OutputType>::connectInputTo(
 	}
 
 	return true;
+}
+
+template<typename OutputType>
+template<typename T>
+Conversion<OutputType>* Converter<OutputType>::getInput(System::Input<T>** input)
+{
+	typename std::list<Conversion<OutputType>*>::iterator i;
+	for (i = conversions.begin(); i != conversions.end(); ++i) {
+		Conversion<OutputType>* conversion = *i;
+		*input = dynamic_cast<System::Input<T>*>(  //NOLINT: see RTTI note above
+				conversion->getConversionInput() );
+
+		if (*input != NULL) {
+			return conversion;
+		}
+	}
+
+	assert(*input == NULL);
+	return NULL;
 }
 
 template<typename OutputType>
