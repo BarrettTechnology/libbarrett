@@ -60,6 +60,27 @@ void ForceTorqueSensor::update(bool realtime)
 	}
 }
 
+void ForceTorqueSensor::updateAccel(bool realtime)
+{
+	int ret;
+
+	// TODO(dc): Fix this once FT sensors have working ROLE/VERS properties.
+	int accelPropId = Puck::getPropertyId(Puck::A, Puck::PT_ForceTorque, 0);
+
+	ret = Puck::sendGetPropertyRequest(*bus, id, accelPropId);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::sendGetPropertyRequest() returned error %d.", __func__, ret);
+		throw std::runtime_error("ForceTorqueSensor::updateAccel(): Failed to send request. Check /var/log/syslog for details.");
+	}
+
+	ret = Puck::receiveGetPropertyReply<AccelParser>(*bus, id, accelPropId, &ca, true, realtime);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: Puck::receiveGetPropertyReply() returned error %d while receiving FT Accel reply from ID=%d.",
+				__func__, ret, id);
+		throw std::runtime_error("ForceTorqueSensor::updateAccel(): Failed to receive reply. Check /var/log/syslog for details.");
+	}
+}
+
 int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor)
 {
 	if (len != 6  &&  len != 7) {

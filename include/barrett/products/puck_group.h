@@ -78,6 +78,8 @@ public:
 		FGRP_FT_FORCE = Puck::GROUP_MASK | 10,
 		// Torque data from the F/T Sensor is sent to group 11.
 		FGRP_FT_TORQUE = Puck::GROUP_MASK | 11,
+		// Accelerometer data from the F/T Sensor is sent to group 12.
+		FGRP_FT_ACCEL = Puck::GROUP_MASK | 12,
 	};
 
 protected:

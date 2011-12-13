@@ -37,6 +37,9 @@ public:
 	const cf_type& getForce() const { return cf; }
 	const ct_type& getTorque() const { return ct; }
 
+	void updateAccel(bool realtime = false);
+	const ca_type& getAccel() const { return ca; }
+
 
 	struct ForceParser {
 		static int busId(int id, int propId) {
@@ -60,6 +63,17 @@ public:
 			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
 		}
 	};
+	struct AccelParser {
+		static int busId(int id, int propId) {
+			return Puck::encodeBusId(id, PuckGroup::FGRP_FT_ACCEL);
+		}
+
+		static const double SCALE_FACTOR = 16.0;
+		typedef ca_type result_type;
+		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
+			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
+		}
+	};
 
 
 protected:
@@ -69,6 +83,7 @@ protected:
 
 	cf_type cf;
 	ct_type ct;
+	ca_type ca;
 
 private:
 	typedef cf_type::Base base_type;
