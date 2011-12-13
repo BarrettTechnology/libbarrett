@@ -147,6 +147,7 @@ public:
 	thread::Mutex& getEmMutex() const { return llww.getEmMutex(); }
 
 protected:
+	template<typename T> T currentPosHelper(const T& currentPos);
 	template<typename T> void moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started);
 
 	bool doneMoving;
