@@ -269,26 +269,26 @@ inline void Wam<DOF>::moveHome(bool blocking, double velocity)
 template<size_t DOF>
 inline void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
-	moveTo(getHomePosition(), blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getHomePosition()), blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking, double velocity, double acceleration)
 {
-//	moveTo(getJointPositions(), getJointVelocities(), destination, blocking, velocity, acceleration);
-	moveTo(getJointPositions(), /*jv_type(0.0),*/ destination, blocking, velocity, acceleration);
+//	moveTo(currentPosHelper(getJointPositions()), getJointVelocities(), destination, blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getJointPositions()), /*jv_type(0.0),*/ destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const cp_type& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getToolPosition(), /*cv_type(0.0),*/ destination, blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getToolPosition()), /*cv_type(0.0),*/ destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const Eigen::Quaterniond& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getToolOrientation(), destination, blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getToolOrientation()), destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
@@ -322,6 +322,25 @@ void Wam<DOF>::idle()
 	supervisoryController.disconnectInput();
 }
 
+
+template<size_t DOF>
+template<typename T>
+T Wam<DOF>::currentPosHelper(const T& currentPos)
+{
+	System::Input<T>* input = NULL;
+	supervisoryController.getInput(&input);
+	if (input != NULL  &&  input->valueDefined()) {
+		// If we're already using the controller we're about to use in the
+		// moveTo() call, it's best to treat the current *set point* as the
+		// "current position". That way the reference signal is continuous as it
+		// transitions from whatever is happening now to the moveTo() Spline.
+		return input->getValue();
+	}
+
+	// If we're not using the appropriate controller already, then use our
+	// *actual* current position.
+	return currentPos;
+}
 
 template<size_t DOF>
 template<typename T>
