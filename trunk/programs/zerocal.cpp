@@ -131,10 +131,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
-	jp_type prev(wam.getJointPositions());
-	jp_type cur;
-
-	wam.moveTo(prev);  // Hold position. The next move assumes that the WAM is still at prev.
 
 
 	/* Spin off the magenc thread, which also detects Puck versions into mechset */
@@ -272,9 +268,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				switch (mode) {
 				case MODE_TOZERO:
 					gsl_vector_set_zero(jangle);
-					cur.copyFrom(jangle);
-					wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
-					prev = cur;
+					wam.moveTo(jp_type(jangle), false);
 					break;
 				case MODE_CANCEL:
 					done = -1;
@@ -327,15 +321,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				/* Actually do the moves */
 			case BTKEY_UP:
 				*(gsl_vector_ptr(jangle, joint)) += pow(10, -decplace);
-				cur.copyFrom(jangle);
-				wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
-				prev = cur;
+				wam.moveTo(jp_type(jangle), false);
 				break;
 			case BTKEY_DOWN:
 				*(gsl_vector_ptr(jangle, joint)) -= pow(10, -decplace);
-				cur.copyFrom(jangle);
-				wam.moveTo(prev, /*jv_type(0.0),*/ cur, false, 0.5, 0.5);
-				prev = cur;
+				wam.moveTo(jp_type(jangle), false);
 				break;
 			default:
 				break;
