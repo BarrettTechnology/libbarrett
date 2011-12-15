@@ -16,6 +16,7 @@
 
 #include <curses.h>
 #include <boost/lexical_cast.hpp>
+#include <libconfig.h++>
 
 #include <barrett/exception.h>
 #include <barrett/systems.h>
@@ -25,6 +26,9 @@
 
 using namespace barrett;
 using detail::waitForEnter;
+
+//const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char CAL_CONFIG_FILE[] = "/home/robot/libbarrett/config/calibration.conf";
 
 
 class CalibrationStep {
@@ -70,12 +74,13 @@ class AdjustJoint : public CalibrationStep {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 public:
-	explicit AdjustJoint(size_t jointIndex, const jp_type& pos, jp_type* offsets_) :
+	explicit AdjustJoint(size_t jointIndex, const jp_type& pos_, systems::Wam<DOF>* wam_, jp_type* offsets_) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), pos(pos_), offsets(offsets_)
+		j(jointIndex), pos(pos_), wam(wam_), offsets(offsets_)
 	{
 		assert(jointIndex >= 0);
 		assert(jointIndex < DOF);
+		assert(wam != NULL);
 		assert(offsets != NULL);
 	}
 	virtual ~AdjustJoint() {}
@@ -88,7 +93,7 @@ public:
 		left += L_OFF;
 
 		if (active) {
-			mvprintw(top,left, "OMG! %d", j);
+			mvprintw(top,left, "jIdx:%d, pos: [%f, %f, %f, %f]", j, pos[0], pos[1], pos[2], pos[3]);
 		}
 
 		return height(origTop);
@@ -97,6 +102,7 @@ public:
 protected:
 	size_t j;
 	const jp_type pos;
+	systems::Wam<DOF>* wam;
 	jp_type* offsets;
 };
 
@@ -113,6 +119,48 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	wam.moveTo(home);  // Hold position
 
 
+	// Read from config
+	std::vector<CalibrationStep*> steps;
+	try {
+		libconfig::Config config;
+		config.readFile(CAL_CONFIG_FILE);
+		const libconfig::Setting& setting = config.lookup("zerocal")[pm.getWamDefaultConfigPath()];
+		assert(setting.isList());
+		assert(setting.getLength() >= 1);
+		assert(setting.getLength() <= (int)DOF);
+
+		for (int i = 0; i < setting.getLength(); ++i) {
+			assert(setting[i].isList());
+			assert(setting[i].getLength() == 2);
+
+			const libconfig::Setting& jointListSetting = setting[i][0];
+			assert(jointListSetting.isArray()  ||  jointListSetting.isList());
+			jp_type pos(setting[i][1]);
+
+			for (int j = 0; j < jointListSetting.getLength(); ++j) {
+				assert(jointListSetting[j].isNumber());
+				int jointNumer = jointListSetting[j];
+				assert(jointNumer >= 1);
+				assert(jointNumer <= (int)DOF);
+
+				steps.push_back(new AdjustJoint<DOF>(jointNumer-1, pos, &wam, &offsets));
+			}
+		}
+	} catch (libconfig::ParseException e) {
+		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE, e.getError());
+		return 1;
+	} catch (libconfig::SettingNotFoundException e) {
+		printf(">>> CONFIG FILE ERROR in %s: could not find \"%s\"\n", CAL_CONFIG_FILE, e.getPath());
+		return 1;
+	} catch (libconfig::SettingTypeException e) {
+		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE, e.getPath());
+		return 1;
+	}
+
+	steps[2]->setSelected(true);
+	steps[1]->setActive(true);
+
+
 	// Set up ncurses
 	initscr();
 	curs_set(0);
@@ -120,17 +168,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	timeout(0);
 	std::atexit((void (*)())endwin);
 
-	std::vector<CalibrationStep*> steps;
-	for (size_t i = 0; i < DOF; ++i) {
-		steps.push_back(new AdjustJoint<DOF>(i));
-	}
-	steps[1]->setSelected(true);
-	steps[2]->setActive(true);
 
 	int top = 5;
 	for (size_t i = 0; i < DOF; ++i) {
 		top += steps[i]->display(top,0);
 	}
+
 
 	refresh();
 	detail::purge(steps);
