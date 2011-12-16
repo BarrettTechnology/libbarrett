@@ -34,6 +34,42 @@ using detail::waitForEnter;
 const char CAL_CONFIG_FILE[] = "/home/robot/libbarrett/config/calibration.conf";
 
 
+class ScopedAttr {
+public:
+	ScopedAttr() : isOn(false), a(-1) {}
+	explicit ScopedAttr(unsigned long attr, bool startOn = false) : isOn(false), a(-1) {
+		set(attr, startOn);
+	}
+	~ScopedAttr() { off(); }
+
+	void set(unsigned long attr, bool startOn = true) {
+		if (isOn) {
+			off();
+		}
+		a = attr;
+		if (startOn) {
+			on();
+		}
+	}
+	void on() {
+		if (!isOn) {
+			attron(a);
+			isOn = true;
+		}
+	}
+	void off() {
+		if (isOn) {
+			attroff(a);
+			isOn = false;
+		}
+	}
+
+protected:
+	bool isOn;
+	unsigned long a;
+};
+
+
 class CalibrationStep {
 public:
 	explicit CalibrationStep(const std::string& title_ = "") :
@@ -53,27 +89,23 @@ public:
 		return true;
 	}
 
-	static const int L_OFFSET = 8;
+	static const int L_OFFSET = 10;
 	virtual int display(int top, int left) {
+		ScopedAttr sa(A_BOLD);
 		if (selected) {
-			attron(A_BOLD);
+			sa.on();
 			mvprintw(top,left, "--> ] ");
 		} else {
 			mvprintw(top,left, "    ] ");
 		}
 		printw("%s", title.c_str());
-		if(selected) {
-			attroff(A_BOLD);
-		}
 
-		return 1;
+		return height(top);
 	}
 
 
 	static int height(int origTop) {
-		int y, x;
-		getyx(stdscr, y,x);
-		return y - origTop + 1;
+		return getcury(stdscr) - origTop + 1;
 	}
 
 protected:
@@ -106,7 +138,12 @@ public:
 
 	virtual bool onKeyPress(enum Key k) {
 		switch (k) {
-
+		case K_ENTER:
+//			wam->moveTo(jp_type(pos + *offsets), false);
+			state++;
+			break;
+		default:
+			break;
 		}
 
 		return true;
@@ -117,13 +154,48 @@ public:
 		left += L_OFFSET;
 
 		if (active) {
-			mvprintw(line++,left, "--> Press [Enter] to move to: [%0.2f", pos[0]);
-			for (size_t i = 1; i < DOF; ++i) {
-				printw(", %0.2f", pos[i]);
-			}
-			printw("]");
+			ScopedAttr sa(A_STANDOUT, true);
 
-			mvprintw(line++,left, "    Adjust Joint %d to make the outer link vertical", j+1);
+			switch (state) {
+			case 0:
+				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", pos[0]);
+				for (size_t i = 1; i < DOF; ++i) {
+					printw(", %0.2f", pos[i]);
+				}
+				printw("]");
+				break;
+			case 1:
+				mvprintw(line++,left, "Wait for the WAM to finish moving.");
+				break;
+			default:
+				mvprintw(line++,left, "Use arrow keys to adjust Joint %d", j+1);
+				sa.off();
+				line++;
+				mvprintw(line++,left, "         Offset (rad):");
+				mvprintw(line++,left, "            0.000");
+				line++;
+				mvprintw(line++,left, "Press [Enter] once the outer link is vertical.");
+				break;
+			}
+
+//			// If we just moved the WAM, see if it has arrived yet.
+//			if (state == 1  &&  wam->moveIsDone()) {
+//				state++;
+//			}
+//
+//			ScopedAttr sa;
+//
+//			sa.set(state < 2 ? A_STANDOUT : A_NORMAL);
+//			if (state == 0) {
+//				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", pos[0]);
+//				for (size_t i = 1; i < DOF; ++i) {
+//					printw(", %0.2f", pos[i]);
+//				}
+//				printw("]");
+//
+//
+//			sa.set(state >= 2 ? A_STANDOUT : A_NORMAL);
+//			mvprintw(line++,left, "Use arrow keys to adjust Joint %d", j+1);
 		}
 
 		return height(top);
@@ -238,7 +310,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				active = -1;
 				break;
 			default:
-				// Forward to active item
+				// Forward to the active item
+				steps[active]->onKeyPress(k);
 				break;
 			}
 		}
