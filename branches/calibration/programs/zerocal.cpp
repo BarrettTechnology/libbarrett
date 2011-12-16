@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstdlib>  // For std::atexit()
 #include <cassert>
+#include <cmath>
 
 #include <unistd.h>  // For usleep()
 
@@ -22,6 +23,8 @@
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 #include <barrett/detail/stl_utils.h>
+
+#include "get_key.h"
 
 
 using namespace barrett;
@@ -38,10 +41,19 @@ public:
 	virtual ~CalibrationStep() {}
 
 	void setSelected(bool on) { selected = on; }
-	void setActive(bool on) { active = on; }
+	void setActive(bool on) {
+		if (active != on) {
+			active = on;
+			onChangeActive();
+		}
+	}
 
-	static const int T_OFF = 1;
-	static const int L_OFF = 8;
+	virtual void onChangeActive() {}
+	virtual bool onKeyPress(enum Key k) {
+		return true;
+	}
+
+	static const int L_OFFSET = 8;
 	virtual int display(int top, int left) {
 		if (selected) {
 			attron(A_BOLD);
@@ -76,7 +88,7 @@ class AdjustJoint : public CalibrationStep {
 public:
 	explicit AdjustJoint(size_t jointIndex, const jp_type& pos_, systems::Wam<DOF>* wam_, jp_type* offsets_) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), pos(pos_), wam(wam_), offsets(offsets_)
+		j(jointIndex), pos(pos_), wam(wam_), offsets(offsets_), state(0)
 	{
 		assert(jointIndex >= 0);
 		assert(jointIndex < DOF);
@@ -85,18 +97,36 @@ public:
 	}
 	virtual ~AdjustJoint() {}
 
-	virtual int display(int top, int left) {
-		const int origTop = top;
-		CalibrationStep::display(top, left);  // Call super
 
-		top += T_OFF;
-		left += L_OFF;
-
+	virtual void onChangeActive() {
 		if (active) {
-			mvprintw(top,left, "jIdx:%d, pos: [%f, %f, %f, %f]", j, pos[0], pos[1], pos[2], pos[3]);
+			state = 0;
+		}
+	}
+
+	virtual bool onKeyPress(enum Key k) {
+		switch (k) {
+
 		}
 
-		return height(origTop);
+		return true;
+	}
+
+	virtual int display(int top, int left) {
+		int line = top + CalibrationStep::display(top, left);  // Call super
+		left += L_OFFSET;
+
+		if (active) {
+			mvprintw(line++,left, "--> Press [Enter] to move to: [%0.2f", pos[0]);
+			for (size_t i = 1; i < DOF; ++i) {
+				printw(", %0.2f", pos[i]);
+			}
+			printw("]");
+
+			mvprintw(line++,left, "    Adjust Joint %d to make the outer link vertical", j+1);
+		}
+
+		return height(top);
 	}
 
 protected:
@@ -104,6 +134,8 @@ protected:
 	const jp_type pos;
 	systems::Wam<DOF>* wam;
 	jp_type* offsets;
+
+	int state;
 };
 
 template<size_t DOF>
@@ -157,9 +189,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		return 1;
 	}
 
-	steps[2]->setSelected(true);
-	steps[1]->setActive(true);
-
 
 	// Set up ncurses
 	initscr();
@@ -169,13 +198,60 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	std::atexit((void (*)())endwin);
 
 
-	int top = 5;
-	for (size_t i = 0; i < DOF; ++i) {
-		top += steps[i]->display(top,0);
+	// Display loop
+	assert(steps.size() >= 2);
+	int selected = 1;
+	steps[selected]->setSelected(true);
+	int active = 1;
+	steps[active]->setActive(true);
+
+	enum Key k;
+	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
+		clear();
+
+		k = getKey();
+		if (active == -1) {  // Menu mode
+			switch (k) {
+			case K_UP:
+				steps[selected]->setSelected(false);
+				selected = std::max(0, selected-1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_DOWN:
+				steps[selected]->setSelected(false);
+				selected = std::min((int)steps.size()-1, selected+1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_ENTER:
+				active = selected;
+				steps[active]->setActive(true);
+				break;
+			default:
+				break;
+			}
+		} else {  // Adjust mode
+			switch (k) {
+			case K_BACKSPACE:
+			case K_ESCAPE:
+			case K_TAB:
+				steps[active]->setActive(false);
+				active = -1;
+				break;
+			default:
+				// Forward to active item
+				break;
+			}
+		}
+
+		int top = 5;
+		for (size_t i = 0; i < DOF; ++i) {
+			top += steps[i]->display(top,0);
+		}
+
+		refresh();
+		usleep(100000);  // Slow loop to ~10Hz
 	}
 
-
-	refresh();
 	detail::purge(steps);
 
 
