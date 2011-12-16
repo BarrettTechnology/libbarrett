@@ -4,7 +4,7 @@ set(programs
 )
 
 foreach (prog ${programs})
-	add_executable(${prog} ${prog}.cpp)
+	add_executable(${prog} get_key.cpp ${prog}.cpp)
 	target_link_libraries(${prog} barrett ${CURSES_LIBRARIES})
 	set_target_properties(${prog} PROPERTIES
 		PREFIX "bt-wam-"
@@ -12,4 +12,3 @@ foreach (prog ${programs})
 		LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
 	)
 endforeach()
-
