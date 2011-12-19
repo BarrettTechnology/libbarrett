@@ -9,7 +9,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstdlib>  // For std::atexit()
 #include <cassert>
 #include <cmath>
 
@@ -117,15 +116,19 @@ template<size_t DOF>
 class AdjustJoint : public CalibrationStep {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+	static const int DEFAULT_DIGIT = -2;
+	static const int MAX_DIGIT = 0;
+	static const int MIN_DIGIT = -3;
+
 public:
 	explicit AdjustJoint(size_t jointIndex, const jp_type& pos_, systems::Wam<DOF>* wam_, jp_type* offsets_) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), pos(pos_), wam(wam_), offsets(offsets_), state(0)
+		j(jointIndex), pos(pos_), wam(*wam_), offsets(*offsets_), state(0), digit(DEFAULT_DIGIT)
 	{
 		assert(jointIndex >= 0);
 		assert(jointIndex < DOF);
-		assert(wam != NULL);
-		assert(offsets != NULL);
+		assert(wam_ != NULL);
+		assert(offsets_ != NULL);
 	}
 	virtual ~AdjustJoint() {}
 
@@ -133,17 +136,48 @@ public:
 	virtual void onChangeActive() {
 		if (active) {
 			state = 0;
+			digit = DEFAULT_DIGIT;
 		}
 	}
 
 	virtual bool onKeyPress(enum Key k) {
-		switch (k) {
-		case K_ENTER:
-//			wam->moveTo(jp_type(pos + *offsets), false);
-			state++;
+		switch (state) {
+		case 0:
+			if (k == K_ENTER) {
+				state++;
+				move();
+			}
 			break;
+
+		case 1:
+			// This transition is handled in display().
+			break;
+
 		default:
-			break;
+			switch (k) {
+			case K_LEFT:
+				digit = std::min(MAX_DIGIT, digit+1);
+				break;
+			case K_RIGHT:
+				digit = std::max(MIN_DIGIT, digit-1);
+				break;
+
+			case K_UP:
+				offsets[j] += std::pow(10.0, digit);
+				move();
+				break;
+			case K_DOWN:
+				offsets[j] -= std::pow(10.0, digit);
+				move();
+				break;
+
+			case K_ENTER:
+				return false;  // Move on to the next joint!
+				break;
+
+			default:
+				break;
+			}
 		}
 
 		return true;
@@ -160,54 +194,53 @@ public:
 			case 0:
 				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", pos[0]);
 				for (size_t i = 1; i < DOF; ++i) {
-					printw(", %0.2f", pos[i]);
+					printw(", %04.2f", pos[i]);
 				}
 				printw("]");
 				break;
 			case 1:
 				mvprintw(line++,left, "Wait for the WAM to finish moving.");
+
+				if (wam.moveIsDone()) {  // Have we arrived yet?
+					state++;
+				}
 				break;
 			default:
-				mvprintw(line++,left, "Use arrow keys to adjust Joint %d", j+1);
+				mvprintw(line++,left, "Use arrow keys to adjust the Joint %d offset.", j+1);
 				sa.off();
 				line++;
-				mvprintw(line++,left, "         Offset (rad):");
-				mvprintw(line++,left, "            0.000");
-				line++;
+				mvprintw(line++,left, "                 ");
+				attron(A_UNDERLINE);
+				printw("Offset (rad)");
+				attroff(A_UNDERLINE);
+				mvprintw(  line,left, "                    %+06.3f", offsets[j]);
+
+				int x = getcurx(stdscr);
+				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_BOLD, 0, NULL);
+
+				line += 2;
 				mvprintw(line++,left, "Press [Enter] once the outer link is vertical.");
 				break;
 			}
-
-//			// If we just moved the WAM, see if it has arrived yet.
-//			if (state == 1  &&  wam->moveIsDone()) {
-//				state++;
-//			}
-//
-//			ScopedAttr sa;
-//
-//			sa.set(state < 2 ? A_STANDOUT : A_NORMAL);
-//			if (state == 0) {
-//				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", pos[0]);
-//				for (size_t i = 1; i < DOF; ++i) {
-//					printw(", %0.2f", pos[i]);
-//				}
-//				printw("]");
-//
-//
-//			sa.set(state >= 2 ? A_STANDOUT : A_NORMAL);
-//			mvprintw(line++,left, "Use arrow keys to adjust Joint %d", j+1);
 		}
 
 		return height(top);
 	}
 
 protected:
+	void move() {
+		while ( !wam.moveIsDone() ) {
+			usleep(20000);
+		}
+		wam.moveTo(jp_type(pos + offsets), false);
+	}
+
 	size_t j;
 	const jp_type pos;
-	systems::Wam<DOF>* wam;
-	jp_type* offsets;
+	systems::Wam<DOF>& wam;
+	jp_type& offsets;
 
-	int state;
+	int state, digit;
 };
 
 template<size_t DOF>
@@ -267,20 +300,18 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	curs_set(0);
 	noecho();
 	timeout(0);
-	std::atexit((void (*)())endwin);
 
 
 	// Display loop
-	assert(steps.size() >= 2);
-	int selected = 1;
+	assert(steps.size() >= 1);
+	int selected = 0;
 	steps[selected]->setSelected(true);
-	int active = 1;
+	int active = 0;
 	steps[active]->setActive(true);
 
 	enum Key k;
-	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
-		clear();
-
+	bool done = false;
+	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE  &&  !done) {
 		k = getKey();
 		if (active == -1) {  // Menu mode
 			switch (k) {
@@ -311,21 +342,50 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				break;
 			default:
 				// Forward to the active item
-				steps[active]->onKeyPress(k);
+				if ( !steps[active]->onKeyPress(k) ) {
+					// This step is done. Move to the next one.
+					steps[selected]->setSelected(false);
+					steps[active]->setActive(false);
+					++selected;
+					if (selected < (int)steps.size()) {
+						active = selected;
+						steps[selected]->setSelected(true);
+						steps[active]->setActive(true);
+					} else {  // Finished the last step!
+						done = true;
+					}
+				}
 				break;
 			}
 		}
 
 		int top = 5;
+		clear();
 		for (size_t i = 0; i < DOF; ++i) {
 			top += steps[i]->display(top,0);
 		}
-
 		refresh();
+
 		usleep(100000);  // Slow loop to ~10Hz
 	}
-
+	endwin();
 	detail::purge(steps);
+
+
+	// Restore stdout's line buffering
+	if (freopen(NULL, "w", stdout) == NULL) {
+		fprintf(stderr, ">>> ERROR: freopen(stdout) failed.\n");
+		return 1;
+	}
+
+
+	if (done) {
+		printf(">>> Calibration completed!\n");
+		wam.moveHome(false);
+	} else {
+		printf(">>> ERROR: WAM was Idled before the calibration was completed.\n");
+		return 1;
+	}
 
 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
