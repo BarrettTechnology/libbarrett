@@ -16,6 +16,7 @@
 
 #include <curses.h>
 #include <boost/lexical_cast.hpp>
+#include <Eigen/Core>
 #include <libconfig.h++>
 
 #include <barrett/exception.h>
@@ -102,7 +103,6 @@ public:
 		return height(top);
 	}
 
-
 	static int height(int origTop) {
 		return getcury(stdscr) - origTop + 1;
 	}
@@ -121,14 +121,14 @@ class AdjustJoint : public CalibrationStep {
 	static const int MIN_DIGIT = -3;
 
 public:
-	explicit AdjustJoint(size_t jointIndex, const jp_type& pos_, systems::Wam<DOF>* wam_, jp_type* offsets_) :
+	explicit AdjustJoint(size_t jointIndex, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), pos(pos_), wam(*wam_), offsets(*offsets_), state(0), digit(DEFAULT_DIGIT)
+		j(jointIndex), wam(*wamPtr), calPos(calPos_), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr), state(0), digit(DEFAULT_DIGIT)
 	{
 		assert(jointIndex >= 0);
 		assert(jointIndex < DOF);
-		assert(wam_ != NULL);
-		assert(offsets_ != NULL);
+		assert(wamPtr != NULL);
+		assert(calOffsetPtr != NULL);
 	}
 	virtual ~AdjustJoint() {}
 
@@ -141,6 +141,8 @@ public:
 	}
 
 	virtual bool onKeyPress(enum Key k) {
+		Eigen::Matrix<int, DOF,1> mech;
+
 		switch (state) {
 		case 0:
 			if (k == K_ENTER) {
@@ -163,15 +165,20 @@ public:
 				break;
 
 			case K_UP:
-				offsets[j] += std::pow(10.0, digit);
+				calOffset[j] += std::pow(10.0, digit);
 				move();
 				break;
 			case K_DOWN:
-				offsets[j] -= std::pow(10.0, digit);
+				calOffset[j] -= std::pow(10.0, digit);
 				move();
 				break;
 
 			case K_ENTER:
+				// Record actual joint position, not commanded joint position
+				zeroPos[j] = wam.getJointPositions()[j];
+
+				wam.llww.getLowLevelWam().getPuckGroup().getProperty(Puck::MECH, mech.data());
+				mechPos[j] = (wam.llww.getLowLevelWam().getPuckToJointPositionTransform() * mech.template cast<double>())[j];
 				return false;  // Move on to the next joint!
 				break;
 
@@ -192,9 +199,9 @@ public:
 
 			switch (state) {
 			case 0:
-				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", pos[0]);
+				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", calPos[0]);
 				for (size_t i = 1; i < DOF; ++i) {
-					printw(", %04.2f", pos[i]);
+					printw(", %04.2f", calPos[i]);
 				}
 				printw("]");
 				break;
@@ -213,7 +220,7 @@ public:
 				attron(A_UNDERLINE);
 				printw("Offset (rad)");
 				attroff(A_UNDERLINE);
-				mvprintw(  line,left, "                    %+06.3f", offsets[j]);
+				mvprintw(  line,left, "                    %+06.3f", calOffset[j]);
 
 				int x = getcurx(stdscr);
 				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_BOLD, 0, NULL);
@@ -232,16 +239,19 @@ protected:
 		while ( !wam.moveIsDone() ) {
 			usleep(20000);
 		}
-		wam.moveTo(jp_type(pos + offsets), false);
+		wam.moveTo(jp_type(calPos + calOffset), false);
 	}
 
 	size_t j;
-	const jp_type pos;
 	systems::Wam<DOF>& wam;
-	jp_type& offsets;
+	const jp_type calPos;
+	jp_type& calOffset;
+	jp_type& zeroPos;
+	jp_type& mechPos;
 
 	int state, digit;
 };
+
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
@@ -249,7 +259,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	// Record the starting position. (Should be identical to wam.getHomePosition().)
 	const jp_type home(wam.getJointPositions());
-	jp_type offsets(0.0);
+	jp_type calOffset(0.0);
+	jp_type zeroPos(0.0);
+	jp_type mechPos(0.0);
 
 	// Disable torque saturation because gravity compensation is off
 	wam.jpController.setControlSignalLimit(jp_type());
@@ -272,7 +284,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 			const libconfig::Setting& jointListSetting = setting[i][0];
 			assert(jointListSetting.isArray()  ||  jointListSetting.isList());
-			jp_type pos(setting[i][1]);
+			jp_type calPos(setting[i][1]);
 
 			for (int j = 0; j < jointListSetting.getLength(); ++j) {
 				assert(jointListSetting[j].isNumber());
@@ -280,7 +292,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				assert(jointNumer >= 1);
 				assert(jointNumer <= (int)DOF);
 
-				steps.push_back(new AdjustJoint<DOF>(jointNumer-1, pos, &wam, &offsets));
+				steps.push_back(new AdjustJoint<DOF>(jointNumer-1, &wam, calPos, &calOffset, &zeroPos, &mechPos));
 			}
 		}
 	} catch (libconfig::ParseException e) {
@@ -341,7 +353,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				active = -1;
 				break;
 			default:
-				// Forward to the active item
+				// Forward to the active item by calling onKeyPress()
 				if ( !steps[active]->onKeyPress(k) ) {
 					// This step is done. Move to the next one.
 					steps[selected]->setSelected(false);
@@ -359,16 +371,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 
-		int top = 5;
 		clear();
+		mvprintw(0,18, "*** Barrett WAM Zero Calibration Utility ***");
+		int top = 4;
 		for (size_t i = 0; i < DOF; ++i) {
 			top += steps[i]->display(top,0);
 		}
 		refresh();
 
-		usleep(100000);  // Slow loop to ~10Hz
+		usleep(100000);  // Slow loop down to ~10Hz
 	}
-	endwin();
+	endwin();  // Turn off ncurses
 	detail::purge(steps);
 
 
@@ -391,6 +404,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	// Make sure the user applies their new calibration
 	pm.getSafetyModule()->setWamZeroed(false);
+
+	std::cout << calOffset << "\n";
+	std::cout << zeroPos << "\n";
+	std::cout << mechPos << "\n";
+
 	return 0;
 }
 
@@ -402,7 +420,7 @@ int main(int argc, char** argv) {
 
 	printf(
 "\n"
-"*** Barrett WAM Zero Calibration Utility ***\n"
+"                  *** Barrett WAM Zero Calibration Utility ***\n"
 "\n"
 "This utility will help you set the joint angle offsets for your WAM Arm. Joint\n"
 "angle offsets affect operations that rely on the robot's kinematics, such as\n"
