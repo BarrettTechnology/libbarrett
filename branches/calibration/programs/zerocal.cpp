@@ -113,7 +113,7 @@ protected:
 };
 
 template<size_t DOF>
-class AdjustJoint : public CalibrationStep {
+class AdjustJointStep : public CalibrationStep {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 	static const int DEFAULT_DIGIT = -2;
@@ -121,7 +121,7 @@ class AdjustJoint : public CalibrationStep {
 	static const int MIN_DIGIT = -3;
 
 public:
-	explicit AdjustJoint(size_t jointIndex, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
+	explicit AdjustJointStep(size_t jointIndex, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
 		j(jointIndex), wam(*wamPtr), calPos(calPos_), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr), state(0), digit(DEFAULT_DIGIT)
 	{
@@ -130,7 +130,7 @@ public:
 		assert(wamPtr != NULL);
 		assert(calOffsetPtr != NULL);
 	}
-	virtual ~AdjustJoint() {}
+	virtual ~AdjustJointStep() {}
 
 
 	virtual void onChangeActive() {
@@ -253,6 +253,29 @@ protected:
 };
 
 
+class ExitStep : public CalibrationStep {
+public:
+	explicit ExitStep(const std::string& title_ = "Exit") : CalibrationStep(title_) {}
+	virtual ~ExitStep() {}
+
+	virtual bool onKeyPress(enum Key k) {
+		return k != K_ENTER;
+	}
+
+	virtual int display(int top, int left) {
+		int line = top + CalibrationStep::display(top, left);  // Call super
+		left += L_OFFSET;
+
+		if (active) {
+			ScopedAttr sa(A_STANDOUT, true);
+			mvprintw(line++,left, "Press [Enter] to move the home position and record calibration data.");
+		}
+
+		return height(top);
+	}
+};
+
+
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
@@ -292,7 +315,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				assert(jointNumer >= 1);
 				assert(jointNumer <= (int)DOF);
 
-				steps.push_back(new AdjustJoint<DOF>(jointNumer-1, &wam, calPos, &calOffset, &zeroPos, &mechPos));
+				steps.push_back(new AdjustJointStep<DOF>(jointNumer-1, &wam, calPos, &calOffset, &zeroPos, &mechPos));
 			}
 		}
 	} catch (libconfig::ParseException e) {
@@ -305,6 +328,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE, e.getPath());
 		return 1;
 	}
+	steps.push_back(new ExitStep);
 
 
 	// Set up ncurses
@@ -374,7 +398,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		clear();
 		mvprintw(0,18, "*** Barrett WAM Zero Calibration Utility ***");
 		int top = 4;
-		for (size_t i = 0; i < DOF; ++i) {
+		for (size_t i = 0; i < steps.size(); ++i) {
 			top += steps[i]->display(top,0);
 		}
 		refresh();
