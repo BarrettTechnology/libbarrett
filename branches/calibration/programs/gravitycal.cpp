@@ -245,20 +245,20 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		config_setting_t * poses_array;
 
 		config_init(&cfg);
-		err = config_read_file(&cfg, "/etc/barrett/gravitycal.conf");
+		err = config_read_file(&cfg, "/etc/barrett/calibration.conf");
 		if (err != CONFIG_TRUE) {
-			syslog(LOG_ERR, "Calibration configuration file cal.conf not found.");
-			printf("Calibration configuration file /etc/barrett/gravitycal.conf not found.\n");
+			syslog(LOG_ERR, "Calibration configuration file /etc/barrett/calibration.conf not found.");
+			printf("Calibration configuration file /etc/barrett/calibration.conf not found.\n");
 			config_destroy(&cfg);
 			endwin();
 			return -1;
 		}
 
-		sprintf(key, "calibration-poses-wam%d", n);
-		poses_array = config_setting_get_member(config_root_setting(&cfg), key);
+		sprintf(key, "gravitycal.%s", pm.getWamDefaultConfigPath());
+		poses_array = config_lookup(&cfg, key);
 		if (!poses_array) {
-			syslog(LOG_ERR, "Configuration group calibration-poses-wam%d not found.", n);
-			printf("Configuration group calibration-poses-wam%d not found.\n", n);
+			syslog(LOG_ERR, "Configuration group %s not found.", key);
+			printf("Configuration group %s not found.\n", key);
 			config_destroy(&cfg);
 			endwin();
 			return -1;
