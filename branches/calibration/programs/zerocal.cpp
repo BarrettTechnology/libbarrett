@@ -121,9 +121,9 @@ class AdjustJointStep : public CalibrationStep {
 	static const int MIN_DIGIT = -3;
 
 public:
-	explicit AdjustJointStep(size_t jointIndex, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
+	explicit AdjustJointStep(size_t jointIndex, const std::string& endConditionStr, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), wam(*wamPtr), calPos(calPos_), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr), state(0), digit(DEFAULT_DIGIT)
+		j(jointIndex), endCondition(endConditionStr), wam(*wamPtr), calPos(calPos_), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr), state(0), digit(DEFAULT_DIGIT)
 	{
 		assert(jointIndex >= 0);
 		assert(jointIndex < DOF);
@@ -247,7 +247,7 @@ public:
 				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_BOLD, 0, NULL);
 
 				line += 2;
-				mvprintw(line++,left, "Press [Enter] once the outer link is vertical.");
+				mvprintw(line++,left, "Press [Enter] once %s.", endCondition.c_str());
 				break;
 			}
 		}
@@ -264,6 +264,7 @@ protected:
 	}
 
 	size_t j;
+	std::string endCondition;
 	systems::Wam<DOF>& wam;
 	const jp_type calPos;
 	jp_type& calOffset;
@@ -324,11 +325,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		for (int i = 0; i < setting.getLength(); ++i) {
 			assert(setting[i].isList());
-			assert(setting[i].getLength() == 2);
+			assert(setting[i].getLength() == 3);
 
-			const libconfig::Setting& jointListSetting = setting[i][0];
+			jp_type calPos(setting[i][0]);
+
+			const libconfig::Setting& jointListSetting = setting[i][1];
 			assert(jointListSetting.isArray()  ||  jointListSetting.isList());
-			jp_type calPos(setting[i][1]);
+
+			const libconfig::Setting& endConditionSetting = setting[i][2];
+			assert(endConditionSetting.isArray()  ||  endConditionSetting.isList());
+			assert(jointListSetting.getLength() == endConditionSetting.getLength());
 
 			for (int j = 0; j < jointListSetting.getLength(); ++j) {
 				assert(jointListSetting[j].isNumber());
@@ -336,7 +342,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				assert(jointNumer >= 1);
 				assert(jointNumer <= (int)DOF);
 
-				steps.push_back(new AdjustJointStep<DOF>(jointNumer-1, &wam, calPos, &calOffset, &zeroPos, &mechPos));
+				steps.push_back(new AdjustJointStep<DOF>(jointNumer-1, endConditionSetting[j], &wam, calPos, &calOffset, &zeroPos, &mechPos));
 			}
 		}
 	} catch (libconfig::ParseException e) {
@@ -418,7 +424,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		clear();
 		mvprintw(0,18, "*** Barrett WAM Zero Calibration Utility ***");
-		int top = 4;
+		int top = 3;
 		for (size_t i = 0; i < steps.size(); ++i) {
 			top += steps[i]->display(top,0);
 		}
