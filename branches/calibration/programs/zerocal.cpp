@@ -142,6 +142,7 @@ public:
 
 	virtual bool onKeyPress(enum Key k) {
 		Eigen::Matrix<int, DOF,1> mech;
+		v_type mp;
 
 		switch (state) {
 		case 0:
@@ -174,12 +175,32 @@ public:
 				break;
 
 			case K_ENTER:
-				// Record actual joint position, not commanded joint position
-				zeroPos[j] = wam.getJointPositions()[j];
+				if (wam.moveIsDone()) {
+					// Record actual joint position, not commanded joint position
+					zeroPos[j] = wam.getJointPositions()[j];
 
-				wam.llww.getLowLevelWam().getPuckGroup().getProperty(Puck::MECH, mech.data());
-				mechPos[j] = (wam.llww.getLowLevelWam().getPuckToJointPositionTransform() * mech.template cast<double>())[j];
-				return false;  // Move on to the next joint!
+					// Get MECH property from all WAM Pucks
+					wam.llww.getLowLevelWam().getPuckGroup().getProperty(Puck::MECH, mech.data());
+					for (size_t i = 0; i < DOF; ++i) {
+						// Convert motor angle from encoder-counts to radians
+						mp[i] = wam.llww.getLowLevelWam().getMotorPucks()[i].counts2rad(mech[i]);
+
+						if (i > 0) {
+							// In case Motor i and Motor i-1 form a differential, make sure that the
+							// difference between their angles is between -pi and pi. Because MECH
+							// "rolls over", this is necessary for differential joints. For normal
+							// joints, adding a multiple of 2*pi has no effect.
+							while ((mp[i] - mp[i-1]) > M_PI) {
+								mp[i] -= 2*M_PI;
+							}
+							while ((mp[i] - mp[i-1]) < -M_PI) {
+								mp[i] += 2*M_PI;
+							}
+						}
+					}
+					mechPos[j] = (wam.llww.getLowLevelWam().getMotorToJointPositionTransform() * mp)[j];
+					return false;  // Move on to the next joint!
+				}
 				break;
 
 			default:
@@ -419,6 +440,18 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (done) {
 		printf(">>> Calibration completed!\n");
 		wam.moveHome(false);
+
+		std::cout << v_type(wam.getHomePosition() - zeroPos) << "\n";
+		v_type mp = wam.llww.getLowLevelWam().getJointToMotorPositionTransform() * mechPos;
+		for (size_t i = 0; i < DOF; ++i) {
+			while (mp[i] > 2*M_PI) {
+				mp[i] -= 2*M_PI;
+			}
+			while (mp[i] < 0.0) {
+				mp[i] += 2*M_PI;
+			}
+		}
+		std::cout << mp << "\n";
 	} else {
 		printf(">>> ERROR: WAM was Idled before the calibration was completed.\n");
 		return 1;
@@ -428,10 +461,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	// Make sure the user applies their new calibration
 	pm.getSafetyModule()->setWamZeroed(false);
-
-	std::cout << calOffset << "\n";
-	std::cout << zeroPos << "\n";
-	std::cout << mechPos << "\n";
 
 	return 0;
 }
