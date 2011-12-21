@@ -445,7 +445,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	if (done) {
 		printf(">>> Calibration completed!\n");
-		wam.moveHome(false);
 
 		std::cout << v_type(wam.getHomePosition() - zeroPos) << "\n";
 		v_type mp = wam.llww.getLowLevelWam().getJointToMotorPositionTransform() * mechPos;
@@ -458,6 +457,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 		std::cout << mp << "\n";
+
+		printf(">>> Moving back to home position.\n");
+		wam.moveHome();
 	} else {
 		printf(">>> ERROR: WAM was Idled before the calibration was completed.\n");
 		return 1;
