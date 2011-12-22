@@ -28,64 +28,14 @@
 
 #include <barrett/standard_main_function.h>
 
+#include "utils.h"
+
 
 using namespace barrett;
 
+const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/gravitycal.conf";
 
-enum btkey {
-	BTKEY_UNKNOWN = -2,
-	BTKEY_NOKEY = -1,
-	BTKEY_TAB = 9,
-	BTKEY_ENTER = 10,
-	BTKEY_ESCAPE = 27,
-	BTKEY_BACKSPACE = 127,
-	BTKEY_UP = 256,
-	BTKEY_DOWN = 257,
-	BTKEY_LEFT = 258,
-	BTKEY_RIGHT = 259
-};
-enum btkey btkey_get() {
-	int c1, c2, c3;
-
-	/* Get the key from ncurses */
-	c1 = getch();
-	if (c1 == ERR)
-		return BTKEY_NOKEY;
-
-	/* Get all keyboard characters */
-	if (32 <= c1 && c1 <= 126)
-		return (enum btkey) c1;
-
-	/* Get special keys */
-	switch (c1) {
-	case BTKEY_TAB:
-	case BTKEY_ENTER:
-	case BTKEY_BACKSPACE:
-		return (enum btkey) c1;
-		/* Get extended keyboard chars (eg arrow keys) */
-	case 27:
-		c2 = getch();
-		if (c2 == ERR)
-			return BTKEY_ESCAPE;
-		if (c2 != 91)
-			return BTKEY_UNKNOWN;
-		c3 = getch();
-		switch (c3) {
-		case 65:
-			return BTKEY_UP;
-		case 66:
-			return BTKEY_DOWN;
-		case 67:
-			return BTKEY_RIGHT;
-		case 68:
-			return BTKEY_LEFT;
-		default:
-			return BTKEY_UNKNOWN;
-		}
-	default:
-		return BTKEY_UNKNOWN;
-	}
-}
 
 
 /* ------------------------------------------------------------------------ *
@@ -245,10 +195,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		config_setting_t * poses_array;
 
 		config_init(&cfg);
-		err = config_read_file(&cfg, "/etc/barrett/calibration.conf");
+		err = config_read_file(&cfg, CAL_CONFIG_FILE);
 		if (err != CONFIG_TRUE) {
-			syslog(LOG_ERR, "Calibration configuration file /etc/barrett/calibration.conf not found.");
-			printf("Calibration configuration file /etc/barrett/calibration.conf not found.\n");
+			syslog(LOG_ERR, "Calibration configuration file %s not found.", CAL_CONFIG_FILE);
+			printf("Calibration configuration file %s not found.\n", CAL_CONFIG_FILE);
 			config_destroy(&cfg);
 			endwin();
 			return -1;
@@ -324,7 +274,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	j = 4;
 	mvprintw(j++, 0, "IMPORTANT: Once gravity-calibration begins, the WAM will begin");
-	mvprintw(j++, 0, "to move to a set of %d predefined poses (defined in gravitycal.conf).", num_poses);
+	mvprintw(j++, 0, "to move to a set of %d predefined poses (defined in calibration.conf).", num_poses);
 	j++;
 	mvprintw(j++, 0, "DO NOT TOUCH the WAM during the measurement process, or the");
 	mvprintw(j++, 0, "calibration computations will be significantly wrong, and");
@@ -340,7 +290,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	j++;
 	mvprintw(j++, 0, "Press [Enter] to start.");
 	refresh();
-	while (btkey_get() != BTKEY_ENTER)
+	while (getKey() != K_ENTER)
 		usleep(10000);
 
 	/* Start the GUI! */
@@ -465,16 +415,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (freopen(NULL, "w", stdout) == NULL) {  // restore stdout's line buffering
 		syslog(LOG_ERR, "%s:%d freopen(stdout) failed.", __FILE__, __LINE__);
 	}
-
-	/* Re-fold, print, and exit */
-	printf("Beginning move back to the home location...\n");
-	
-	if (hand != NULL) {
-		hand->trapezoidalMove(Hand::jp_type(0.0));
-		hand->trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
-		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0, M_PI/2.0, M_PI/2.0, M_PI));
-	}
-	wam.moveHome(false);
 
 	/* Free unneeded variables */
 	for (j = 0; j < n; j++) {
@@ -638,69 +578,41 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			free(P);
 		}
 
-		/* Print results */
-		printf("\n");
+
 		printf("Gravity calibration ended.\n");
-		printf("\n");
-		printf("Copy the following lines into your wam.config file,\n");
-		printf("replacing any existing gravity_compensation groups.\n");
-		printf("It is usually placed after the dynamics: group.\n");
-		printf("--------\n");
-		printf("   # Calibrated gravity vectors\n");
-		printf("   gravity_compensation:\n");
-		printf("   {\n");
-		for (j = 0; j < n; j++) {
-			if (j == 0)
-				printf("      mus = (");
-			else
-				printf("             ");
 
-			printf("( % 8.5f, % 8.5f, % 8.5f )", gsl_vector_get(mus[j], 0),
-					gsl_vector_get(mus[j], 1), gsl_vector_get(mus[j], 2));
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		manageBackups(dataConfigFile);  // Backup old calibration data
 
-			if (j != n - 1)
-				printf(",\n");
-			else
-				printf(");\n");
+		// Save to the data config file
+		libconfig::Config dataConfig;
+		libconfig::Setting& musSetting = dataConfig.getRoot()
+				.add("gravity_compensation", libconfig::Setting::TypeGroup)
+				.add("mus", libconfig::Setting::TypeList);
+		for (size_t i = 0; i < DOF; ++i) {
+			libconfig::Setting& rowSetting = musSetting.add(libconfig::Setting::TypeList);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 0);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 1);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 2);
 		}
-		printf("   };\n");
-		printf("--------\n");
-//      {
-//         FILE * logfile;
-//         logfile = fopen("cal-gravity.log","w");
-//         if (logfile)
-//         {
-//            fprintf(logfile,"   # Calibrated gravity vectors\n");
-//            fprintf(logfile,"   calgrav:\n");
-//            fprintf(logfile,"   {\n");
-//            for (j=0; j<n; j++)
-//            {
-//               if (j==0) fprintf(logfile,"      mus = (");
-//               else      fprintf(logfile,"             ");
-//
-//               fprintf(logfile,
-//                       "( % .6f, % .6f, % .6f )",
-//                       gsl_vector_get(mus[j],0),
-//                       gsl_vector_get(mus[j],1),
-//                       gsl_vector_get(mus[j],2));
-//
-//               if (j!=n-1) fprintf(logfile,",\n");
-//               else        fprintf(logfile,");\n");
-//            }
-//            fprintf(logfile,"   };\n");
-//            fclose(logfile);
-//            printf("This text has been saved to cal-gravity.log.\n");
-//         }
-//         else
-//         {
-//            syslog(LOG_ERR,"Could not write to cal-gravity.log.");
-//            printf("Error: Could not write to cal-gravity.log.\n");
-//         }
-//      }
-		printf("\n");
 
+		dataConfig.writeFile(dataConfigFile);
+		printf("Data written to: %s\n", dataConfigFile);
+
+		delete[] dataConfigFile;
 	}
 
+
+	/* Re-fold, print, and exit */
+	printf("Beginning move back to the home location...\n");
+
+	if (hand != NULL) {
+		hand->trapezoidalMove(Hand::jp_type(0.0));
+		hand->trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
+		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0, M_PI/2.0, M_PI/2.0, M_PI));
+	}
+	wam.moveHome();
 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
