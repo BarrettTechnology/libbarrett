@@ -11,6 +11,7 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 
 #include <unistd.h>  // For usleep()
 
@@ -30,8 +31,8 @@
 using namespace barrett;
 using detail::waitForEnter;
 
-//const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
-const char CAL_CONFIG_FILE[] = "/home/robot/libbarrett/config/calibration.conf";
+const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/zerocal.conf";
 
 
 class ScopedAttr {
@@ -302,15 +303,14 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	// Record the starting position. (Should be identical to wam.getHomePosition().)
-	const jp_type home(wam.getJointPositions());
 	jp_type calOffset(0.0);
 	jp_type zeroPos(0.0);
 	jp_type mechPos(0.0);
 
+
 	// Disable torque saturation because gravity compensation is off
 	wam.jpController.setControlSignalLimit(jp_type());
-	wam.moveTo(home);  // Hold position
+	wam.moveTo(wam.getJointPositions());  // Hold position
 
 
 	// Read from config
@@ -446,18 +446,36 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (done) {
 		printf(">>> Calibration completed!\n");
 
-		std::cout << v_type(wam.getHomePosition() - zeroPos) << "\n";
-		v_type mp = wam.llww.getLowLevelWam().getJointToMotorPositionTransform() * mechPos;
+		// Compute calibration data
+		jp_type newHome(wam.getHomePosition() - zeroPos);
+		v_type zeroAngle(wam.llww.getLowLevelWam().getJointToMotorPositionTransform() * mechPos);
 		for (size_t i = 0; i < DOF; ++i) {
-			while (mp[i] > 2*M_PI) {
-				mp[i] -= 2*M_PI;
+			while (zeroAngle[i] > 2*M_PI) {
+				zeroAngle[i] -= 2*M_PI;
 			}
-			while (mp[i] < 0.0) {
-				mp[i] += 2*M_PI;
+			while (zeroAngle[i] < 0.0) {
+				zeroAngle[i] += 2*M_PI;
 			}
 		}
-		std::cout << mp << "\n";
 
+
+		// Save to the data config file
+		libconfig::Config dataConfig;
+		libconfig::Setting& homeSetting = dataConfig.getRoot().add("home", libconfig::Setting::TypeList);
+		libconfig::Setting& zaSetting = dataConfig.getRoot().add("zeroangle", libconfig::Setting::TypeList);
+		for (size_t i = 0; i < DOF; ++i) {
+			homeSetting.add(libconfig::Setting::TypeFloat) = newHome[i];
+			zaSetting.add(libconfig::Setting::TypeFloat) = zeroAngle[i];
+		}
+
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		dataConfig.writeFile(dataConfigFile);
+		printf(">>> Data written to: %s\n", dataConfigFile);
+		delete[] dataConfigFile;
+
+
+		// Move home!
 		printf(">>> Moving back to home position.\n");
 		wam.moveHome();
 	} else {
