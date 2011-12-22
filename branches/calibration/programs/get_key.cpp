@@ -7,7 +7,7 @@
  */
 
 #include <curses.h>
-#include "get_key.h"
+#include "utils.h"
 
 
 enum Key getKey() {

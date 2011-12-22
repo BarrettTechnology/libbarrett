@@ -1,12 +1,15 @@
 /*
- * get_key.h
+ * utils.h
  *
  *  Created on: Dec 16, 2011
  *      Author: dc
  */
 
-#ifndef GET_KEY_H_
-#define GET_KEY_H_
+#ifndef UTILS_H_
+#define UTILS_H_
+
+
+void manageBackups(const char* file, int numBackups = 5);
 
 
 enum Key {
@@ -25,4 +28,4 @@ enum Key {
 enum Key getKey();
 
 
-#endif /* GET_KEY_H_ */
+#endif /* UTILS_H_ */
