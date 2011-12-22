@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 
 #include <unistd.h>  // For usleep()
 
@@ -33,6 +34,14 @@ using detail::waitForEnter;
 
 const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
 const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/zerocal.conf";
+const size_t NUM_BACKUPS = 5;
+
+
+bool fileExists(const char *file)
+{
+	std::ifstream fs(file);
+	return fs;
+}
 
 
 class ScopedAttr {
@@ -459,6 +468,36 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+
+
+		// Backup old calibration data
+		assert(NUM_BACKUPS <= 9);  // Otherwise our strings won't be long enough
+		char* backupFile1 = new char[strlen(dataConfigFile) + 2 + 1];
+		char* backupFile2 = new char[strlen(dataConfigFile) + 2 + 1];
+
+		sprintf(backupFile2, "%s.%d", dataConfigFile, NUM_BACKUPS);
+		for (int i = NUM_BACKUPS - 1; i >= 0; --i) {
+			if (i != 0) {
+				sprintf(backupFile1, "%s.%d", dataConfigFile, i);
+			} else {
+				strcpy(backupFile1, dataConfigFile);
+			}
+
+			if (fileExists(backupFile1)) {
+				if (fileExists(backupFile2)) {
+					remove(backupFile2);
+				}
+				rename(backupFile1, backupFile2);
+			}
+			strcpy(backupFile2, backupFile1);
+		}
+
+		delete[] backupFile1;
+		delete[] backupFile2;
+
+
 		// Save to the data config file
 		libconfig::Config dataConfig;
 		libconfig::Setting& homeSetting = dataConfig.getRoot().add("home", libconfig::Setting::TypeList);
@@ -468,10 +507,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			zaSetting.add(libconfig::Setting::TypeFloat) = zeroAngle[i];
 		}
 
-		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
-		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
 		dataConfig.writeFile(dataConfigFile);
 		printf(">>> Data written to: %s\n", dataConfigFile);
+
+
 		delete[] dataConfigFile;
 
 
