@@ -122,14 +122,18 @@ class AdjustJointStep : public CalibrationStep {
 	static const int MIN_DIGIT = -3;
 
 public:
-	explicit AdjustJointStep(size_t jointIndex, const std::string& endConditionStr, systems::Wam<DOF>* wamPtr, const jp_type& calPos_, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
-		CalibrationStep("Joint " + boost::lexical_cast<std::string>(jointIndex+1)),
-		j(jointIndex), endCondition(endConditionStr), wam(*wamPtr), calPos(calPos_), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr), state(0), digit(DEFAULT_DIGIT)
+	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
+		CalibrationStep("Joint " + boost::lexical_cast<std::string>((int)setting[0])),
+		j((int)setting[0] - 1), calPos(setting[1]), endCondition(setting[2].c_str()),
+		wam(*wamPtr), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr),
+		state(0), digit(DEFAULT_DIGIT)
 	{
-		assert(jointIndex >= 0);
-		assert(jointIndex < DOF);
+		assert(j >= 0);
+		assert(j < DOF);
 		assert(wamPtr != NULL);
 		assert(calOffsetPtr != NULL);
+		assert(zeroPosPtr != NULL);
+		assert(mechPosPtr != NULL);
 	}
 	virtual ~AdjustJointStep() {}
 
@@ -265,9 +269,10 @@ protected:
 	}
 
 	size_t j;
-	std::string endCondition;
-	systems::Wam<DOF>& wam;
 	const jp_type calPos;
+	std::string endCondition;
+
+	systems::Wam<DOF>& wam;
 	jp_type& calOffset;
 	jp_type& zeroPos;
 	jp_type& mechPos;
@@ -320,30 +325,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		config.readFile(CAL_CONFIG_FILE);
 		const libconfig::Setting& setting = config.lookup("zerocal")[pm.getWamDefaultConfigPath()];
 		assert(setting.isList());
-		assert(setting.getLength() >= 1);
-		assert(setting.getLength() <= (int)DOF);
+		assert(setting.getLength() == (int)DOF);
 
-		for (int i = 0; i < setting.getLength(); ++i) {
-			assert(setting[i].isList());
-			assert(setting[i].getLength() == 3);
-
-			jp_type calPos(setting[i][0]);
-
-			const libconfig::Setting& jointListSetting = setting[i][1];
-			assert(jointListSetting.isArray()  ||  jointListSetting.isList());
-
-			const libconfig::Setting& endConditionSetting = setting[i][2];
-			assert(endConditionSetting.isArray()  ||  endConditionSetting.isList());
-			assert(jointListSetting.getLength() == endConditionSetting.getLength());
-
-			for (int j = 0; j < jointListSetting.getLength(); ++j) {
-				assert(jointListSetting[j].isNumber());
-				int jointNumer = jointListSetting[j];
-				assert(jointNumer >= 1);
-				assert(jointNumer <= (int)DOF);
-
-				steps.push_back(new AdjustJointStep<DOF>(jointNumer-1, endConditionSetting[j], &wam, calPos, &calOffset, &zeroPos, &mechPos));
-			}
+		for (size_t i = 0; i < DOF; ++i) {
+			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &mechPos));
 		}
 	} catch (libconfig::ParseException e) {
 		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE, e.getError());
