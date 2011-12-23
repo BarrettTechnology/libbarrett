@@ -26,6 +26,7 @@
 #include <barrett/cdlbt/kinematics.h>
 #include <barrett/cdlbt/calgrav.h>
 
+#define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
 #include "utils.h"
@@ -36,6 +37,33 @@ using namespace barrett;
 const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
 const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/gravitycal.conf";
 
+
+bool validate_args(int argc, char** argv) {
+	printf(
+"\n"
+"                *** Barrett WAM Gravity Calibration Utility ***\n"
+"\n"
+"This utility will calculate cumulative first moment of mass data for each link\n"
+"of your WAM Arm. This data is used by the gravity compensation routine to\n"
+"support WAM's weight in gravity. The program will move the WAM to several\n"
+"predefined positions and take torque measurements at each location.\n"
+"\n"
+"The calculations rely on having accurate kinematic information. Consider\n"
+"performing the zero-calibration procedure (bt-wam-zerocal) before proceeding. It\n"
+"is also necessary to know how the WAM is oriented relative to gravity, so be\n"
+"sure to update the \"world_to_base\" transform if your WAM is not mounted in the\n"
+"standard orientation.\n"
+"\n"
+"\n"
+"IMPORTANT: DO NOT TOUCH the WAM during the measurement process, or the\n"
+"calibration computations will be significantly wrong, and any subsequent gravity\n"
+"compensation will fail spectacularly!\n"
+"\n"
+"\n"
+	);
+
+	return true;
+}
 
 
 /* ------------------------------------------------------------------------ *
@@ -271,27 +299,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
 
-
-	j = 4;
-	mvprintw(j++, 0, "IMPORTANT: Once gravity-calibration begins, the WAM will begin");
-	mvprintw(j++, 0, "to move to a set of %d predefined poses (defined in calibration.conf).", num_poses);
-	j++;
-	mvprintw(j++, 0, "DO NOT TOUCH the WAM during the measurement process, or the");
-	mvprintw(j++, 0, "calibration computations will be significantly wrong, and");
-	mvprintw(j++, 0, "any subsequent gravity compensation will fail spectacularly!");
-	j++;
-	j++;
-	j++;
-	mvprintw(j++, 0, "NOTE: This routine relies on having accurate kinematic information.");
-	mvprintw(j++, 0, "Consider performing the zero-calibration procedure (bt-wam-zerocal)");
-	mvprintw(j++, 0, "before proceeding with gravity-calibration.");
-	j++;
-	j++;
-	j++;
-	mvprintw(j++, 0, "Press [Enter] to start.");
-	refresh();
-	while (getKey() != K_ENTER)
-		usleep(10000);
 
 	/* Start the GUI! */
 	pose = 0;
