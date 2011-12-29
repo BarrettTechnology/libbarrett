@@ -44,6 +44,7 @@ set(programs
 	two_wams
 	vibrate_wam
 	wrist
+	wrist_teach_with_hand
 )
 
 add_programs(${programs})
