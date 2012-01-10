@@ -41,28 +41,16 @@ enum TP_STATE {
 bool loop = false;
 
 
-void displayEntryPoint(Hand* hand) {
-	if (hand != NULL) {
-		printf("Press [Enter] to initialize the Hand. (Make sure it has room!)");
-		waitForEnter();
+bool handPause = true;
 
-		hand->initialize();
-	} else {
-		printf("WARNING: No Hand found!\n");
-	}
-
-	Hand::jp_type currentPos(0.0);
-	Hand::jp_type nextPos(M_PI);
-	nextPos[3] = 0;
-
-
+void displayEntryPoint() {
 	printf("\n");
 	printf("Commands:\n");
 	printf("  t    Start teaching a new trajectory\n");
 	printf("  p    Play back recorded trajectory\n");
 	printf("  l    Loop recorded trajectory\n");
 	printf("  s    Stop teaching, stop playing\n");
-	printf("  At any time, press [Enter] to open or close the Hand.\n");
+	printf("  At any time, press [Enter] to toggle pause/play for the Hand.\n");
 	printf("\n");
 
 	std::string line;
@@ -71,10 +59,8 @@ void displayEntryPoint(Hand* hand) {
 		std::getline(std::cin, line);
 
 		if (line.size() == 0) {
-			if (hand != NULL) {
-				hand->trapezoidalMove(nextPos, false);
-				std::swap(currentPos, nextPos);
-			}
+			// Toggle Hand motion
+			handPause = !handPause;
 		} else {
 			switch (line[0]) {
 			case 't':
@@ -101,6 +87,33 @@ void displayEntryPoint(Hand* hand) {
 	}
 }
 
+
+void handEntryPoint(Hand& hand) {
+	std::vector<Hand::jp_type> positions;
+
+	const double O = 0.0;
+	const double C = 2.4;
+	const double SC = M_PI;
+
+	positions.push_back(Hand::jp_type(O, O, O, O));
+	positions.push_back(Hand::jp_type(C, C, C, O));
+	positions.push_back(Hand::jp_type(O, O, O, O));
+	positions.push_back(Hand::jp_type(O, O, O, SC));
+	positions.push_back(Hand::jp_type(C, C, C, SC));
+	positions.push_back(Hand::jp_type(C*0.3, C*0.7, C*0.5, SC));
+	positions.push_back(Hand::jp_type(C*0.7, C*0.3, C*0.5, SC));
+
+	size_t i = 0;
+	while(true) {
+		i = (i + 1) % positions.size();
+		sleep(3);
+		while (handPause) {
+			usleep(250000);
+		}
+		hand.trapezoidalMove(positions[i]);
+	}
+}
+
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
@@ -115,8 +128,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	const double T_s = pm.getExecutionManager()->getPeriod();
 
 
-	wam.gravityCompensate();
-	boost::thread displayThread(displayEntryPoint, pm.getHand());
+	if (pm.foundHand()) {
+		printf("Press [Enter] to initialize the Hand. (Make sure it has room!)");
+		waitForEnter();
+		pm.getHand()->initialize();
+
+		boost::thread handThread(handEntryPoint, boost::ref(*pm.getHand()));
+	} else {
+		printf("WARNING: No Hand found!\n");
+	}
+	boost::thread displayThread(displayEntryPoint);
 
 	while (true) {
 		systems::Ramp time(pm.getExecutionManager());
