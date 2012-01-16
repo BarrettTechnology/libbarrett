@@ -94,6 +94,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	getyx(stdscr, wamY, wamX);
 	mvprintw(line++,0, "  Joint Velocities (rad/s): ");
 	mvprintw(line++,0, "       Joint Torques (N*m): ");
+	mvprintw(line++,0, "         Tool Position (m): ");
+	mvprintw(line++,0, "   Tool Orientation (quat): ");
 	line++;
 
 	if (fts != NULL) {
@@ -133,9 +135,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	jp_type jp;
 	jv_type jv;
 	jt_type jt;
+	cp_type cp;
+	Eigen::Quaterniond to;
+	math::Matrix<6,DOF> J;
+
 	cf_type cf;
 	ct_type ct;
+
 	Hand::jp_type hjp;
+
 
 	// Fall out of the loop once the user Shift-idles
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
@@ -146,26 +154,32 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		// from exceeding 9.9999. This puts an upper limit on the length of the
 		// string that gets printed to the screen below. We do this to make sure
 		// that the string will fit properly on the screen.
-		jp = math::saturate(wam.getJointPositions(), 9.9999);
-		mvprintw(line++,wamX, "[%7.4f", jp[0]);
+		jp = math::saturate(wam.getJointPositions(), 9.999);
+		mvprintw(line++,wamX, "[%6.3f", jp[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.4f", jp[i]);
+			printw(", %6.3f", jp[i]);
 		}
 		printw("]");
 
-		jv = math::saturate(wam.getJointVelocities(), 9.9999);
-		mvprintw(line++,wamX, "[%7.4f", jv[0]);
+		jv = math::saturate(wam.getJointVelocities(), 9.999);
+		mvprintw(line++,wamX, "[%6.3f", jv[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.4f", jv[i]);
+			printw(", %6.3f", jv[i]);
 		}
 		printw("]");
 
-		jt = math::saturate(wam.getJointTorques(), 99.999);
-		mvprintw(line++,wamX, "[%7.3f", jt[0]);
+		jt = math::saturate(wam.getJointTorques(), 99.99);
+		mvprintw(line++,wamX, "[%6.2f", jt[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.3f", jt[i]);
+			printw(", %6.2f", jt[i]);
 		}
 		printw("]");
+
+		cp = math::saturate(wam.getToolPosition(), 9.999);
+    	mvprintw(line++,wamX, "[%6.3f, %6.3f, %6.3f]", cp[0], cp[1], cp[2]);
+
+		to = wam.getToolOrientation();  // We work only with unit quaternions. No saturation necessary.
+    	mvprintw(line++,wamX, "%+7.4f %+7.4fi %+7.4fj %+7.4fk", to.w(), to.x(), to.y(), to.z());
 
 
 		// FTS
@@ -173,10 +187,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			line = ftsY;
 
             fts->update();
-            cf = math::saturate(fts->getForce(), 99.999);
-        	mvprintw(line++,ftsX, "[%7.3f, %7.3f, %7.3f]", cf[0], cf[1], cf[2]);
-            ct = math::saturate(fts->getTorque(), 9.9999);
-        	mvprintw(line++,ftsX, "[%7.4f, %7.4f, %7.4f]", ct[0], ct[1], ct[2]);
+            cf = math::saturate(fts->getForce(), 99.99);
+        	mvprintw(line++,ftsX, "[%6.2f, %6.2f, %6.2f]", cf[0], cf[1], cf[2]);
+            ct = math::saturate(fts->getTorque(), 9.999);
+        	mvprintw(line++,ftsX, "[%6.4f, %6.3f, %6.3f]", ct[0], ct[1], ct[2]);
 		}
 
 
@@ -185,11 +199,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			line = handY;
 
 			hand->updatePosition();
-			hjp = math::saturate(hand->getInnerLinkPosition(), 9.9999);
-			mvprintw(line++,handX, "[%7.4f, %7.4f, %7.4f, %7.4f]",
+			hjp = math::saturate(hand->getInnerLinkPosition(), 9.999);
+			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
-			hjp = math::saturate(hand->getOuterLinkPosition(), 9.9999);
-			mvprintw(line++,handX, "[%7.4f, %7.4f, %7.4f, %7.4f]",
+			hjp = math::saturate(hand->getOuterLinkPosition(), 9.999);
+			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
 
 			if (hand->hasStrainSensors()) {
@@ -212,7 +226,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 		refresh();  // Ask ncurses to display the new text
-		usleep(200000);  // Slow the loop rate down to roughly 5 Hz
+		usleep(100000);  // Slow the loop rate down to roughly 10 Hz
 	}
 
 	return 0;
