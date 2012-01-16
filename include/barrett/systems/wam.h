@@ -128,6 +128,7 @@ public:
 	cp_type getToolPosition() const;
 	Eigen::Quaterniond getToolOrientation() const;
 	pose_type getToolPose() const;
+	math::Matrix<6,DOF> getToolJacobian() const;
 
 
 	void gravityCompensate(bool compensate = true);
