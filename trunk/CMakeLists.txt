@@ -49,7 +49,7 @@ if (NON_REALTIME)
 else()
 	## Xenomai
 	# TODO(dc): make into a finder?
-	set(Xeno_TARGETVERSION "2.5")
+	set(Xeno_TARGETVERSION "2.6")
 
 	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
 	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
@@ -112,6 +112,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 ## curses
+##set(CURSES_USE_NCURSES TRUE)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
