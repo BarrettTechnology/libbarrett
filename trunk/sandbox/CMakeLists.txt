@@ -41,6 +41,7 @@ set(programs
 	safety_module
 	tactile_test
 	teach_with_hand
+	tuning
 	two_wams
 	vibrate_wam
 	wrist
