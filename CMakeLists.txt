@@ -49,7 +49,7 @@ if (NON_REALTIME)
 else()
 	## Xenomai
 	# TODO(dc): make into a finder?
-	set(Xeno_TARGETVERSION "2.5")
+	set(Xeno_TARGETVERSION "2.6")
 
 	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
 	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
