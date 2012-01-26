@@ -45,61 +45,16 @@ endif()
 ### Dependencies
 
 if (NON_REALTIME)
-	message(STATUS "NON_REALTIME: Not using Xeonmai")
+        message(STATUS "NON_REALTIME: Not using Xeonmai")
 else()
-	## Xenomai
-	# TODO(dc): make into a finder?
-	set(Xeno_TARGETVERSION "2.5")
-
-	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
-	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
-		message(SEND_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
-		unset(Xeno_CONFIGEXE CACHE)
-	else()
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --version OUTPUT_VARIABLE Xeno_VERSION)
-		string(STRIP ${Xeno_VERSION} Xeno_VERSION)
-		string(SUBSTRING ${Xeno_VERSION} 0 4 Xeno_SHORTVERSION)
-		if (NOT (${Xeno_SHORTVERSION} VERSION_EQUAL ${Xeno_TARGETVERSION}))
-			message(SEND_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
-			unset(Xeno_CONFIGEXE CACHE)
-			unset(Xeno_VERSION CACHE)
-			unset(Xeno_SHORTVERSION CACHE)
-		endif()
-	
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --cflags OUTPUT_VARIABLE Xeno_CFLAGS)
-		string(STRIP ${Xeno_CFLAGS} Xeno_CFLAGS)
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --ldflags OUTPUT_VARIABLE Xeno_LDFLAGS)
-		string(STRIP ${Xeno_LDFLAGS} Xeno_LDFLAGS)
-	
-		message(STATUS "Xeonmai version: ${Xeno_VERSION} (${Xeno_CONFIGEXE})")
-	endif()
+        include(./FindXENOMAI.cmake)
+        include_directories(${XENOMAI_INCLUDE_DIR}
+                            ${XENOMAI_INCLUDE_POSIX_DIR})
 endif()
-
 
 ## GSL
-# TODO(dc): make into a finder?
-set(GSL_MINVERSION "1.14")
-
-find_program(GSL_CONFIGEXE "gsl-config")
-if (${GSL_CONFIGEXE} STREQUAL "GSL_CONFIGEXE-NOTFOUND")
-	message(SEND_ERROR "Could not find GSL installation with version ${GSL_MINVERSION}. (http://www.gnu.org/software/gsl/)")
-	unset(GSL_CONFIGEXE CACHE)
-else()
-	execute_process(COMMAND ${GSL_CONFIGEXE} --version OUTPUT_VARIABLE GSL_VERSION)
-	string(STRIP ${GSL_VERSION} GSL_VERSION)
-	if (NOT ( (${GSL_VERSION} VERSION_GREATER ${GSL_MINVERSION}) OR (${GSL_VERSION} VERSION_EQUAL ${GSL_MINVERSION})))
-		message(SEND_ERROR "Found incompatible version of GSL. Found: ${GSL_VERSION}, Need >=${GSL_MINVERSION}")
-		unset(GSL_CONFIGEXE CACHE)
-		unset(GSL_VERSION CACHE)
-	endif()
-	
-	execute_process(COMMAND ${GSL_CONFIGEXE} --cflags OUTPUT_VARIABLE GSL_CFLAGS)
-	string(STRIP ${GSL_CFLAGS} GSL_CFLAGS)
-	execute_process(COMMAND ${GSL_CONFIGEXE} --libs OUTPUT_VARIABLE GSL_LDFLAGS)
-	string(STRIP ${GSL_LDFLAGS} GSL_LDFLAGS)
-	
-	message(STATUS "GSL version: ${GSL_VERSION} (${GSL_CONFIGEXE})")
-endif()
+include(./FindGSL.cmake)
+include_directories(${GSL_INCLUDE_DIRS})
 
 
 ## Boost

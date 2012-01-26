@@ -3,13 +3,11 @@ set(programs
 	zerocal
 )
 
+
 foreach (prog ${programs})
 	add_executable(${prog} ${prog}.cpp)
-	target_link_libraries(${prog} barrett ${CURSES_LIBRARIES})
+	target_link_libraries(${prog} barrett ${CURSES_LIBRARIES} ${Boost_LIBRARIES} ${GSL_LIBRARIES} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE})
 	set_target_properties(${prog} PROPERTIES
 		PREFIX "bt-wam-"
-		COMPILE_FLAGS "${Xeno_CFLAGS} ${GSL_CFLAGS}"
-		LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
 	)
 endforeach()
-
