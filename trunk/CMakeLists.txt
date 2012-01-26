@@ -44,16 +44,17 @@ endif()
 
 ### Dependencies
 
+## Xenomai
 if (NON_REALTIME)
-        message(STATUS "NON_REALTIME: Not using Xeonmai")
+	message(STATUS "NON_REALTIME: Not using Xeonmai")
 else()
-        include(./FindXENOMAI.cmake)
-        include_directories(${XENOMAI_INCLUDE_DIR}
-                            ${XENOMAI_INCLUDE_POSIX_DIR})
+	find_package(Xenomai REQUIRED)
+	include_directories(${XENOMAI_INCLUDE_DIR})
 endif()
 
+
 ## GSL
-include(./FindGSL.cmake)
+find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
 

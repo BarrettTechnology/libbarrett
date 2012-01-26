@@ -3,7 +3,13 @@ project(libbarrett_sandbox)
 function(add_programs)
 	foreach (prog ${ARGV})
 		add_executable(${prog} ${prog}.cpp)
-		target_link_libraries(${prog} barrett ${CURSES_LIBRARIES} ${Boost_LIBRARIES} ${GSL_LIBRARIES} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE})
+		target_link_libraries(${prog}
+			barrett
+			${CURSES_LIBRARIES}
+			${Boost_LIBRARIES}
+			${GSL_LIBRARIES}
+			${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
+		)
 	endforeach()
 endfunction()
 
@@ -59,6 +65,11 @@ if (WITH_PYTHON)
 	link_directories(${PYTHON_LIBRARIES})
 	
 	add_library(btpy SHARED python.cpp)
-	target_link_libraries(btpy barrett ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
-	target_link_libraries(btpy barrett ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${GSL_LIBRARIES} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE})
+	target_link_libraries(btpy
+		barrett
+		${Boost_LIBRARIES}
+		${PYTHON_LIBRARIES}
+		${GSL_LIBRARIES}
+		${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
+	)
 endif()

@@ -39,4 +39,10 @@ set(tests_SOURCES
 )
 
 add_executable(tests ${tests_SOURCES})
-target_link_libraries(tests barrett gtest_main ${CURSES_LIBRARIES} ${Boost_LIBRARIES} ${GSL_LIBRARIES} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE})
+target_link_libraries(tests
+	barrett
+	gtest_main
+	${Boost_LIBRARIES}
+	${GSL_LIBRARIES}
+	${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
+)

@@ -3,11 +3,16 @@ project(libbarrett_examples)
 function(add_programs)
 	foreach (prog ${ARGV})
 		add_executable(${prog} ${prog}.cpp)
-		target_link_libraries(${prog} barrett ${GSL_LIBRARIES} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE})
+		target_link_libraries(${prog}
+			barrett
+			${GSL_LIBRARIES}
+			${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
+		)
 	endforeach()
 endfunction()
 
 
+add_definitions(${XENOMAI_DEFINITIONS})
 add_programs(
 	ex01_initialize_wam
 	ex02_hold_position
