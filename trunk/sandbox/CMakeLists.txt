@@ -20,7 +20,7 @@ set(programs
 	full_system_test
 	gimbals_hand_controller
 	hand
-	hand_buttons_test
+#	hand_buttons_test
 	hand_self_preservation
 	high_level_wam
 	inverse_dynamics_test
@@ -50,7 +50,7 @@ set(programs
 
 add_programs(${programs})
 
-target_link_libraries(hand_buttons_test parapin)
+#target_link_libraries(hand_buttons_test parapin)
 
 
 if (WITH_PYTHON)
