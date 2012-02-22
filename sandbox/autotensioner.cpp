@@ -104,7 +104,7 @@ private:
 				temp[1] = LOW_STOP[1]; temp[2] = LOW_STOP[2]; temp[3] = LOW_STOP[3];
 				break;
 			case 3:
-				temp[1] = LOW_STOP[1]/2.0; temp[3] = LOW_STOP[3];
+				temp[3] = LOW_STOP[3];
 				break;
 			case 4:
 				temp[4] = HIGH_STOP[4]; temp[5] = LOW_STOP[5];
@@ -163,8 +163,8 @@ private:
 					stop1[0] = HIGH_STOP[0]; stop1[1] = HIGH_STOP[1]; stop1[2] = HIGH_STOP[2]; stop1[3] = (rand()%300)/100.0;
 					break;
 				case 3:
-					stop1[1] = LOW_STOP[1]; stop2[3] = LOW_STOP[3];
-					stop2[1] = LOW_STOP[1]; stop2[3] = HIGH_STOP[3];
+					stop1[1] = -0.7; stop1[3] = LOW_STOP[3];
+					stop2[1] = -0.7; stop2[3] = HIGH_STOP[3];
 					break;
 				case 4:
 					stop1[4] = HIGH_STOP[4]; stop1[5] = LOW_STOP[5];
@@ -172,7 +172,7 @@ private:
 					break;
 				case 5:
 					stop1[4] = HIGH_STOP[4]; stop1[5] = HIGH_STOP[5];
-					stop1[4] = LOW_STOP[4]; stop1[5] = LOW_STOP[5];
+					stop2[4] = LOW_STOP[4]; stop2[5] = LOW_STOP[5];
 					break;
 			}
 		moveTheWAM(stop1);
@@ -240,13 +240,11 @@ private:
 		setTang(tangMotor, 0); // Disengane the tang to save the Puck
 
 		double startPos = (j2mp * wam.getJointPositions())[motor]; // record our starting point
-		double tangLoc = wam.getJointPositions()[motor]; // Record motor start point to update tang position later
 		wam.moveTo(wam.getJointPositions()); // tell it to stay still
 		torqueSetPoint.setValue(TENSION_TORQUES[motor]); // set the torque
 		connect(torqueSetPoint.output, torqueSetter.getElementInput(motor)); // apply the torque
 		sleep(5.0); // wait a few seconds
 		double endPos = (j2mp*wam.getJointPositions())[motor]; //record our ending point
-		tangLoc = fabs(tangLoc - wam.getJointPositions()[motor]); // Figure out how much the tang moved
 		disconnect(torqueSetPoint.output); //stop applying the torque
 		
 		setPoint = wam.getJointPositions(); // Update setPoint to account for movement
@@ -256,7 +254,7 @@ private:
 		moveTheWAM(temp); // Back off the tang so it will close
 
 		distribute(motor); // Run the WAM between extremes for the motor spindle to distribute tension
-		tangPositions[motor] += tangLoc; // Update the tang position
+		tangPositions[motor] = fmod(endPos, 2*M_PI); // Update the tang position
 		return fabs(startPos-endPos); // Return how much slack we've taken up
 	}
 
