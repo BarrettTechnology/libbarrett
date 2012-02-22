@@ -18,6 +18,7 @@ set(programs
 	autotensioner
 	can_terminal
 	can_timing
+	cv_moves
 	ft_persistent_tare
 	full_system_test
 	gimbals_hand_controller
