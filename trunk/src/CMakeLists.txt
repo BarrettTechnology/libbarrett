@@ -49,9 +49,6 @@ set(barrett_SOURCES
 )
 
 
-# Defenitions for cdlbt code
-add_definitions(-DCANTYPE_SOCKET -DHAVE_INLINE -DHAS_WAM_LOCAL -DRTSYS_XENOMAI)
-
 add_library(barrett ${barrett_SOURCES})
 target_link_libraries(barrett ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
 if (NOT NON_REALTIME)
