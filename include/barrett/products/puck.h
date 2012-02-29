@@ -43,6 +43,8 @@ public:
 // include the generated file containing the list of available properties
 #	include <barrett/products/detail/property_list.h>
 	static const char* getPropertyStr(enum Property prop);
+	static enum Property getPropertyEnum(const char* str) throw(std::invalid_argument);
+	static enum Property getPropertyEnumNoThrow(const char* str);
 
 
 public:
