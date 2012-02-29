@@ -196,8 +196,18 @@ f.close()
 print "\n### Writing source output to %s..." % OUTPUT_CPP_FILE
 f = open(OUTPUT_CPP_FILE, 'w')
 print >> f, GENERATED_FILE_MSG
-print >> f, "#include <barrett/products/puck.h>\n"
-print >> f, "namespace barrett {\n"
+print >> f, """
+#include <cstring>
+#include <stdexcept>
+#include <cctype>
+
+#include <boost/format.hpp>
+#include <barrett/products/puck.h>
+
+
+namespace barrett {
+
+"""
 
 universalPropList = None  # a list of properties that are common to all versions and all types
 for pt in range(len(p)):
@@ -250,11 +260,13 @@ def binarySearchHelper(pt, vers, indentation, low, high):
 		binarySearchHelper(pt, vers, indentation + 1, low, mid-1)
 		print >> f, prefix + "}"
 	
-print >> f, "int Puck::getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers) {"
-print >> f, "\tif (prop < 0  ||  prop >= NUM_PROPERTIES) {"
-print >> f, "\t\treturn -1;"
-print >> f, "\t}"
-print >> f, "\tswitch (pt) {"
+print >> f, """
+int Puck::getPropertyIdNoThrow(enum Property prop, enum PuckType pt, int fwVers) {
+	if (prop < 0  ||  prop >= NUM_PROPERTIES) {
+		return -1;
+	}
+	switch (pt) {
+"""
 for pt in range(len(p)):
 	vers = sorted(p[pt].keys())
 	if len(vers) != 0:
@@ -263,19 +275,55 @@ for pt in range(len(p)):
 		print >> f, "\t\tbreak;"
 print >> f, "\tcase PT_%s:" % PUCK_TYPE_NAMES[-1]
 print >> f, "\t\treturn PL_%s[prop];" % PUCK_TYPE_NAMES[-1]
-print >> f, "\t\tbreak;"
-print >> f, "\t}"
-print >> f, "\treturn -1;"
-print >> f, "}\n"
+print >> f, """
+		break;
+	}
+	return -1;
+}
+
+"""
 
 maxStrLen = max(map(len, props)) + 1  # need an extra character for the '\0'
-print >> f, "const char propertyStrs[Puck::NUM_PROPERTIES][%d] = {\n%s\n};\n"  \
+print >> f, "const char propertyStrs[Puck::NUM_PROPERTIES][%d] = {\n%s\n};"  \
 				% (maxStrLen, str(props).translate(string.maketrans("'", "\""), "[]"))
-print >> f, "const char* Puck::getPropertyStr(enum Property prop) {"
-print >> f, "\treturn propertyStrs[prop];"
-print >> f, "}\n"
+print >> f, r"""
+const char* Puck::getPropertyStr(enum Property prop) {
+	return propertyStrs[prop];
+}
 
-print >> f, "}"
+enum Puck::Property Puck::getPropertyEnumNoThrow(const char* str) {
+	const int N = strlen(str);
+	char* uStr = new char[N + 1];
+	for (int i = 0; i < N; ++i) {
+		uStr[i] = toupper(str[i]);
+	}
+	uStr[N] = '\0';
+
+	for (int i = 0; i < NUM_PROPERTIES; ++i) {
+		if (strcmp(uStr, propertyStrs[i]) == 0) {
+			delete[] uStr;
+			return (enum Property) i;
+		}
+	}
+
+	delete[] uStr;
+	return (enum Property) -1;
+}
+
+enum Puck::Property Puck::getPropertyEnum(const char* str)
+throw(std::invalid_argument)
+{
+	enum Property prop = getPropertyEnumNoThrow(str);
+	if (prop == -1) {
+		throw std::invalid_argument(boost::str(boost::format(
+			"Puck::getPropertyEnum(): There is no property corresponding to \"%s\"") % str));
+	}
+	return prop;
+}
+
+
+}
+"""
 
 f.close()
 

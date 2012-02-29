@@ -17,6 +17,8 @@ set(tests_SOURCES
 	math/traits.cpp
 	math/utils.cpp
 	math/vector.cpp
+	
+	products/puck.cpp
 
 	systems/abstract/controller.cpp
 	systems/abstract/execution_manager.cpp
