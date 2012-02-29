@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <cctype>
 
 #include <boost/format.hpp>
 #include <barrett/products/puck.h>
@@ -205,23 +206,17 @@ const char* Puck::getPropertyStr(enum Property prop) {
 	return propertyStrs[prop];
 }
 
-//REVIEW(pb):  No commens?!
 enum Puck::Property Puck::getPropertyEnumNoThrow(const char* str) {
 	const int N = strlen(str);
 	char* uStr = new char[N + 1];
 	for (int i = 0; i < N; ++i) {
-		//REVIEW(bz): This doesn't handle numbers correctly (like "X0").
-		if (str[i] >= 'A'  &&  str[i] <= 'Z') {
-			uStr[i] = str[i];
-		} else {
-			uStr[i] = str[i] + ('A' - 'a');
-		}
+		uStr[i] = toupper(str[i]);
 	}
 	uStr[N] = '\0';
 
 	for (int i = 0; i < NUM_PROPERTIES; ++i) {
 		if (strcmp(uStr, propertyStrs[i]) == 0) {
-			//REVIEW(dc): Memory leak: uStr.
+			delete[] uStr;
 			return (enum Property) i;
 		}
 	}
