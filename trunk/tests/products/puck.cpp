@@ -33,13 +33,9 @@ TEST(PuckTest, GetPropertyStrTest) {
 }
 
 TEST(PuckTest, GetPropertyEnumTestNoThrow) {
-	EXPECT_EQ(Puck::A, Puck::getPropertyEnumNoThrow("A"));
-	EXPECT_EQ(Puck::ERROR, Puck::getPropertyEnumNoThrow("ERROR"));
-	EXPECT_EQ(Puck::IOFST, Puck::getPropertyEnumNoThrow("IOFST"));
-	EXPECT_EQ(Puck::LOCK, Puck::getPropertyEnumNoThrow("LOCK"));
-	EXPECT_EQ(Puck::POLES, Puck::getPropertyEnumNoThrow("POLES"));
-	EXPECT_EQ(Puck::TIE, Puck::getPropertyEnumNoThrow("TIE"));
-	EXPECT_EQ(Puck::VNOM, Puck::getPropertyEnumNoThrow("VNOM"));
+	for (int i = 0; i < Puck::NUM_PROPERTIES; ++i) {
+		EXPECT_EQ(i, Puck::getPropertyEnumNoThrow(Puck::getPropertyStr((enum Puck::Property) i)));
+	}
 
 	EXPECT_EQ(Puck::ZERO, Puck::getPropertyEnumNoThrow("ZERO"));
 	EXPECT_EQ(Puck::ZERO, Puck::getPropertyEnumNoThrow("zero"));
@@ -55,13 +51,9 @@ TEST(PuckTest, GetPropertyEnumTestNoThrow) {
 }
 
 TEST(PuckTest, GetPropertyEnumTest) {
-	EXPECT_EQ(Puck::A, Puck::getPropertyEnum("A"));
-	EXPECT_EQ(Puck::ERROR, Puck::getPropertyEnum("ERROR"));
-	EXPECT_EQ(Puck::IOFST, Puck::getPropertyEnum("IOFST"));
-	EXPECT_EQ(Puck::LOCK, Puck::getPropertyEnum("LOCK"));
-	EXPECT_EQ(Puck::POLES, Puck::getPropertyEnum("POLES"));
-	EXPECT_EQ(Puck::TIE, Puck::getPropertyEnum("TIE"));
-	EXPECT_EQ(Puck::VNOM, Puck::getPropertyEnum("VNOM"));
+	for (int i = 0; i < Puck::NUM_PROPERTIES; ++i) {
+		EXPECT_EQ(i, Puck::getPropertyEnum(Puck::getPropertyStr((enum Puck::Property) i)));
+	}
 
 	EXPECT_EQ(Puck::ZERO, Puck::getPropertyEnum("ZERO"));
 	EXPECT_EQ(Puck::ZERO, Puck::getPropertyEnum("zero"));
