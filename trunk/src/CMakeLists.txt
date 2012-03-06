@@ -21,10 +21,17 @@ if (NOT NON_REALTIME)
 		thread/disable_secondary_mode_warning.cpp
 		thread/real_time_mutex.cpp
 	)
+	
+	if (WITH_PYTHON)
+		set(barrett_PYTHON_SOURCES
+			python.cpp
+		)
+	endif()
 endif()
 
 set(barrett_SOURCES
 	${barrett_RT_SOURCES}  # Maybe include RT sources
+	${barrett_PYTHON_SOURCES}  # Maybe include Python sources
 	
 	bus/communications_bus.cpp
 	
