@@ -52,8 +52,10 @@ set(barrett_SOURCES
 add_library(barrett ${barrett_SOURCES})
 target_link_libraries(barrett ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
 if (NOT NON_REALTIME)
-	add_definitions(${XENOMAI_DEFINITIONS})
     target_link_libraries(barrett ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
+endif()
+if (WITH_PYTHON)
+	target_link_libraries(barrett ${PYTHON_LIBRARIES})
 endif()
 
 set_target_properties(barrett PROPERTIES
