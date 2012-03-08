@@ -1,0 +1,62 @@
+#!/usr/bin/python
+
+"""
+	Copyright 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+"""
+
+"""
+This utility makes it easy to discover the (dynamic) IP address of a remote
+WAM-PC or PC/104 computer.
+
+It sends a UDP broadcast to request that any target systems identify themselves.
+If the corresponding daemon is running on a target system, it will reply with a
+human-readable name and an IP address. This daemon is installed by default on
+all Barrett systems. The WAM and the local machine must be connected to the same
+subnet.
+"""
+
+from socket import *
+
+
+PORT = 1337
+TIMEOUT = 0.5  # seconds
+SEPERATOR = '|'
+
+
+# Broadcast
+sock = socket(AF_INET, SOCK_DGRAM)
+sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+sock.sendto("", ("<broadcast>", PORT))
+
+# Discover
+sock.settimeout(TIMEOUT)
+replies = []
+try:
+	while True:
+		replies.append(sock.recv(4096))  # Arbitrary buffer size
+except timeout:
+	pass
+wams = map(lambda r: r.split(SEPERATOR), sorted(replies))
+
+# Display
+print wams
+
