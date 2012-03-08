@@ -25,21 +25,108 @@
 
 """
 This utility makes it easy to discover the (dynamic) IP address of a remote
-WAM-PC or PC/104 computer.
+WAM-PC or PC/104 computer. Copy to to /usr/local/bin/ on your local machine so
+that you can find your WAM on the network.
 
-It sends a UDP broadcast to request that any target systems identify themselves.
-If the corresponding daemon is running on a target system, it will reply with a
-human-readable name and an IP address. This daemon is installed by default on
-all Barrett systems. The WAM and the local machine must be connected to the same
-subnet.
+The script sends a UDP broadcast to request that any target systems identify
+themselves. If the corresponding daemon is running on a target system, it will
+reply with a human-readable name and an IP address. This daemon is installed by
+default on all Barrett systems. The WAM and the local machine must be connected
+to the same subnet.
 """
 
+from sys import exit
 from socket import *
-
+import curses
 
 PORT = 1337
 TIMEOUT = 0.5  # seconds
 SEPERATOR = '|'
+
+
+# curses interface
+def getChoice(wams):
+	win = curses.initscr()
+	try:
+		curses.cbreak()
+		curses.noecho()
+		win.keypad(1)
+
+		line = 0
+
+		win.addstr(line,0, "WAMDISCOVER  --  Choose a WAM. Press 'x' to cancel.")
+		line += 3
+
+		WAM_Y = line
+		IP_X = max(map(lambda w: len(w[0]), wams)) + 7
+		for i,w in enumerate(wams):
+			win.addstr(line,0, "%d)  %s" % (i, w[0]))
+			win.addstr(line,IP_X, w[1])
+			line += 1
+
+		line += 2
+		win.addstr(line,0, "Choice: ")
+		C_Y,C_X = win.getyx()
+
+		class SetChoice:
+			C_NONE = -2  # Easier to handle arrow keys if this is < -1
+			
+			def __init__(self):
+				self.c = SetChoice.C_NONE
+			
+			def up(self):
+				self(self.c - 1)
+			def down(self):
+				self(self.c + 1)
+				
+			def __call__(self, newChoice):
+				C_NONE = SetChoice.C_NONE
+				
+				# Ignore bad choices
+				if newChoice != C_NONE  and  (newChoice < 0  or  newChoice >= len(wams)):
+					return
+		
+				# If the old choice is valid
+				if self != C_NONE:
+					win.chgat(WAM_Y + self.c,0, curses.A_NORMAL)  # Make the old choice normal
+		
+				if newChoice != C_NONE:
+					win.chgat(WAM_Y + newChoice,0, curses.A_STANDOUT)  # Highlight the new choice
+					win.addstr(C_Y,C_X, str(newChoice))  # Display the number
+					self.c = newChoice
+				else:  # Special case: C_NONE means deselect
+					win.addstr(C_Y,C_X, " ")  # Display the number
+					self.c = C_NONE
+		
+				win.refresh()
+
+		setChoice = SetChoice()
+		setChoice(0)
+
+		while True:
+			k = win.getch(C_Y,C_X)
+		
+			# Handle keypad characters first
+			if k == curses.KEY_UP:
+				setChoice.up()
+			elif k == curses.KEY_DOWN:
+				setChoice.down()
+			elif k < 256:
+				# Then normal characters
+				ck = chr(k).upper()
+	
+				if k == 27 or ck == 'Q' or ck == 'X':  # Escape, q, Q, x, X
+					setChoice(SetChoice.C_NONE)
+					break
+				if k == 10:  # Enter
+					break
+				if ck.isdigit():  # 0 through 9
+					setChoice(int(ck))
+			# Otherwise, ignore
+	finally:
+		curses.endwin()
+	
+	return setChoice.c
 
 
 # Broadcast
@@ -58,5 +145,10 @@ except timeout:
 wams = map(lambda r: r.split(SEPERATOR), sorted(replies))
 
 # Display
-print wams
+choice = getChoice(wams)
+if choice not in range(len(wams)):
+	exit()
+
+w = wams[choice]
+print 'Connecting to: %s (%s)' % (w[0], w[1])
 
