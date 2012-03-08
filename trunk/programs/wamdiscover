@@ -25,7 +25,7 @@
 
 """
 This utility makes it easy to discover the (dynamic) IP address of a remote
-WAM-PC or PC/104 computer. Copy to to /usr/local/bin/ on your local machine so
+WAM-PC or PC/104 computer. Copy it to /usr/local/bin/ on your local machine so
 that you can find your WAM on the network.
 
 The script sends a UDP broadcast to request that any target systems identify
@@ -35,7 +35,7 @@ default on all Barrett systems. The WAM and the local machine must be connected
 to the same subnet.
 """
 
-from sys import exit
+from sys import argv, exit
 from socket import *
 import curses
 
@@ -43,6 +43,9 @@ PORT = 1337
 TIMEOUT = 0.5  # seconds
 SEPERATOR = '|'
 
+
+def wamStr(w, width=0):
+	return "%s (%s)" % (w[0].ljust(width), w[1])
 
 # curses interface
 def getChoice(wams):
@@ -134,6 +137,7 @@ sock = socket(AF_INET, SOCK_DGRAM)
 sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 sock.sendto("", ("<broadcast>", PORT))
 
+
 # Discover
 sock.settimeout(TIMEOUT)
 replies = []
@@ -143,12 +147,33 @@ try:
 except timeout:
 	pass
 wams = map(lambda r: r.split(SEPERATOR), sorted(replies))
+NAME_LEN = max(map(lambda w: len(w[0]), wams))
+print "Found:"
+print "    " + "\n    ".join(map(lambda w: wamStr(w, NAME_LEN), wams))
 
-# Display
-choice = getChoice(wams)
+
+# Choose
+if len(argv) > 1:  # They passed a name on the command line. See if we can match it.
+	name = " ".join(argv[1:]).lower()
+	choice = -1
+	for i,w in enumerate(wams):
+		if w[0].lower().find(name) != -1:
+			# Multiple matches is an error
+			if choice != -1:
+				choice = -2
+				break
+			else:
+				choice = i
+	if choice == -1:
+		print "ERROR: No WAM matching \"%s\" found." % name
+	elif choice == -2:
+		print "ERROR: More than one WAM matching \"%s\" found." % name
+else:  # No args, use curses
+	choice = getChoice(wams)
 if choice not in range(len(wams)):
-	exit()
-
+	exit(1)
 w = wams[choice]
-print 'Connecting to: %s (%s)' % (w[0], w[1])
+
+print "Connecting to:"
+print "    " + wamStr(w, NAME_LEN)
 
