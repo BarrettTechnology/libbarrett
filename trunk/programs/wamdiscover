@@ -36,9 +36,12 @@ to the same subnet.
 """
 
 from sys import exit, stdout
+import os
+import subprocess
+import string
+from glob import glob
 from socket import *
 import argparse
-import subprocess
 import curses
 
 
@@ -46,6 +49,9 @@ PORT = 1337
 TIMEOUT = 0.5  # seconds
 SEPERATOR = '|'
 DEFAULT_USERNAME = "robot"
+VALID_NAME_CHARACTERS = string.ascii_letters + string.digits + " _-"
+MOUNT_DIR = os.path.expanduser("~/wamdiscover/")
+GVFS_GLOB_TEMPLATE = os.path.expanduser("~/.gvfs/*%s")
 
 
 def wamStr(w, width=0):
@@ -53,6 +59,12 @@ def wamStr(w, width=0):
 
 def maxNameLen(wams):
 	return max(map(lambda w: len(w[0]), wams))
+
+def alreadyMounted(w):
+	return subprocess.call("gvfs-mount --list | grep %s > /dev/null" % w[1], shell=True) == 0
+
+def niceString(s):
+	return len(s.translate(None, VALID_NAME_CHARACTERS)) == 0
 
 # curses interface
 def getChoice(wams):
@@ -192,15 +204,39 @@ w = wams[choice]
 # GVFS
 if args.gvfs:
 	# See if it's already mounted
-	if subprocess.call("gvfs-mount --list | grep %s > /dev/null" % w[1], shell=True) == 0:
+	if alreadyMounted(w):
 		print "Remote filesystem already mounted."
 	else:
+		# Mount it
 		print "Mounting remote filesystem..."
 		stdout.flush()
 		try:
 			subprocess.call(["gvfs-mount", "sftp://" + w[1]])
 		except KeyboardInterrupt:
 			pass
+		
+		# Did the mount succeed?
+		if alreadyMounted(w):
+			# Is the name a valid directory name?
+			if niceString(w[0]):
+				path = MOUNT_DIR + w[0]
+				# Is there already a file by that name?
+				if os.path.exists(path):
+					print "Symlink already exsists:"
+					print "    " + path
+				else:
+					# Different versions of GVFS use different file name conventions
+					gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
+					# Is there exactly one candidate for the GVFS directory?
+					if len(gvfsPaths) == 1:
+						# Link it!
+						os.symlink(gvfsPaths[0], path)
+						print "Remote filesystem available at:"
+						print "    " + path
+					else:
+						print "Skipping symlink. Couldn't find GVFS directory."
+			else:
+				print "Skipping symlink. WAM name contains illigal characters."
 
 
 # Connect
