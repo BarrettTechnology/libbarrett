@@ -51,6 +51,9 @@ DEFAULT_USERNAME = "robot"
 def wamStr(w, width=0):
 	return "%s (%s)" % (w[0].ljust(width), w[1])
 
+def maxNameLen(wams):
+	return max(map(lambda w: len(w[0]), wams))
+
 # curses interface
 def getChoice(wams):
 	win = curses.initscr()
@@ -65,7 +68,7 @@ def getChoice(wams):
 		line += 3
 
 		WAM_Y = line
-		IP_X = max(map(lambda w: len(w[0]), wams)) + 7
+		IP_X = maxNameLen(wams) + 7
 		for i,w in enumerate(wams):
 			win.addstr(line,0, "%d)  %s" % (i, w[0]))
 			win.addstr(line,IP_X, w[1])
@@ -159,9 +162,8 @@ try:
 except timeout:
 	pass
 wams = map(lambda r: r.split(SEPERATOR), sorted(replies))
-NAME_LEN = max(map(lambda w: len(w[0]), wams))
 print "Found:"
-print "    " + "\n    ".join(map(lambda w: wamStr(w, NAME_LEN), wams))
+print "    " + "\n    ".join(map(lambda w: wamStr(w, maxNameLen(wams)), wams))
 
 
 # Choose
@@ -189,12 +191,21 @@ w = wams[choice]
 
 # GVFS
 if args.gvfs:
-	pass
+	# See if it's already mounted
+	if subprocess.call("gvfs-mount --list | grep %s > /dev/null" % w[1], shell=True) == 0:
+		print "Remote filesystem already mounted."
+	else:
+		print "Mounting remote filesystem..."
+		stdout.flush()
+		try:
+			subprocess.call(["gvfs-mount", "sftp://" + w[1]])
+		except KeyboardInterrupt:
+			pass
 
 
 # Connect
 print "Connecting to:"
-print "    " + wamStr(w, NAME_LEN)
+print "    " + wamStr(w, maxNameLen(wams))
 stdout.flush()
 
 try:
