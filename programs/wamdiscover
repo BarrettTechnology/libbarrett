@@ -35,13 +35,17 @@ default on all Barrett systems. The WAM and the local machine must be connected
 to the same subnet.
 """
 
-from sys import argv, exit
+from sys import exit, stdout
 from socket import *
+import argparse
+import subprocess
 import curses
+
 
 PORT = 1337
 TIMEOUT = 0.5  # seconds
 SEPERATOR = '|'
+DEFAULT_USERNAME = "robot"
 
 
 def wamStr(w, width=0):
@@ -132,6 +136,14 @@ def getChoice(wams):
 	return setChoice.c
 
 
+# Parse arguments
+ap = argparse.ArgumentParser(description="Find WAM-PCs or PC/104s on the local network.")
+ap.add_argument("-u", "--user", default=DEFAULT_USERNAME, help="the username to login with (default: %(default)s)")
+ap.add_argument("-n", "--no-gvfs", dest="gvfs", action="store_false", help="don't attempt to gvfs-mount the remote filesystem")
+ap.add_argument("name", nargs=argparse.REMAINDER, help="optional: name of the WAM you want to connect to")
+args = ap.parse_args()
+
+
 # Broadcast
 sock = socket(AF_INET, SOCK_DGRAM)
 sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -153,8 +165,8 @@ print "    " + "\n    ".join(map(lambda w: wamStr(w, NAME_LEN), wams))
 
 
 # Choose
-if len(argv) > 1:  # They passed a name on the command line. See if we can match it.
-	name = " ".join(argv[1:]).lower()
+if len(args.name) > 0:  # They passed a name on the command line. See if we can match it.
+	name = " ".join(args.name).lower()
 	choice = -1
 	for i,w in enumerate(wams):
 		if w[0].lower().find(name) != -1:
@@ -174,6 +186,19 @@ if choice not in range(len(wams)):
 	exit(1)
 w = wams[choice]
 
+
+# GVFS
+if args.gvfs:
+	pass
+
+
+# Connect
 print "Connecting to:"
 print "    " + wamStr(w, NAME_LEN)
+stdout.flush()
+
+try:
+	subprocess.call(["ssh", args.user + "@" + w[1]])
+except KeyboardInterrupt:
+	pass
 
