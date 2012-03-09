@@ -220,10 +220,14 @@ if args.gvfs:
 			# Is the name a valid directory name?
 			if niceString(w[0]):
 				path = MOUNT_DIR + w[0]
+				
+				# If there's a link (not some other kind of file) with that name, remove it
+				if os.path.islink(path):
+					os.remove(path)
+					
 				# Is there already a file by that name?
 				if os.path.exists(path):
-					print "Symlink already exsists:"
-					print "    " + path
+					print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
 				else:
 					# Different versions of GVFS use different file name conventions
 					gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
@@ -234,9 +238,9 @@ if args.gvfs:
 						print "Remote filesystem available at:"
 						print "    " + path
 					else:
-						print "Skipping symlink. Couldn't find GVFS directory."
+						print "WARNING: Skipping symlink. Couldn't find GVFS directory."
 			else:
-				print "Skipping symlink. WAM name contains illigal characters."
+				print "WARNING: Skipping symlink. WAM name contains illegal characters."
 
 
 # Connect
