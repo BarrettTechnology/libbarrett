@@ -92,7 +92,7 @@ BOOST_PYTHON_MODULE(libbarrett)
 	// Puck class
 	{
 		// The Puck class becomes the active scope until puckScope is destroyed.
-		scope puckScope = class_<Puck>("Puck", init<bus::CANSocket&, int>())
+		scope puckScope = class_<Puck>("Puck", init<bus::CANSocket&, int>()[with_custodian_and_ward<1,2>()])
 			.def("wake", (void(Puck::*)()) &Puck::wake)  // cast to resolve the overload
 			.def("getProperty", getPropertyNoRT)
 		;
