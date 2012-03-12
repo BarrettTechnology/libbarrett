@@ -154,7 +154,7 @@ def getChoice(wams):
 # Parse arguments
 ap = argparse.ArgumentParser(description="Find WAM-PCs or PC/104s on the local network.")
 ap.add_argument("-u", "--user", default=DEFAULT_USERNAME, help="the username to login with (default: %(default)s)")
-ap.add_argument("-n", "--no-gvfs", dest="gvfs", action="store_false", help="don't attempt to gvfs-mount the remote filesystem")
+ap.add_argument("-g", "--gvfs", action="store_true", help="use gvfs-mount the mount the remote filesystem")
 ap.add_argument("name", nargs=argparse.REMAINDER, help="optional: name of the WAM you want to connect to")
 args = ap.parse_args()
 
