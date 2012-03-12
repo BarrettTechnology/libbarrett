@@ -47,6 +47,12 @@ namespace barrett {
 using namespace boost::python;
 
 
+class Namespace {};
+scope makeNamespace(const char* name) {
+	return scope(class_<Namespace, boost::noncopyable>(name, no_init));
+}
+
+
 bool isWamActivated(ProductManager& pm) {
 	return pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE;
 }
@@ -74,10 +80,14 @@ void wrapWam() {
 
 BOOST_PYTHON_MODULE(libbarrett)
 {
-	class_<bus::CANSocket, boost::noncopyable>("CANSocket", init<int>())
-		.def("send", &bus::CANSocket::send)
-		.def("receiveRaw", &bus::CANSocket::receiveRaw)
-	;
+	// barrett::bus namespace
+	{
+		scope busScope = makeNamespace("bus");
+		class_<bus::CANSocket, boost::noncopyable>("CANSocket", init<int>())
+			.def("send", &bus::CANSocket::send)
+			.def("receiveRaw", &bus::CANSocket::receiveRaw)
+		;
+	}
 
 	// Puck class
 	{
