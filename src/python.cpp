@@ -51,6 +51,9 @@ bool isWamActivated(ProductManager& pm) {
 	return pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE;
 }
 
+int getPropertyNoRT(const Puck& p, enum Puck::Property prop) {
+	return p.getProperty(prop, false);
+}
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_getExecutionManager_overloads, getExecutionManager, 0, 2)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_waitForWam_overloads, waitForWam, 0, 1)
@@ -71,15 +74,26 @@ void wrapWam() {
 
 BOOST_PYTHON_MODULE(libbarrett)
 {
-	class_<bus::CANSocket, boost::noncopyable>("CANSocket", init<int> ())
+	class_<bus::CANSocket, boost::noncopyable>("CANSocket", init<int>())
 		.def("send", &bus::CANSocket::send)
 		.def("receiveRaw", &bus::CANSocket::receiveRaw)
 	;
 
-	class_<Puck>("Puck", init<bus::CANSocket&, int> ())
-		.def("wake", (void(Puck::*)()) &Puck::wake)  // cast to resolve the overload
-//		.def("getProperty", &Puck::getProperty)
-	;
+	// Puck class
+	{
+		// The Puck class becomes the active scope until puckScope is destroyed.
+		scope puckScope = class_<Puck>("Puck", init<bus::CANSocket&, int>())
+			.def("wake", (void(Puck::*)()) &Puck::wake)  // cast to resolve the overload
+			.def("getProperty", getPropertyNoRT)
+		;
+
+		enum_<enum Puck::Property> propEnum("Property");
+		for (int i = 0; i < Puck::NUM_PROPERTIES; ++i) {
+			enum Puck::Property p = (enum Puck::Property)i;
+			propEnum.value(Puck::getPropertyStr(p), p);
+		}
+		propEnum.export_values();
+	}
 
 	class_<systems::RealTimeExecutionManager, boost::noncopyable>("RealTimeExecutionManager", no_init);
 	wrapWam<4>();
@@ -89,15 +103,15 @@ BOOST_PYTHON_MODULE(libbarrett)
 
 	class_<ProductManager, boost::noncopyable>("ProductManager")
 		.def("getExecutionManager", &ProductManager::getExecutionManager,
-				ProductManager_getExecutionManager_overloads()[return_internal_reference<> ()])
+				ProductManager_getExecutionManager_overloads()[return_internal_reference<>()])
 		.def("waitForWam", &ProductManager::waitForWam, ProductManager_waitForWam_overloads())
 		.def("wakeAllPucks", &ProductManager::wakeAllPucks)
 		.def("foundWam7", &ProductManager::foundWam7)
 		.def("getWam7", &ProductManager::getWam7,
-				ProductManager_getWam7_overloads()[return_internal_reference<> ()])
+				ProductManager_getWam7_overloads()[return_internal_reference<>()])
 		.def("foundWam4", &ProductManager::foundWam4)
 		.def("getWam4", &ProductManager::getWam4,
-				ProductManager_getWam4_overloads()[return_internal_reference<> ()])
+				ProductManager_getWam4_overloads()[return_internal_reference<>()])
 	;
 }
 
