@@ -29,6 +29,7 @@
  */
 
 
+#include <stdexcept>
 #include <boost/python.hpp>
 
 #include <barrett/bus/abstract/communications_bus.h>
@@ -46,20 +47,80 @@ const size_t MAX_MESSAGE_LEN = CommunicationsBus::MAX_MESSAGE_LEN;
 const size_t TIMEOUT = CommunicationsBus::TIMEOUT;
 
 
+void send(const CommunicationsBus& cb, int busId, object pyData) {
+	const size_t L = len(pyData);
+	if (L > (int)cb.MAX_MESSAGE_LEN) {
+		throw std::logic_error("data exceeds the maximum length");
+	}
+
+	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
+	for (size_t i = 0; i < L; ++i) {
+		data[i] = extract<unsigned char>(pyData[i]);
+	}
+
+	int ret = cb.send(busId, data, L);
+	if (ret != 0) {
+		throw std::runtime_error("bus::CommunicationsBus::send() failed. See /var/log/syslog for details.");
+	}
+}
+
+list receive(const CommunicationsBus& cb, int expectedBusId, bool blocking = true) {
+	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
+	size_t l = 0;
+	int ret = cb.receive(expectedBusId, data, l, blocking, false);  // No realtime for python!
+
+	// If we failed because receive() would have blocked, return an empty list
+	if (!blocking  &&  ret == 1) {
+		return list();
+	} else if (ret != 0) {
+		throw std::runtime_error("bus::CommunicationsBus::receive() failed. See /var/log/syslog for details.");
+	}
+
+	list pyData;
+	for (size_t i = 0; i < l; ++i) {
+		pyData.append(data[i]);
+	}
+	return pyData;
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(receive_overloads, receive, 2, 3)
+
+tuple receiveRaw(const CommunicationsBus& cb, bool blocking = true) {
+	int busId = 0;
+	unsigned char data[CommunicationsBus::MAX_MESSAGE_LEN];
+	size_t l = 0;
+	int ret = cb.receiveRaw(busId, data, l, blocking);
+
+	// If we failed because receiveRaw() would have blocked, return an empty list
+	if (!blocking  &&  ret == 1) {
+		return make_tuple(0, list());
+	} else if (ret != 0) {
+		throw std::runtime_error("bus::CommunicationsBus::receiveRaw() failed. See /var/log/syslog for details.");
+	}
+
+	list pyData;
+	for (size_t i = 0; i < l; ++i) {
+		pyData.append(data[i]);
+	}
+	return make_tuple(busId, pyData);
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(receiveRaw_overloads, receiveRaw, 1, 2)
+
+
 void pythonBusInterface() {
 	class_<CommunicationsBus, boost::noncopyable>("CommunicationsBus", no_init)
 		.def_readonly("MAX_MESSAGE_LEN", MAX_MESSAGE_LEN)
 		.def_readonly("TIMEOUT", TIMEOUT)
 
-//		.def("getMutex", &CommunicationsBus::getMutex, return_internal_reference<>())
+		// TODO(dc): Why is this broken?
+		//.def("getMutex", &CommunicationsBus::getMutex, return_internal_reference<>())
 
 		.def("open", &CommunicationsBus::open)
 		.def("close", &CommunicationsBus::close)
 		.def("isOpen", &CommunicationsBus::isOpen)
 
-		.def("send", &CommunicationsBus::send)
-		.def("receive", &CommunicationsBus::receive)
-		.def("receiveRaw", &CommunicationsBus::receiveRaw)
+		.def("send", &send)
+		.def("receive", &receive, receive_overloads())
+		.def("receiveRaw", &receiveRaw, receiveRaw_overloads())
 	;
 
 	class_<CANSocket, bases<CommunicationsBus>, boost::noncopyable>("CANSocket")
