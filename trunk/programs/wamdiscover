@@ -106,7 +106,7 @@ def getChoice(wams):
 				
 				# Ignore bad choices
 				if newChoice != C_NONE  and  (newChoice < 0  or  newChoice >= len(wams)):
-					return
+					return False
 		
 				# If the old choice is valid
 				if self != C_NONE:
@@ -121,6 +121,7 @@ def getChoice(wams):
 					self.c = C_NONE
 		
 				win.refresh()
+				return self.c != C_NONE
 
 		setChoice = SetChoice()
 		setChoice(0)
@@ -143,7 +144,8 @@ def getChoice(wams):
 				if k == 10:  # Enter
 					break
 				if ck.isdigit():  # 0 through 9
-					setChoice(int(ck))
+					if setChoice(int(ck)):  # Is choice valid?
+						break
 			# Otherwise, ignore
 	finally:
 		curses.endwin()
