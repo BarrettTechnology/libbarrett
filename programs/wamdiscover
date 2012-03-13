@@ -223,6 +223,10 @@ if args.gvfs:
 			if niceString(w[0]):
 				path = MOUNT_DIR + w[0]
 				
+				# Does the directory exist?
+				if not os.path.exists(MOUNT_DIR):
+					os.makedirs(MOUNT_DIR)
+					
 				# If there's a link (not some other kind of file) with that name, remove it
 				if os.path.islink(path):
 					os.remove(path)
