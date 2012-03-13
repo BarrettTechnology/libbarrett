@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-These tests assume that there is a correctly configured WAM attached to the
+These tests assume that there is a well-behaved, Shift-idled WAM attached to the
 CANbus on CAN_PORT.
 """
 
@@ -63,6 +63,25 @@ b.close()
 b = bus.BusManager(CAN_PORT)
 assert b.isOpen()
 assert b.getUnderlyingBus().isOpen()
+
+try:
+	b.send(0x001, range(bus.CommunicationsBus.MAX_MESSAGE_LEN + 1))
+except RuntimeError:
+	pass
+else:
+	assert False, "Message should have been too long"
+try:
+	b.send(0x001, [5,0,256,0,0,0,0,0])
+except OverflowError:
+	pass
+else:
+	assert False, "Data entry should have been too big"
+b.send(0x001, [3,0,0,0,0,0,0,0])
+assert b.receive(0x426) == [0x83,0,1,0]
+assert b.receive(0x426, False) == []  # We don't expect any messages
+b.send(0x001, [3,0,0,0,0,0,0,0])
+assert b.receiveRaw() == (0x426, [0x83,0,1,0])
+assert b.receiveRaw(False) == (0, [])  # We don't expect any messages
 b.close()
 
 
@@ -70,6 +89,6 @@ b.close()
 
 
 
-p = Puck(bus.CANSocket(CAN_PORT), 1)
+#p = Puck(bus.CANSocket(CAN_PORT), 1)
 
-print p.getProperty(Puck.STAT)
+#print p.getProperty(Puck.STAT)
