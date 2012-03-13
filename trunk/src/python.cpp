@@ -43,13 +43,18 @@
 #include <barrett/systems/wam.h>
 
 
-namespace barrett {
+using namespace barrett;
 using namespace boost::python;
 
 
+// Forward declarations of the "build functions"
+void pythonBusInterface();
+
+
 class Namespace {};
-scope makeNamespace(const char* name) {
-	return scope(class_<Namespace, boost::noncopyable>(name, no_init));
+void makeNamespace(const char* name, void(&buildFunction)()) {
+	scope s = class_<Namespace, boost::noncopyable>(name, no_init);
+	buildFunction();
 }
 
 
@@ -80,14 +85,7 @@ void wrapWam() {
 
 BOOST_PYTHON_MODULE(libbarrett)
 {
-	// barrett::bus namespace
-	{
-		scope busScope = makeNamespace("bus");
-		class_<bus::CANSocket, boost::noncopyable>("CANSocket", init<int>())
-			.def("send", &bus::CANSocket::send)
-			.def("receiveRaw", &bus::CANSocket::receiveRaw)
-		;
-	}
+	makeNamespace("bus", pythonBusInterface);
 
 	// Puck class
 	{
@@ -123,6 +121,4 @@ BOOST_PYTHON_MODULE(libbarrett)
 		.def("getWam4", &ProductManager::getWam4,
 				ProductManager_getWam4_overloads()[return_internal_reference<>()])
 	;
-}
-
 }
