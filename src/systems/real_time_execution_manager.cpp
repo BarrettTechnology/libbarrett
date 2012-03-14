@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * real_time_execution_manager.cpp
  *
  *  Created on: Dec 11, 2009
@@ -6,6 +29,7 @@
  */
 
 #include <stdexcept>
+#include <string>
 #include <limits>
 #include <cmath>
 
@@ -17,6 +41,7 @@
 #include <native/timer.h>
 
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <barrett/thread/real_time_mutex.h>
 #include <barrett/systems/abstract/execution_manager.h>
@@ -156,8 +181,9 @@ void RealTimeExecutionManager::start()
 		stopRunning = false;
 		task = new RT_TASK;
 
+		std::string name = "RTEM: " + boost::lexical_cast<std::string>(this);
 		int ret = 0;
-		ret = rt_task_create(task, "RTEM", 0, priority, T_JOINABLE);
+		ret = rt_task_create(task, name.c_str(), 0, priority, T_JOINABLE);
 		if (ret != 0) {
 			syslog(LOG_ERR, "%s: rt_task_create(): (%d) %s\n", __func__, -ret, strerror(-ret));
 			throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
