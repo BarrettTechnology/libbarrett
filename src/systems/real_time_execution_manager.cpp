@@ -10,6 +10,7 @@
 #include <cmath>
 
 #include <syslog.h>
+#include <errno.h>
 #include <sys/mman.h>
 
 #include <native/task.h>
@@ -27,7 +28,6 @@ namespace systems {
 
 
 // TODO(dc): test!
-// TODO(dc): check return codes for errors!
 
 
 namespace detail {
@@ -45,8 +45,8 @@ void rtemEntryPoint(void* cookie)
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
 	uint32_t period_us = rtem->period * 1e6;
-    RTIME start;
-    uint32_t duration;
+	RTIME start;
+	uint32_t duration;
 	uint32_t min = std::numeric_limits<unsigned int>::max();
 	uint32_t max = 0;
 	uint64_t sum = 0;
@@ -54,13 +54,22 @@ void rtemEntryPoint(void* cookie)
 	uint32_t loopCount = 0;
 	uint32_t missedCycleCount = 0;
 
+	int ret = 0;
 
-	rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
+	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: rt_task_set_periodic(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		exit(2);
+	}
 
 	rtem->running = true;
 	try {
 		while ( !rtem->stopRunning ) {
-			rt_task_wait_period(NULL);
+			ret = rt_task_wait_period(NULL);
+			if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
+				syslog(LOG_ERR, "%s: rt_task_wait_period(): (%d) %s\n", __func__, -ret, strerror(-ret));
+				exit(2);
+			}
 
 
 			start = rt_timer_read();
@@ -146,12 +155,27 @@ void RealTimeExecutionManager::start()
 	if ( !isRunning() ) {
 		stopRunning = false;
 		task = new RT_TASK;
-		rt_task_create(task, "RTEM", 0, priority, T_JOINABLE);
-		rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
+
+		int ret = 0;
+		ret = rt_task_create(task, "RTEM", 0, priority, T_JOINABLE);
+		if (ret != 0) {
+			syslog(LOG_ERR, "%s: rt_task_create(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
+		}
+
+		ret = rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
+		if (ret != 0) {
+			syslog(LOG_ERR, "%s: rt_task_start(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
+		}
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
-			rt_task_sleep(detail::secondsToRTIME(period / 10.0));
+			ret = rt_task_sleep(detail::secondsToRTIME(period / 10.0));
+			if (ret != 0) {
+				syslog(LOG_ERR, "%s: rt_task_sleep(): (%d) %s\n", __func__, -ret, strerror(-ret));
+				throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
+			}
 		}
 	}
 	// TODO(dc): else, throw an exception?
@@ -160,9 +184,17 @@ void RealTimeExecutionManager::start()
 void RealTimeExecutionManager::stop()
 {
 	stopRunning = true;
-	rt_task_join(task);
+	int ret = rt_task_join(task);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: rt_task_join(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		throw std::runtime_error("systems::RealTimeExecutionManager::stop(): Couldn't stop the realtime task. See /var/log/syslog for details.");
+	}
 
-	rt_task_delete(task);
+	ret = rt_task_delete(task);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: rt_task_delete(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		throw std::runtime_error("systems::RealTimeExecutionManager::stop(): Couldn't stop the realtime task. See /var/log/syslog for details.");
+	}
 	delete task;
 	task = NULL;
 }
@@ -175,7 +207,11 @@ void RealTimeExecutionManager::clearError()
 	errorStr = "";
 
 	stopRunning = true;
-	rt_task_delete(task);
+	int ret = rt_task_delete(task);
+	if (ret != 0) {
+		syslog(LOG_ERR, "%s: rt_task_delete(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		throw std::runtime_error("systems::RealTimeExecutionManager::clearError(): Couldn't delete the realtime task. See /var/log/syslog for details.");
+	}
 	delete task;
 	task = NULL;
 }
