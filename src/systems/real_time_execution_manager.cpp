@@ -210,17 +210,14 @@ void RealTimeExecutionManager::start()
 void RealTimeExecutionManager::stop()
 {
 	stopRunning = true;
+
+	// According to Xenomai docs, rt_task_join() also performs the rt_task_delete() behaviors.
 	int ret = rt_task_join(task);
 	if (ret != 0) {
 		syslog(LOG_ERR, "%s: rt_task_join(): (%d) %s\n", __func__, -ret, strerror(-ret));
 		throw std::runtime_error("systems::RealTimeExecutionManager::stop(): Couldn't stop the realtime task. See /var/log/syslog for details.");
 	}
 
-	ret = rt_task_delete(task);
-	if (ret != 0) {
-		syslog(LOG_ERR, "%s: rt_task_delete(): (%d) %s\n", __func__, -ret, strerror(-ret));
-		throw std::runtime_error("systems::RealTimeExecutionManager::stop(): Couldn't stop the realtime task. See /var/log/syslog for details.");
-	}
 	delete task;
 	task = NULL;
 }
