@@ -77,9 +77,11 @@ void rtemEntryPoint(void* cookie)
 	uint64_t sum = 0;
 	uint64_t sumSq = 0;
 	uint32_t loopCount = 0;
-	uint32_t missedCycleCount = 0;
+	uint32_t overruns = 0;
+	uint32_t missedReleasePoints = 0;
+	unsigned long newMissedReleasePoints = 0;
 
-	int ret = 0;
+	int ret;
 
 	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 	if (ret != 0) {
@@ -90,13 +92,12 @@ void rtemEntryPoint(void* cookie)
 	rtem->running = true;
 	try {
 		while ( !rtem->stopRunning ) {
-			ret = rt_task_wait_period(NULL);
+			ret = rt_task_wait_period(&newMissedReleasePoints);
 			if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
 				syslog(LOG_ERR, "%s: rt_task_wait_period(): (%d) %s\n", __func__, -ret, strerror(-ret));
 				exit(2);
 			}
-
-
+			missedReleasePoints += newMissedReleasePoints;
 			start = rt_timer_read();
 
 			rtem->runExecutionCycle();
@@ -112,7 +113,7 @@ void rtemEntryPoint(void* cookie)
 			sumSq += duration * duration;
 			++loopCount;
 			if (duration > period_us) {
-				++missedCycleCount;
+				++overruns;
 			}
 		}
 	} catch (const ExecutionManagerException& e) {
@@ -132,12 +133,14 @@ void rtemEntryPoint(void* cookie)
 	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
 
     syslog(LOG_ERR, "RealTimeExecutionManager control-loop stats (microseconds):");
-    syslog(LOG_ERR, "  num missed cycles = %u (%u cycles total)", missedCycleCount, loopCount);
     syslog(LOG_ERR, "  target period = %u", period_us);
     syslog(LOG_ERR, "  min = %u", min);
     syslog(LOG_ERR, "  ave = %.3f", mean);
     syslog(LOG_ERR, "  max = %u", max);
     syslog(LOG_ERR, "  stdev = %.3f", stdev);
+    syslog(LOG_ERR, "  num total cycles = %u", loopCount);
+    syslog(LOG_ERR, "  num missed release points = %u", missedReleasePoints);
+    syslog(LOG_ERR, "  num overruns = %u", overruns);
 }
 
 
