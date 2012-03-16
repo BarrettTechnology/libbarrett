@@ -41,7 +41,12 @@ public:
 
 	// preferred: low control-rate moves
 	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
-	void setVelocity(const jv_type& jv) const;
+        void graspMove(const jp_type& jp, bool blocking = true) const;
+        void spreadMove(const jp_type& jp, bool blocking = true) const;
+        void setVelocity(const jv_type& jv) const;
+        void graspVelocity(const jv_type& jv) const;
+        void spreadVelocity(const jv_type& jv) const;
+	  
 
 	// advanced: high control-rate moves
 	void setPositionMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_PID); }
