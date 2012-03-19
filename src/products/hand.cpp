@@ -104,21 +104,28 @@ void Hand::initialize() const
 	waitUntilDoneMoving();
 }
 
-bool Hand::doneMoving(bool realtime) const
+bool Hand::doneMoving(unsigned int whichDigits, bool realtime) const
 {
 	int modes[DOF];
+
+	// TODO(dc): Avoid asking for modes from the Pucks we don't care about.
 	group.getProperty(Puck::MODE, modes, realtime);
 
 	for (size_t i = 0; i < DOF; ++i) {
-		if (modes[i] != MotorPuck::MODE_IDLE  &&  (modes[i] != MotorPuck::MODE_PID  ||  holds[i] == 0)) {
+		if (
+				digitsInclude(whichDigits, i)  &&
+				modes[i] != MotorPuck::MODE_IDLE  &&
+				(modes[i] != MotorPuck::MODE_PID  ||  holds[i] == 0)
+				)
+		{
 			return false;
 		}
 	}
 	return true;
 }
-void Hand::waitUntilDoneMoving(int period_us) const
+void Hand::waitUntilDoneMoving(unsigned int whichDigits, int period_us) const
 {
-	while ( !doneMoving() ) {
+	while ( !doneMoving(whichDigits) ) {
 		usleep(period_us);
 	}
 }
@@ -134,27 +141,38 @@ void Hand::close(unsigned int whichDigits, bool blocking) const {
 
 void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
-	commandThenApply(whichDigits, Puck::E, j2pp.cwise() * jp, MotorPuck::MODE_TRAPEZOIDAL);
+	setProperty(whichDigits, Puck::E, j2pp.cwise() * jp);
+	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
 	blockIf(blocking);
 }
 
 void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
 {
 	// Convert to counts/millisecond
-	commandThenApply(whichDigits, Puck::V, (j2pp.cwise() * jv) / 1000.0, MotorPuck::MODE_VELOCITY);
+	setProperty(whichDigits, Puck::V, (j2pp.cwise() * jv) / 1000.0);
+	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_VELOCITY);
 }
 
 
-void Hand::setPositionCommand(const jp_type& jp) const
+void Hand::setPositionMode(unsigned int whichDigits) const {
+	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_PID);
+}
+void Hand::setPositionCommand(const jp_type& jp, unsigned int whichDigits) const
 {
-	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::P, j2pp[i] * jp[i]);
-	}
+	setProperty(whichDigits, Puck::P, j2pp.cwise() * jp);
 }
-void Hand::setTorqueCommand(const jt_type& jt) const
+
+void Hand::setTorqueMode(unsigned int whichDigits) const {
+	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TORQUE);
+}
+void Hand::setTorqueCommand(const jt_type& jt, unsigned int whichDigits) const
 {
 	pt = j2pt.cwise() * jt;
-	MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, pt.data(), DOF);
+	if (whichDigits == WHOLE_HAND) {
+		MotorPuck::sendPackedTorques(pucks[0]->getBus(), group.getId(), Puck::T, pt.data(), DOF);
+	} else {
+		setProperty(whichDigits, Puck::T, pt);
+	}
 }
 
 void Hand::update(unsigned int sensors, bool realtime)
@@ -261,24 +279,19 @@ void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, int v
 		group.setProperty(prop, value);
 	} else {
 		for (size_t i = 0; i < DOF; ++i) {
-			if (whichDigits & (1 << i)) {
+			if (digitsInclude(whichDigits, i)) {
 				pucks[i]->setProperty(prop, value);
 			}
 		}
 	}
 }
-void Hand::commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const
+
+void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, const v_type& values) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
-		if (whichDigits & (1 << i)) {
-			pucks[i]->setProperty(cmdProp, cmdValues[i]);
-			if (whichDigits != WHOLE_HAND) {
-				pucks[i]->setProperty(Puck::MODE, mode);
-			}
+		if (digitsInclude(whichDigits, i)) {
+			pucks[i]->setProperty(prop, values[i]);
 		}
-	}
-	if (whichDigits == WHOLE_HAND) {
-		group.setProperty(Puck::MODE, mode);
 	}
 }
 
