@@ -26,6 +26,16 @@ int main() {
 
 
 	{
+		hand.close();
+		hand.open();
+		hand.close(Hand::SPREAD);
+		hand.close(Hand::GRASP);
+		hand.open(Hand::GRASP, false);
+		sleep(1);
+		hand.open();
+	}
+
+	{
 		Hand::jp_type open(0.0);
 		Hand::jp_type closed(2.4);
 		closed[3] = M_PI;
