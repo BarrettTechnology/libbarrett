@@ -53,25 +53,30 @@ public:
 	BARRETT_UNITS_TYPEDEFS(DOF);
 
 
-	Hand(const std::vector<Puck*>& pucks);
-	~Hand();
-
-	void initialize() const;
-	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
-
-	bool doneMoving(bool realtime = false) const;
-	void waitUntilDoneMoving(int period_us = 100000) const;
-
-
-	// Basic moves
+	// Constants for referring to specific axes of the Hand
 	static const unsigned int F1         = 1 << 0;
 	static const unsigned int F2         = 1 << 1;
 	static const unsigned int F3         = 1 << 2;
 	static const unsigned int SPREAD     = 1 << 3;
 	static const unsigned int GRASP      = F1 | F2 | F3;
 	static const unsigned int WHOLE_HAND = GRASP | SPREAD;
+
+
+	Hand(const std::vector<Puck*>& pucks);
+	~Hand();
+
+	void initialize() const;
+	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
+
+	bool doneMoving(unsigned int whichDigits = WHOLE_HAND, bool realtime = false) const;
+	void waitUntilDoneMoving(unsigned int whichDigits = WHOLE_HAND, int period_us = 100000) const;
+
+
+	// Basic moves
 	void open(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	void open(bool blocking) const { open(WHOLE_HAND, blocking); }
 	void close(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	void close(bool blocking) const { close(WHOLE_HAND, blocking); }
 
 	// Preferred: low control-rate moves
 	void trapezoidalMove(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
@@ -79,10 +84,10 @@ public:
 	void velocityMove(const jv_type& jv, unsigned int whichDigits = WHOLE_HAND) const;
 
 	// Advanced: high control-rate moves
-	void setPositionMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_PID); }
-	void setPositionCommand(const jp_type& jp) const;
-	void setTorqueMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_TORQUE); }
-	void setTorqueCommand(const jt_type& jt) const;
+	void setPositionMode(unsigned int whichDigits = WHOLE_HAND) const;
+	void setPositionCommand(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND) const;
+	void setTorqueMode(unsigned int whichDigits = WHOLE_HAND) const;
+	void setTorqueCommand(const jt_type& jt, unsigned int whichDigits = WHOLE_HAND) const;
 
 
 	static const unsigned int S_POSITION          = 1 << 0;
@@ -110,8 +115,9 @@ public:
 	static const size_t SPREAD_INDEX = 3;
 
 protected:
+	bool digitsInclude(unsigned int whichDigits, size_t index) const { return whichDigits & (1 << index); }
 	void setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const;
-	void commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const;
+	void setProperty(unsigned int whichDigits, enum Puck::Property prop, const v_type& values) const;
 	void blockIf(bool blocking) const;
 
 
