@@ -64,16 +64,26 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			++numFtt;
 			hasFtt = true;
 		}
+	}
+	syslog(LOG_ERR, "  Found %d Fingertip torque sensors", numFtt);
+
+	bool tactError = false;
+	for (size_t i = 0; i < DOF; ++i) {
 		if (pucks[i]->hasOption(Puck::RO_Tact)) {
 			try {
 				// The TactilePuck ctor might throw if there was an initialization error
 				tactilePucks.push_back(new TactilePuck(pucks[i]));
 				hasTact = true;
-			} catch (std::runtime_error e) {}
+			} catch (std::runtime_error e) {
+				tactError = true;
+			}
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Fingertip torque sensors", numFtt);
 	syslog(LOG_ERR, "  Found %d Tactile arrays", tactilePucks.size());
+	if (tactError) {
+		syslog(LOG_ERR, "  Initialization error! Disabling Tactile arrays");
+		hasTact = false;
+	}
 
 	// record HOLD values
 	group.getProperty(Puck::HOLD, holds);
