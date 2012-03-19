@@ -123,12 +123,19 @@ void Hand::waitUntilDoneMoving(int period_us) const
 	}
 }
 
+void Hand::open(unsigned int whichDigits, bool blocking) const {
+	setProperty(whichDigits, Puck::CMD, CMD_OPEN);
+	blockIf(blocking);
+}
+void Hand::close(unsigned int whichDigits, bool blocking) const {
+	setProperty(whichDigits, Puck::CMD, CMD_CLOSE);
+	blockIf(blocking);
+}
+
 void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
 	commandThenApply(whichDigits, Puck::E, j2pp.cwise() * jp, MotorPuck::MODE_TRAPEZOIDAL);
-	if (blocking) {
-		waitUntilDoneMoving();
-	}
+	blockIf(blocking);
 }
 
 void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
@@ -248,6 +255,18 @@ void Hand::updateTactFull(bool realtime)
 }
 
 
+void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const
+{
+	if (whichDigits == WHOLE_HAND) {
+		group.setProperty(prop, value);
+	} else {
+		for (size_t i = 0; i < DOF; ++i) {
+			if (whichDigits & (1 << i)) {
+				pucks[i]->setProperty(prop, value);
+			}
+		}
+	}
+}
 void Hand::commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
@@ -260,6 +279,12 @@ void Hand::commandThenApply(unsigned int whichDigits, enum Puck::Property cmdPro
 	}
 	if (whichDigits == WHOLE_HAND) {
 		group.setProperty(Puck::MODE, mode);
+	}
+}
+
+void Hand::blockIf(bool blocking) const {
+	if (blocking) {
+		waitUntilDoneMoving();
 	}
 }
 

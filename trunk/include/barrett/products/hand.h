@@ -63,13 +63,17 @@ public:
 	void waitUntilDoneMoving(int period_us = 100000) const;
 
 
-	// Preferred: low control-rate moves
+	// Basic moves
 	static const unsigned int F1         = 1 << 0;
 	static const unsigned int F2         = 1 << 1;
 	static const unsigned int F3         = 1 << 2;
 	static const unsigned int SPREAD     = 1 << 3;
 	static const unsigned int GRASP      = F1 | F2 | F3;
 	static const unsigned int WHOLE_HAND = GRASP | SPREAD;
+	void open(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	void close(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+
+	// Preferred: low control-rate moves
 	void trapezoidalMove(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
 	void trapezoidalMove(const jp_type& jp, bool blocking) const { trapezoidalMove(jp, WHOLE_HAND, blocking); }
 	void velocityMove(const jv_type& jv, unsigned int whichDigits = WHOLE_HAND) const;
@@ -106,7 +110,10 @@ public:
 	static const size_t SPREAD_INDEX = 3;
 
 protected:
+	void setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const;
 	void commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const;
+	void blockIf(bool blocking) const;
+
 
 	static const double J2_RATIO = 125.0;
 	static const double J2_ENCODER_RATIO = 50.0;
@@ -129,7 +136,9 @@ protected:
 	std::vector<TactilePuck*> tactilePucks;
 
 private:
-	static const int CMD_HI = 13;
+	static const int CMD_HI    = 13;
+	static const int CMD_CLOSE = 18;
+	static const int CMD_OPEN  = 20;
 	static const enum Puck::Property props[];
 
 	DISALLOW_COPY_AND_ASSIGN(Hand);
