@@ -55,14 +55,14 @@ const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, P
 
 Hand::Hand(const std::vector<Puck*>& _pucks) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"),
-	hasSg(false), hasTact(false), useSecondaryEncoders(true), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), sg(DOF, 0), tactilePucks()
+	hasFtt(false), hasTact(false), useSecondaryEncoders(true), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), ftt(DOF, 0), tactilePucks()
 {
-	// Check for TACT and SG options.
-	int numSg = 0;
+	// Check for TACT and FingertipTorque options.
+	int numFtt = 0;
 	for (size_t i = 0; i < DOF; ++i) {
 		if (pucks[i]->hasOption(Puck::RO_Strain)) {
-			++numSg;
-			hasSg = true;
+			++numFtt;
+			hasFtt = true;
 		}
 		if (pucks[i]->hasOption(Puck::RO_Tact)) {
 			try {
@@ -72,7 +72,7 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			} catch (std::runtime_error e) {}
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Strain-gauge sensors", numSg);
+	syslog(LOG_ERR, "  Found %d Fingertip torque sensors", numFtt);
 	syslog(LOG_ERR, "  Found %d Tactile arrays", tactilePucks.size());
 
 	// record HOLD values
@@ -188,7 +188,7 @@ void Hand::update(unsigned int sensors, bool realtime)
 	if (sensors & S_POSITION) {
 		group.sendGetPropertyRequest(group.getPropertyId(Puck::P));
 	}
-	if (hasStrainSensors()  &&  sensors & S_FINGER_TIP_TORQUE) {
+	if (hasFingertipTorqueSensors()  &&  sensors & S_FINGERTIP_TORQUE) {
 		group.sendGetPropertyRequest(group.getPropertyId(Puck::SG));
 	}
 	if (hasTactSensors()  &&  sensors & S_TACT_FULL) {
@@ -221,8 +221,8 @@ void Hand::update(unsigned int sensors, bool realtime)
 		// For the spread
 		innerJp[SPREAD_INDEX] = outerJp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].counts2rad(primaryEncoder[SPREAD_INDEX]) / SPREAD_RATIO;
 	}
-	if (hasStrainSensors()  &&  sensors & S_FINGER_TIP_TORQUE) {
-		group.receiveGetPropertyReply<Puck::StandardParser>(group.getPropertyId(Puck::SG), sg.data(), realtime);
+	if (hasFingertipTorqueSensors()  &&  sensors & S_FINGERTIP_TORQUE) {
+		group.receiveGetPropertyReply<Puck::StandardParser>(group.getPropertyId(Puck::SG), ftt.data(), realtime);
 	}
 	if (hasTactSensors()  &&  sensors & S_TACT_FULL) {
 		for (size_t i = 0; i < tactilePucks.size(); ++i) {
