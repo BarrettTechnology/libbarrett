@@ -160,10 +160,7 @@ void readHand(Hand& hand) {
 //	int motorTemp[Hand::DOF];
 
 	while ( !boost::this_thread::interruption_requested() ) {
-		hand.updatePosition();
-		hand.updateStrain();
-		hand.updateTactFull();
-
+		hand.update();
 //		hand.getPuckGroup().getProperty(Puck::TEMP, puckTemp);
 //		hand.getPuckGroup().getProperty(Puck::THERM, motorTemp);
 
