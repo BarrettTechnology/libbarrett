@@ -92,9 +92,9 @@ public:
 
 	// Sensors
 	static const unsigned int S_POSITION          = 1 << 0;
-	static const unsigned int S_FINGER_TIP_TORQUE = 1 << 1;
+	static const unsigned int S_FINGERTIP_TORQUE = 1 << 1;
 	static const unsigned int S_TACT_FULL         = 1 << 2;
-	static const unsigned int S_ALL = S_POSITION | S_FINGER_TIP_TORQUE | S_TACT_FULL;
+	static const unsigned int S_ALL = S_POSITION | S_FINGERTIP_TORQUE | S_TACT_FULL;
 	void update(unsigned int sensors = S_ALL, bool realtime = false);
 
 	const jp_type& getInnerLinkPosition() const { return innerJp; }
@@ -103,8 +103,8 @@ public:
 	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
 	void enableBreakawayEncoders(bool enable) { useSecondaryEncoders = enable; }  // Enabled by default.
 
-	bool hasStrainSensors() const { return hasSg; }
-	const std::vector<int>& getStrain() const { return sg; }
+	bool hasFingertipTorqueSensors() const { return hasFtt; }
+	const std::vector<int>& getFingertipTorque() const { return ftt; }
 
 	bool hasTactSensors() const { return hasTact; }
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
@@ -125,7 +125,7 @@ protected:
 	static const double SPREAD_RATIO = 17.5;
 
 
-	bool hasSg;
+	bool hasFtt;
 	bool hasTact;
 	bool useSecondaryEncoders;
 
@@ -136,7 +136,7 @@ protected:
 	std::vector<MotorPuck::CombinedPositionParser<int>::result_type> encoderTmp;
 	std::vector<int> primaryEncoder, secondaryEncoder;
 	jp_type innerJp, outerJp;
-	std::vector<int> sg;
+	std::vector<int> ftt;
 	std::vector<TactilePuck*> tactilePucks;
 
 private:
