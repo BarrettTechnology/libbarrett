@@ -48,7 +48,7 @@ void logEntryPoint(Hand& hand, const char* outFile) {
 	}
 
 	// Become a shadowed Xenomai task so we can use rt_timer services.
-	hand.updatePosition();
+	hand.update();
 	RTIME start = rt_timer_read();
 
 	tuple_type data;
@@ -56,9 +56,7 @@ void logEntryPoint(Hand& hand, const char* outFile) {
 	while ( !boost::this_thread::interruption_requested() ) {
 		boost::get<0>(data) = (rt_timer_read() - start) * 1e-9;
 
-		hand.updatePosition();
-		hand.updateStrain();
-		hand.updateTactFull();
+		hand.update();
 
 		boost::get<1>(data) = hand.getInnerLinkPosition();
 		boost::get<2>(data) = hand.getOuterLinkPosition();
