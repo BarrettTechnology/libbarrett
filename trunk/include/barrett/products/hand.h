@@ -90,25 +90,23 @@ public:
 	void setTorqueCommand(const jt_type& jt, unsigned int whichDigits = WHOLE_HAND) const;
 
 
+	// Sensors
 	static const unsigned int S_POSITION          = 1 << 0;
 	static const unsigned int S_FINGER_TIP_TORQUE = 1 << 1;
 	static const unsigned int S_TACT_FULL         = 1 << 2;
 	static const unsigned int S_ALL = S_POSITION | S_FINGER_TIP_TORQUE | S_TACT_FULL;
 	void update(unsigned int sensors = S_ALL, bool realtime = false);
 
-	void updatePosition(bool realtime = false);
 	const jp_type& getInnerLinkPosition() const { return innerJp; }
 	const jp_type& getOuterLinkPosition() const { return outerJp; }
 	const std::vector<int>& getPrimaryEncoderPosition() const { return primaryEncoder; }
 	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
-	void enableBreakawayEncoders(bool enable) { useSecondaryEncoders = enable; }
+	void enableBreakawayEncoders(bool enable) { useSecondaryEncoders = enable; }  // Enabled by default.
 
 	bool hasStrainSensors() const { return hasSg; }
-	void updateStrain(bool realtime = false);
 	const std::vector<int>& getStrain() const { return sg; }
 
 	bool hasTactSensors() const { return hasTact; }
-	void updateTactFull(bool realtime = false);
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
 

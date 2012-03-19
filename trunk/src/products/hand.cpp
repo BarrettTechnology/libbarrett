@@ -231,47 +231,6 @@ void Hand::update(unsigned int sensors, bool realtime)
 	}
 }
 
-void Hand::updatePosition(bool realtime)
-{
-	group.getProperty<MotorPuck::CombinedPositionParser<int> >(Puck::P, encoderTmp.data(), realtime);
-
-	for (size_t i = 0; i < DOF; ++i) {
-		primaryEncoder[i] = encoderTmp[i].get<0>();
-		secondaryEncoder[i] = encoderTmp[i].get<1>();
-	}
-
-	// For the fingers
-	for (size_t i = 0; i < DOF-1; ++i) {
-		// If we got a reading from the secondary encoder and it's enabled...
-		if (useSecondaryEncoders  &&  secondaryEncoder[i] != std::numeric_limits<int>::max()) {
-			innerJp[i] = motorPucks[i].counts2rad(secondaryEncoder[i]) / J2_ENCODER_RATIO;
-			outerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) * (1.0/J2_RATIO + 1.0/J3_RATIO) - innerJp[i];
-		} else {
-			// These calculations are only valid before breakaway!
-			innerJp[i] = motorPucks[i].counts2rad(primaryEncoder[i]) / J2_RATIO;
-			outerJp[i] = innerJp[i] * J2_RATIO / J3_RATIO;
-		}
-	}
-
-	// For the spread
-	innerJp[SPREAD_INDEX] = outerJp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].counts2rad(primaryEncoder[SPREAD_INDEX]) / SPREAD_RATIO;
-}
-void Hand::updateStrain(bool realtime)
-{
-	if (hasStrainSensors()) {
-		group.getProperty(Puck::SG, sg.data(), realtime);
-	}
-}
-void Hand::updateTactFull(bool realtime)
-{
-	if (hasTactSensors()) {
-		group.setProperty(Puck::TACT, TactilePuck::FULL_FORMAT);
-		for (size_t i = 0; i < tactilePucks.size(); ++i) {
-			tactilePucks[i]->receiveFull(realtime);
-		}
-	}
-}
-
 
 void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const
 {
