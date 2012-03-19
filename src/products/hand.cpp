@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * hand.cpp
  *
  *  Created on: Nov 9, 2010
@@ -100,62 +123,18 @@ void Hand::waitUntilDoneMoving(int period_us) const
 	}
 }
 
-void Hand::trapezoidalMove(const jp_type& jp, bool blocking) const
+void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
-	for (size_t i = 0; i < DOF; ++i) {
-		pucks[i]->setProperty(Puck::E, j2pp[i] * jp[i]);
-	}
-	group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
-
+	commandThenApply(whichDigits, Puck::E, j2pp.cwise() * jp, MotorPuck::MODE_TRAPEZOIDAL);
 	if (blocking) {
 		waitUntilDoneMoving();
 	}
 }
 
-void Hand::graspMove(const jp_type& jp, bool blocking) const
+void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
 {
-        for (size_t i = 0; i < DOF-1; ++i) {
-                pucks[i]->setProperty(Puck::E, j2pp[i] * jp[i]);
-        }
-        group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
-
-        if (blocking) {
-                waitUntilDoneMoving();
-        }
-}
-
-void Hand::spreadMove(const jp_type& jp, bool blocking) const
-{
-        pucks[3]->setProperty(Puck::E, j2pp[3] * jp[3]);
-        group.setProperty(Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
-
-        if (blocking) {
-                waitUntilDoneMoving();
-        }
-}
-
-void Hand::setVelocity(const jv_type& jv) const
-{
-	for (size_t i = 0; i < DOF; ++i) {
-		// Convert to counts/millisecond
-		pucks[i]->setProperty(Puck::V, (j2pp[i] * jv[i]) / 1000.0);
-	}
-	group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
-}
-
-void Hand::graspVelocity(const jv_type& jv) const
-{
-        for (size_t i = 0; i < DOF-1; ++i) {
-          pucks[i]->setProperty(Puck::V, (j2pp[i] * jv[i]) / 1000.0);
-        }
-        group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
-}
-
-void Hand::spreadVelocity(const jv_type& jv) const
-{
-
-        pucks[3]->setProperty(Puck::V, (j2pp[3] * jv[3]) / 1000.0);
-        group.setProperty(Puck::MODE, MotorPuck::MODE_VELOCITY);
+	// Convert to counts/millisecond
+	commandThenApply(whichDigits, Puck::V, (j2pp.cwise() * jv) / 1000.0, MotorPuck::MODE_VELOCITY);
 }
 
 
@@ -265,6 +244,22 @@ void Hand::updateTactFull(bool realtime)
 		for (size_t i = 0; i < tactilePucks.size(); ++i) {
 			tactilePucks[i]->receiveFull(realtime);
 		}
+	}
+}
+
+
+void Hand::commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const
+{
+	for (size_t i = 0; i < DOF; ++i) {
+		if (whichDigits & (1 << i)) {
+			pucks[i]->setProperty(cmdProp, cmdValues[i]);
+			if (whichDigits != WHOLE_HAND) {
+				pucks[i]->setProperty(Puck::MODE, mode);
+			}
+		}
+	}
+	if (whichDigits == WHOLE_HAND) {
+		group.setProperty(Puck::MODE, mode);
 	}
 }
 

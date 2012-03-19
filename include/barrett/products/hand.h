@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * hand.h
  *
  *  Created on: Nov 9, 2010
@@ -39,16 +62,19 @@ public:
 	bool doneMoving(bool realtime = false) const;
 	void waitUntilDoneMoving(int period_us = 100000) const;
 
-	// preferred: low control-rate moves
-	void trapezoidalMove(const jp_type& jp, bool blocking = true) const;
-        void graspMove(const jp_type& jp, bool blocking = true) const;
-        void spreadMove(const jp_type& jp, bool blocking = true) const;
-        void setVelocity(const jv_type& jv) const;
-        void graspVelocity(const jv_type& jv) const;
-        void spreadVelocity(const jv_type& jv) const;
-	  
 
-	// advanced: high control-rate moves
+	// Preferred: low control-rate moves
+	static const unsigned int F1         = 1 << 0;
+	static const unsigned int F2         = 1 << 1;
+	static const unsigned int F3         = 1 << 2;
+	static const unsigned int SPREAD     = 1 << 3;
+	static const unsigned int GRASP      = F1 | F2 | F3;
+	static const unsigned int WHOLE_HAND = GRASP | SPREAD;
+	void trapezoidalMove(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	void trapezoidalMove(const jp_type& jp, bool blocking) const { trapezoidalMove(jp, WHOLE_HAND, blocking); }
+	void velocityMove(const jv_type& jv, unsigned int whichDigits = WHOLE_HAND) const;
+
+	// Advanced: high control-rate moves
 	void setPositionMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_PID); }
 	void setPositionCommand(const jp_type& jp) const;
 	void setTorqueMode() const { group.setProperty(Puck::MODE, MotorPuck::MODE_TORQUE); }
@@ -80,6 +106,8 @@ public:
 	static const size_t SPREAD_INDEX = 3;
 
 protected:
+	void commandThenApply(unsigned int whichDigits, enum Puck::Property cmdProp, const v_type& cmdValues, enum MotorPuck::MotorMode mode) const;
+
 	static const double J2_RATIO = 125.0;
 	static const double J2_ENCODER_RATIO = 50.0;
 	static const double J3_RATIO = 375.0;
