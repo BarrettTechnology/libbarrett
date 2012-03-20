@@ -226,27 +226,32 @@ if args.gvfs:
 				path = MOUNT_DIR + w[0]
 				
 				# Does the directory exist?
-				if not os.path.exists(MOUNT_DIR):
+				# Use normpath() to catch directories *and* files with that
+				# name. exists() gets confused by trailing '/' characters.
+				if not os.path.exists(os.path.normpath(MOUNT_DIR)):
 					os.makedirs(MOUNT_DIR)
+				
+				if os.path.isdir(MOUNT_DIR):  # Maybe it's a file?
+					# If there's a link (not some other kind of file) with that name, remove it
+					if os.path.islink(path):
+						os.remove(path)
 					
-				# If there's a link (not some other kind of file) with that name, remove it
-				if os.path.islink(path):
-					os.remove(path)
-					
-				# Is there already a file by that name?
-				if os.path.exists(path):
-					print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
-				else:
-					# Different versions of GVFS use different file name conventions
-					gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
-					# Is there exactly one candidate for the GVFS directory?
-					if len(gvfsPaths) == 1:
-						# Link it!
-						os.symlink(gvfsPaths[0], path)
-						print "Remote filesystem available at:"
-						print "    " + path
+					# Is there already a file by that name?
+					if os.path.exists(path):
+						print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
 					else:
-						print "WARNING: Skipping symlink. Couldn't find GVFS directory."
+						# Different versions of GVFS use different file name conventions
+						gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
+						# Is there exactly one candidate for the GVFS directory?
+						if len(gvfsPaths) == 1:
+							# Link it!
+							os.symlink(gvfsPaths[0], path)
+							print "Remote filesystem available at:"
+							print "    " + path
+						else:
+							print "WARNING: Skipping symlink. Couldn't find GVFS directory."
+				else:
+					print "WARNING: Skipping symlink. \"%s\" is not a directory." % MOUNT_DIR
 			else:
 				print "WARNING: Skipping symlink. WAM name contains illegal characters."
 
