@@ -57,14 +57,6 @@ add_programs(${programs})
 
 
 if (WITH_PYTHON)
-	find_package(Boost 1.40.0 REQUIRED python)
-	include_directories(${Boost_INCLUDE_DIRS})
-	link_directories(${Boost_LIBRARY_DIRS})
-	
-	find_package(PythonLibs REQUIRED)
-	include_directories(${PYTHON_INCLUDE_PATH})
-	link_directories(${PYTHON_LIBRARIES})
-	
 	add_library(btpy SHARED python.cpp)
 	target_link_libraries(btpy
 		barrett

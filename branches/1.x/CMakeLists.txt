@@ -50,6 +50,7 @@ if (NON_REALTIME)
 else()
 	find_package(Xenomai REQUIRED)
 	include_directories(${XENOMAI_INCLUDE_DIR})
+	add_definitions(${XENOMAI_DEFINITIONS})
 endif()
 
 
@@ -59,12 +60,25 @@ include_directories(${GSL_INCLUDE_DIRS})
 
 
 ## Boost
-# Python code to generate version list:
+# Python snippet to generate version list:
 #for minor in range(45, 60):
 #	print '"1.%d" "1.%d.0"' % (minor, minor),
 set(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0" "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0" "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0" "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0" "1.57" "1.57.0" "1.58" "1.58.0" "1.59" "1.59.0")
-find_package(Boost 1.45.0 REQUIRED thread)
+set(boost_components thread)
+if (WITH_PYTHON)
+	set(boost_components ${boost_components} python)
+endif()
+find_package(Boost 1.45.0 REQUIRED ${boost_components})
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+
+## Python
+if (WITH_PYTHON)
+	find_package(PythonLibs REQUIRED)
+	include_directories(${PYTHON_INCLUDE_PATH})
+	link_directories(${PYTHON_LIBRARIES})
+endif()
 
 
 ## curses
