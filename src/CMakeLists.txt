@@ -21,10 +21,18 @@ if (NOT NON_REALTIME)
 		thread/disable_secondary_mode_warning.cpp
 		thread/real_time_mutex.cpp
 	)
+	
+	if (WITH_PYTHON)
+		set(barrett_PYTHON_SOURCES
+			python.cpp
+			bus/python.cpp
+		)
+	endif()
 endif()
 
 set(barrett_SOURCES
 	${barrett_RT_SOURCES}  # Maybe include RT sources
+	${barrett_PYTHON_SOURCES}  # Maybe include Python sources
 	
 	bus/communications_bus.cpp
 	
@@ -52,8 +60,10 @@ set(barrett_SOURCES
 add_library(barrett ${barrett_SOURCES})
 target_link_libraries(barrett ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
 if (NOT NON_REALTIME)
-	add_definitions(${XENOMAI_DEFINITIONS})
     target_link_libraries(barrett ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
+endif()
+if (WITH_PYTHON)
+	target_link_libraries(barrett ${PYTHON_LIBRARIES})
 endif()
 
 set_target_properties(barrett PROPERTIES
