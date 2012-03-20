@@ -87,6 +87,10 @@ BOOST_PYTHON_MODULE(libbarrett)
 {
 	makeNamespace("bus", pythonBusInterface);
 
+
+	// WARNING! The python wrappers below are experimental. They are partially
+	// implemented and are likely to have API changes in the near future.
+
 	// Puck class
 	{
 		// The Puck class becomes the active scope until puckScope is destroyed.
