@@ -6,10 +6,12 @@ CANbus on CAN_PORT.
 """
 
 
+from time import sleep
 from libbarrett import *
 
 
 CAN_PORT = 0
+P_ID = 1
 
 
 def assertHasattrs(obj, attrs):
@@ -70,7 +72,7 @@ assert b.getUnderlyingBus().isOpen()
 shouldRaise(RuntimeError, bus.BusManager.send, b, 0x001, range(bus.CommunicationsBus.MAX_MESSAGE_LEN + 1))
 # 256 doesn't fit in a char
 shouldRaise(OverflowError, bus.BusManager.send, b, 0x001, [5,0,256,0,0,0,0,0])
-b.send(0x001, [0,0,0,0,0,0,0,0])  # Can we send an 8-byte message?
+b.send(0x000, [0,0,0,0,0,0,0,0])  # Can we send an 8-byte message?
 
 b.send(0x001, [3])
 assert b.receive(0x426) == [0x83,0,1,0]
@@ -104,9 +106,52 @@ shouldRaise(ValueError, Puck.getPropertyEnum, "myprop")
 assert Puck.getPropertyEnumNoThrow("vl1") == Puck.VL1
 assert Puck.getPropertyEnumNoThrow("asdfasdf") == -1
 
+p = Puck(bus.BusManager(CAN_PORT), P_ID)
+p.wake()
+assert p.respondsToProperty(Puck.STAT)
+assert p.getPropertyId(Puck.STAT) == 5
+assert p.getProperty(Puck.STAT) == 2
 
-#p = Puck(bus.CANSocket(CAN_PORT), 1)
+assert p.respondsToProperty(Puck.CTS)
+assert not p.respondsToProperty(Puck.VL2)
+shouldRaise(RuntimeError, Puck.getPropertyId, p, Puck.VL2)
+assert p.getPropertyIdNoThrow(Puck.VL2) == -1
 
-#print p.getProperty(Puck.STAT)
+assert isinstance(p.getBus(), bus.CommunicationsBus)
+assert p.getId() == P_ID
+assert p.getVers() > 100 and p.getVers() < 1000
+assert p.getRole() & 0x001f == 0
+assert p.hasOption(Puck.RO_MagEncOnSerial)
+assert not p.hasOption(Puck.RO_OpticalEncOnEnc)
+assert p.getType() == Puck.PT_Motor
+assert p.getEffectiveType() == Puck.PT_Motor
+
+oHsg = p.getProperty(Puck.HSG)
+if oHsg > 5:
+	nHsg = oHsg - 1
+else:
+	nHsg = oHsg + 1
+p.setProperty(Puck.HSG, nHsg)
+assert p.getProperty(Puck.HSG) == nHsg
+p.resetProperty(Puck.HSG)
+assert p.getProperty(Puck.HSG) == oHsg
+
+p.setProperty(Puck.HSG, nHsg)
+assert p.getProperty(Puck.HSG) == nHsg
+p.saveProperty(Puck.HSG)
+p.resetProperty(Puck.HSG)
+assert p.getProperty(Puck.HSG) == nHsg
+p.setProperty(Puck.STAT, 0)
+sleep(2)
+p.updateStatus()
+assert p.getProperty(Puck.STAT) == 0
+assert p.getType() == Puck.PT_Motor
+assert p.getEffectiveType() == Puck.PT_Monitor
+assert not p.respondsToProperty(Puck.CTS)
+shouldRaise(RuntimeError, Puck.getPropertyId, p, Puck.CTS)
+assert p.getPropertyIdNoThrow(Puck.CTS) == -1
+p.wake()
+assert p.getProperty(Puck.HSG) == nHsg
+
 
 print "Success! All tests passed."
