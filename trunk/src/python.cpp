@@ -42,17 +42,13 @@
 #include <barrett/systems/real_time_execution_manager.h>
 #include <barrett/systems/wam.h>
 
+#include "python.h"
+
 
 using namespace barrett;
 using namespace boost::python;
 
 
-// Forward declarations of functions that do the work of building python wrappers.
-void pythonBusInterface();
-void pythonProductsInterface();
-
-
-class Namespace {};
 void makeNamespace(const char* name, void(&buildFunction)()) {
 	scope s = class_<Namespace, boost::noncopyable>(name, no_init);
 	buildFunction();
