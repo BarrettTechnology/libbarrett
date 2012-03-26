@@ -67,7 +67,7 @@ void pythonProductsInterface() {
 	// Puck class
 	{
 		// The Puck class becomes the active scope until puckScope is destroyed.
-		scope puckScope = class_<Puck>("Puck", init<bus::CommunicationsBus&, int>()[with_custodian_and_ward<1,2>()])
+		scope puckScope = class_<Puck>("Puck", init<const bus::CommunicationsBus&, int>()[with_custodian_and_ward<1,2>()])
 			.def("getPuckTypeStr", &Puck::getPuckTypeStr).staticmethod("getPuckTypeStr")
 			.def("getPropertyStr", &Puck::getPropertyStr).staticmethod("getPropertyStr")
 			.def("getPropertyEnum", &Puck::getPropertyEnum).staticmethod("getPropertyEnum")
@@ -79,6 +79,7 @@ void pythonProductsInterface() {
 //					tryGetProperty_overloads())
 			.def("setProperty", (void (Puck::*)(enum Puck::Property, int, bool) const) &Puck::setProperty,
 					Puck_setProperty_overloads())
+			// TODO(dc): Expose getProperty() and setProperty() with alternate parsers?
 
 			.def("saveProperty", &Puck::saveProperty)
 			.def("resetProperty", &Puck::resetProperty)
