@@ -29,13 +29,34 @@
  */
 
 
+#include <stdexcept>
+
 #include <boost/python.hpp>
 
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
 
+#include "../python.h"
+
+
 using namespace barrett;
 using namespace boost::python;
+
+
+// Reserve storage for static constants.
+const int DEFAULT_IPNM = Puck::DEFAULT_IPNM;
+const int MIN_ID = Puck::MIN_ID;
+const int MAX_ID = Puck::MAX_ID;
+const int HOST_ID = Puck::HOST_ID;
+const int NODE_ID_WIDTH = Puck::NODE_ID_WIDTH;
+const int NODE_ID_MASK = Puck::NODE_ID_MASK;
+const int GROUP_MASK = Puck::GROUP_MASK;
+const int FROM_MASK = Puck::FROM_MASK;
+const int TO_MASK = Puck::TO_MASK;
+const int SET_MASK = Puck::SET_MASK;
+const int PROPERTY_MASK = Puck::PROPERTY_MASK;
+const int WAKE_UP_TIME = Puck::WAKE_UP_TIME;
+const int TURN_OFF_TIME = Puck::TURN_OFF_TIME;
 
 
 int getProperty(const Puck& p, enum Puck::Property prop) {
@@ -63,6 +84,49 @@ int getProperty(const Puck& p, enum Puck::Property prop) {
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Puck_setProperty_overloads, setProperty, 2, 3)
 
+void wakeList(list puckList) {
+	std::vector<Puck*> pucks;
+	for (int i = 0; i < len(puckList); ++i) {
+		pucks.push_back(extract<Puck*>(puckList[i]));
+	}
+
+	Puck::wake(pucks);
+}
+
+int staticGetProperty(const bus::CommunicationsBus& bus, int id, int propId) {
+	return Puck::getProperty(bus, id, propId, false);
+}
+
+tuple staticTryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, int timeout_ns = -1) {
+	int ret;
+	int result = 0;
+
+	if (timeout_ns <= 0) {
+		ret = Puck::tryGetProperty(bus, id, propId, &result);
+	} else {
+		ret = Puck::tryGetProperty(bus, id, propId, &result, timeout_ns);
+	}
+
+	return make_tuple(ret, result);
+}
+BOOST_PYTHON_FUNCTION_OVERLOADS(staticTryGetProperty_overloads, staticTryGetProperty, 3, 4)
+
+BOOST_PYTHON_FUNCTION_OVERLOADS(staticSetProperty_overloads, Puck::setProperty, 4, 5)
+
+tuple receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int propId, bool blocking) {
+	int ret;
+	int result = 0;
+	ret = Puck::receiveGetPropertyReply(bus, id, propId, &result, blocking, false);
+	return make_tuple(ret, result);
+}
+
+tuple decodeBusId(int busId) {
+	int fromId, toId;
+	Puck::decodeBusId(busId, &fromId, &toId);
+	return make_tuple(fromId, toId);
+}
+
+
 void pythonProductsInterface() {
 	// Puck class
 	{
@@ -73,13 +137,14 @@ void pythonProductsInterface() {
 			.def("getPropertyEnum", &Puck::getPropertyEnum).staticmethod("getPropertyEnum")
 			.def("getPropertyEnumNoThrow", &Puck::getPropertyEnumNoThrow).staticmethod("getPropertyEnumNoThrow")
 
+
 			.def("wake", (void(Puck::*)()) &Puck::wake)  // Cast to resolve the overload
+			// TODO(dc): Expose getProperty() with alternate parsers?
 			.def("getProperty", &getProperty)
 //			.def("tryGetProperty", &tryGetProperty,
 //					tryGetProperty_overloads())
 			.def("setProperty", (void (Puck::*)(enum Puck::Property, int, bool) const) &Puck::setProperty,
 					Puck_setProperty_overloads())
-			// TODO(dc): Expose getProperty() and setProperty() with alternate parsers?
 
 			.def("saveProperty", &Puck::saveProperty)
 			.def("resetProperty", &Puck::resetProperty)
@@ -98,6 +163,8 @@ void pythonProductsInterface() {
 			.def("hasOption", &Puck::hasOption)
 			.def("getType", &Puck::getType)
 			.def("getEffectiveType", &Puck::getEffectiveType)
+
+			.def("wakeList", &wakeList).staticmethod("wakeList")  // Renamed because boost::puthon can't handle a static/non-static overload
 		;
 
 		enum_<enum Puck::RoleOption>("RoleOption")
@@ -126,5 +193,45 @@ void pythonProductsInterface() {
 			propEnum.value(Puck::getPropertyStr(p), p);
 		}
 		propEnum.export_values();
+
+
+		class_<Namespace, boost::noncopyable>("LowLevel", no_init)
+			// TODO(dc): Expose getProperty(), etc. with alternate parsers?
+			.def("getProperty", &staticGetProperty).staticmethod("getProperty")
+			.def("tryGetProperty", &staticTryGetProperty, staticTryGetProperty_overloads()).staticmethod("tryGetProperty")
+			.def("setProperty", (void (*)(const bus::CommunicationsBus&, int, int, int, bool))&Puck::setProperty, staticSetProperty_overloads()).staticmethod("setProperty")
+
+			.def("sendGetPropertyRequest", &Puck::sendGetPropertyRequest).staticmethod("sendGetPropertyRequest")
+			.def("receiveGetPropertyReply", &receiveGetPropertyReply).staticmethod("receiveGetPropertyReply")
+
+			.def("respondsToProperty", (bool (*)(enum Puck::Property, enum Puck::PuckType, int))&Puck::respondsToProperty).staticmethod("respondsToProperty")
+			.def("getPropertyId", (int (*)(enum Puck::Property, enum Puck::PuckType, int))&Puck::getPropertyId).staticmethod("getPropertyId")
+			.def("getPropertyIdNoThrow", (int (*)(enum Puck::Property, enum Puck::PuckType, int))&Puck::getPropertyIdNoThrow).staticmethod("getPropertyIdNoThrow")
+
+
+			.def_readonly("DEFAULT_IPNM", DEFAULT_IPNM)
+
+			.def_readonly("MIN_ID", MIN_ID)
+			.def_readonly("MAX_ID", MAX_ID)
+			.def_readonly("HOST_ID", HOST_ID)
+			.def_readonly("NODE_ID_WIDTH", NODE_ID_WIDTH)
+			.def_readonly("NODE_ID_MASK", NODE_ID_MASK)
+
+			.def("nodeId2BusId", &Puck::nodeId2BusId).staticmethod("nodeId2BusId")
+			.def("busId2NodeId", &Puck::busId2NodeId).staticmethod("busId2NodeId")
+			.def("encodeBusId", &Puck::encodeBusId).staticmethod("encodeBusId")
+			.def("decodeBusId", &decodeBusId).staticmethod("decodeBusId")
+
+
+			.def_readonly("GROUP_MASK", GROUP_MASK)
+			.def_readonly("FROM_MASK", FROM_MASK)
+			.def_readonly("TO_MASK", TO_MASK)
+
+			.def_readonly("SET_MASK", SET_MASK)
+			.def_readonly("PROPERTY_MASK", PROPERTY_MASK)
+
+			.def_readonly("WAKE_UP_TIME", WAKE_UP_TIME)
+			.def_readonly("TURN_OFF_TIME", TURN_OFF_TIME)
+		;
 	}
 }

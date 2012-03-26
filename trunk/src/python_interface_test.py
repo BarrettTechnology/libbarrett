@@ -12,6 +12,7 @@ from libbarrett import *
 
 CAN_PORT = 0
 P_ID = 1
+BAD_P_ID = 9  # There is no Puck 9 on the bus
 
 
 def assertHasattrs(obj, attrs):
@@ -106,7 +107,8 @@ shouldRaise(ValueError, Puck.getPropertyEnum, "myprop")
 assert Puck.getPropertyEnumNoThrow("vl1") == Puck.VL1
 assert Puck.getPropertyEnumNoThrow("asdfasdf") == -1
 
-p = Puck(bus.BusManager(CAN_PORT), P_ID)
+bm = bus.BusManager(CAN_PORT)
+p = Puck(bm, P_ID)
 p.wake()
 assert p.respondsToProperty(Puck.STAT)
 assert p.getPropertyId(Puck.STAT) == 5
@@ -153,5 +155,45 @@ assert p.getPropertyIdNoThrow(Puck.CTS) == -1
 p.wake()
 assert p.getProperty(Puck.HSG) == nHsg
 
+pucks = [Puck(bm, 1), Puck(bm, 3), Puck(bm, 2)]
+map(lambda p: p.setProperty(Puck.STAT, 0), pucks)
+sleep(2)
+map(Puck.updateStatus, pucks)
+assert map(Puck.getEffectiveType, pucks) == [Puck.PT_Monitor] * len(pucks)
+Puck.wakeList(pucks)
+assert map(Puck.getEffectiveType, pucks) == [Puck.PT_Motor] * len(pucks)
+
+assertHasattrs(Puck, "LowLevel")
+LL = Puck.LowLevel
+
+assert LL.getProperty(bm, P_ID, 5) == 2
+assert LL.tryGetProperty(bm, P_ID, 5) == (0, 2)
+assert LL.tryGetProperty(bm, BAD_P_ID, 5) == (1, 0)
+assert LL.tryGetProperty(bm, BAD_P_ID, 5, 100000000) == (1, 0)
+
+assert p.getProperty(Puck.HSG) == nHsg
+LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), oHsg)
+assert p.getProperty(Puck.HSG) == oHsg
+LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), nHsg, True)
+assert p.getProperty(Puck.HSG) == nHsg
+
+assert LL.sendGetPropertyRequest(bm, P_ID, 5) == 0
+assert LL.receiveGetPropertyReply(bm, P_ID, 5, True) == (0, 2)
+assert LL.receiveGetPropertyReply(bm, P_ID, 5, False) == (1, 0)
+
+assert LL.respondsToProperty(Puck.STAT, Puck.PT_Unknown, 2)
+assert not LL.respondsToProperty(Puck.X2, Puck.PT_Unknown, 150)
+assert LL.respondsToProperty(Puck.X2, Puck.PT_Motor, 150)
+assert LL.getPropertyId(Puck.FT, Puck.PT_ForceTorque, 5) == 54
+shouldRaise(RuntimeError, LL.getPropertyId, Puck.VL2, Puck.PT_ForceTorque, 5)
+assert LL.getPropertyIdNoThrow(Puck.TL2, Puck.PT_Safety, 119) == 48
+assert LL.getPropertyIdNoThrow(Puck.TL2, Puck.PT_Monitor, 119) == -1
+
+assertHasattrs(LL, "DEFAULT_IPNM MIN_ID MAX_ID HOST_ID NODE_ID_WIDTH NODE_ID_MASK")
+assert LL.nodeId2BusId(3) == 0x003
+assert LL.busId2NodeId(0x066) == 3
+assert LL.encodeBusId(10, 5) == 0x145
+assert LL.decodeBusId(0x082) == (4, 2)
+assertHasattrs(LL, "GROUP_MASK FROM_MASK TO_MASK SET_MASK PROPERTY_MASK WAKE_UP_TIME TURN_OFF_TIME")
 
 print "Success! All tests passed."
