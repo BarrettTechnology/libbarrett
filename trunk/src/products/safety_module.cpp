@@ -28,12 +28,16 @@
  *      Author: dc
  */
 
+#include <bitset>
+#include <string>
 #include <stdexcept>
 #include <cstdio>
 #include <cassert>
 
 #include <syslog.h>
 #include <unistd.h>
+
+#include <boost/lexical_cast.hpp>
 
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
@@ -88,6 +92,11 @@ enum SafetyModule::SafetyMode SafetyModule::waitForModeChange(int pollingPeriod_
 	return currentMode;
 }
 
+void SafetyModule::ignoreNextVelocityFault()
+{
+	p->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
+}
+
 void SafetyModule::setDefaultSafetyLimits()
 {
 	p->resetProperty(Puck::VL1);
@@ -118,13 +127,123 @@ void SafetyModule::setVelocityLimit(double fault, double warning)
 	p->setProperty(Puck::VL1, (int)(warning*0x1000));
 }
 
-void SafetyModule::ignoreNextVelocityFault()
+void SafetyModule::getPendantState(PendantState* ps, bool realtime) const
 {
-	p->setProperty(Puck::IFAULT, SafetyModule::VELOCITY_FAULT_HISTORY_BUFFER_SIZE);
+	typedef const std::bitset<32> bits_type;
+
+	assert(ps != NULL);
+	int pen = p->getProperty(Puck::PEN);
+	bits_type bits(pen);
+
+	if (bits[27]) {
+		if (bits[26]) {
+			ps->pressedButton = PendantState::NONE;
+		} else {
+			ps->pressedButton = PendantState::IDLE;
+		}
+	} else {
+		if (bits[26]) {
+			ps->pressedButton = PendantState::ACTIVATE;
+		} else {
+			ps->pressedButton = PendantState::ESTOP;
+		}
+	}
+
+	ps->activateLight = bits[25];
+	ps->idleLight = bits[24];
+	ps->displayedCharacter = (pen >> 16) & 0xff;  // Select bits 16 through 23
+
+	for (int i = 0; i < PendantState::NUM_PARAMS; ++i) {
+		bits_type paramBits((pen >> (3 * i)) & 0x7);  // Select three bits...
+		if (paramBits.count() != 1) {  // exactly one of which should be set.
+			syslog(LOG_ERR, "SafetyModule::getPendantState(): Bad PEN value for Parameter %d: %s", i, bits.to_string().c_str());
+			throw std::runtime_error("SafetyModule::getPendantState(): Bad PEN value. Check /var/log/syslog for details.");
+		}
+
+		if (paramBits[0]) {
+			ps->safetyParameters[i] = PendantState::OK;
+		} else if (paramBits[1]) {
+			ps->safetyParameters[i] = PendantState::WARNING;
+		} else {
+			ps->safetyParameters[i] = PendantState::FAULT;
+		}
+	}
 }
 
 
 const char SafetyModule::safetyModeStrs[][15] = { "E-stop", "Shift-idle", "Shift-activate" };
+
+
+std::string SafetyModule::PendantState::toString() const
+{
+	std::string out;
+
+	switch (pressedButton) {
+	case ESTOP:
+		out += "E";
+		break;
+	case ACTIVATE:
+		out += "A";
+		break;
+	case IDLE:
+		out += "I";
+		break;
+	case NONE:
+		out += "N";
+		break;
+	default:
+		assert(false);
+		break;
+	}
+	out += " ";
+
+	out += activateLight ? "A":"a";
+	out += idleLight ? "I":"i";
+	out += " \"";
+	out += decodeDisplayedCharacter();
+	out += "\" (";
+	out += boost::lexical_cast<std::string, int>(displayedCharacter);
+	out += ")";
+
+	for (int i = 0; i < NUM_PARAMS; ++i) {
+		out += " ";
+		switch (safetyParameters[i]) {
+		case OK:
+			out += "O";
+			break;
+		case WARNING:
+			out += "W";
+			break;
+		case FAULT:
+			out += "F";
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+
+	return out;
+}
+
+char SafetyModule::PendantState::decodeDisplayedCharacter() const
+{
+	switch (displayedCharacter) {
+	case 0x3f: return '0';
+	case 0x06: return '1';
+	case 0x5b: return '2';
+	case 0x4f: return '3';
+	case 0x66: return '4';
+	case 0x6d: return '5';
+	case 0x7d: return '6';
+	case 0x07: return '7';
+	case 0x77: return 'A';
+	case 0x79: return 'E';
+	case 0x76: return 'H';
+	case 0x38: return 'L';
+	default:   return '?';
+	}
+}
 
 
 }
