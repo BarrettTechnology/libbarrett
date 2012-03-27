@@ -32,6 +32,8 @@
 #define BARRETT_PRODUCTS_SAFETY_MODULE_H_
 
 
+#include <string>
+
 #include <barrett/products/puck.h>
 #include <barrett/products/abstract/special_puck.h>
 
@@ -50,33 +52,48 @@ public:
 	~SafetyModule() {}
 
 	enum SafetyMode getMode(bool realtime = false) const;
+	void waitForMode(enum SafetyMode mode,
+			bool printMessage = true, int pollingPeriod_us = 250000);
+	enum SafetyMode waitForModeChange(int pollingPeriod_us = 250000);
+	static const char* getSafetyModeStr(enum SafetyMode mode) {
+		return safetyModeStrs[mode];
+	}
+	// For safety reasons, the SafetyModule will ignore requests to move from
+	// ESTOP to IDLE, or from IDLE to ACTIVE.
+	void setMode(enum SafetyMode mode) { p->setProperty(Puck::MODE, mode); }
+
 	bool wamIsZeroed() const { return p->getProperty(Puck::ZERO) == 1; }
 	void setWamZeroed(bool zeroed = true) const {
 		p->setProperty(Puck::ZERO, zeroed);
 	}
 
-	void waitForMode(enum SafetyMode mode,
-			bool printMessage = true, int pollingPeriod_us = 250000);
-	enum SafetyMode waitForModeChange(int pollingPeriod_us = 250000);
-
-	// For safety reasons, the SafetyModule will ignore requests to move from
-	// ESTOP to IDLE, or from IDLE to ACTIVE.
-	void setMode(enum SafetyMode mode) { p->setProperty(Puck::MODE, mode); }
-
-	void setDefaultSafetyLimits();
 	void ignoreNextVelocityFault();
-
+	void setDefaultSafetyLimits();
 	// Measured in Newton*meters at each motor, assuming equal IPNM.
 	void setTorqueLimit(double fault,
 			double warning = -1.0, int ipnm = Puck::DEFAULT_IPNM);
-
 	// Measured in meters/second at the elbow and 4-DOF end-point.
 	void setVelocityLimit(double fault, double warning = -1.0);
 
 
-	static const char* getSafetyModeStr(enum SafetyMode mode) {
-		return safetyModeStrs[mode];
-	}
+	struct PendantState {
+		enum Button { ESTOP, ACTIVATE, IDLE, NONE };
+		enum Parameter { OK, WARNING, FAULT };
+		enum ParameterNames {
+			VELOCITY, TORQUE, VOLTAGE, HEARTBEAT, OTHER,
+			NUM_PARAMS
+		};
+
+		enum Button pressedButton;
+		bool activateLight;
+		bool idleLight;
+		char displayedCharacter;
+		enum Parameter safetyParameters[NUM_PARAMS];
+
+		std::string toString() const;
+		char decodeDisplayedCharacter() const;
+	};
+	void getPendantState(PendantState* ps, bool realtime = false) const;
 
 protected:
 	static const int VELOCITY_FAULT_HISTORY_BUFFER_SIZE = 5;
