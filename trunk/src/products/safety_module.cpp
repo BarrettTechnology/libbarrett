@@ -30,6 +30,7 @@
 
 #include <bitset>
 #include <string>
+#include <algorithm>
 #include <stdexcept>
 #include <cstdio>
 #include <cassert>
@@ -173,6 +174,16 @@ void SafetyModule::getPendantState(PendantState* ps, bool realtime) const
 
 const char SafetyModule::safetyModeStrs[][15] = { "E-stop", "Shift-idle", "Shift-activate" };
 
+
+bool SafetyModule::PendantState::allOk() const
+{
+	return std::count(safetyParameters, safetyParameters + NUM_PARAMS, OK) == NUM_PARAMS;
+}
+
+bool SafetyModule::PendantState::hasFaults() const
+{
+	return std::find(safetyParameters, safetyParameters + NUM_PARAMS, FAULT) != safetyParameters + NUM_PARAMS;
+}
 
 std::string SafetyModule::PendantState::toString() const
 {

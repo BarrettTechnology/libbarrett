@@ -43,9 +43,16 @@ int main() {
 	SafetyModule& sm = *pm.getSafetyModule();
 	SafetyModule::PendantState ps;
 
+	// Optional: Instantiate a Wam object and start the realtime control loop
+	if (pm.foundWam4()) {
+		pm.getWam4(false);
+	} else {
+		pm.getWam7(false);
+	}
+
 	while (true) {
 		sm.getPendantState(&ps);
-		std::cout << ps.toString() << "\n";
+		std::cout << ps.toString() << " " << ps.allOk() << " " << ps.hasFaults() << "\n";
 		usleep(1000000);
 	}
 
