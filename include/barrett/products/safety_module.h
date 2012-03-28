@@ -90,6 +90,9 @@ public:
 		char displayedCharacter;
 		enum Parameter safetyParameters[NUM_PARAMS];
 
+		bool allOk() const;
+		bool hasFaults() const;
+
 		std::string toString() const;
 		char decodeDisplayedCharacter() const;
 	};
