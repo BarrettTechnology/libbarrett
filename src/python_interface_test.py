@@ -76,10 +76,12 @@ except OverflowError:
 	pass
 else:
 	assert False, "Data entry should have been too big"
-b.send(0x001, [3,0,0,0,0,0,0,0])
+b.send(0x001, [0,0,0,0,0,0,0,0])  # Can we send an 8-byte message?
+
+b.send(0x001, [3])
 assert b.receive(0x426) == [0x83,0,1,0]
 assert b.receive(0x426, False) == []  # We don't expect any messages
-b.send(0x001, [3,0,0,0,0,0,0,0])
+b.send(0x001, [3])
 assert b.receiveRaw() == (0x426, [0x83,0,1,0])
 assert b.receiveRaw(False) == (0, [])  # We don't expect any messages
 b.close()
