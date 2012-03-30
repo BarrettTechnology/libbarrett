@@ -47,8 +47,12 @@ public:
 	~LogFormatter() { print(); }
 
 	template <typename ExceptionType>
-	void raise() {
-		print();
+	void raise(bool alsoPrint = false) {
+		if (alsoPrint) {
+			print();
+		} else {
+			printed = true;
+		}
 
 		// It's necessary to do this in a member function because it's unsafe to
 		// throw exceptions from a dtor.
