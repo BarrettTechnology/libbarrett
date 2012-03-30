@@ -54,6 +54,7 @@ set(barrett_SOURCES
 	thread/null_mutex.cpp
 
 	exception.cpp
+	os.cpp
 	stl_utils.cpp
 )
 
