@@ -78,7 +78,7 @@ public:
 
 	struct PendantState {
 		enum Button { ESTOP, ACTIVATE, IDLE, NONE };
-		enum Parameter { OK, WARNING, FAULT };
+		enum Parameter { SAFE, WARNING, FAULT };
 		enum ParameterNames {
 			VELOCITY, TORQUE, VOLTAGE, HEARTBEAT, OTHER,
 			NUM_PARAMS
@@ -90,7 +90,7 @@ public:
 		char displayedCharacter;
 		enum Parameter safetyParameters[NUM_PARAMS];
 
-		bool allOk() const;
+		bool allSafe() const;
 		bool hasFaults() const;
 
 		std::string toString() const;
