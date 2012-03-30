@@ -52,7 +52,7 @@ int main() {
 
 	while (true) {
 		sm.getPendantState(&ps);
-		std::cout << ps.toString() << " " << ps.allOk() << " " << ps.hasFaults() << "\n";
+		std::cout << ps.toString() << " " << ps.allSafe() << " " << ps.hasFaults() << "\n";
 		usleep(1000000);
 	}
 

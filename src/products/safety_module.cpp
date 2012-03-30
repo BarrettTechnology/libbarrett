@@ -162,7 +162,7 @@ void SafetyModule::getPendantState(PendantState* ps, bool realtime) const
 		}
 
 		if (paramBits[0]) {
-			ps->safetyParameters[i] = PendantState::OK;
+			ps->safetyParameters[i] = PendantState::SAFE;
 		} else if (paramBits[1]) {
 			ps->safetyParameters[i] = PendantState::WARNING;
 		} else {
@@ -175,9 +175,9 @@ void SafetyModule::getPendantState(PendantState* ps, bool realtime) const
 const char SafetyModule::safetyModeStrs[][15] = { "E-stop", "Shift-idle", "Shift-activate" };
 
 
-bool SafetyModule::PendantState::allOk() const
+bool SafetyModule::PendantState::allSafe() const
 {
-	return std::count(safetyParameters, safetyParameters + NUM_PARAMS, OK) == NUM_PARAMS;
+	return std::count(safetyParameters, safetyParameters + NUM_PARAMS, SAFE) == NUM_PARAMS;
 }
 
 bool SafetyModule::PendantState::hasFaults() const
@@ -219,8 +219,8 @@ std::string SafetyModule::PendantState::toString() const
 	for (int i = 0; i < NUM_PARAMS; ++i) {
 		out += " ";
 		switch (safetyParameters[i]) {
-		case OK:
-			out += "O";
+		case SAFE:
+			out += "S";
 			break;
 		case WARNING:
 			out += "W";
