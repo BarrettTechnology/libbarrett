@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * multi_puck_product.cpp
  *
  *  Created on: Nov 11, 2010
@@ -8,8 +31,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include <syslog.h>
-
+#include <barrett/os.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/puck_group.h>
 #include <barrett/products/motor_puck.h>
@@ -23,13 +45,14 @@ MultiPuckProduct::MultiPuckProduct(size_t DOF, const std::vector<Puck*>& _pucks,
 	bus(_pucks.at(0)->getBus()), pucks(_pucks), motorPucks(DOF), group(groupId, pucks)
 {
 	if (syslogStr != NULL) {
-		syslog(LOG_ERR, "%s", syslogStr);
+		logMessage("%s") % syslogStr;
 	}
 
 	// Check number of Pucks
 	if (pucks.size() != DOF) {
-		syslog(LOG_ERR, "  Expected a vector of %d Pucks, got %d", DOF, pucks.size());
-		throw std::invalid_argument("MultiPuckProduct::MultiPuckProduct(): Wrong number of Pucks. Check /var/log/syslog for details.");
+		(logMessage("MultiPuckProduct::MultiPuckProduct(): Wrong number of Pucks. "
+				"Expected a vector of %d Pucks, got %d.")
+				% DOF % pucks.size()).raise<std::invalid_argument>();
 	}
 
 	// Initialize MotorPucks
@@ -43,15 +66,16 @@ MultiPuckProduct::MultiPuckProduct(size_t DOF, const std::vector<Puck*>& _pucks,
 	for (size_t i = 0; i < numProps; ++i) {
 		if ( !group.verifyProperty(props[i]) ) {
 			err = true;
-			syslog(LOG_ERR, "  Incompatible property: %s", Puck::getPropertyStr(props[i]));
+			logMessage("  Incompatible property: %s") % Puck::getPropertyStr(props[i]);
 		}
 	}
 	if (err) {
-		syslog(LOG_ERR, "  Some Pucks might...");
-		syslog(LOG_ERR, "    a) still be in Monitor");
-		syslog(LOG_ERR, "    b) have incompatible firmware versions");
-		syslog(LOG_ERR, "    c) have incompatible ROLEs");
-		throw std::runtime_error("MultiPuckProduct::MultiPuckProduct(): Pucks have incompatible property lists. Check /var/log/syslog for details.");
+		logMessage("  Some Pucks might...");
+		logMessage("    a) still be in Monitor");
+		logMessage("    b) have incompatible firmware versions");
+		logMessage("    c) have incompatible ROLEs");
+		logMessage("MultiPuckProduct::MultiPuckProduct(): Pucks have incompatible property lists. "
+				"Check /var/log/syslog for details.").raise<std::runtime_error>();
 	}
 }
 MultiPuckProduct::~MultiPuckProduct()
