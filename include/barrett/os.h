@@ -22,49 +22,36 @@
 */
 
 /*
- * os.cpp
+ * os.h
  *
- *  Created on: Mar 28, 2012
+ *  Created on: Mar 30, 2012
  *      Author: dc
  */
 
+#ifndef BARRETT_OS_H_
+#define BARRETT_OS_H_
 
-#include <iostream>
-#include <syslog.h>
 
+#include <string>
 #include <barrett/detail/os.h>
 
 
 namespace barrett {
 
 
-detail::LogFormatter logMessage(const std::string& message, bool outputToStderr)
-{
-	return detail::LogFormatter(message, outputToStderr);
+// Returns an object that can be used in the same way as a boost::format object.
+//   http://www.boost.org/doc/libs/1_49_0/libs/format/
+// The formatted message is output to syslog() and optionally stderr. Use the
+// raise<ExceptionType>() member function to throw an exception passing the
+// formatted message as the "what()" string.
+// Examples:
+//   barrett::logMessage("%s: Error %d", true) % __func__ % 5;
+//   (barrett::logMessage("Bad parameter value: %.2f") % 5.3277).raise<std::runtime_error>();
+detail::LogFormatter logMessage(const std::string& message,
+		bool outputToStderr = false);
+
+
 }
 
 
-namespace detail {
-
-void LogFormatter::print()
-{
-	// Make sure we only print once
-	if (printed) {
-		return;
-	}
-	printed = true;
-
-	std::string message = str();
-	if (ose) {
-		std::cerr << message;
-		// The message should always have one newline
-		if (message[message.size() - 1] != '\n') {
-			std::cerr << std::endl;
-		}
-	}
-	// Use a trivial format string in case message contains '%'
-	syslog(LOG_ERR, "%s", message.c_str());
-}
-
-}
-}
+#endif /* BARRETT_OS_H_ */

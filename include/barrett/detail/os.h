@@ -49,6 +49,9 @@ public:
 	template <typename ExceptionType>
 	void raise() {
 		print();
+
+		// It's necessary to do this in a member function because it's unsafe to
+		// throw exceptions from a dtor.
 		throw ExceptionType(str());
 	}
 
@@ -66,8 +69,6 @@ protected:
 	bool ose;
 	bool printed;
 };
-
-LogFormatter log(const std::string& message, bool outputToStderr = false);
 
 
 }
