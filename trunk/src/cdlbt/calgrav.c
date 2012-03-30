@@ -120,7 +120,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
        ||  (config_setting_type(mus) != CONFIG_TYPE_LIST)
        ||  (config_setting_length(mus) != dof)
    ) {
-      syslog(LOG_ERR,"%s: grav:mus not a list with %d elements.",__func__,dof);
+      syslog(LOG_ERR,"%s: grav:mus not a list with %u elements.",__func__, (unsigned int)dof);
       bt_calgrav_destroy(grav);
       return -1;
    }

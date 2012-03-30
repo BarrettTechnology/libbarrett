@@ -33,11 +33,11 @@
 #include <algorithm>
 #include <limits>
 
-#include <syslog.h>
 #include <unistd.h>
 
 #include <boost/thread/locks.hpp>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/products/abstract/multi_puck_product.h>
 #include <barrett/products/puck.h>
@@ -65,7 +65,7 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			hasFtt = true;
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Fingertip torque sensors", numFtt);
+	logMessage("  Found %d Fingertip torque sensors") % numFtt;
 
 	bool tactError = false;
 	for (size_t i = 0; i < DOF; ++i) {
@@ -79,9 +79,9 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			}
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Tactile arrays", tactilePucks.size());
+	logMessage("  Found %d Tactile arrays") % tactilePucks.size();
 	if (tactError) {
-		syslog(LOG_ERR, "  Initialization error! Disabling Tactile arrays");
+		logMessage("  Initialization error! Disabling Tactile arrays");
 		hasTact = false;
 	}
 

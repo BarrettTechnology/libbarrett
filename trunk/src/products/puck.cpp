@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * puck.cpp
  *
  *  Created on: Aug 23, 2010
@@ -8,10 +31,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <syslog.h>
 #include <unistd.h>
 #include <native/task.h>
 
+#include <barrett/os.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/puck_group.h>
@@ -84,8 +107,9 @@ void Puck::updateStatus()
 		effectiveType = type;
 		break;
 	default:
-		syslog(LOG_ERR, "%s: unexpected value from ID=%d: STAT=%d.", __func__, id, stat);
-		throw std::runtime_error("Puck::updateStatus(): Bad STAT value. Check /var/log/syslog for details.");
+		(logMessage("Puck::%s(): Bad STAT value. "
+				"ID=%d, STAT=%d.")
+				% __func__ % id % stat).raise<std::runtime_error>();
 		break;
 	}
 }
@@ -154,11 +178,14 @@ void Puck::wake(std::vector<Puck*> pucks)
 			(*i)->updateStatus();
 		} else {
 			if (ret == 0) {
-				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: STAT=%d", __func__, (*i)->getId(), stat);
+				(logMessage("Puck::%s(): Failed to wake Puck ID=%d. "
+						"STAT=%d.")
+						% __func__ % (*i)->getId() % stat).raise<std::runtime_error>();
 			} else {
-				syslog(LOG_ERR, "%s: Failed to wake Puck ID=%d: No response after waiting %.2fs.", __func__, (*i)->getId(), WAKE_UP_TIME/1e9);
+				(logMessage("Puck::%s(): Failed to wake Puck ID=%d. "
+						"No response after waiting %.2fs.")
+						% __func__ % (*i)->getId() % (WAKE_UP_TIME/1e9)).raise<std::runtime_error>();
 			}
-			throw std::runtime_error("Puck::wake(): Failed to wake Puck. Check /var/log/syslog for details.");
 		}
 	}
 }
@@ -169,26 +196,22 @@ int Puck::StandardParser::parse(int id,
 {
 	bool err = false;
 	if (len != 4 && len != 6) {
-		syslog(
-				LOG_ERR,
-				"%s: expected message length of 4 or 6, got message length of %d",
-				__func__, len);
+		logMessage("%s: expected message length of 4 or 6, got message length of %d")
+				% __func__ % len;
 		err = true;
 	}
 	if (!(data[0] & Puck::SET_MASK)) {
-		syslog(LOG_ERR, "%s: expected SET command, got GET request", __func__);
+		logMessage("%s: expected SET command, got GET request") % __func__;
 		err = true;
 	}
 	if ((propId & Puck::PROPERTY_MASK) != (data[0] & Puck::PROPERTY_MASK)) {
-		syslog(LOG_ERR, "%s: expected property = %d, got property %d",
-				__func__, (int) (propId & Puck::PROPERTY_MASK), (int) (data[0]
-						& Puck::PROPERTY_MASK));
+		logMessage("%s: expected property = %d, got property %d")
+				% __func__ % (propId & Puck::PROPERTY_MASK) % (data[0] & Puck::PROPERTY_MASK);
 		err = true;
 	}
 	if (data[1] != 0) {
-		syslog(LOG_ERR,
-				"%s: expected second data byte to be 0, got value of %d",
-				__func__, (int) data[1]);
+		logMessage("%s: expected second data byte to be 0, got value of %d")
+				% __func__ % data[1];
 		err = true;
 	}
 
