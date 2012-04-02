@@ -34,7 +34,7 @@ void waitForEnter() {
 
 // Functions that help display data from the Hand's (optional) tactile sensors.
 // Note that the palm tactile sensor has a unique cell layout that these
-// functions do not print  correctly.
+// functions do not print correctly.
 const int TACT_CELL_HEIGHT = 3;
 const int TACT_CELL_WIDTH = 6;
 const int TACT_BOARD_ROWS = 8;
@@ -100,9 +100,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	if (fts != NULL) {
 		mvprintw(line++,0, "F/T Sensor");
-		mvprintw(line++,0, "     Force (N): ");
+		mvprintw(line++,0, "             Force (N): ");
 		getyx(stdscr, ftsY, ftsX);
-		mvprintw(line++,0, "  Torque (N*m): ");
+		mvprintw(line++,0, "          Torque (N*m): ");
+		mvprintw(line++,0, "  Acceleration (m/s^2): ");
 		line++;
 	}
 
@@ -141,6 +142,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	cf_type cf;
 	ct_type ct;
+	ca_type ca;
 
 	Hand::jp_type hjp;
 
@@ -190,7 +192,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
             cf = math::saturate(fts->getForce(), 99.99);
         	mvprintw(line++,ftsX, "[%6.2f, %6.2f, %6.2f]", cf[0], cf[1], cf[2]);
             ct = math::saturate(fts->getTorque(), 9.999);
-        	mvprintw(line++,ftsX, "[%6.4f, %6.3f, %6.3f]", ct[0], ct[1], ct[2]);
+        	mvprintw(line++,ftsX, "[%6.3f, %6.3f, %6.3f]", ct[0], ct[1], ct[2]);
+
+        	fts->updateAccel();
+            ca = math::saturate(fts->getAccel(), 99.99);
+        	mvprintw(line++,ftsX, "[%6.2f, %6.2f, %6.2f]", ca[0], ca[1], ca[2]);
 		}
 
 
