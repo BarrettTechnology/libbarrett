@@ -35,11 +35,11 @@
 #include <cstdio>
 #include <cassert>
 
-#include <syslog.h>
 #include <unistd.h>
 
 #include <boost/lexical_cast.hpp>
 
+#include <barrett/os.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
 
@@ -60,8 +60,9 @@ SafetyModule::SafetyModule(Puck* puck) :
 enum SafetyModule::SafetyMode SafetyModule::getMode(bool realtime) const {
 	int mode = p->getProperty(Puck::MODE, realtime);
 	if (mode < 0  ||  mode > 2) {
-		syslog(LOG_ERR, "SafetyModule::getMode(): Expected MODE value of 0, 1, or 2. Got value of %d.", mode);
-		throw std::runtime_error("SafetyModule::getMode(): Bad MODE value. Check /var/log/syslog for details.");
+		(logMessage("SafetyModule::%s(): Bad MODE value. "
+				"Expected MODE value of 0, 1, or 2. Got value of %d.")
+				% __func__ % mode).raise<std::runtime_error>();
 	}
 	return static_cast<enum SafetyMode>(mode);
 }
@@ -157,8 +158,8 @@ void SafetyModule::getPendantState(PendantState* ps, bool realtime) const
 	for (int i = 0; i < PendantState::NUM_PARAMS; ++i) {
 		bits_type paramBits((pen >> (3 * i)) & 0x7);  // Select three bits...
 		if (paramBits.count() != 1) {  // exactly one of which should be set.
-			syslog(LOG_ERR, "SafetyModule::getPendantState(): Bad PEN value for Parameter %d: %s", i, bits.to_string().c_str());
-			throw std::runtime_error("SafetyModule::getPendantState(): Bad PEN value. Check /var/log/syslog for details.");
+			(logMessage("SafetyModule::%s(): Bad PEN value for Parameter %d: %s")
+					% __func__ % i % bits.to_string()).raise<std::runtime_error>();
 		}
 
 		if (paramBits[0]) {
