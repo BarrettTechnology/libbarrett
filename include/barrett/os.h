@@ -39,6 +39,11 @@
 namespace barrett {
 
 
+void btsleep(double duration_s);
+void btsleepRT(double duration_s);
+void btsleep(double duration_s, bool realtime);
+
+
 // Returns an object that can be used in the same way as a boost::format object.
 //   http://www.boost.org/doc/libs/1_49_0/libs/format/
 // The formatted message is output to syslog() and optionally stderr. Use the

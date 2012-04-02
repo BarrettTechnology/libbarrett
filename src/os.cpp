@@ -29,13 +29,46 @@
  */
 
 
+#include <stdexcept>
 #include <iostream>
+#include <cassert>
+
 #include <syslog.h>
+#include <native/task.h>
+
+#include <boost/thread.hpp>
 
 #include <barrett/detail/os.h>
+#include <barrett/os.h>
 
 
 namespace barrett {
+
+
+void btsleep(double duration_s)
+{
+	assert(duration_s > 1e-6);  // Minimum duration is 1 ns
+	boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
+}
+
+void btsleepRT(double duration_s)
+{
+	assert(duration_s > 1e-9);  // Minimum duration is 1 ns
+	int ret = rt_task_sleep(RTIME(duration_s * 1e9));
+	if (ret != 0) {
+		(logMessage("%s: rt_task_sleep() returned error %d.") % __func__ % ret).raise<std::runtime_error>();
+	}
+}
+
+void btsleep(double duration_s, bool realtime)
+{
+	if (realtime) {
+		btsleepRT(duration_s);
+	} else {
+		btsleep(duration_s);
+	}
+}
+
 
 
 detail::LogFormatter logMessage(const std::string& message, bool outputToStderr)
