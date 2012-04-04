@@ -41,6 +41,7 @@ set(programs
 	mouse_follow
 	puck_terminal
 	quaternion_interpolation
+	read_pendant_state
 	safety_module
 	tactile_test
 	teach_with_hand

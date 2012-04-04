@@ -42,16 +42,13 @@
 #include <barrett/systems/real_time_execution_manager.h>
 #include <barrett/systems/wam.h>
 
+#include "python.h"
+
 
 using namespace barrett;
 using namespace boost::python;
 
 
-// Forward declarations of the "build functions"
-void pythonBusInterface();
-
-
-class Namespace {};
 void makeNamespace(const char* name, void(&buildFunction)()) {
 	scope s = class_<Namespace, boost::noncopyable>(name, no_init);
 	buildFunction();
@@ -60,10 +57,6 @@ void makeNamespace(const char* name, void(&buildFunction)()) {
 
 bool isWamActivated(ProductManager& pm) {
 	return pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE;
-}
-
-int getPropertyNoRT(const Puck& p, enum Puck::Property prop) {
-	return p.getProperty(prop, false);
 }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_getExecutionManager_overloads, getExecutionManager, 0, 2)
@@ -86,26 +79,11 @@ void wrapWam() {
 BOOST_PYTHON_MODULE(libbarrett)
 {
 	makeNamespace("bus", pythonBusInterface);
+	pythonProductsInterface();  // The products sub-folder doesn't correspond to a namespace
 
 
 	// WARNING! The python wrappers below are experimental. They are partially
 	// implemented and are likely to have API changes in the near future.
-
-	// Puck class
-	{
-		// The Puck class becomes the active scope until puckScope is destroyed.
-		scope puckScope = class_<Puck>("Puck", init<bus::CANSocket&, int>()[with_custodian_and_ward<1,2>()])
-			.def("wake", (void(Puck::*)()) &Puck::wake)  // cast to resolve the overload
-			.def("getProperty", getPropertyNoRT)
-		;
-
-		enum_<enum Puck::Property> propEnum("Property");
-		for (int i = 0; i < Puck::NUM_PROPERTIES; ++i) {
-			enum Puck::Property p = (enum Puck::Property)i;
-			propEnum.value(Puck::getPropertyStr(p), p);
-		}
-		propEnum.export_values();
-	}
 
 	class_<systems::RealTimeExecutionManager, boost::noncopyable>("RealTimeExecutionManager", no_init);
 	wrapWam<4>();

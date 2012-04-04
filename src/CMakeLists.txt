@@ -26,6 +26,7 @@ if (NOT NON_REALTIME)
 		set(barrett_PYTHON_SOURCES
 			python.cpp
 			bus/python.cpp
+			products/python.cpp
 		)
 	endif()
 endif()
