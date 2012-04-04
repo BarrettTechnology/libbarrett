@@ -36,6 +36,8 @@
 #include <barrett/bus/can_socket.h>
 #include <barrett/bus/bus_manager.h>
 
+#include "../python.h"
+
 
 using namespace barrett;
 using namespace bus;
