@@ -6,9 +6,9 @@
  */
 
 #include <iostream>
-#include <unistd.h>
 #include <native/timer.h>
 
+#include <barrett/os.h>
 #include <barrett/products/product_manager.h>
 
 
@@ -31,7 +31,7 @@ int main() {
 		hand.close(Hand::SPREAD);
 		hand.close(Hand::GRASP);
 		hand.open(Hand::GRASP, false);
-		sleep(1);
+		btsleep(0.5);
 		hand.open();
 	}
 
@@ -57,18 +57,33 @@ int main() {
 	}
 
 	{
-		Hand::jv_type open(-0.5);
-		Hand::jv_type close(0.5);
+		Hand::jv_type open(-0.75);
+		Hand::jv_type close(0.75);
 
 		// Original interface preserved? Should move all 4 motors.
 		hand.velocityMove(close);
-		sleep(1);
+		btsleep(1);
 
 		// New interface
-		hand.trapezoidalMove(open, Hand::GRASP);
-		sleep(1);
-		hand.trapezoidalMove(open, Hand::WHOLE_HAND);
+		hand.velocityMove(open, Hand::GRASP);
+		btsleep(1);
+		hand.velocityMove(open, Hand::WHOLE_HAND);
 		hand.waitUntilDoneMoving();
+	}
+
+	{
+		Hand::jp_type open(0.0);
+		Hand::jv_type close(0.75);
+
+		// Original interface preserved? Should move all 4 motors.
+		hand.velocityMove(close);
+		btsleep(1);
+
+		// SPREAD should continue its velocity move
+		hand.trapezoidalMove(open, Hand::F1);  // Only blocks for F1
+		hand.open(Hand::GRASP);  // Only blocks for GRASP
+		btsleep(1);
+		hand.open();
 	}
 
 
