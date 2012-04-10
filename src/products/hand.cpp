@@ -142,18 +142,18 @@ void Hand::waitUntilDoneMoving(unsigned int whichDigits, int period_us) const
 
 void Hand::open(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_OPEN);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 void Hand::close(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_CLOSE);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 
 void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
 	setProperty(whichDigits, Puck::E, j2pp.cwise() * jp);
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 
 void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
@@ -264,9 +264,9 @@ void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, const
 	}
 }
 
-void Hand::blockIf(bool blocking) const {
+void Hand::blockIf(bool blocking, unsigned int whichDigits) const {
 	if (blocking) {
-		waitUntilDoneMoving();
+		waitUntilDoneMoving(whichDigits);
 	}
 }
 

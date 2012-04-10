@@ -116,7 +116,7 @@ protected:
 	bool digitsInclude(unsigned int whichDigits, size_t index) const { return whichDigits & (1 << index); }
 	void setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const;
 	void setProperty(unsigned int whichDigits, enum Puck::Property prop, const v_type& values) const;
-	void blockIf(bool blocking) const;
+	void blockIf(bool blocking, unsigned int whichDigits) const;
 
 
 	static const double J2_RATIO = 125.0;
