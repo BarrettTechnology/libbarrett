@@ -97,7 +97,8 @@ assertHasattrs(Puck, "CMD ID JP MODE SAVE TSTOP X6")
 assert Puck.getPropertyStr(Puck.STAT) == "STAT"
 assert Puck.getPropertyStr(Puck.FET0) == "FET0"
 # Puck.getPropertyStr() should reject invalid properties
-#shouldRaise(RuntimeError, Puck.getPropertyStr, Puck.Property(-1))
+shouldRaise(ValueError, Puck.getPropertyStr, Puck.Property(-1))
+shouldRaise(ValueError, Puck.getPropertyStr, Puck.Property(Puck.NUM_PROPERTIES))
 
 assert Puck.getPropertyEnum("MODE") == Puck.MODE
 assert Puck.getPropertyEnum("TStoP") == Puck.TSTOP
@@ -105,7 +106,7 @@ shouldRaise(ValueError, Puck.getPropertyEnum, "")
 shouldRaise(ValueError, Puck.getPropertyEnum, "myprop")
 
 assert Puck.getPropertyEnumNoThrow("vl1") == Puck.VL1
-assert Puck.getPropertyEnumNoThrow("asdfasdf") == -1
+#assert Puck.getPropertyEnumNoThrow("asdfasdf") == -1
 
 bm = bus.BusManager(CAN_PORT)
 p = Puck(bm, P_ID)
