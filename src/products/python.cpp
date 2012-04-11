@@ -44,6 +44,7 @@ using namespace boost::python;
 
 
 // Reserve storage for static constants.
+const int NUM_PROPERTIES = Puck::NUM_PROPERTIES;
 const int DEFAULT_IPNM = Puck::DEFAULT_IPNM;
 const int MIN_ID = Puck::MIN_ID;
 const int MAX_ID = Puck::MAX_ID;
@@ -132,6 +133,7 @@ void pythonProductsInterface() {
 	{
 		// The Puck class becomes the active scope until puckScope is destroyed.
 		scope puckScope = class_<Puck>("Puck", init<const bus::CommunicationsBus&, int>()[with_custodian_and_ward<1,2>()])
+			.def_readonly("NUM_PROPERTIES", NUM_PROPERTIES)
 			.def("getPuckTypeStr", &Puck::getPuckTypeStr).staticmethod("getPuckTypeStr")
 			.def("getPropertyStr", &Puck::getPropertyStr).staticmethod("getPropertyStr")
 			.def("getPropertyEnum", &Puck::getPropertyEnum).staticmethod("getPropertyEnum")
