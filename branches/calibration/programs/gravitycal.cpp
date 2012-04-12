@@ -460,8 +460,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		/* Start calculating ...
 		 * We have vectors of torque and position
 		 * in torques[] and positions[] */
-		printf("\n");
-		printf("Calculating ...\n");
+		printf(">>> Calculating...\n");
 
 		libconfig::Setting& wamSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
 		bt_kinematics_create(&kin, wamSetting["kinematics"].getCSetting(), n);
@@ -587,7 +586,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 
-		printf("Gravity calibration ended.\n");
+		printf(">>> Gravity calibration ended.\n");
 
 		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
 		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
@@ -606,19 +605,20 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 		dataConfig.writeFile(dataConfigFile);
-		printf("Data written to: %s\n", dataConfigFile);
+		printf(">>> Data written to: %s\n", dataConfigFile);
 
 		delete[] dataConfigFile;
+	} else {
+		printf(">>> ERROR: Calibration canceled.\n");
 	}
 
 
 	/* Re-fold, print, and exit */
-	printf("Beginning move back to the home location...\n");
-
+	printf(">>> Moving back to home position.\n");
 	if (hand != NULL) {
 		hand->open(Hand::GRASP);
 		hand->close(Hand::SPREAD);
-		hand->trapezoidalMove(Hand::jp_type(M_PI / 2.0), Hand::GRASP);
+		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
 	}
 	wam.moveHome();
 
