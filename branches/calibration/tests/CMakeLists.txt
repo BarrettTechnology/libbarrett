@@ -17,6 +17,8 @@ set(tests_SOURCES
 	math/traits.cpp
 	math/utils.cpp
 	math/vector.cpp
+	
+	products/puck.cpp
 
 	systems/abstract/controller.cpp
 	systems/abstract/execution_manager.cpp
@@ -39,8 +41,10 @@ set(tests_SOURCES
 )
 
 add_executable(tests ${tests_SOURCES})
-target_link_libraries(tests barrett gtest_main)
-set_target_properties(tests PROPERTIES
-	COMPILE_FLAGS "${Xeno_CFLAGS} ${GSL_CFLAGS}"
-	LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
+target_link_libraries(tests
+	barrett
+	gtest_main
+	${Boost_LIBRARIES}
+	${GSL_LIBRARIES}
+	${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
 )

@@ -197,11 +197,14 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 {
 	{
 		BARRETT_SCOPED_LOCK(getEmMutex());
+
+		// Return the filtered velocity, if available.
 		if (jvController1.feedbackInput.valueDefined()) {
 			return jvController1.feedbackInput.getValue();
 		}
 	}
 
+	// Otherwise just return differentiated positions.
 	return llww.getLowLevelWam().getJointVelocities();
 }
 
@@ -238,6 +241,13 @@ template<size_t DOF>
 inline typename Wam<DOF>::pose_type Wam<DOF>::getToolPose() const
 {
 	return boost::make_tuple(getToolPosition(), getToolOrientation());
+}
+
+template<size_t DOF>
+inline math::Matrix<6,DOF> Wam<DOF>::getToolJacobian() const
+{
+	kin.eval(getJointPositions(), getJointVelocities());
+	return math::Matrix<6,DOF>(kin.impl->tool_jacobian);
 }
 
 

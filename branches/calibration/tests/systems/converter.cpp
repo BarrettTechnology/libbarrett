@@ -54,21 +54,7 @@ TEST_F(ConverterTest, RegisterConversion) {
 		new ConversionImpl<units::JointPositions<12>::type, jt_type>());
 }
 
-TEST_F(ConverterTest, ConnectInputToExplicit) {
-	systems::connect(sc.output, eios.input);
-	EXPECT_TRUE(sc.connectInputTo(eios.output,
-			new ConversionImpl<jt_type, jt_type>()));
-
-	jt_type jt(jt_type::Random());
-	checkConnected(mem, &eios, eios, jt);
-
-	// can't be connected because output and conversion input are
-	// different types
-	EXPECT_FALSE(sc.connectInputTo(eios.output,
-		new ConversionImpl<units::JointPositions<12>::type, jt_type>()));
-}
-
-TEST_F(ConverterTest, ConnectInputToAutomatic) {
+TEST_F(ConverterTest, ConnectInputTo) {
 	systems::connect(sc.output, eios.input);
 
 	// no conversions registered
@@ -86,6 +72,55 @@ TEST_F(ConverterTest, ConnectInputToAutomatic) {
 
 	jt_type jt(jt_type::Random());
 	checkConnected(mem, &eios, eios, jt);
+}
+
+TEST_F(ConverterTest, ConnectInputToNoThrow) {
+	systems::connect(sc.output, eios.input);
+
+	// no conversions registered
+	EXPECT_FALSE(sc.connectInputToNoThrow(eios.output));
+
+	// wrong kind of conversion registered
+	sc.registerConversion(
+		new ConversionImpl<units::JointPositions<12>::type, jt_type>());
+	EXPECT_FALSE(sc.connectInputToNoThrow(eios.output));
+
+	// compatible conversion registered
+	sc.registerConversion(
+			new ConversionImpl<jt_type, jt_type>());
+	EXPECT_TRUE(sc.connectInputToNoThrow(eios.output));
+
+	jt_type jt(jt_type::Random());
+	checkConnected(mem, &eios, eios, jt);
+}
+
+TEST_F(ConverterTest, GetInput) {
+	ExposedIOSystem<jt_type> out;
+	systems::connect(sc.output, eios.input);
+
+	systems::System::Input<jt_type>* inputPtr = NULL;
+	EXPECT_EQ(NULL, sc.getInput(&inputPtr));
+	EXPECT_EQ(NULL, inputPtr);
+
+	// compatible conversion registered
+	ConversionImpl<jt_type, jt_type>* conversionPtr1 = new ConversionImpl<jt_type, jt_type>();
+	sc.registerConversion(conversionPtr1);
+	EXPECT_NO_THROW(sc.connectInputTo(out.output));
+
+	EXPECT_EQ(conversionPtr1, sc.getInput(&inputPtr));
+	EXPECT_EQ(&conversionPtr1->input, inputPtr);
+
+	// another compatible conversion registered
+	ConversionImpl<jt_type, jt_type>* conversionPtr2 = new ConversionImpl<jt_type, jt_type>();
+	sc.registerConversion(conversionPtr2);
+	EXPECT_NO_THROW(sc.connectInputTo(out.output));
+
+	EXPECT_EQ(conversionPtr2, sc.getInput(&inputPtr));
+	EXPECT_EQ(&conversionPtr2->input, inputPtr);
+
+	sc.disconnectInput();
+	EXPECT_EQ(conversionPtr2, sc.getInput(&inputPtr));
+	EXPECT_EQ(&conversionPtr2->input, inputPtr);
 }
 
 TEST_F(ConverterTest, DisconnectInput) {

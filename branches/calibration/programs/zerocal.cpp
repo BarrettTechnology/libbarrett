@@ -14,6 +14,7 @@
 #include <cstring>
 
 #include <unistd.h>  // For usleep()
+#include <syslog.h>
 
 #include <curses.h>
 #include <boost/lexical_cast.hpp>

@@ -21,10 +21,19 @@ if (NOT NON_REALTIME)
 		thread/disable_secondary_mode_warning.cpp
 		thread/real_time_mutex.cpp
 	)
+	
+	if (WITH_PYTHON)
+		set(barrett_PYTHON_SOURCES
+			python.cpp
+			bus/python.cpp
+			products/python.cpp
+		)
+	endif()
 endif()
 
 set(barrett_SOURCES
 	${barrett_RT_SOURCES}  # Maybe include RT sources
+	${barrett_PYTHON_SOURCES}  # Maybe include Python sources
 	
 	bus/communications_bus.cpp
 	
@@ -45,17 +54,18 @@ set(barrett_SOURCES
 	thread/null_mutex.cpp
 
 	exception.cpp
+	os.cpp
 	stl_utils.cpp
 )
 
 
-# Defenitions for cdlbt code
-add_definitions(-DCANTYPE_SOCKET -DHAVE_INLINE -DHAS_WAM_LOCAL -DRTSYS_XENOMAI)
-
 add_library(barrett ${barrett_SOURCES})
-target_link_libraries(barrett ${Boost_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
+target_link_libraries(barrett ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
 if (NOT NON_REALTIME)
-	target_link_libraries(barrett rtdm) 
+    target_link_libraries(barrett ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
+endif()
+if (WITH_PYTHON)
+	target_link_libraries(barrett ${PYTHON_LIBRARIES})
 endif()
 
 set_target_properties(barrett PROPERTIES
@@ -63,13 +73,9 @@ set_target_properties(barrett PROPERTIES
 	VERSION ${${PROJECT_NAME}_VERSION}
 	SOVERSION ${${PROJECT_NAME}_SOVERSION}
 	
-	COMPILE_FLAGS "${Xeno_CFLAGS} ${GSL_CFLAGS}"
-	LINK_FLAGS "${Xeno_LDFLAGS} ${GSL_LDFLAGS}"
-	
 	# Allow creating static and shared libs without conflicts
 	CLEAN_DIRECT_OUTPUT 1
 	
 	# Prevent executables from having to link with all of libbarrett's dependencies
 	LINK_INTERFACE_LIBRARIES ""
 )
-

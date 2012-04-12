@@ -44,71 +44,41 @@ endif()
 
 ### Dependencies
 
+## Xenomai
 if (NON_REALTIME)
 	message(STATUS "NON_REALTIME: Not using Xeonmai")
 else()
-	## Xenomai
-	# TODO(dc): make into a finder?
-	set(Xeno_TARGETVERSION "2.5")
-
-	find_program(Xeno_CONFIGEXE "xeno-config" "/usr/xenomai/bin/")
-	if (${Xeno_CONFIGEXE} STREQUAL "Xeno_CONFIGEXE-NOTFOUND")
-		message(SEND_ERROR "Could not find Xenomai installation with version ${Xeno_TARGETVERSION}. (http://www.xenomai.org/)")
-		unset(Xeno_CONFIGEXE CACHE)
-	else()
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --version OUTPUT_VARIABLE Xeno_VERSION)
-		string(STRIP ${Xeno_VERSION} Xeno_VERSION)
-		string(SUBSTRING ${Xeno_VERSION} 0 4 Xeno_SHORTVERSION)
-		if (NOT (${Xeno_SHORTVERSION} VERSION_EQUAL ${Xeno_TARGETVERSION}))
-			message(SEND_ERROR "Found incompatible version of Xenomai. Found: ${Xeno_VERSION}, Need ${Xeno_TARGETVERSION}")
-			unset(Xeno_CONFIGEXE CACHE)
-			unset(Xeno_VERSION CACHE)
-			unset(Xeno_SHORTVERSION CACHE)
-		endif()
-	
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --cflags OUTPUT_VARIABLE Xeno_CFLAGS)
-		string(STRIP ${Xeno_CFLAGS} Xeno_CFLAGS)
-		execute_process(COMMAND ${Xeno_CONFIGEXE} --skin native --ldflags OUTPUT_VARIABLE Xeno_LDFLAGS)
-		string(STRIP ${Xeno_LDFLAGS} Xeno_LDFLAGS)
-	
-		message(STATUS "Xeonmai version: ${Xeno_VERSION} (${Xeno_CONFIGEXE})")
-	endif()
+	find_package(Xenomai REQUIRED)
+	include_directories(${XENOMAI_INCLUDE_DIR})
+	add_definitions(${XENOMAI_DEFINITIONS})
 endif()
 
 
 ## GSL
-# TODO(dc): make into a finder?
-set(GSL_MINVERSION "1.14")
-
-find_program(GSL_CONFIGEXE "gsl-config")
-if (${GSL_CONFIGEXE} STREQUAL "GSL_CONFIGEXE-NOTFOUND")
-	message(SEND_ERROR "Could not find GSL installation with version ${GSL_MINVERSION}. (http://www.gnu.org/software/gsl/)")
-	unset(GSL_CONFIGEXE CACHE)
-else()
-	execute_process(COMMAND ${GSL_CONFIGEXE} --version OUTPUT_VARIABLE GSL_VERSION)
-	string(STRIP ${GSL_VERSION} GSL_VERSION)
-	if (NOT ( (${GSL_VERSION} VERSION_GREATER ${GSL_MINVERSION}) OR (${GSL_VERSION} VERSION_EQUAL ${GSL_MINVERSION})))
-		message(SEND_ERROR "Found incompatible version of GSL. Found: ${GSL_VERSION}, Need >=${GSL_MINVERSION}")
-		unset(GSL_CONFIGEXE CACHE)
-		unset(GSL_VERSION CACHE)
-	endif()
-	
-	execute_process(COMMAND ${GSL_CONFIGEXE} --cflags OUTPUT_VARIABLE GSL_CFLAGS)
-	string(STRIP ${GSL_CFLAGS} GSL_CFLAGS)
-	execute_process(COMMAND ${GSL_CONFIGEXE} --libs OUTPUT_VARIABLE GSL_LDFLAGS)
-	string(STRIP ${GSL_LDFLAGS} GSL_LDFLAGS)
-	
-	message(STATUS "GSL version: ${GSL_VERSION} (${GSL_CONFIGEXE})")
-endif()
+find_package(GSL REQUIRED)
+include_directories(${GSL_INCLUDE_DIRS})
 
 
 ## Boost
-# Python code to generate version list:
+# Python snippet to generate version list:
 #for minor in range(45, 60):
 #	print '"1.%d" "1.%d.0"' % (minor, minor),
 set(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0" "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0" "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0" "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0" "1.57" "1.57.0" "1.58" "1.58.0" "1.59" "1.59.0")
-find_package(Boost 1.45.0 REQUIRED thread)
+set(boost_components thread)
+if (WITH_PYTHON)
+	set(boost_components ${boost_components} python)
+endif()
+find_package(Boost 1.45.0 REQUIRED ${boost_components})
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+
+## Python
+if (WITH_PYTHON)
+	find_package(PythonLibs REQUIRED)
+	include_directories(${PYTHON_INCLUDE_PATH})
+	link_directories(${PYTHON_LIBRARIES})
+endif()
 
 
 ## curses

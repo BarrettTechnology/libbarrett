@@ -1,4 +1,27 @@
 /*
+	Copyright 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * product_manager.cpp
  *
  *  Created on: Jan 3, 2011
@@ -11,11 +34,11 @@
 #include <cstdlib>
 
 #include <string.h>
-#include <syslog.h>
 #include <libgen.h>
 
 #include <libconfig.h++>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/bus/bus_manager.h>
@@ -43,7 +66,7 @@ ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _
 	int ret;
 
 
-	syslog(LOG_ERR, "ProductManager::ProductManager()");
+	logMessage("ProductManager::%s()") % __func__;
 
 	char cfSource[8] = "param";
 	if (configFile == NULL  ||  configFile[0] == '\0') {
@@ -55,7 +78,7 @@ ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _
 			strcpy(cfSource, "env");
 		}
 	}
-	syslog(LOG_ERR, "  Config file (from %s): %s", cfSource, configFile);
+	logMessage("  Config file (from %s): %s") % cfSource % configFile;
 
 
 	char* cf1 = strdup(configFile);
@@ -143,9 +166,9 @@ void ProductManager::enumerate()
 	Puck* p = NULL;
 	int lastId = -1;
 
-	syslog(LOG_ERR, "ProductManager::enumerate()");
+	logMessage("ProductManager::%s()") % __func__;
 
-	syslog(LOG_ERR, "  Pucks:");
+	logMessage("  Pucks:");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {
 		ret = Puck::tryGetProperty(*bus, id, propId, &result);
 		p = getPuck(id);
@@ -162,12 +185,12 @@ void ProductManager::enumerate()
 			}
 
 			if (lastId != id - 1  &&  lastId != -1) {
-				syslog(LOG_ERR, "    --");  // marker to indicate that the listed IDs are not contiguous
+				logMessage("    --");  // marker to indicate that the listed IDs are not contiguous
 			}
-			syslog(LOG_ERR, "    ID=%2d VERS=%3d ROLE=0x%04x TYPE=%s%s",
-					p->getId(), p->getVers(), p->getRole(),
-					Puck::getPuckTypeStr(p->getType()),
-					(p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
+			logMessage("    ID=%2d VERS=%3d ROLE=0x%04x TYPE=%s%s")
+					% p->getId() % p->getVers() % p->getRole()
+					% Puck::getPuckTypeStr(p->getType())
+					% ((p->getEffectiveType() == Puck::PT_Monitor) ? " (Monitor)" : "");
 			lastId = id;
 		} else if (p != NULL) {
 			// if the Puck has disappeared since the last enumeration, remove it
@@ -185,38 +208,38 @@ void ProductManager::enumerate()
 	}
 
 
-	syslog(LOG_ERR, "  Products:");
+	logMessage("  Products:");
 	bool noProductsFound = true;
 	bool wamFound = false;
 	if (foundWam4()) {
 		noProductsFound = false;
 		wamFound = true;
-		syslog(LOG_ERR, "    4-DOF WAM");
+		logMessage("    4-DOF WAM");
 	}
 	if (foundWam7()) {
 		noProductsFound = false;
 		wamFound = true;
-		syslog(LOG_ERR, "    7-DOF WAM%s%s", foundWam7Wrist() ? " (Wrist)" : "", foundWam7Gimbals() ? " (Gimbals)" : "");
+		logMessage("    7-DOF WAM%s%s") % (foundWam7Wrist() ? " (Wrist)" : "") % (foundWam7Gimbals() ? " (Gimbals)" : "");
 	}
 	if (wamFound) {
 		if (foundSafetyModule()) {
-			syslog(LOG_ERR, "    Safety Module");
+			logMessage("    Safety Module");
 		} else {
-			syslog(LOG_ERR, "    *** NO SAFETY MODULE ***");
+			logMessage("    *** NO SAFETY MODULE ***");
 		}
 	}
 	if (foundForceTorqueSensor()) {
 		noProductsFound = false;
-		syslog(LOG_ERR, "    Force-Torque Sensor");
+		logMessage("    Force-Torque Sensor");
 	}
 	if (foundHand()) {
 		noProductsFound = false;
-		syslog(LOG_ERR, "    BarrettHand");
+		logMessage("    BarrettHand");
 	}
 	// TODO(dc): Don't report GHC because we don't have a very selective test.
 
 	if (noProductsFound) {
-		syslog(LOG_ERR, "    (none)");
+		logMessage("    (none)");
 	}
 }
 

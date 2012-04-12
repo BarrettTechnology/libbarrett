@@ -34,7 +34,7 @@ void waitForEnter() {
 
 // Functions that help display data from the Hand's (optional) tactile sensors.
 // Note that the palm tactile sensor has a unique cell layout that these
-// functions do not print  correctly.
+// functions do not print correctly.
 const int TACT_CELL_HEIGHT = 3;
 const int TACT_CELL_WIDTH = 6;
 const int TACT_BOARD_ROWS = 8;
@@ -94,26 +94,29 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	getyx(stdscr, wamY, wamX);
 	mvprintw(line++,0, "  Joint Velocities (rad/s): ");
 	mvprintw(line++,0, "       Joint Torques (N*m): ");
+	mvprintw(line++,0, "         Tool Position (m): ");
+	mvprintw(line++,0, "   Tool Orientation (quat): ");
 	line++;
 
 	if (fts != NULL) {
 		mvprintw(line++,0, "F/T Sensor");
-		mvprintw(line++,0, "     Force (N): ");
+		mvprintw(line++,0, "             Force (N): ");
 		getyx(stdscr, ftsY, ftsX);
-		mvprintw(line++,0, "  Torque (N*m): ");
+		mvprintw(line++,0, "          Torque (N*m): ");
+		mvprintw(line++,0, "  Acceleration (m/s^2): ");
 		line++;
 	}
 
 	if (hand != NULL) {
 		mvprintw(line++,0, "Hand");
-		mvprintw(line++,0, "  Inner Position (rad): ");
+		mvprintw(line++,0, "      Inner Position (rad): ");
 		getyx(stdscr, handY, handX);
-		mvprintw(line++,0, "  Outer Position (rad): ");
-		mvprintw(line++,0, "  Strain-gauge sensors: ");
-		if ( !hand->hasStrainSensors() ) {
+		mvprintw(line++,0, "      Outer Position (rad): ");
+		mvprintw(line++,0, "  Fingertip Torque sensors: ");
+		if ( !hand->hasFingertipTorqueSensors() ) {
 			printw(" n/a");
 		}
-		mvprintw(line++,0, "       Tactile sensors: ");
+		mvprintw(line++,0, "           Tactile sensors: ");
 		if (hand->hasTactSensors()) {
 			tps = hand->getTactilePucks();
 			for (size_t i = 0; i < tps.size(); ++i) {
@@ -133,9 +136,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	jp_type jp;
 	jv_type jv;
 	jt_type jt;
+	cp_type cp;
+	Eigen::Quaterniond to;
+	math::Matrix<6,DOF> J;
+
 	cf_type cf;
 	ct_type ct;
+	ca_type ca;
+
 	Hand::jp_type hjp;
+
 
 	// Fall out of the loop once the user Shift-idles
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
@@ -146,26 +156,32 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		// from exceeding 9.9999. This puts an upper limit on the length of the
 		// string that gets printed to the screen below. We do this to make sure
 		// that the string will fit properly on the screen.
-		jp = math::saturate(wam.getJointPositions(), 9.9999);
-		mvprintw(line++,wamX, "[%7.4f", jp[0]);
+		jp = math::saturate(wam.getJointPositions(), 9.999);
+		mvprintw(line++,wamX, "[%6.3f", jp[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.4f", jp[i]);
+			printw(", %6.3f", jp[i]);
 		}
 		printw("]");
 
-		jv = math::saturate(wam.getJointVelocities(), 9.9999);
-		mvprintw(line++,wamX, "[%7.4f", jv[0]);
+		jv = math::saturate(wam.getJointVelocities(), 9.999);
+		mvprintw(line++,wamX, "[%6.3f", jv[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.4f", jv[i]);
+			printw(", %6.3f", jv[i]);
 		}
 		printw("]");
 
-		jt = math::saturate(wam.getJointTorques(), 99.999);
-		mvprintw(line++,wamX, "[%7.3f", jt[0]);
+		jt = math::saturate(wam.getJointTorques(), 99.99);
+		mvprintw(line++,wamX, "[%6.2f", jt[0]);
 		for (size_t i = 1; i < DOF; ++i) {
-			printw(", %7.3f", jt[i]);
+			printw(", %6.2f", jt[i]);
 		}
 		printw("]");
+
+		cp = math::saturate(wam.getToolPosition(), 9.999);
+    	mvprintw(line++,wamX, "[%6.3f, %6.3f, %6.3f]", cp[0], cp[1], cp[2]);
+
+		to = wam.getToolOrientation();  // We work only with unit quaternions. No saturation necessary.
+    	mvprintw(line++,wamX, "%+7.4f %+7.4fi %+7.4fj %+7.4fk", to.w(), to.x(), to.y(), to.z());
 
 
 		// FTS
@@ -173,36 +189,39 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			line = ftsY;
 
             fts->update();
-            cf = math::saturate(fts->getForce(), 99.999);
-        	mvprintw(line++,ftsX, "[%7.3f, %7.3f, %7.3f]", cf[0], cf[1], cf[2]);
-            ct = math::saturate(fts->getTorque(), 9.9999);
-        	mvprintw(line++,ftsX, "[%7.4f, %7.4f, %7.4f]", ct[0], ct[1], ct[2]);
+            cf = math::saturate(fts->getForce(), 99.99);
+        	mvprintw(line++,ftsX, "[%6.2f, %6.2f, %6.2f]", cf[0], cf[1], cf[2]);
+            ct = math::saturate(fts->getTorque(), 9.999);
+        	mvprintw(line++,ftsX, "[%6.3f, %6.3f, %6.3f]", ct[0], ct[1], ct[2]);
+
+        	fts->updateAccel();
+            ca = math::saturate(fts->getAccel(), 99.99);
+        	mvprintw(line++,ftsX, "[%6.2f, %6.2f, %6.2f]", ca[0], ca[1], ca[2]);
 		}
 
 
 		// Hand
 		if (hand != NULL) {
 			line = handY;
+			hand->update();  // Update all sensors
 
-			hand->updatePosition();
-			hjp = math::saturate(hand->getInnerLinkPosition(), 9.9999);
-			mvprintw(line++,handX, "[%7.4f, %7.4f, %7.4f, %7.4f]",
+			hjp = math::saturate(hand->getInnerLinkPosition(), 9.999);
+			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
-			hjp = math::saturate(hand->getOuterLinkPosition(), 9.9999);
-			mvprintw(line++,handX, "[%7.4f, %7.4f, %7.4f, %7.4f]",
+			hjp = math::saturate(hand->getOuterLinkPosition(), 9.999);
+			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
 
-			if (hand->hasStrainSensors()) {
-				hand->updateStrain();
+			if (hand->hasFingertipTorqueSensors()) {
 				mvprintw(line,handX, "[%4d, %4d, %4d, %4d]",
-						hand->getStrain()[0], hand->getStrain()[1],
-						hand->getStrain()[2], hand->getStrain()[3]);
+						hand->getFingertipTorque()[0],
+						hand->getFingertipTorque()[1],
+						hand->getFingertipTorque()[2],
+						hand->getFingertipTorque()[3]);
 			}
 
 			line += 2;
 			if (hand->hasTactSensors()) {
-				hand->updateTactFull();
-
 				for (size_t i = 0; i < tps.size(); ++i) {
 					graphPressures(stdscr, line, i * TACT_BOARD_STRIDE,
 							tps[i]->getFullData());
@@ -212,7 +231,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 		refresh();  // Ask ncurses to display the new text
-		usleep(200000);  // Slow the loop rate down to roughly 5 Hz
+		usleep(100000);  // Slow the loop rate down to roughly 10 Hz
 	}
 
 	return 0;
