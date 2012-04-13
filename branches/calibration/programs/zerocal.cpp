@@ -146,10 +146,10 @@ class AdjustJointStep : public CalibrationStep {
 	static const int MIN_DIGIT = -3;
 
 public:
-	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, jp_type* mechPosPtr) :
+	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, v_type* zeroAnglePtr) :
 		CalibrationStep("Joint " + boost::lexical_cast<std::string>((int)setting[0])),
 		j((int)setting[0] - 1), calPos(setting[1]), endCondition(setting[2].c_str()),
-		wam(*wamPtr), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), mechPos(*mechPosPtr),
+		wam(*wamPtr), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), zeroAngle(*zeroAnglePtr),
 		state(0), digit(DEFAULT_DIGIT)
 	{
 		assert(j >= 0);
@@ -157,7 +157,7 @@ public:
 		assert(wamPtr != NULL);
 		assert(calOffsetPtr != NULL);
 		assert(zeroPosPtr != NULL);
-		assert(mechPosPtr != NULL);
+		assert(zeroAnglePtr != NULL);
 	}
 	virtual ~AdjustJointStep() {}
 
@@ -170,9 +170,6 @@ public:
 	}
 
 	virtual bool onKeyPress(enum Key k) {
-		Eigen::Matrix<int, DOF,1> mech;
-		v_type mp;
-
 		switch (state) {
 		case 0:
 			if (k == K_ENTER) {
@@ -208,26 +205,16 @@ public:
 					// Record actual joint position, not commanded joint position
 					zeroPos[j] = wam.getJointPositions()[j];
 
-					// Get MECH property from all WAM Pucks
-					wam.llww.getLowLevelWam().getPuckGroup().getProperty(Puck::MECH, mech.data());
+					// Record the motor angles that affect this joint
+					const sqm_type& m2jp = wam.llww.getLowLevelWam().getMotorToJointPositionTransform();
+					double tolerance = m2jp.cwise().abs().maxCoeff() * 1e-5;
 					for (size_t i = 0; i < DOF; ++i) {
-						// Convert motor angle from encoder-counts to radians
-						mp[i] = wam.llww.getLowLevelWam().getMotorPucks()[i].counts2rad(mech[i]);
-
-						if (i > 0) {
-							// In case Motor i and Motor i-1 form a differential, make sure that the
-							// difference between their angles is between -pi and pi. Because MECH
-							// "rolls over", this is necessary for differential joints. For normal
-							// joints, adding a multiple of 2*pi has no effect.
-							while ((mp[i] - mp[i-1]) > M_PI) {
-								mp[i] -= 2*M_PI;
-							}
-							while ((mp[i] - mp[i-1]) < -M_PI) {
-								mp[i] += 2*M_PI;
-							}
+						// If the j,i entry is non-zero, then Motor i is in some way connected to Joint j
+						if (math::abs(m2jp(j,i)) > tolerance) {
+							int mech = wam.llww.getLowLevelWam().getPucks()[i]->getProperty(Puck::MECH);
+							zeroAngle[i] = wam.llww.getLowLevelWam().getMotorPucks()[i].counts2rad(mech);
 						}
 					}
-					mechPos[j] = (wam.llww.getLowLevelWam().getMotorToJointPositionTransform() * mp)[j];
 					return false;  // Move on to the next joint!
 				}
 				break;
@@ -299,7 +286,7 @@ protected:
 	systems::Wam<DOF>& wam;
 	jp_type& calOffset;
 	jp_type& zeroPos;
-	jp_type& mechPos;
+	v_type& zeroAngle;
 
 	int state, digit;
 };
@@ -334,7 +321,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	jp_type calOffset(0.0);
 	jp_type zeroPos(0.0);
-	jp_type mechPos(0.0);
+	v_type zeroAngle(0.0);
 
 
 	// Disable torque saturation because gravity compensation is off
@@ -352,7 +339,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		assert(setting.getLength() == (int)DOF);
 
 		for (size_t i = 0; i < DOF; ++i) {
-			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &mechPos));
+			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &zeroAngle));
 		}
 	} catch (libconfig::ParseException e) {
 		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE, e.getError());
@@ -455,24 +442,13 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (done) {
 		printf(">>> Calibration completed!\n");
 
-		// Compute calibration data
-		jp_type newHome(wam.getHomePosition() - zeroPos);
-		v_type zeroAngle(wam.llww.getLowLevelWam().getJointToMotorPositionTransform() * mechPos);
-		for (size_t i = 0; i < DOF; ++i) {
-			while (zeroAngle[i] > 2*M_PI) {
-				zeroAngle[i] -= 2*M_PI;
-			}
-			while (zeroAngle[i] < 0.0) {
-				zeroAngle[i] += 2*M_PI;
-			}
-		}
-
-
 		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
 		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
 		manageBackups(dataConfigFile);  // Backup old calibration data
 
 		// Save to the data config file
+		jp_type newHome(wam.getHomePosition() - zeroPos);
+
 		libconfig::Config dataConfig;
 		libconfig::Setting& homeSetting = dataConfig.getRoot().add("home", libconfig::Setting::TypeList);
 		libconfig::Setting& zaSetting = dataConfig.getRoot().add("zeroangle", libconfig::Setting::TypeList);
