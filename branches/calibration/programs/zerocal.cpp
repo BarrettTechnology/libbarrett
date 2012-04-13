@@ -59,6 +59,7 @@ const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
 const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/zerocal.conf";
 
 
+// Convenience class that wraps ncurses text attributes.
 class ScopedAttr {
 public:
 	ScopedAttr() : isOn(false), a(-1) {}
@@ -95,6 +96,9 @@ protected:
 };
 
 
+// Represents a generic step in the calibration process.
+// Handles displaying a menu item and provides hooks for keyboard interactions
+// and state transitions. Can be "selected" and/or "active".
 class CalibrationStep {
 public:
 	explicit CalibrationStep(const std::string& title_ = "") :
@@ -115,6 +119,8 @@ public:
 	}
 
 	static const int L_OFFSET = 10;
+
+	// Returns the number of lines that were displayed
 	virtual int display(int top, int left) {
 		ScopedAttr sa(A_BOLD);
 		if (selected) {
@@ -128,6 +134,7 @@ public:
 		return height(top);
 	}
 
+	// Helper for calculating display heights
 	static int height(int origTop) {
 		return getcury(stdscr) - origTop + 1;
 	}
@@ -137,13 +144,15 @@ protected:
 	std::string title;
 };
 
+// Handles actions an displays associated with adjusting the angle of a
+// particular joint.
 template<size_t DOF>
 class AdjustJointStep : public CalibrationStep {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	static const int DEFAULT_DIGIT = -2;
-	static const int MAX_DIGIT = 0;
-	static const int MIN_DIGIT = -3;
+	static const int DEFAULT_DIGIT = -2;  // Start by adjusting the hundredth's place.
+	static const int MAX_DIGIT = 0;  // Display 1's...
+	static const int MIN_DIGIT = -3;  // ... through thourstandth's.
 
 public:
 	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, v_type* zeroAnglePtr) :
@@ -164,6 +173,7 @@ public:
 
 	virtual void onChangeActive() {
 		if (active) {
+			// Reset
 			state = 0;
 			digit = DEFAULT_DIGIT;
 		}
@@ -171,6 +181,7 @@ public:
 
 	virtual bool onKeyPress(enum Key k) {
 		switch (state) {
+		// Prompt to move the WAM
 		case 0:
 			if (k == K_ENTER) {
 				state++;
@@ -178,10 +189,12 @@ public:
 			}
 			break;
 
+		// Wait until the move is done
 		case 1:
 			// This transition is handled in display().
 			break;
 
+		// Adjust the offset
 		default:
 			switch (k) {
 			case K_LEFT:
@@ -235,6 +248,7 @@ public:
 			ScopedAttr sa(A_STANDOUT, true);
 
 			switch (state) {
+			// Prompt to move the WAM
 			case 0:
 				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", calPos[0]);
 				for (size_t i = 1; i < DOF; ++i) {
@@ -242,6 +256,8 @@ public:
 				}
 				printw("]");
 				break;
+
+			// Wait until the move is done
 			case 1:
 				mvprintw(line++,left, "Wait for the WAM to finish moving.");
 
@@ -249,6 +265,8 @@ public:
 					state++;
 				}
 				break;
+
+			// Adjust the offset
 			default:
 				mvprintw(line++,left, "Use arrow keys to adjust the Joint %d offset.", j+1);
 				sa.off();
@@ -291,7 +309,7 @@ protected:
 	int state, digit;
 };
 
-
+// The Exit menu item.
 class ExitStep : public CalibrationStep {
 public:
 	explicit ExitStep(const std::string& title_ = "Exit") : CalibrationStep(title_) {}
@@ -319,9 +337,9 @@ template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	jp_type calOffset(0.0);
-	jp_type zeroPos(0.0);
-	v_type zeroAngle(0.0);
+	jp_type calOffset(0.0);  // The offsets as entered by the user
+	jp_type zeroPos(0.0);  // Zero position angles in joint space
+	v_type zeroAngle(0.0);  // Motor positions that correspond to zeroPos
 
 
 	// Disable torque saturation because gravity compensation is off
@@ -339,6 +357,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		assert(setting.getLength() == (int)DOF);
 
 		for (size_t i = 0; i < DOF; ++i) {
+			// Populate the menu
 			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &zeroAngle));
 		}
 	} catch (libconfig::ParseException e) {
@@ -418,6 +437,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 
+		// Display
 		clear();
 		mvprintw(0,18, "*** Barrett WAM Zero Calibration Utility ***");
 		int top = 3;
@@ -511,7 +531,7 @@ int main(int argc, char** argv) {
 
 
 	ProductManager pm;
-	pm.waitForWam(false);
+	pm.waitForWam(false);  // Don't prompt on zeroing
 	pm.wakeAllPucks();
 
 	SafetyModule* sm = pm.getSafetyModule();
@@ -522,7 +542,8 @@ int main(int argc, char** argv) {
 		sm->setWamZeroed(false);
 	}
 
-	// Remove existing zerocal information, if present
+	// Remove existing zerocal information, if present. Must be done before
+	// calling ProductManager::getWam*().
 	libconfig::Setting& llSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath())["low_level"];
 	if (llSetting.exists("zeroangle")) {
 		llSetting.remove(llSetting["zeroangle"].getIndex());

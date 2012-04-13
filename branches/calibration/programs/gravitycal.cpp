@@ -61,6 +61,7 @@ const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
 const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/gravitycal.conf";
 
 
+// Print this before the WAM is activated.
 bool validate_args(int argc, char** argv) {
 	printf(
 "\n"
@@ -222,7 +223,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		MU_P_DONE
 	} phase;
 
-	// the longest string below is 9 characters (including the NULL termination)
+	// The longest string below is 9 characters (including the NULL termination).
 	char phasenm[][9] = { "START", "TO_TOP", "FROM_TOP", "MEAS_TOP", "TO_BOT",
 			"FROM_BOT", "MEAS_BOT", "DONE" };
 
@@ -311,16 +312,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	for (j = 0; j < n; j++)
 		mus[j] = gsl_vector_alloc(3);
 
-	// install callback
+	// Install callback
 	systems::TupleGrouper<jt_type, jp_type> tg;
 	systems::Callback<boost::tuple<jt_type, jp_type>, int> muCallback(mu_callback<DOF>);
-	pm.getExecutionManager()->startManaging(muCallback);  // make sure mu_callback() is called every execution cycle
+	pm.getExecutionManager()->startManaging(muCallback);  // Make sure mu_callback() is called every execution cycle
 
 	systems::connect(wam.jtSum.output, tg.template getInput<0>());
 	systems::connect(wam.jpOutput, tg.template getInput<1>());
 	systems::connect(tg.output, muCallback.input);
 
-	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
+	wam.jpController.setControlSignalLimit(jp_type()); // Disable torque saturation because gravity comp isn't on
 
 
 	/* Start the GUI! */
@@ -480,10 +481,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		/* We have a solution vector P for each link */
 		gsl_vector ** P;
 
+		printf(">>> Calibration completed!\n");
+
 		/* Start calculating ...
 		 * We have vectors of torque and position
 		 * in torques[] and positions[] */
-		printf(">>> Calculating...\n");
 
 		libconfig::Setting& wamSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
 		bt_kinematics_create(&kin, wamSetting["kinematics"].getCSetting(), n);
@@ -609,8 +611,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 
-		printf(">>> Gravity calibration ended.\n");
-
 		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
 		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
 		manageBackups(dataConfigFile);  // Backup old calibration data
@@ -636,7 +636,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 
 
-	/* Re-fold, print, and exit */
+	/* Re-fold and exit */
 	printf(">>> Moving back to home position.\n");
 	if (hand != NULL) {
 		hand->open(Hand::GRASP);
@@ -644,7 +644,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
 	}
 	wam.moveHome();
-
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	/* Free the variables */
