@@ -5,7 +5,7 @@ set(programs
 
 
 foreach (prog ${programs})
-	add_executable(${prog} ${prog}.cpp)
+	add_executable(${prog} get_key.cpp manage_backups.cpp ${prog}.cpp)
 	target_link_libraries(${prog}
 		barrett
 		${CURSES_LIBRARIES}
