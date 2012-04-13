@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * gravitycal.cpp
  *
  *  Created on: Apr 9, 2010
@@ -26,65 +49,44 @@
 #include <barrett/cdlbt/kinematics.h>
 #include <barrett/cdlbt/calgrav.h>
 
+#define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
+
+#include "utils.h"
 
 
 using namespace barrett;
 
+const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/gravitycal.conf";
 
-enum btkey {
-	BTKEY_UNKNOWN = -2,
-	BTKEY_NOKEY = -1,
-	BTKEY_TAB = 9,
-	BTKEY_ENTER = 10,
-	BTKEY_ESCAPE = 27,
-	BTKEY_BACKSPACE = 127,
-	BTKEY_UP = 256,
-	BTKEY_DOWN = 257,
-	BTKEY_LEFT = 258,
-	BTKEY_RIGHT = 259
-};
-enum btkey btkey_get() {
-	int c1, c2, c3;
 
-	/* Get the key from ncurses */
-	c1 = getch();
-	if (c1 == ERR)
-		return BTKEY_NOKEY;
+// Print this before the WAM is activated.
+bool validate_args(int argc, char** argv) {
+	printf(
+"\n"
+"                *** Barrett WAM Gravity Calibration Utility ***\n"
+"\n"
+"This utility will calculate cumulative first moment of mass data for each link\n"
+"of your WAM Arm. This data is used by the gravity compensation routine to\n"
+"support WAM's weight in gravity. The program will move the WAM to several\n"
+"predefined positions and take torque measurements at each location.\n"
+"\n"
+"The calculations rely on having accurate kinematic information. Consider\n"
+"performing the zero-calibration procedure (bt-wam-zerocal) before proceeding. It\n"
+"is also necessary to know how the WAM is oriented relative to gravity, so be\n"
+"sure to update the \"world_to_base\" transform if your WAM is not mounted in the\n"
+"standard orientation.\n"
+"\n"
+"\n"
+"IMPORTANT: DO NOT TOUCH the WAM during the measurement process, or the\n"
+"calibration computations will be significantly wrong, and any subsequent gravity\n"
+"compensation will fail spectacularly!\n"
+"\n"
+"\n"
+	);
 
-	/* Get all keyboard characters */
-	if (32 <= c1 && c1 <= 126)
-		return (enum btkey) c1;
-
-	/* Get special keys */
-	switch (c1) {
-	case BTKEY_TAB:
-	case BTKEY_ENTER:
-	case BTKEY_BACKSPACE:
-		return (enum btkey) c1;
-		/* Get extended keyboard chars (eg arrow keys) */
-	case 27:
-		c2 = getch();
-		if (c2 == ERR)
-			return BTKEY_ESCAPE;
-		if (c2 != 91)
-			return BTKEY_UNKNOWN;
-		c3 = getch();
-		switch (c3) {
-		case 65:
-			return BTKEY_UP;
-		case 66:
-			return BTKEY_DOWN;
-		case 67:
-			return BTKEY_RIGHT;
-		case 68:
-			return BTKEY_LEFT;
-		default:
-			return BTKEY_UNKNOWN;
-		}
-	default:
-		return BTKEY_UNKNOWN;
-	}
+	return true;
 }
 
 
@@ -221,7 +223,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		MU_P_DONE
 	} phase;
 
-	// the longest string below is 9 characters (including the NULL termination)
+	// The longest string below is 9 characters (including the NULL termination).
 	char phasenm[][9] = { "START", "TO_TOP", "FROM_TOP", "MEAS_TOP", "TO_BOT",
 			"FROM_BOT", "MEAS_BOT", "DONE" };
 
@@ -245,20 +247,20 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		config_setting_t * poses_array;
 
 		config_init(&cfg);
-		err = config_read_file(&cfg, "/etc/barrett/gravitycal.conf");
+		err = config_read_file(&cfg, CAL_CONFIG_FILE);
 		if (err != CONFIG_TRUE) {
-			syslog(LOG_ERR, "Calibration configuration file cal.conf not found.");
-			printf("Calibration configuration file /etc/barrett/gravitycal.conf not found.\n");
+			syslog(LOG_ERR, "Calibration configuration file %s not found.", CAL_CONFIG_FILE);
+			printf("Calibration configuration file %s not found.\n", CAL_CONFIG_FILE);
 			config_destroy(&cfg);
 			endwin();
 			return -1;
 		}
 
-		sprintf(key, "calibration-poses-wam%d", n);
-		poses_array = config_setting_get_member(config_root_setting(&cfg), key);
+		sprintf(key, "gravitycal.%s", pm.getWamDefaultConfigPath());
+		poses_array = config_lookup(&cfg, key);
 		if (!poses_array) {
-			syslog(LOG_ERR, "Configuration group calibration-poses-wam%d not found.", n);
-			printf("Configuration group calibration-poses-wam%d not found.\n", n);
+			syslog(LOG_ERR, "Configuration group %s not found.", key);
+			printf("Configuration group %s not found.\n", key);
 			config_destroy(&cfg);
 			endwin();
 			return -1;
@@ -310,38 +312,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	for (j = 0; j < n; j++)
 		mus[j] = gsl_vector_alloc(3);
 
-	// install callback
+	// Install callback
 	systems::TupleGrouper<jt_type, jp_type> tg;
 	systems::Callback<boost::tuple<jt_type, jp_type>, int> muCallback(mu_callback<DOF>);
-	pm.getExecutionManager()->startManaging(muCallback);  // make sure mu_callback() is called every execution cycle
+	pm.getExecutionManager()->startManaging(muCallback);  // Make sure mu_callback() is called every execution cycle
 
 	systems::connect(wam.jtSum.output, tg.template getInput<0>());
 	systems::connect(wam.jpOutput, tg.template getInput<1>());
 	systems::connect(tg.output, muCallback.input);
 
-	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
+	wam.jpController.setControlSignalLimit(jp_type()); // Disable torque saturation because gravity comp isn't on
 
-
-	j = 4;
-	mvprintw(j++, 0, "IMPORTANT: Once gravity-calibration begins, the WAM will begin");
-	mvprintw(j++, 0, "to move to a set of %d predefined poses (defined in gravitycal.conf).", num_poses);
-	j++;
-	mvprintw(j++, 0, "DO NOT TOUCH the WAM during the measurement process, or the");
-	mvprintw(j++, 0, "calibration computations will be significantly wrong, and");
-	mvprintw(j++, 0, "any subsequent gravity compensation will fail spectacularly!");
-	j++;
-	j++;
-	j++;
-	mvprintw(j++, 0, "NOTE: This routine relies on having accurate kinematic information.");
-	mvprintw(j++, 0, "Consider performing the zero-calibration procedure (bt-wam-zerocal)");
-	mvprintw(j++, 0, "before proceeding with gravity-calibration.");
-	j++;
-	j++;
-	j++;
-	mvprintw(j++, 0, "Press [Enter] to start.");
-	refresh();
-	while (btkey_get() != BTKEY_ENTER)
-		usleep(10000);
 
 	/* Start the GUI! */
 	pose = 0;
@@ -466,15 +447,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		syslog(LOG_ERR, "%s:%d freopen(stdout) failed.", __FILE__, __LINE__);
 	}
 
-	/* Re-fold, print, and exit */
-	printf("Beginning move back to the home location...\n");
-	
-	if (hand != NULL) {
-		hand->open(Hand::GRASP);
-		hand->close(Hand::SPREAD);
-		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
-	}
-	wam.moveHome(false);
 
 	/* Free unneeded variables */
 	for (j = 0; j < n; j++) {
@@ -509,11 +481,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		/* We have a solution vector P for each link */
 		gsl_vector ** P;
 
+		printf(">>> Calibration completed!\n");
+
 		/* Start calculating ...
 		 * We have vectors of torque and position
 		 * in torques[] and positions[] */
-		printf("\n");
-		printf("Calculating ...\n");
 
 		libconfig::Setting& wamSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
 		bt_kinematics_create(&kin, wamSetting["kinematics"].getCSetting(), n);
@@ -638,70 +610,40 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			free(P);
 		}
 
-		/* Print results */
-		printf("\n");
-		printf("Gravity calibration ended.\n");
-		printf("\n");
-		printf("Copy the following lines into your wam.config file,\n");
-		printf("replacing any existing gravity_compensation groups.\n");
-		printf("It is usually placed after the dynamics: group.\n");
-		printf("--------\n");
-		printf("   # Calibrated gravity vectors\n");
-		printf("   gravity_compensation:\n");
-		printf("   {\n");
-		for (j = 0; j < n; j++) {
-			if (j == 0)
-				printf("      mus = (");
-			else
-				printf("             ");
 
-			printf("( % 8.5f, % 8.5f, % 8.5f )", gsl_vector_get(mus[j], 0),
-					gsl_vector_get(mus[j], 1), gsl_vector_get(mus[j], 2));
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		manageBackups(dataConfigFile);  // Backup old calibration data
 
-			if (j != n - 1)
-				printf(",\n");
-			else
-				printf(");\n");
+		// Save to the data config file
+		libconfig::Config dataConfig;
+		libconfig::Setting& musSetting = dataConfig.getRoot()
+				.add("gravity_compensation", libconfig::Setting::TypeGroup)
+				.add("mus", libconfig::Setting::TypeList);
+		for (size_t i = 0; i < DOF; ++i) {
+			libconfig::Setting& rowSetting = musSetting.add(libconfig::Setting::TypeList);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 0);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 1);
+			rowSetting.add(libconfig::Setting::TypeFloat) = gsl_vector_get(mus[i], 2);
 		}
-		printf("   };\n");
-		printf("--------\n");
-//      {
-//         FILE * logfile;
-//         logfile = fopen("cal-gravity.log","w");
-//         if (logfile)
-//         {
-//            fprintf(logfile,"   # Calibrated gravity vectors\n");
-//            fprintf(logfile,"   calgrav:\n");
-//            fprintf(logfile,"   {\n");
-//            for (j=0; j<n; j++)
-//            {
-//               if (j==0) fprintf(logfile,"      mus = (");
-//               else      fprintf(logfile,"             ");
-//
-//               fprintf(logfile,
-//                       "( % .6f, % .6f, % .6f )",
-//                       gsl_vector_get(mus[j],0),
-//                       gsl_vector_get(mus[j],1),
-//                       gsl_vector_get(mus[j],2));
-//
-//               if (j!=n-1) fprintf(logfile,",\n");
-//               else        fprintf(logfile,");\n");
-//            }
-//            fprintf(logfile,"   };\n");
-//            fclose(logfile);
-//            printf("This text has been saved to cal-gravity.log.\n");
-//         }
-//         else
-//         {
-//            syslog(LOG_ERR,"Could not write to cal-gravity.log.");
-//            printf("Error: Could not write to cal-gravity.log.\n");
-//         }
-//      }
-		printf("\n");
 
+		dataConfig.writeFile(dataConfigFile);
+		printf(">>> Data written to: %s\n", dataConfigFile);
+
+		delete[] dataConfigFile;
+	} else {
+		printf(">>> ERROR: Calibration canceled.\n");
 	}
 
 
+	/* Re-fold and exit */
+	printf(">>> Moving back to home position.\n");
+	if (hand != NULL) {
+		hand->open(Hand::GRASP);
+		hand->close(Hand::SPREAD);
+		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
+	}
+	wam.moveHome();
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	/* Free the variables */
