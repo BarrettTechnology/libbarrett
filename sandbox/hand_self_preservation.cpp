@@ -43,14 +43,13 @@ int main() {
 		rt_task_wait_period(NULL);
 		now = rt_timer_read();
 
-		hand.updateStrain(true);
-		hand.updatePosition(true);
-		const std::vector<int>& strain = hand.getStrain();
+		hand.update(Hand::S_POSITION | Hand::S_FINGERTIP_TORQUE, true);
+		const std::vector<int>& ftt = hand.getFingertipTorque();
 		for (size_t i = 0; i < Hand::DOF - 1; ++i) {
 			int offset = 0;
-			if (strain[i] > 2800) {
+			if (ftt[i] > 2800) {
 				offset = -30000;
-			} else if (strain[i] < 1000) {
+			} else if (ftt[i] < 1000) {
 				offset = 30000;
 			}
 

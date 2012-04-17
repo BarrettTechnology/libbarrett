@@ -42,7 +42,7 @@ int main() {
 	for (int i = 0; i < 5000; ++i) {
 		rt_task_wait_period(NULL);
 
-		hand.updateTactFull(true);
+		hand.update(Hand::S_TACT_FULL, true);
 		t.get<0>() = rt_timer_read() - last;
 		t.get<1>() = hand.getTactilePucks()[0]->getFullData();
 		t.get<2>() = hand.getTactilePucks()[1]->getFullData();

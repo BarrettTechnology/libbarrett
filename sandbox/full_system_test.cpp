@@ -160,10 +160,7 @@ void readHand(Hand& hand) {
 //	int motorTemp[Hand::DOF];
 
 	while ( !boost::this_thread::interruption_requested() ) {
-		hand.updatePosition();
-		hand.updateStrain();
-		hand.updateTactFull();
-
+		hand.update();
 //		hand.getPuckGroup().getProperty(Puck::TEMP, puckTemp);
 //		hand.getPuckGroup().getProperty(Puck::THERM, motorTemp);
 
@@ -254,9 +251,9 @@ void moveAndRead(ProductManager& pm, systems::Wam<DOF>& wam) {
 	}
 
 	if (pm.foundHand()) {
-		hand.trapezoidalMove(Hand::jp_type(0.0));
-		hand.trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
-//		hand.trapezoidalMove(Hand::jp_type(M_PI_2, M_PI_2, M_PI_2, M_PI));
+		hand.open();
+		hand.close(Hand::SPREAD);
+//		hand.trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
 	}
 	wam.moveHome();
 }

@@ -22,71 +22,56 @@ int main() {
 		return 1;
 	}
 	Hand& hand = *pm.getHand();
-
-
 	hand.initialize();
-	RTIME start, end;
-	const size_t COUNT = 1000;
 
 
-#define PRE \
-	start = rt_timer_read(); \
-	for (size_t i = 0; i < COUNT; ++i) {
+	{
+		hand.close();
+		hand.open();
+		hand.close(Hand::SPREAD);
+		hand.close(Hand::GRASP);
+		hand.open(Hand::GRASP, false);
+		sleep(1);
+		hand.open();
+	}
 
-#define POST \
-	} \
-	end = rt_timer_read(); \
-	std::cout << (end - start) * 1e-6 / COUNT << "\n";
+	{
+		Hand::jp_type open(0.0);
+		Hand::jp_type closed(2.4);
+		closed[3] = M_PI;
 
+		// Original interface preserved? Should move all 4 motors.
+		hand.trapezoidalMove(closed);
+		hand.trapezoidalMove(open, false);
+		hand.waitUntilDoneMoving();
 
-	PRE
-	hand.updatePosition(true);
-	hand.updateStrain(true);
-	hand.updateTactFull(true);
-	POST
+		// New interface
+		hand.trapezoidalMove(closed, Hand::SPREAD);
+		hand.trapezoidalMove(closed, Hand::F1);
+		hand.trapezoidalMove(closed, Hand::F2);
+		hand.trapezoidalMove(closed, Hand::F3);
+		hand.trapezoidalMove(open, Hand::GRASP);
+		hand.trapezoidalMove(open, Hand::SPREAD);
+		hand.trapezoidalMove(closed, Hand::F3 | Hand::SPREAD);
+		hand.trapezoidalMove(open, Hand::WHOLE_HAND);
+	}
 
-	PRE
-	hand.updatePosition();
-	hand.updateStrain();
-	hand.updateTactFull();
-	POST
+	{
+		Hand::jv_type open(-0.5);
+		Hand::jv_type close(0.5);
 
-	PRE
-	hand.update(Hand::S_ALL, true);
-	POST
+		// Original interface preserved? Should move all 4 motors.
+		hand.velocityMove(close);
+		sleep(1);
 
-	PRE
-	hand.update();
-	POST
+		// New interface
+		hand.trapezoidalMove(open, Hand::GRASP);
+		sleep(1);
+		hand.trapezoidalMove(open, Hand::WHOLE_HAND);
+		hand.waitUntilDoneMoving();
+	}
 
-
-	return 0;
-
-	Hand::jp_type jp;
-	jp.setConstant(0.5);
-	hand.trapezoidalMove(jp);
-
-	hand.updatePosition(true);
-	hand.updateStrain(true);
-	//hand.update(Hand::S_POSITION | Hand::S_FINGER_TIP_TORQUE, true);
-	std::cout << hand.getInnerLinkPosition() << hand.getOuterLinkPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
-
-	Hand::jv_type jv(0.5);
-	hand.setVelocity(jv);
-
-	sleep(1);
-	hand.updatePosition(true);
-	hand.updateStrain(true);
-	//hand.update(Hand::S_POSITION | Hand::S_FINGER_TIP_TORQUE, true);
-	std::cout << hand.getInnerLinkPosition() << hand.getOuterLinkPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
-
-	sleep(1);
-	hand.updatePosition(true);
-	hand.updateStrain(true);
-	//hand.update(Hand::S_POSITION | Hand::S_FINGER_TIP_TORQUE, true);
-	std::cout << hand.getInnerLinkPosition() << hand.getOuterLinkPosition() << " [" << hand.getStrain()[0] << "," << hand.getStrain()[1] << "," << hand.getStrain()[2] << "," << hand.getStrain()[3] << "]" << "\n";
 
 	hand.idle();
-
 	return 0;
 }
