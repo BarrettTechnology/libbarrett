@@ -125,7 +125,8 @@ public:
 		if (pm.foundHand()) {
 			Hand* hand = pm.getHand();
 			hand->initialize();
-			hand->trapezoidalMove(Hand::jp_type(M_PI), false);
+			hand->close(Hand::SPREAD);
+			hand->close(Hand::GRASP, false);
 		}
 
 		// Handle the wrist if it's present
@@ -161,9 +162,7 @@ public:
 
 		// Now move to the home position
 		if (pm.foundHand()) {
-			Hand::jp_type handPos(1.6);
-			handPos[3] = 3.14;
-			pm.getHand()->trapezoidalMove(handPos, false);
+			pm.getHand()->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP, false);
 		}
 
 		jp_type home = setPoint + wam.getHomePosition();

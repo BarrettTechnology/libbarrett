@@ -359,7 +359,7 @@ void handEntryPoint(Hand* hand, const char* remoteHost) {
 			hjv[1] = velCommand(data & (1<<0), data & (1<<1));  // Pointer
 			hjv[2] = velCommand(data & (1<<4), data & (1<<5));  // Thumb
 			hjv[3] = velCommand(data & (1<<6), data & (1<<7));  // Rocker
-			hand->setVelocity(hjv);
+			hand->velocityMove(hjv);
 			std::cout << "Velocity: " << hjv << std::endl;
 
 			data_1 = data;

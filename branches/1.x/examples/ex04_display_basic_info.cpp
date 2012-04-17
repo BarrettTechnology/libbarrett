@@ -108,14 +108,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	if (hand != NULL) {
 		mvprintw(line++,0, "Hand");
-		mvprintw(line++,0, "  Inner Position (rad): ");
+		mvprintw(line++,0, "      Inner Position (rad): ");
 		getyx(stdscr, handY, handX);
-		mvprintw(line++,0, "  Outer Position (rad): ");
-		mvprintw(line++,0, "  Strain-gauge sensors: ");
-		if ( !hand->hasStrainSensors() ) {
+		mvprintw(line++,0, "      Outer Position (rad): ");
+		mvprintw(line++,0, "  Fingertip Torque sensors: ");
+		if ( !hand->hasFingertipTorqueSensors() ) {
 			printw(" n/a");
 		}
-		mvprintw(line++,0, "       Tactile sensors: ");
+		mvprintw(line++,0, "           Tactile sensors: ");
 		if (hand->hasTactSensors()) {
 			tps = hand->getTactilePucks();
 			for (size_t i = 0; i < tps.size(); ++i) {
@@ -197,8 +197,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		// Hand
 		if (hand != NULL) {
 			line = handY;
+			hand->update();  // Update all sensors
 
-			hand->updatePosition();
 			hjp = math::saturate(hand->getInnerLinkPosition(), 9.999);
 			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
@@ -206,17 +206,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			mvprintw(line++,handX, "[%6.3f, %6.3f, %6.3f, %6.3f]",
 					hjp[0], hjp[1], hjp[2], hjp[3]);
 
-			if (hand->hasStrainSensors()) {
-				hand->updateStrain();
+			if (hand->hasFingertipTorqueSensors()) {
 				mvprintw(line,handX, "[%4d, %4d, %4d, %4d]",
-						hand->getStrain()[0], hand->getStrain()[1],
-						hand->getStrain()[2], hand->getStrain()[3]);
+						hand->getFingertipTorque()[0],
+						hand->getFingertipTorque()[1],
+						hand->getFingertipTorque()[2],
+						hand->getFingertipTorque()[3]);
 			}
 
 			line += 2;
 			if (hand->hasTactSensors()) {
-				hand->updateTactFull();
-
 				for (size_t i = 0; i < tps.size(); ++i) {
 					graphPressures(stdscr, line, i * TACT_BOARD_STRIDE,
 							tps[i]->getFullData());

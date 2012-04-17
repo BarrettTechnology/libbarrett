@@ -175,7 +175,7 @@ try:
 		replies.append(sock.recv(4096))  # Arbitrary buffer size
 except timeout:
 	pass
-wams = map(lambda r: r.split(SEPERATOR), sorted(replies))
+wams = map(lambda r: r.split(SEPERATOR), sorted(replies, key=str.lower))
 print "Found:"
 print "    " + "\n    ".join(map(lambda w: wamStr(w, maxNameLen(wams)), wams))
 

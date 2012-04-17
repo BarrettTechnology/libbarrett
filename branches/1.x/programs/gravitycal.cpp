@@ -397,7 +397,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 			if (hand != NULL  &&  pose == 0) {
 				hand->initialize();
-				hand->trapezoidalMove(Hand::jp_type(M_PI, M_PI, M_PI, 0.0));
+				hand->close(Hand::GRASP);
 			}
 
 			mvprintw(9, 3, "Moving to position (from above) ...    ");
@@ -470,9 +470,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	printf("Beginning move back to the home location...\n");
 	
 	if (hand != NULL) {
-		hand->trapezoidalMove(Hand::jp_type(0.0));
-		hand->trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
-		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0, M_PI/2.0, M_PI/2.0, M_PI));
+		hand->open(Hand::GRASP);
+		hand->close(Hand::SPREAD);
+		hand->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
 	}
 	wam.moveHome(false);
 
