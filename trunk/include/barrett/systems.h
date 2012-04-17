@@ -69,6 +69,7 @@
 #include <barrett/systems/tool_position.h>
 #include <barrett/systems/tool_orientation.h>
 #include <barrett/systems/tool_force_to_joint_torques.h>
+#include <barrett/systems/tool_torque_to_joint_torques.h>
 #include <barrett/systems/tool_orientation_controller.h>
 
 #include <barrett/systems/haptic_ball.h>
