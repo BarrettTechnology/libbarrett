@@ -28,16 +28,36 @@
  *      Author: dc
  */
 
+#include <cassert>
+
+#include <barrett/math/utils.h>
 #include <barrett/systems/rate_limiter.h>
 
 
 namespace barrett {
 namespace systems {
 
+
+template<typename T, typename MathTraits>
+void RateLimiter<T,MathTraits>::setLimit(const T& limit)
+{
+	// Limit must be non-negative. Zero is a special value meaning "don't limit".
+	assert(limit == math::abs(limit));
+	rl = limit;
+}
+
 template<typename T, typename MathTraits>
 void RateLimiter<T,MathTraits>::operate()
 {
-	data = this->input.getValue();
+	const T& x = this->input.getValue();
+
+	if (rl == MT::zero()) {
+		data = x;
+	} else {
+		rate = MT::sub(x, data) / T_s;
+		data += MT::mult(math::sign(rate), math::min(math::abs(rate), rl)) * T_s;
+	}
+
 	this->outputValue->setData(&data);
 }
 
