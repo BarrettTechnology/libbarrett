@@ -52,7 +52,7 @@ protected:
 
 public:
 	RateLimiter(const T& limit = T(0.0), const std::string& sysName = "RateLimiter") :
-		SingleIO<T,T>(sysName), T_s(0.0), rl(), data()
+		SingleIO<T,T>(sysName), T_s(0.0), rl(), data(), rate()
 	{
 		setLimit(limit);
 		getSamplePeriodFromEM();
@@ -61,12 +61,14 @@ public:
 		this->mandatoryCleanUp();
 	}
 
-	void setLimit(const T& limit) { rl = limit; }
+	void setLimit(const T& limit);
 
 protected:
 	double T_s;
 	T rl;
 	T data;
+
+	T rate;
 	virtual void operate();
 
 	virtual void onExecutionManagerChanged() {
