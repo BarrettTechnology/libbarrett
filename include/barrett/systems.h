@@ -80,6 +80,7 @@
 
 #include <barrett/systems/pid_controller.h>
 #include <barrett/systems/first_order_filter.h>
+#include <barrett/systems/rate_limiter.h>
 
 #include <barrett/systems/callback.h>
 
