@@ -39,11 +39,12 @@ namespace systems {
 
 
 template<typename T, typename MathTraits>
-void RateLimiter<T,MathTraits>::setLimit(const T& limit)
+void RateLimiter<T,MathTraits>::setLimit(const T& newLimit)
 {
 	// Limit must be non-negative. Zero is a special value meaning "don't limit".
-	assert(limit == math::abs(limit));
-	rl = limit;
+	assert(newLimit == math::abs(newLimit));
+	limit = newLimit;
+	delta = T_s * limit;
 }
 
 template<typename T, typename MathTraits>
@@ -51,11 +52,11 @@ void RateLimiter<T,MathTraits>::operate()
 {
 	const T& x = this->input.getValue();
 
-	if (rl == MT::zero()) {
+	if (limit == MT::zero()) {
 		data = x;
 	} else {
-		rate = MT::sub(x, data) / T_s;
-		data += MT::mult(math::sign(rate), math::min(math::abs(rate), rl)) * T_s;
+		rate = MT::sub(x, data);
+		data += MT::mult(math::sign(rate), math::min(math::abs(rate), delta));
 	}
 
 	this->outputValue->setData(&data);
@@ -71,6 +72,7 @@ void RateLimiter<T,MathTraits>::getSamplePeriodFromEM()
 	} else {
 		T_s = 0.0;
 	}
+	setLimit(limit);  // Update delta
 }
 
 
