@@ -116,6 +116,32 @@ TEST_F(RateLimiterTest, SwitchesDirection) {
 	}
 }
 
+TEST_F(RateLimiterTest, GetsSamplePeriodFromEM) {
+	double rate = 1.0;
+	systems::RateLimiter<double> rl(rate);
+	startTesting(rl);
+
+	setRunAndExpect(9e9, rate * T_s);
+	setRunAndExpect(9e9, rate * 2*T_s);
+
+	double T_s2 = 1.0;
+	systems::ManualExecutionManager mem2(T_s2);
+	ExposedIOSystem<double> eios2;
+	mem2.startManaging(eios2);
+	systems::disconnect(rl.input);
+	systems::disconnect(rl.output);
+	systems::connect(eios2.output, rl.input);
+	systems::connect(rl.output, eios2.input);
+
+	eios2.setOutputValue(9e9);
+	mem2.runExecutionCycle();
+	EXPECT_DOUBLE_EQ(rate * (2*T_s + T_s2), eios2.getInputValue());
+
+	eios2.setOutputValue(9e9);
+	mem2.runExecutionCycle();
+	EXPECT_DOUBLE_EQ(rate * (2*T_s + 2*T_s2), eios2.getInputValue());
+}
+
 
 // Death tests
 TEST(RateLimiterDeathTest, LimitCantBeNegative) {
