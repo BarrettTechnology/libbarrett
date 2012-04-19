@@ -278,7 +278,7 @@ public:
 				mvprintw(  line,left, "                    %+06.3f", calOffset[j]);
 
 				int x = getcurx(stdscr);
-				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_BOLD, 0, NULL);
+				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_STANDOUT, 0, NULL);
 
 				line += 2;
 				mvprintw(line++,left, "Press [Enter] once %s.", endCondition.c_str());
