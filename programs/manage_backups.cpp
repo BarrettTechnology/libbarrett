@@ -36,10 +36,15 @@
 #include "utils.h"
 
 
-bool fileExists(const char *file)
+bool fileExists(const char* file)
 {
 	std::ifstream fs(file);
 	return fs;
+}
+
+void backupFileName(char* str, const char* baseFileName, int backupNumer)
+{
+	sprintf(str, "%s.%d", baseFileName, backupNumer);
 }
 
 
@@ -48,12 +53,12 @@ void manageBackups(const char* file, int numBackups) {
 	char* backupFile1 = new char[strlen(file) + 2 + 1];
 	char* backupFile2 = new char[strlen(file) + 2 + 1];
 
-	sprintf(backupFile2, "%s.%d", file, numBackups);
+	backupFileName(backupFile2, file, numBackups);
 	for (int i = numBackups - 1; i >= 0; --i) {
-		if (i != 0) {
-			sprintf(backupFile1, "%s.%d", file, i);
-		} else {
+		if (i == 0) {
 			strcpy(backupFile1, file);
+		} else {
+			backupFileName(backupFile1, file, i);
 		}
 
 		if (fileExists(backupFile1)) {
@@ -63,6 +68,11 @@ void manageBackups(const char* file, int numBackups) {
 			rename(backupFile1, backupFile2);
 		}
 		strcpy(backupFile2, backupFile1);
+	}
+
+	backupFileName(backupFile1, file, 1);
+	if (fileExists(backupFile1)) {
+		printf(">>> Old data saved: %s\n", backupFile1);
 	}
 
 	delete[] backupFile1;
