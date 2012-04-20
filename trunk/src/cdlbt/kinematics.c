@@ -166,10 +166,10 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          }
          
          /* Make sure we have an appropriate configuration for the world to base transform */
-         if ( (world = config_setting_get_member(kinconfig,"world")) ) {
+         if ( (world = config_setting_get_member(kinconfig,"world_to_base")) ) {
             if (    (config_setting_type(world) != CONFIG_TYPE_LIST)
                 ||  (config_setting_length(world) != 4) ) {
-               syslog(LOG_ERR,"%s: kinematics:world not a list with 4 elements.",__func__);
+               syslog(LOG_ERR,"%s: kinematics:world_to_base not a list with 4 elements.",__func__);
                bt_kinematics_destroy(kin);
                return -1;
             }
@@ -180,7 +180,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
                if (   (config_setting_type(world_row) != CONFIG_TYPE_LIST)
                    || (config_setting_length(world_row) != 4)
                ) {
-                  syslog(LOG_ERR,"%s: kinematics:world #%d not a 4-element list.",__func__,j);
+                  syslog(LOG_ERR,"%s: kinematics:world_to_base #%d not a 4-element list.",__func__,j);
                   bt_kinematics_destroy(kin);
                   return -1;
                }
