@@ -54,7 +54,18 @@ def main():
 	print ">>> Destination: %s" % args.dest
 	
 	backupDir = getBackupDirName(args.dest)
+	os.mkdir(backupDir)
+	
 	installConfig(args.source, args.dest, backupDir, MAIN_VERS_FILE, MAIN_CONFIG_FILES)
+	installConfig(args.source, args.dest, backupDir, CAL_VERS_FILE, CAL_CONFIG_FILES)
+	
+	# If backupDir is empty, delete it.
+	try:
+		os.rmdir(backupDir)
+	except OSError:
+		pass
+	
+	print ">>> Done!"
 
 
 def parseArguments():
@@ -101,12 +112,13 @@ def installConfig(s, d, backupDir, versFile, configFiles):
 	print "  --> Destination version:", dVers
 	
 	if sVers == dVers:
-		print "  --> Group is already up to date" % versFile
+		print "  --> Group is already up to date"
 		return
 	else:
 		print "  --> Creating backup in:", backupDir
-		copyGroup(d, backupDir, configFiles, False)
+		copyGroup(d, backupDir, configFiles, False, True)
 		print "  --> Updating"
+		copyGroup(s, d, configFiles, True, False)
 
 def getConfigVers(d, f):
 	""" Special values: -1 means file not present, 0 means CONFIG_VERSION not present"""
@@ -130,24 +142,28 @@ def getConfigVers(d, f):
 			vers = int(m.group(1))
 	return vers
 
-def copyGroup(s, d, fileList, strict):
-	os.mkdir(d)
+def copyGroup(src, dst, fileList, srcMustExist, dstMustNotExist):
 	for f in fileList:
-		if not copyFileOrDir(joinPaths(s, f), joinPaths(d, f)) and strict:
-			if strict or e.errno != errno.ENOENT:
-				print "ERROR: %s does not exist." % joinPaths(s, f)
+		sPath = joinPaths(src, f)
+		if not os.path.exists(sPath):
+			if srcMustExist:
+				print "ERROR: %s does not exist." % sPath
 				sys.exit(2)
+			else:
+				continue
+		dPath = joinPaths(dst, f)
+		if dstMustNotExist and os.path.exists(dPath):
+				print "ERROR: %s already exists." % dPath
+				sys.exit(2)
+		copyFileOrDir(sPath, dPath)
 
 def copyFileOrDir(src, dst):
-	assert not os.path.exists(dst)
-	if not os.path.exists(src):
-		return False
-	
 	if os.path.isdir(src):
+		if os.path.exists(dst):
+			shutil.rmtree(dst)
 		shutil.copytree(src, dst)
 	else:
 		shutil.copy2(src, dst)
-	return True
 
 
 if __name__ == "__main__":
