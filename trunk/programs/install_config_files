@@ -31,7 +31,8 @@ necessary according to the CONFIG_VERSION setting.
 """
 
 import sys, os
-import re
+from datetime import date
+import re, shutil, errno
 import argparse
 
 
@@ -52,7 +53,8 @@ def main():
 	print ">>> Source: %s" % args.source
 	print ">>> Destination: %s" % args.dest
 	
-	installConfig(args.source, args.dest, MAIN_VERS_FILE, MAIN_CONFIG_FILES)
+	backupDir = getBackupDirName(args.dest)
+	installConfig(args.source, args.dest, backupDir, MAIN_VERS_FILE, MAIN_CONFIG_FILES)
 
 
 def parseArguments():
@@ -73,19 +75,43 @@ def cleanDirPath(p):
 	return p
 
 
-def installConfig(s, d, versFile, configFiles):
+def getBackupDirName(d):
+	base = date.today().strftime("BACKUP-%Y%m%d-")
+	i = 0
+	while True:
+		p = joinPaths(d, base + str(i))
+		if not os.path.exists(p):
+			break
+		i += 1
+	return p
+
+def joinPaths(a, b):
+	return os.path.abspath(a + "/" + b)
+
+
+def installConfig(s, d, backupDir, versFile, configFiles):
+	print ">>> Updating configuration group: %s" % versFile
+	
 	sVers = getConfigVers(s, versFile)
 	if sVers == -1:
 		print "ERROR: \"%s\" not present in source directory." % versFile
+		return
 	dVers = getConfigVers(d, versFile)
+	print "  --> Source version:", sVers
+	print "  --> Destination version:", dVers
 	
 	if sVers == dVers:
-		print ">>> \"%s\" configuration group is up to date" % versFile
+		print "  --> Group is already up to date" % versFile
+		return
+	else:
+		print "  --> Creating backup in:", backupDir
+		copyGroup(d, backupDir, configFiles, False)
+		print "  --> Updating"
 
 def getConfigVers(d, f):
 	""" Special values: -1 means file not present, 0 means CONFIG_VERSION not present"""
 	
-	p = os.path.abspath(d + '/' + f)
+	p = joinPaths(d, f)
 	if not os.path.exists(p):
 		return -1
 	if not os.path.isfile(p):
@@ -103,6 +129,25 @@ def getConfigVers(d, f):
 				sys.exit(1)
 			vers = int(m.group(1))
 	return vers
+
+def copyGroup(s, d, fileList, strict):
+	os.mkdir(d)
+	for f in fileList:
+		if not copyFileOrDir(joinPaths(s, f), joinPaths(d, f)) and strict:
+			if strict or e.errno != errno.ENOENT:
+				print "ERROR: %s does not exist." % joinPaths(s, f)
+				sys.exit(2)
+
+def copyFileOrDir(src, dst):
+	assert not os.path.exists(dst)
+	if not os.path.exists(src):
+		return False
+	
+	if os.path.isdir(src):
+		shutil.copytree(src, dst)
+	else:
+		shutil.copy2(src, dst)
+	return True
 
 
 if __name__ == "__main__":
