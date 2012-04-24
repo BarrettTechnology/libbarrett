@@ -24,10 +24,10 @@
 """
 
 """
-This utility installs libbarrett configuration files into the specified directory.
-If there are already
-configuration files in the directory, they will be backed-up and updated as
-necessary according to the CONFIG_VERSION setting.
+This utility installs libbarrett configuration files into the specified
+directory. If there are already configuration files in the directory, they will
+be backed-up and updated as necessary according to the value of the
+CONFIG_VERSION setting.
 """
 
 import sys, os
@@ -109,15 +109,22 @@ def installConfig(s, d, backupDir, versFile, configFiles):
 		return
 	dVers = getConfigVers(d, versFile)
 	print "  --> Source version:", sVers
-	print "  --> Destination version:", dVers
+	print "  --> Destination version:",
+	if dVers == -1:
+		print "(none)"
+	else:
+		print dVers
 	
 	if sVers == dVers:
 		print "  --> Group is already up to date"
 		return
 	else:
-		print "  --> Creating backup in:", backupDir
+		# Only announce the backup if we found a versFile...
+		if dVers != -1:
+			print "  --> Creating backup in:", backupDir
+		# ... but perform the backup always, just in case.
 		copyGroup(d, backupDir, configFiles, False, True)
-		print "  --> Updating"
+		print "  --> Copying new configuration files"
 		copyGroup(s, d, configFiles, True, False)
 
 def getConfigVers(d, f):
