@@ -75,12 +75,8 @@ public:
 	void wake();
 
 	int getProperty(enum Property prop, bool realtime = false) const;
-	int tryGetProperty(enum Property prop, int* result, int timeout_ns = 1000000) const;
-
 	template<typename Parser> void getProperty(enum Property prop,
 			typename Parser::result_type* result, bool realtime = false) const;
-	template<typename Parser> int tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_ns = 1000000) const;
-
 	void setProperty(enum Property prop, int value, bool blocking = false) const {
 		setProperty(bus, id, getPropertyId(prop), value, blocking);
 	}
