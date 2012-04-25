@@ -125,7 +125,7 @@ typename Spline<Eigen::Quaternion<Scalar> >::T Spline<Eigen::Quaternion<Scalar> 
 		++index;
 		rate = -1.0;
 	}
-	assert(index >= 0  &&  index < data.size());
+	assert(index < data.size());
 
 	if (index == data.size()-1) {
 		return boost::get<1>(data[index]);
