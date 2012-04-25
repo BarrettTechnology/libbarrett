@@ -33,11 +33,11 @@
 #include <algorithm>
 #include <limits>
 
-#include <syslog.h>
 #include <unistd.h>
 
 #include <boost/thread/locks.hpp>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/products/abstract/multi_puck_product.h>
 #include <barrett/products/puck.h>
@@ -65,7 +65,7 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			hasFtt = true;
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Fingertip torque sensors", numFtt);
+	logMessage("  Found %d Fingertip torque sensors") % numFtt;
 
 	bool tactError = false;
 	for (size_t i = 0; i < DOF; ++i) {
@@ -79,9 +79,9 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 			}
 		}
 	}
-	syslog(LOG_ERR, "  Found %d Tactile arrays", tactilePucks.size());
+	logMessage("  Found %d Tactile arrays") % tactilePucks.size();
 	if (tactError) {
-		syslog(LOG_ERR, "  Initialization error! Disabling Tactile arrays");
+		logMessage("  Initialization error! Disabling Tactile arrays");
 		hasTact = false;
 	}
 
@@ -142,18 +142,18 @@ void Hand::waitUntilDoneMoving(unsigned int whichDigits, int period_us) const
 
 void Hand::open(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_OPEN);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 void Hand::close(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_CLOSE);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 
 void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
 	setProperty(whichDigits, Puck::E, j2pp.cwise() * jp);
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
-	blockIf(blocking);
+	blockIf(blocking, whichDigits);
 }
 
 void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
@@ -264,9 +264,9 @@ void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, const
 	}
 }
 
-void Hand::blockIf(bool blocking) const {
+void Hand::blockIf(bool blocking, unsigned int whichDigits) const {
 	if (blocking) {
-		waitUntilDoneMoving();
+		waitUntilDoneMoving(whichDigits);
 	}
 }
 

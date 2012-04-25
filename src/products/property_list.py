@@ -201,7 +201,7 @@ print >> f, """
 #include <stdexcept>
 #include <cctype>
 
-#include <boost/format.hpp>
+#include <barrett/os.h>
 #include <barrett/products/puck.h>
 
 
@@ -288,6 +288,11 @@ print >> f, "const char propertyStrs[Puck::NUM_PROPERTIES][%d] = {\n%s\n};"  \
 				% (maxStrLen, str(props).translate(string.maketrans("'", "\""), "[]"))
 print >> f, r"""
 const char* Puck::getPropertyStr(enum Property prop) {
+	if (prop < 0  ||  prop >= NUM_PROPERTIES) {
+		const int  np = NUM_PROPERTIES;
+		(logMessage("Puck::%s(): Property out of range: %d is not in the range [0,%d)")
+			% __func__ % prop % np).raise<std::invalid_argument>();
+	}
 	return propertyStrs[prop];
 }
 
@@ -315,8 +320,8 @@ throw(std::invalid_argument)
 {
 	enum Property prop = getPropertyEnumNoThrow(str);
 	if (prop == -1) {
-		throw std::invalid_argument(boost::str(boost::format(
-			"Puck::getPropertyEnum(): There is no property corresponding to \"%s\"") % str));
+		(logMessage("Puck::%s(): There is no property corresponding to \"%s\"")
+			% __func__ % str).raise<std::invalid_argument>();
 	}
 	return prop;
 }
