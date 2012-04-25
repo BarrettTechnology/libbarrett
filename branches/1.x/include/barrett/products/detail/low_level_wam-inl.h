@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * low_level_wam-inl.h
  *
  *  Created on: Nov 2, 2010
@@ -11,13 +34,12 @@
 #include <vector>
 #include <cmath>
 
-#include <syslog.h>
-
 #include <native/timer.h>
 
 #include <Eigen/LU>
 #include <libconfig.h++>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/products/puck.h>
@@ -41,7 +63,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_WAM, props, sizeof(props)/sizeof(props[0]), "LowLevelWam::LowLevelWam()"),
 	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
 {
-	syslog(LOG_ERR, "  Config setting: %s => \"%s\"", setting.getSourceFile(), setting.getPath().c_str());
+	logMessage("  Config setting: %s => \"%s\"") % setting.getSourceFile() % setting.getPath();
 
 
 	group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE);  // Make sure the Pucks are IDLE
@@ -50,15 +72,15 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	// Zero-compensation?
 	bool zeroCompensation = setting.exists("zeroangle");
 	if (!zeroCompensation) {
-		syslog(LOG_ERR, "  Missing \"zeroangle\" vector: no zero-compensation");
+		logMessage("  Missing \"zeroangle\" vector: no zero-compensation");
 	}
 
 
 	// Compute motor/joint transforms
 	Eigen::LU<typename sqm_type::Base> lu(j2mp);
 	if (!lu.isInvertible()) {
-		syslog(LOG_ERR, "  j2mp matrix is not invertible");
-		throw std::runtime_error("LowLevelWam::LowLevelWam(): j2mp matrix is not invertible.");
+		(logMessage("LowLevelWam::%s(): j2mp matrix is not invertible.")
+				% __func__).template raise<std::runtime_error>();
 	}
 	lu.computeInverse(&m2jp);
 	j2mt = m2jp.transpose();
@@ -72,8 +94,10 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	}
 	size_t numTorqueGroups = ceil(static_cast<double>(DOF)/MotorPuck::PUCKS_PER_TORQUE_GROUP);
 	if (numTorqueGroups > torqueGroupIds.size()) {
-		syslog(LOG_ERR, "  Need %d torque groups, only %d IDs provided", numTorqueGroups, torqueGroupIds.size());
-		throw std::logic_error("LowLevelWam::LowLevelWam(): Too few torque group IDs provided. Check /var/log/syslog for details.");
+		(logMessage("LowLevelWam::%s(): Too few torque group IDs. "
+				"Need %d torque groups, only %d IDs provided.")
+				% __func__ % numTorqueGroups % torqueGroupIds.size())
+				.template raise<std::logic_error>();
 	}
 
 	size_t i = 0;
@@ -110,9 +134,9 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// Zero the WAM?
 	if (safetyModule == NULL) {
-		syslog(LOG_ERR, "  No safetyModule: WAM might not be zeroed");
+		logMessage("  No safetyModule: WAM might not be zeroed");
 	} else if (safetyModule->wamIsZeroed()) {
-		syslog(LOG_ERR, "  WAM was already zeroed");
+		logMessage("  WAM was already zeroed");
 	} else if (zeroCompensation) {
 		v_type zeroAngle(setting["zeroangle"]);
 
@@ -135,31 +159,31 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 		for (size_t i = 0; i < DOF; ++i) {
 			// If VERS < 118, then nothing useful is exposed on MECH; don't compensate
 			if (pucks[i]->getVers() < 118) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: old firmware", pucks[i]->getId());
+				logMessage("  No zero-compensation for Puck %d: old firmware") % pucks[i]->getId();
 				errorAngle[i] = 0;
 				continue;
 			}
 
 			// If not ROLE & 256, then it's not an absolute encoder; don't compensate
 			if ( !(pucks[i]->hasOption(Puck::RO_MagEncOnSerial)) ) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: no absolute encoder", pucks[i]->getId());
+				logMessage("  No zero-compensation for Puck %d: no absolute encoder") % pucks[i]->getId();
 				errorAngle[i] = 0;
 				continue;
 			}
 
 			// If the calibration data is out of range, don't compensate
 			if (zeroAngle[i] > 2*M_PI  ||  zeroAngle[i] < 0) {
-				syslog(LOG_ERR, "  No zero-compensation for Puck %d: bad calibration data", pucks[i]->getId());
+				logMessage("  No zero-compensation for Puck %d: bad calibration data") % pucks[i]->getId();
 				errorAngle[i] = 0;
 				continue;
 			}
 		}
 
 		definePosition(home - m2jp*errorAngle);
-		syslog(LOG_ERR, "  WAM zeroed with zero-compensation");
+		logMessage("  WAM zeroed with zero-compensation");
 	} else {
 		definePosition(home);
-		syslog(LOG_ERR, "  WAM zeroed without zero-compensation");
+		logMessage("  WAM zeroed without zero-compensation");
 	}
 
 

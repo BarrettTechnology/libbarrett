@@ -1,9 +1,36 @@
 /*
+	Copyright 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * motor_puck-inl.h
  *
  *  Created on: Feb 1, 2011
  *      Author: dc
  */
+
+
+#include <barrett/os.h>
+
 
 namespace barrett {
 
@@ -11,9 +38,7 @@ namespace barrett {
 template<typename ResultType>
 int MotorPuck::MotorPositionParser<ResultType>::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
 	if (len != 3 && len != 6) {
-		syslog(LOG_ERR,
-				"%s: expected message length of 3 or 6, got message length of %d",
-				__func__, len);
+		logMessage("%s: expected message length of 3 or 6, got message length of %d") % __func__ % len;
 		return 1;
 	}
 
@@ -23,9 +48,7 @@ int MotorPuck::MotorPositionParser<ResultType>::parse(int id, int propId, result
 template<typename ResultType>
 int MotorPuck::SecondaryPositionParser<ResultType>::parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
 	if (len != 3) {
-		syslog(LOG_ERR,
-				"%s: expected message length of 3, got message length of %d",
-				__func__, len);
+		logMessage("%s: expected message length of 3, got message length of %d") % __func__ % len;
 		return 1;
 	}
 
@@ -41,9 +64,7 @@ int MotorPuck::CombinedPositionParser<ResultType>::parse(int id, int propId, res
 		boost::get<0>(*result) = twentyTwoBit2<ResultType>(data[0], data[1], data[2]);
 		boost::get<1>(*result) = std::numeric_limits<ResultType>::max();
 	} else {
-		syslog(LOG_ERR,
-				"%s: expected message length of 3 or 6, got message length of %d",
-				__func__, len);
+		logMessage("%s: expected message length of 3 or 6, got message length of %d") % __func__ % len;
 		return 1;
 	}
 

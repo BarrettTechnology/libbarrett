@@ -49,7 +49,7 @@ PORT = 1337
 TIMEOUT = 0.5  # seconds
 SEPERATOR = '|'
 DEFAULT_USERNAME = "robot"
-VALID_NAME_CHARACTERS = string.ascii_letters + string.digits + " _-"
+VALID_NAME_CHARACTERS = string.ascii_letters + string.digits + " _-."
 MOUNT_DIR = os.path.expanduser("~/wamdiscover/")
 GVFS_GLOB_TEMPLATE = os.path.expanduser("~/.gvfs/*%s")
 
@@ -61,7 +61,7 @@ def maxNameLen(wams):
 	return max(map(lambda w: len(w[0]), wams))
 
 def alreadyMounted(w):
-	return subprocess.call("gvfs-mount --list | grep %s > /dev/null" % w[1], shell=True) == 0
+	return subprocess.call("gvfs-mount --list | grep \"%s\" > /dev/null" % w[1], shell=True) == 0
 
 def niceString(s):
 	return len(s.translate(None, VALID_NAME_CHARACTERS)) == 0
@@ -90,67 +90,69 @@ def getChoice(wams):
 		win.addstr(line,0, "Choice: ")
 		C_Y,C_X = win.getyx()
 
-		class SetChoice:
-			C_NONE = -2  # Easier to handle arrow keys if this is < -1
+		class HighlightLine:
+			NONE = -2  # Easier to handle arrow keys if this is < -1
 			
 			def __init__(self):
-				self.c = SetChoice.C_NONE
+				self.line = HighlightLine.NONE
 			
 			def up(self):
-				self(self.c - 1)
+				self.setLine(self.line - 1)
 			def down(self):
-				self(self.c + 1)
+				self.setLine(self.line + 1)
 				
-			def __call__(self, newChoice):
-				C_NONE = SetChoice.C_NONE
+			def setLine(self, newLine):
+				NONE = HighlightLine.NONE
 				
-				# Ignore bad choices
-				if newChoice != C_NONE  and  (newChoice < 0  or  newChoice >= len(wams)):
+				# Ignore bad lines
+				if newLine != NONE  and  (newLine < 0  or  newLine >= len(wams)):
 					return False
 		
-				# If the old choice is valid
-				if self != C_NONE:
-					win.chgat(WAM_Y + self.c,0, curses.A_NORMAL)  # Make the old choice normal
+				# If the old line is valid
+				if self != NONE:
+					win.chgat(WAM_Y + self.line,0, curses.A_NORMAL)  # Make the old line normal
 		
-				if newChoice != C_NONE:
-					win.chgat(WAM_Y + newChoice,0, curses.A_STANDOUT)  # Highlight the new choice
-					win.addstr(C_Y,C_X, str(newChoice))  # Display the number
-					self.c = newChoice
-				else:  # Special case: C_NONE means deselect
+				if newLine != NONE:
+					win.chgat(WAM_Y + newLine,0, curses.A_STANDOUT)  # Highlight the new line
+					win.addstr(C_Y,C_X, str(newLine))  # Display the number
+					self.line = newLine
+				else:  # Special case: NONE means deselect
 					win.addstr(C_Y,C_X, " ")  # Display the number
-					self.c = C_NONE
+					self.line = NONE
 		
 				win.refresh()
-				return self.c != C_NONE
+				return self.line != NONE
+			def getLine(self):
+				return self.line
 
-		setChoice = SetChoice()
-		setChoice(0)
+		chosenWam = HighlightLine()
+		chosenWam.setLine(0)
 
 		while True:
 			k = win.getch(C_Y,C_X)
 		
 			# Handle keypad characters first
 			if k == curses.KEY_UP:
-				setChoice.up()
+				chosenWam.up()
 			elif k == curses.KEY_DOWN:
-				setChoice.down()
+				chosenWam.down()
 			elif k < 256:
 				# Then normal characters
 				ck = chr(k).upper()
 	
 				if k == 27 or ck == 'Q' or ck == 'X':  # Escape, q, Q, x, X
-					setChoice(SetChoice.C_NONE)
+					chosenWam.setLine(HighlightLine.NONE)
 					break
 				if k == 10:  # Enter
 					break
 				if ck.isdigit():  # 0 through 9
-					if setChoice(int(ck)):  # Is choice valid?
+					if chosenWam.setLine(int(ck)):  # Is choice valid?
 						break
 			# Otherwise, ignore
 	finally:
 		curses.endwin()
 	
-	return setChoice.c
+	return chosenWam.getLine()
 
 
 # Parse arguments
@@ -224,27 +226,32 @@ if args.gvfs:
 				path = MOUNT_DIR + w[0]
 				
 				# Does the directory exist?
-				if not os.path.exists(MOUNT_DIR):
+				# Use normpath() to catch directories *and* files with that
+				# name. exists() gets confused by trailing '/' characters.
+				if not os.path.exists(os.path.normpath(MOUNT_DIR)):
 					os.makedirs(MOUNT_DIR)
+				
+				if os.path.isdir(MOUNT_DIR):  # Maybe it's a file?
+					# If there's a link (not some other kind of file) with that name, remove it
+					if os.path.islink(path):
+						os.remove(path)
 					
-				# If there's a link (not some other kind of file) with that name, remove it
-				if os.path.islink(path):
-					os.remove(path)
-					
-				# Is there already a file by that name?
-				if os.path.exists(path):
-					print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
-				else:
-					# Different versions of GVFS use different file name conventions
-					gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
-					# Is there exactly one candidate for the GVFS directory?
-					if len(gvfsPaths) == 1:
-						# Link it!
-						os.symlink(gvfsPaths[0], path)
-						print "Remote filesystem available at:"
-						print "    " + path
+					# Is there already a file by that name?
+					if os.path.exists(path):
+						print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
 					else:
-						print "WARNING: Skipping symlink. Couldn't find GVFS directory."
+						# Different versions of GVFS use different file name conventions
+						gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
+						# Is there exactly one candidate for the GVFS directory?
+						if len(gvfsPaths) == 1:
+							# Link it!
+							os.symlink(gvfsPaths[0], path)
+							print "Remote filesystem available at:"
+							print "    " + path
+						else:
+							print "WARNING: Skipping symlink. Couldn't find GVFS directory."
+				else:
+					print "WARNING: Skipping symlink. \"%s\" is not a directory." % MOUNT_DIR
 			else:
 				print "WARNING: Skipping symlink. WAM name contains illegal characters."
 

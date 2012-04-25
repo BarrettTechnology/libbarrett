@@ -39,6 +39,7 @@ set(programs
 #	log_velocity
 	low_level_wam
 	mouse_follow
+	os_test
 	puck_terminal
 	quaternion_interpolation
 	read_pendant_state
