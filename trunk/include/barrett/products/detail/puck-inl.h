@@ -43,17 +43,9 @@ namespace barrett {
 inline int Puck::getProperty(enum Property prop, bool realtime) const {
 	return getProperty(bus, id, getPropertyId(prop), realtime);
 }
-inline int Puck::tryGetProperty(enum Property prop, int* result, int timeout_ns) const {
-	return tryGetProperty(bus, id, getPropertyId(prop), result, timeout_ns);
-}
-
 template<typename Parser>
 inline void Puck::getProperty(enum Property prop, typename Parser::result_type* result, bool realtime) const {
 	getProperty<Parser> (bus, id, getPropertyId(prop), result, realtime);
-}
-template<typename Parser>
-inline int Puck::tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_ns) const {
-	return tryGetProperty<Parser> (bus, id, getPropertyId(prop), result, timeout_ns);
 }
 
 
