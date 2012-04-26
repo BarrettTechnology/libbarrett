@@ -104,8 +104,24 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
 
-# Installs or updates configuration files
-add_custom_target(install_config
-	./install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=/etc/barrett/
-	WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/programs/" VERBATIM
+
+# The trailing slash in "include/" is important
+install(DIRECTORY include/
+	DESTINATION include
+	PATTERN ".svn" EXCLUDE
 )
+
+# TODO(dc): This approach is too simple for exposing libbarrett to other cmake
+#           projects. 
+#install(EXPORT libbarrett
+#	DESTINATION share/barrett
+#	FILE barrett-config.cmake
+#)
+
+# Installs or updates configuration files
+set(config_dir /etc/barrett/)
+set(install_config_cmd ${PROJECT_SOURCE_DIR}/programs/install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=${config_dir})
+add_custom_target(install_config ${install_config_cmd} VERBATIM)
+
+install(DIRECTORY DESTINATION ${config_dir})  # Makes an empty directory
+install(CODE "execute_process(COMMAND ${install_config_cmd})")
