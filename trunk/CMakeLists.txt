@@ -125,3 +125,9 @@ add_custom_target(install_config ${install_config_cmd} VERBATIM)
 
 install(DIRECTORY DESTINATION ${config_dir})  # Makes an empty directory
 install(CODE "execute_process(COMMAND ${install_config_cmd})")
+
+# Record the name of the user executing the cmake command
+execute_process(COMMAND whoami OUTPUT_VARIABLE config_user OUTPUT_STRIP_TRAILING_WHITESPACE)
+# Change the owner of the config files
+install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${config_user}...\")")
+install(CODE "execute_process(COMMAND chown -R ${config_user}:${config_user} ${config_dir})")

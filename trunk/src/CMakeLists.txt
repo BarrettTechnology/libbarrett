@@ -86,5 +86,5 @@ install(TARGETS barrett
 	ARCHIVE DESTINATION lib
 )
 
-install(CODE "execute_process(COMMAND echo Running ldconfig...)")
+install(CODE "message(STATUS \"Running ldconfig...\")")
 install(CODE "execute_process(COMMAND ldconfig)")
