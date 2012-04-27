@@ -152,7 +152,7 @@ class AdjustJointStep : public CalibrationStep {
 
 	static const int DEFAULT_DIGIT = -2;  // Start by adjusting the hundredth's place.
 	static const int MAX_DIGIT = 0;  // Display 1's...
-	static const int MIN_DIGIT = -3;  // ... through thoustandth's.
+	static const int MIN_DIGIT = -3;  // ... through thousandth's.
 
 public:
 	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, v_type* zeroAnglePtr) :
