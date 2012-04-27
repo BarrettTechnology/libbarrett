@@ -48,16 +48,7 @@ int main() {
 	Hand::jv_type opening(OR);
 	Hand::jv_type closing(CR);
 
-//	for (int i = 0; i < 30; ++i) {
-//		hand.trapezoidalMove(hjp_t(1.0));
-//		btsleep(.1);
-//
-////		hand.trapezoidalMove(hjp_t(1.0));
-////		btsleep(.3);
-////		hand.update();
-////		hand.trapezoidalMove(hand.getInnerLinkPosition());
-//	}
-//	return 0;
+
 
 	{
 		assertPosition(hand, open);
