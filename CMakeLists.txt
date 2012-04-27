@@ -138,3 +138,22 @@ install(CODE "execute_process(COMMAND ${install_config_cmd})")
 # Change the owner of the config files
 install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${CONFIG_FILE_OWNER}...\")")
 install(CODE "execute_process(COMMAND chown -R ${CONFIG_FILE_OWNER}:${CONFIG_FILE_OWNER} ${config_dir})")
+
+
+
+# Packaging
+set(CPACK_GENERATOR TGZ)
+#set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 1)
+set(CPACK_PACKAGE_DESCRIPTION_FILE ${PROJECT_SOURCE_DIR}/README)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libbarrett is a real time controls library for Barrett Techonlogy's products")
+set(CPACK_PACKAGE_VENDOR "Barrett Technology")
+set(CPACK_PACKAGE_VERSION_MAJOR ${libbarrett_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${libbarrett_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${libbarrett_VERSION_PATCH})
+#set(CPACK_SOURCE_GENERATOR TGZ)
+#set(CPACK_SOURCE_IGNORE_FILES "/\\.svn/;\\.swp$;.*~")
+#set(CPACK_SOURCE_STRIP_FILES 0)
+#set(CPACK_STRIP_FILES 0)
+#set(CPACK_PACKAGING_INSTALL_PREFIX /usr/local)
+
+include(CPack)
