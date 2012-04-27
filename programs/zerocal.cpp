@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * zerocal.cpp
  *
  *  Created on: Apr 8, 2010
@@ -6,429 +29,472 @@
  *      Author: dc
  */
 
+#include <iostream>
+#include <string>
 #include <vector>
-#include <string.h>
+#include <cassert>
+#include <cmath>
+#include <cstring>
 
+#include <unistd.h>  // For usleep()
 #include <syslog.h>
-#include <unistd.h>
 
 #include <curses.h>
-
-#include <boost/thread.hpp>
-#include <boost/ref.hpp>
+#include <boost/lexical_cast.hpp>
+#include <Eigen/Core>
+#include <libconfig.h++>
 
 #include <barrett/exception.h>
-#include <barrett/detail/stl_utils.h>
-#include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
+#include <barrett/detail/stl_utils.h>
+
+#include "utils.h"
 
 
 using namespace barrett;
 using detail::waitForEnter;
 
+const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/zerocal.conf";
 
-enum btkey {
-	BTKEY_UNKNOWN = -2,
-	BTKEY_NOKEY = -1,
-	BTKEY_TAB = 9,
-	BTKEY_ENTER = 10,
-	BTKEY_ESCAPE = 27,
-	BTKEY_BACKSPACE = 127,
-	BTKEY_UP = 256,
-	BTKEY_DOWN = 257,
-	BTKEY_LEFT = 258,
-	BTKEY_RIGHT = 259
+
+// Convenience class that wraps ncurses text attributes.
+class ScopedAttr {
+public:
+	ScopedAttr() : isOn(false), a(-1) {}
+	explicit ScopedAttr(unsigned long attr, bool startOn = false) : isOn(false), a(-1) {
+		set(attr, startOn);
+	}
+	~ScopedAttr() { off(); }
+
+	void set(unsigned long attr, bool startOn = true) {
+		if (isOn) {
+			off();
+		}
+		a = attr;
+		if (startOn) {
+			on();
+		}
+	}
+	void on() {
+		if (!isOn) {
+			attron(a);
+			isOn = true;
+		}
+	}
+	void off() {
+		if (isOn) {
+			attroff(a);
+			isOn = false;
+		}
+	}
+
+protected:
+	bool isOn;
+	unsigned long a;
 };
-enum btkey btkey_get() {
-	int c1, c2, c3;
 
-	/* Get the key from ncurses */
-	c1 = getch();
-	if (c1 == ERR)
-		return BTKEY_NOKEY;
 
-	/* Get all keyboard characters */
-	if (32 <= c1 && c1 <= 126)
-		return (enum btkey) c1;
+// Represents a generic step in the calibration process.
+// Handles displaying a menu item and provides hooks for keyboard interactions
+// and state transitions. Can be "selected" and/or "active".
+class CalibrationStep {
+public:
+	explicit CalibrationStep(const std::string& title_ = "") :
+		selected(false), active(false), title(title_) {}
+	virtual ~CalibrationStep() {}
 
-	/* Get special keys */
-	switch (c1) {
-	case BTKEY_TAB:
-	case BTKEY_ENTER:
-	case BTKEY_BACKSPACE:
-		return (enum btkey) c1;
-		/* Get extended keyboard chars (eg arrow keys) */
-	case 27:
-		c2 = getch();
-		if (c2 == ERR)
-			return BTKEY_ESCAPE;
-		if (c2 != 91)
-			return BTKEY_UNKNOWN;
-		c3 = getch();
-		switch (c3) {
-		case 65:
-			return BTKEY_UP;
-		case 66:
-			return BTKEY_DOWN;
-		case 67:
-			return BTKEY_RIGHT;
-		case 68:
-			return BTKEY_LEFT;
+	void setSelected(bool on) { selected = on; }
+	void setActive(bool on) {
+		if (active != on) {
+			active = on;
+			onChangeActive();
+		}
+	}
+
+	virtual void onChangeActive() {}
+	virtual bool onKeyPress(enum Key k) {
+		return true;
+	}
+
+	static const int L_OFFSET = 10;
+
+	// Returns the number of lines that were displayed
+	virtual int display(int top, int left) {
+		ScopedAttr sa(A_BOLD);
+		if (selected) {
+			sa.on();
+			mvprintw(top,left, "--> ] ");
+		} else {
+			mvprintw(top,left, "    ] ");
+		}
+		printw("%s", title.c_str());
+
+		return height(top);
+	}
+
+	// Helper for calculating display heights
+	static int height(int origTop) {
+		return getcury(stdscr) - origTop + 1;
+	}
+
+protected:
+	bool selected, active;
+	std::string title;
+};
+
+// Handles actions an displays associated with adjusting the angle of a
+// particular joint.
+template<size_t DOF>
+class AdjustJointStep : public CalibrationStep {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+	static const int DEFAULT_DIGIT = -2;  // Start by adjusting the hundredth's place.
+	static const int MAX_DIGIT = 0;  // Display 1's...
+	static const int MIN_DIGIT = -3;  // ... through thousandth's.
+
+public:
+	explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, v_type* zeroAnglePtr) :
+		CalibrationStep("Joint " + boost::lexical_cast<std::string>((int)setting[0])),
+		j((int)setting[0] - 1), calPos(setting[1]), endCondition(setting[2].c_str()),
+		wam(*wamPtr), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), zeroAngle(*zeroAnglePtr),
+		state(0), digit(DEFAULT_DIGIT)
+	{
+		assert(j >= 0);
+		assert(j < DOF);
+		assert(wamPtr != NULL);
+		assert(calOffsetPtr != NULL);
+		assert(zeroPosPtr != NULL);
+		assert(zeroAnglePtr != NULL);
+	}
+	virtual ~AdjustJointStep() {}
+
+
+	virtual void onChangeActive() {
+		if (active) {
+			// Reset
+			state = 0;
+			digit = DEFAULT_DIGIT;
+		}
+	}
+
+	virtual bool onKeyPress(enum Key k) {
+		switch (state) {
+		// Prompt to move the WAM
+		case 0:
+			if (k == K_ENTER) {
+				state++;
+				move();
+			}
+			break;
+
+		// Wait until the move is done
+		case 1:
+			// This transition is handled in display().
+			break;
+
+		// Adjust the offset
 		default:
-			return BTKEY_UNKNOWN;
-		}
-	default:
-		return BTKEY_UNKNOWN;
-	}
-}
+			switch (k) {
+			case K_LEFT:
+				digit = std::min(MAX_DIGIT, digit+1);
+				break;
+			case K_RIGHT:
+				digit = std::max(MIN_DIGIT, digit-1);
+				break;
 
+			case K_UP:
+				calOffset[j] += std::pow(10.0, digit);
+				move();
+				break;
+			case K_DOWN:
+				calOffset[j] -= std::pow(10.0, digit);
+				move();
+				break;
 
-int * mz_mechisset;
-int * mz_counts;
-int * mz_magvals;
-double * mz_angles;
-int mz_magvals_get;
+			case K_ENTER:
+				if (wam.moveIsDone()) {
+					// Record actual joint position, not commanded joint position
+					zeroPos[j] = wam.getJointPositions()[j];
 
-void magenc_thd_function(bool* going , const std::vector<MotorPuck>& motorPucks) {
-	int i;
-	const int n = motorPucks.size();
-
-	while (*going) {
-
-		if (mz_magvals_get) {
-			for (i = 0; i < n; i++)
-				if (mz_mechisset[i]) {
-					mz_magvals[i] = motorPucks[i].getPuck()->getProperty(Puck::MECH);
-					mz_angles[i] = motorPucks[i].counts2rad(mz_magvals[i]);
+					// Record the motor angles that affect this joint
+					const sqm_type& m2jp = wam.llww.getLowLevelWam().getMotorToJointPositionTransform();
+					double tolerance = m2jp.cwise().abs().maxCoeff() * 1e-5;
+					for (size_t i = 0; i < DOF; ++i) {
+						// If the j,i entry is non-zero, then Motor i is in some way connected to Joint j
+						if (math::abs(m2jp(j,i)) > tolerance) {
+							int mech = wam.llww.getLowLevelWam().getPucks()[i]->getProperty(Puck::MECH);
+							zeroAngle[i] = wam.llww.getLowLevelWam().getMotorPucks()[i].counts2rad(mech);
+						}
+					}
+					return false;  // Move on to the next joint!
 				}
-			mz_magvals_get = 0;
+				break;
+
+			default:
+				break;
+			}
 		}
-		usleep(100000);
+
+		return true;
 	}
 
-	return;
-}
+	virtual int display(int top, int left) {
+		int line = top + CalibrationStep::display(top, left);  // Call super
+		left += L_OFFSET;
+
+		if (active) {
+			ScopedAttr sa(A_STANDOUT, true);
+
+			switch (state) {
+			// Prompt to move the WAM
+			case 0:
+				mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", calPos[0]);
+				for (size_t i = 1; i < DOF; ++i) {
+					printw(", %04.2f", calPos[i]);
+				}
+				printw("]");
+				break;
+
+			// Wait until the move is done
+			case 1:
+				mvprintw(line++,left, "Wait for the WAM to finish moving.");
+
+				if (wam.moveIsDone()) {  // Have we arrived yet?
+					state++;
+				}
+				break;
+
+			// Adjust the offset
+			default:
+				mvprintw(line++,left, "Use arrow keys to adjust the Joint %d offset.", j+1);
+				sa.off();
+				line++;
+				mvprintw(line++,left, "                 ");
+				attron(A_UNDERLINE);
+				printw("Offset (rad)");
+				attroff(A_UNDERLINE);
+				mvprintw(  line,left, "                    %+06.3f", calOffset[j]);
+
+				int x = getcurx(stdscr);
+				mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_STANDOUT, 0, NULL);
+
+				line += 2;
+				mvprintw(line++,left, "Press [Enter] once %s.", endCondition.c_str());
+				break;
+			}
+		}
+
+		return height(top);
+	}
+
+protected:
+	void move() {
+		while ( !wam.moveIsDone() ) {
+			usleep(20000);
+		}
+		wam.moveTo(jp_type(calPos + calOffset), false);
+	}
+
+	size_t j;
+	const jp_type calPos;
+	std::string endCondition;
+
+	systems::Wam<DOF>& wam;
+	jp_type& calOffset;
+	jp_type& zeroPos;
+	v_type& zeroAngle;
+
+	int state, digit;
+};
+
+// The Exit menu item.
+class ExitStep : public CalibrationStep {
+public:
+	explicit ExitStep(const std::string& title_ = "Exit") : CalibrationStep(title_) {}
+	virtual ~ExitStep() {}
+
+	virtual bool onKeyPress(enum Key k) {
+		return k != K_ENTER;
+	}
+
+	virtual int display(int top, int left) {
+		int line = top + CalibrationStep::display(top, left);  // Call super
+		left += L_OFFSET;
+
+		if (active) {
+			ScopedAttr sa(A_STANDOUT, true);
+			mvprintw(line++,left, "Press [Enter] to move the home position and record calibration data.");
+		}
+
+		return height(top);
+	}
+};
 
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	int n = DOF;
-	int done;
-
-	/* GUI stuff */
-	enum MODE {
-		MODE_TOZERO, MODE_CANCEL, MODE_PRINTVALS, MODE_JSELECT, MODE_EDIT
-	} mode;
-	int joint;
-	int decplace;
-	gsl_vector * jangle;
-
-	char newhome[80];
-	char zeromag[80];
+	jp_type calOffset(0.0);  // The offsets as entered by the user
+	jp_type zeroPos(0.0);  // Zero position angles in joint space
+	v_type zeroAngle(0.0);  // Motor positions that correspond to zeroPos
 
 
-	wam.jpController.setControlSignalLimit(jp_type()); // disable torque saturation because gravity comp isn't on
+	// Disable torque saturation because gravity compensation is off
+	wam.jpController.setControlSignalLimit(jp_type());
+	wam.moveTo(wam.getJointPositions());  // Hold position
 
 
-	/* Spin off the magenc thread, which also detects Puck versions into mechset */
-	mz_mechisset = (int *) malloc(n * sizeof(int));
-	mz_counts = (int *) malloc(n * sizeof(int));
-	mz_magvals = (int *) calloc(n, sizeof(int));
-	mz_angles = (double *) calloc(n, sizeof(double));
-	mz_magvals_get = 0;
-	bool magencGoing = true;
+	// Read from config
+	std::vector<CalibrationStep*> steps;
+	try {
+		libconfig::Config config;
+		config.readFile(CAL_CONFIG_FILE);
+		const libconfig::Setting& setting = config.lookup("zerocal")[pm.getWamDefaultConfigPath()];
+		assert(setting.isList());
+		assert(setting.getLength() == (int)DOF);
 
-	/* Detect puck versions */
-	const std::vector<MotorPuck>& motorPucks = wam.llww.getLowLevelWam().getMotorPucks();
-	for (size_t i = 0; i < motorPucks.size(); i++) {
-		long vers = motorPucks[i].getPuck()->getVers();
-		long role = motorPucks[i].getPuck()->getRole();
-
-		mz_mechisset[i] = ((vers >= 118) && (role & 256)) ? 1 : 0;
-		mz_counts[i] = motorPucks[i].getCts();
+		for (size_t i = 0; i < DOF; ++i) {
+			// Populate the menu
+			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &zeroAngle));
+		}
+	} catch (libconfig::ParseException e) {
+		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE, e.getError());
+		return 1;
+	} catch (libconfig::SettingNotFoundException e) {
+		printf(">>> CONFIG FILE ERROR in %s: could not find \"%s\"\n", CAL_CONFIG_FILE, e.getPath());
+		return 1;
+	} catch (libconfig::SettingTypeException e) {
+		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE, e.getPath());
+		return 1;
 	}
+	steps.push_back(new ExitStep);
 
-	boost::thread magenc_thd(magenc_thd_function, &magencGoing, boost::ref(wam.llww.getLowLevelWam().getMotorPucks()));
 
-
-	/* Initialize the ncurses screen library */
+	// Set up ncurses
 	initscr();
-	cbreak();
+	curs_set(0);
 	noecho();
 	timeout(0);
-	clear();
 
 
-	/* Start the user interface */
-	mode = MODE_TOZERO;
-	joint = 0;
-	decplace = 4;
-	jangle = gsl_vector_alloc(n);
-	wam.getJointPositions().copyTo(jangle);
+	// Display loop
+	assert(steps.size() >= 1);
+	int selected = 0;
+	steps[selected]->setSelected(true);
+	int active = 0;
+	steps[active]->setActive(true);
 
-	done = 0;
-	while (!done) {
-		int j;
-		int line;
-		enum btkey key;
-
-
-		/* Display the Zeroing calibration stuff ... */
-		mz_magvals_get = 1;
-
-		line = 2;
-		if (mode == MODE_TOZERO) {
-			attron( A_BOLD);
-			mvprintw(line++, 0, "--> ] Move To Current Zero");
-			attroff(A_BOLD);
-		} else
-			mvprintw(line++, 0, "    ] Move To Current Zero");
-		if (mode == MODE_CANCEL) {
-			attron( A_BOLD);
-			mvprintw(line++, 0, "--> ] Cancel Calibration");
-			attroff(A_BOLD);
-		} else
-			mvprintw(line++, 0, "    ] Cancel Calibration");
-		if (mode == MODE_PRINTVALS) {
-			attron( A_BOLD);
-			mvprintw(line++, 0, "--> ] Print Calibrated Values and Exit");
-			attroff(A_BOLD);
-		} else
-			mvprintw(line++, 0, "    ] Print Calibrated Values and Exit");
-		if (mode == MODE_JSELECT) {
-			attron( A_BOLD);
-			mvprintw(line, 0, "--> ] Joint:");
-			attroff(A_BOLD);
-		} else
-			mvprintw(line, 0, "    ] Joint:");
-		mvprintw(line + 1, 5, "-------");
-		if (mode == MODE_EDIT)
-			attron( A_BOLD);
-		mvprintw(line + 2, 5, "   Set:");
-		if (mode == MODE_EDIT)
-			attroff( A_BOLD);
-		mvprintw(line + 3, 5, "Actual:");
-		mvprintw(line + 5, 5, " Motor:");
-		mvprintw(line + 6, 5, "MagEnc:");
-		for (j = 0; j < n; j++) {
-			if ((mode == MODE_JSELECT || mode == MODE_EDIT) && j == joint) {
-				attron( A_BOLD);
-				mvprintw(line + 0, 13 + 9 * j, "[Joint %d]", j + 1);
-				attroff(A_BOLD);
-			} else
-				mvprintw(line + 0, 13 + 9 * j, " Joint %d ", j + 1);
-			/* total with 8, 5 decimal points (+0.12345) */
-			if (mode == MODE_EDIT && j == joint) {
-				int boldplace;
-				mvprintw(line + 1, 13 + 9 * j, " _._____ ", j + 1);
-				mvprintw(line + 2, 13 + 9 * j, "% 08.5f ", gsl_vector_get(
-						jangle, j));
-				boldplace = decplace + 1;
-				if (decplace)
-					boldplace++;
-				mvprintw(line + 1, 13 + 9 * j + boldplace, "x");
-				mvchgat(line + 2, 13 + 9 * j + boldplace, 1, A_BOLD, 0, NULL );
-			} else {
-				mvprintw(line + 1, 13 + 9 * j, " ------- ", j + 1);
-				mvprintw(line + 2, 13 + 9 * j, "% 08.5f ", gsl_vector_get(
-						jangle, j));
+	enum Key k;
+	bool done = false;
+	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE  &&  !done) {
+		k = getKey();
+		if (active == -1) {  // Menu mode
+			switch (k) {
+			case K_UP:
+				steps[selected]->setSelected(false);
+				selected = std::max(0, selected-1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_DOWN:
+				steps[selected]->setSelected(false);
+				selected = std::min((int)steps.size()-1, selected+1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_ENTER:
+				active = selected;
+				steps[active]->setActive(true);
+				break;
+			default:
+				break;
 			}
-			mvprintw(line + 3, 13 + 9 * j, "% 08.5f ", wam.getJointPositions()[j]);
-			mvprintw(line + 5, 13 + 9 * j, " Motor %d", j + 1);
-			if (mz_mechisset[j]) {
-				mvprintw(line + 6, 13 + 9 * j, "   %05.3f", mz_angles[j]);
-				mvprintw(line + 7, 13 + 9 * j, "    %04d", mz_magvals[j]);
-			} else
-				mvprintw(line + 6, 13 + 9 * j, "   (None)", mz_magvals[j]);
+		} else {  // Adjust mode
+			switch (k) {
+			case K_BACKSPACE:
+			case K_ESCAPE:
+			case K_TAB:
+				steps[active]->setActive(false);
+				active = -1;
+				break;
+			default:
+				// Forward to the active item by calling onKeyPress()
+				if ( !steps[active]->onKeyPress(k) ) {
+					// This step is done. Move to the next one.
+					steps[selected]->setSelected(false);
+					steps[active]->setActive(false);
+					++selected;
+					if (selected < (int)steps.size()) {
+						active = selected;
+						steps[selected]->setSelected(true);
+						steps[active]->setActive(true);
+					} else {  // Finished the last step!
+						done = true;
+					}
+				}
+				break;
+			}
+		}
 
+		// Display
+		clear();
+		mvprintw(0,18, "*** Barrett WAM Zero Calibration Utility ***");
+		int top = 3;
+		for (size_t i = 0; i < steps.size(); ++i) {
+			top += steps[i]->display(top,0);
 		}
 		refresh();
 
-		/* Wait a bit ... */
-		usleep(50000);
-		key = btkey_get();
-
-		/* If the user is in menu mode, work the menu ... */
-		if (mode != MODE_EDIT)
-			switch (key) {
-			case BTKEY_UP:
-				mode = (enum MODE) ((int) mode - 1);
-				if ((signed int) mode < 0)
-					mode = (enum MODE) 0;
-				break;
-			case BTKEY_DOWN:
-				mode = (enum MODE) ((int) mode + 1);
-				if (mode > MODE_JSELECT)
-					mode = MODE_JSELECT;
-				break;
-			case BTKEY_ENTER:
-				switch (mode) {
-				case MODE_TOZERO:
-					gsl_vector_set_zero(jangle);
-					wam.moveTo(jp_type(jangle), false);
-					break;
-				case MODE_CANCEL:
-					done = -1;
-					break;
-				case MODE_PRINTVALS:
-					done = 1;
-					break;
-				case MODE_JSELECT:
-					mode = MODE_EDIT;
-					decplace = 4;
-					break;
-				case MODE_EDIT:
-					break;
-				}
-				break;
-			default:
-				if (mode == MODE_JSELECT)
-					switch (key) {
-					case BTKEY_LEFT:
-						joint--;
-						if (joint < 0)
-							joint = 0;
-						break;
-					case BTKEY_RIGHT:
-						joint++;
-						if (joint >= n)
-							joint = n - 1;
-						break;
-					default:
-						break;
-					}
-				break;
-			}
-		/* We're in joint edit mode */
-		else
-			switch (key) {
-			case BTKEY_LEFT:
-				decplace--;
-				if (decplace < 0)
-					decplace = 0;
-				break;
-			case BTKEY_RIGHT:
-				decplace++;
-				if (decplace > 5)
-					decplace = 5;
-				break;
-			case BTKEY_BACKSPACE:
-				mode = MODE_JSELECT;
-				break;
-				/* Actually do the moves */
-			case BTKEY_UP:
-				*(gsl_vector_ptr(jangle, joint)) += pow(10, -decplace);
-				wam.moveTo(jp_type(jangle), false);
-				break;
-			case BTKEY_DOWN:
-				*(gsl_vector_ptr(jangle, joint)) -= pow(10, -decplace);
-				wam.moveTo(jp_type(jangle), false);
-				break;
-			default:
-				break;
-			}
+		usleep(100000);  // Slow loop down to ~10Hz
 	}
+	endwin();  // Turn off ncurses
+	detail::purge(steps);
 
-	if (done == 1) {
-		gsl_vector * vec;
-		/* Save the new home location */
-		vec = gsl_vector_alloc(n);
-		gsl_vector_memcpy(vec, wam.getHomePosition().asGslType());
-		gsl_vector_sub(vec, jangle);
-		sprintf(newhome, "( %05.3f", gsl_vector_get(vec, 0));
-		for (int i = 1; i < n; i++)
-			sprintf(newhome + strlen(newhome), ", %05.3f", gsl_vector_get(vec,
-					i));
-		sprintf(newhome + strlen(newhome), " );");
-		gsl_vector_free(vec);
 
-		/* Save the zeromag values */
-		for (int i = 0; i < n; i++)
-			if (!mz_mechisset[i])
-				mz_angles[i] = -1.0;
-		sprintf(zeromag, "( %05.3f", mz_angles[0]);
-		for (int i = 1; i < n; i++)
-			sprintf(zeromag + strlen(zeromag), ", %05.3f", mz_angles[i]);
-		sprintf(zeromag + strlen(zeromag), " );");
-	}
-
-	/* Stop ncurses ... */
-	clear();
-	endwin();
-	if (freopen(NULL, "w", stdout) == NULL) {  // restore stdout's line buffering
-		syslog(LOG_ERR, "%s:%d freopen(stdout) failed.", __FILE__, __LINE__);
-	}
-
-	/* Re-fold, print, and exit */
-	printf("Beginning move back to the home location...\n");
-	wam.moveHome(false);
-
-	if (done == 1) {
-		/* Print the results */
-		printf("\n");
-		printf("Zeroing calibration ended.\n");
-		printf("\n");
-		for (int i = 0; i < n; i++)
-			if (!mz_mechisset[i]) {
-				printf("Note: Some (or all) of your pucks do not support absolute\n");
-				printf("position measurement, either because they do not use magnetic\n");
-				printf("encoders, or because they have not been updated to firmware r118.\n");
-				printf("\n");
-				break;
-			}
-		printf("Copy the following lines into your wam*.conf file,\n");
-//      printf("near the top, in the %s{} group.\n",wamname);
-		printf("Make sure it replaces the old home = ( ... ); definition.\n");
-		printf("--------\n");
-		printf("      # Calibrated zero values ...\n");
-		printf("      home = %s\n", newhome);
-		for (int i = 0; i < n; i++)
-			if (mz_mechisset[i]) {
-				printf("      zeroangle = %s\n", zeromag);
-				break;
-			}
-		printf("--------\n");
-//      {
-//         FILE * logfile;
-//         logfile = fopen("cal-zero.log","w");
-//         if (logfile)
-//         {
-//            fprintf(logfile,"      # Calibrated zero values ...\n");
-//            fprintf(logfile,"      home = %s\n",newhome);
-//            for (i=0; i<n; i++) if (mz_mechisset[i])
-//            { fprintf(logfile,"      zeromag = %s\n",zeromag); break; }
-//            fclose(logfile);
-//            printf("This text has been saved to cal-zero.log.\n");
-//            printf("\n");
-//         }
-//         else
-//         {
-//            syslog(LOG_ERR,"Could not write to cal-zero.log.");
-//            printf("Error: Could not write to cal-zero.log.\n");
-//            printf("\n");
-//         }
-//      }
-
-//		printf("Note that you must E-Stop (or power-cycle) your WAM\n");
-//		printf("for the calibrated settings to take effect!\n");
-		printf("\n");
+	// Restore stdout's line buffering
+	if (freopen(NULL, "w", stdout) == NULL) {
+		fprintf(stderr, ">>> ERROR: freopen(stdout) failed.\n");
+		return 1;
 	}
 
 
-	magencGoing = false;
-	magenc_thd.join();
+	if (done) {
+		printf(">>> Calibration completed!\n");
+
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		manageBackups(dataConfigFile);  // Backup old calibration data
+
+		// Save to the data config file
+		jp_type newHome(wam.getHomePosition() - zeroPos);
+
+		libconfig::Config dataConfig;
+		libconfig::Setting& homeSetting = dataConfig.getRoot().add("home", libconfig::Setting::TypeList);
+		libconfig::Setting& zaSetting = dataConfig.getRoot().add("zeroangle", libconfig::Setting::TypeList);
+		for (size_t i = 0; i < DOF; ++i) {
+			homeSetting.add(libconfig::Setting::TypeFloat) = newHome[i];
+			zaSetting.add(libconfig::Setting::TypeFloat) = zeroAngle[i];
+		}
+
+		dataConfig.writeFile(dataConfigFile);
+		printf(">>> Data written to: %s\n", dataConfigFile);
+
+		delete[] dataConfigFile;
+
+
+		// Move home!
+		printf(">>> Moving back to home position.\n");
+		wam.moveHome();
+	} else {
+		printf(">>> ERROR: WAM was Idled before the calibration was completed.\n");
+		return 1;
+	}
+
 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-	pm.getSafetyModule()->setWamZeroed(false);  // Make sure the user applies their new calibration
-
-	free(mz_mechisset);
-	free(mz_counts);
-	free(mz_magvals);
-	free(mz_angles);
-	gsl_vector_free(jangle);
+	// Make sure the user applies their new calibration
+	pm.getSafetyModule()->setWamZeroed(false);
 
 	return 0;
 }
@@ -438,9 +504,35 @@ int main(int argc, char** argv) {
 	// Give us pretty stack-traces when things die
 	installExceptionHandler();
 
-	ProductManager pm;
-	pm.waitForWam(false);
 
+	printf(
+"\n"
+"                  *** Barrett WAM Zero Calibration Utility ***\n"
+"\n"
+"This utility will help you set the joint angle offsets for your WAM Arm. Joint\n"
+"angle offsets affect operations that rely on the robot's kinematics, such as\n"
+"gravity compensation, haptics, and Cartesian position and orientation control.\n"
+"You should perform this calibration any time you replace a broken cable, add\n"
+"tension to a cable, or re-mount a Puck.\n"
+"\n"
+"The WAM's standard home position is described in the User Manual. However, you\n"
+"may choose any other pose to be your home position if it is more convenient for\n"
+"your application. You will need to return the WAM to the home position on power-\n"
+"up and after certain types of safety faults.\n"
+"\n"
+"Modern WAMs have absolute encoders on their motors, so the WAM only needs to be\n"
+"returned to within one motor revolution of its home position. This translates to\n"
+"roughly +/- 5 degrees at the joint. (The tolerance is different for each joint.)\n"
+"\n"
+"This program assumes the WAM is mounted such that the base is horizontal.\n"
+"\n"
+"\n"
+	);
+
+
+	ProductManager pm;
+	pm.waitForWam(false);  // Don't prompt on zeroing
+	pm.wakeAllPucks();
 
 	SafetyModule* sm = pm.getSafetyModule();
 	if (sm == NULL) {
@@ -450,17 +542,16 @@ int main(int argc, char** argv) {
 		sm->setWamZeroed(false);
 	}
 
-	// Remove existing zerocal information, if present
+	// Remove existing zerocal information, if present. Must be done before
+	// calling ProductManager::getWam*().
 	libconfig::Setting& llSetting = pm.getConfig().lookup(pm.getWamDefaultConfigPath())["low_level"];
 	if (llSetting.exists("zeroangle")) {
 		llSetting.remove(llSetting["zeroangle"].getIndex());
 		syslog(LOG_ERR, "** Ignoring previous \"zeroangle\" vector **");
 	}
 
-
-	printf(">>> Please *carefully* place the WAM in its new home position, then press [Enter].");
+	printf(">>> Please *carefully* place the WAM in its home position, then press [Enter].");
 	waitForEnter();
-
 
 	if (pm.foundWam4()) {
 		return wam_main(argc, argv, pm, *pm.getWam4());
@@ -471,5 +562,3 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 }
-
-
