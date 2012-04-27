@@ -123,7 +123,12 @@ install(DIRECTORY include/
 #)
 
 # Installs or updates configuration files
-set(config_dir /etc/barrett/)  # TODO(dc): Make this configurable, update default config dir in src/products/product_manager.cpp
+# TODO(dc): Make this path configurable. It's currently hard-coded in:
+#     src/products/product_manager.cpp
+#     products/zerocal.cpp
+#     products/gravitycal.cpp
+#     ... others?
+set(config_dir /etc/barrett/)
 set(install_config_cmd ${PROJECT_SOURCE_DIR}/programs/install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=${config_dir})
 add_custom_target(install_config ${install_config_cmd} VERBATIM)
 
