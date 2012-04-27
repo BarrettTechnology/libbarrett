@@ -29,7 +29,6 @@ option(NON_REALTIME "Set to ON to avoid building code that depends on a real-tim
 option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
 option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett (EXPERIMENTAL)" OFF)
 
-
 if (OPTIMIZE_FOR_PROCESSOR)
 	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
 	set(NEW_FLAGS "-march=native -mtune=native")
@@ -40,6 +39,11 @@ if (OPTIMIZE_FOR_PROCESSOR)
 	message(STATUS "OPTIMIZE_FOR_PROCESSOR: ${NEW_FLAGS}")
 	set(NEW_FLAGS)  # unset
 endif()
+
+# Record the name of the user executing the cmake command
+execute_process(COMMAND whoami OUTPUT_VARIABLE current_user OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(CONFIG_FILE_OWNER ${current_user} CACHE STRING "When installed, config files will be owned by this user.")
+message(STATUS "When installed, config files will be owned by: ${CONFIG_FILE_OWNER}")
 
 
 ### Dependencies
@@ -112,22 +116,20 @@ install(DIRECTORY include/
 )
 
 # TODO(dc): This approach is too simple for exposing libbarrett to other cmake
-#           projects. 
+#           projects.
 #install(EXPORT libbarrett
 #	DESTINATION share/barrett
 #	FILE barrett-config.cmake
 #)
 
 # Installs or updates configuration files
-set(config_dir /etc/barrett/)
+set(config_dir /etc/barrett/)  # TODO(dc): Make this configurable, update default config dir in src/products/product_manager.cpp
 set(install_config_cmd ${PROJECT_SOURCE_DIR}/programs/install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=${config_dir})
 add_custom_target(install_config ${install_config_cmd} VERBATIM)
 
 install(DIRECTORY DESTINATION ${config_dir})  # Makes an empty directory
 install(CODE "execute_process(COMMAND ${install_config_cmd})")
 
-# Record the name of the user executing the cmake command
-execute_process(COMMAND whoami OUTPUT_VARIABLE config_user OUTPUT_STRIP_TRAILING_WHITESPACE)
 # Change the owner of the config files
-install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${config_user}...\")")
-install(CODE "execute_process(COMMAND chown -R ${config_user}:${config_user} ${config_dir})")
+install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${CONFIG_FILE_OWNER}...\")")
+install(CODE "execute_process(COMMAND chown -R ${CONFIG_FILE_OWNER}:${CONFIG_FILE_OWNER} ${config_dir})")
