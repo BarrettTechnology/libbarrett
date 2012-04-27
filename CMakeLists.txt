@@ -138,3 +138,11 @@ install(CODE "execute_process(COMMAND ${install_config_cmd})")
 # Change the owner of the config files
 install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${CONFIG_FILE_OWNER}...\")")
 install(CODE "execute_process(COMMAND chown -R ${CONFIG_FILE_OWNER}:${CONFIG_FILE_OWNER} ${config_dir})")
+
+
+
+# Packaging
+add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${libbarrett_VERSION}
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+	VERBATIM
+)
