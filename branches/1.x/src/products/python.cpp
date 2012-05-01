@@ -64,25 +64,6 @@ int getProperty(const Puck& p, enum Puck::Property prop) {
 	return p.getProperty(prop, false);
 }
 
-// TODO(dc): I'm not convinced that this feature has value.
-//object tryGetProperty(const Puck& p, enum Puck::Property prop, double timeout_s = -1.0) {
-//	int result;
-//	int ret;
-//
-//	if (timeout_s < 0.0) {
-//		ret = p.tryGetProperty(prop, &result);
-//	} else {
-//		ret = p.tryGetProperty(prop, &result, timeout_s * 1e9);
-//	}
-//
-//	if (ret == 0) {
-//		return object(result);
-//	} else {
-//		return object();
-//	}
-//}
-//BOOST_PYTHON_FUNCTION_OVERLOADS(tryGetProperty_overloads, tryGetProperty, 2, 3)
-
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Puck_setProperty_overloads, setProperty, 2, 3)
 
 void wakeList(list puckList) {
@@ -143,8 +124,6 @@ void pythonProductsInterface() {
 			.def("wake", (void(Puck::*)()) &Puck::wake)  // Cast to resolve the overload
 			// TODO(dc): Expose getProperty() with alternate parsers?
 			.def("getProperty", &getProperty)
-//			.def("tryGetProperty", &tryGetProperty,
-//					tryGetProperty_overloads())
 			.def("setProperty", (void (Puck::*)(enum Puck::Property, int, bool) const) &Puck::setProperty,
 					Puck_setProperty_overloads())
 

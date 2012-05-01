@@ -173,18 +173,19 @@ void Puck::wake(std::vector<Puck*> pucks)
 		}
 
 		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
-		ret = (*i)->tryGetProperty(STAT, &stat, 50000000);
+		Puck& p = **i;
+		ret = Puck::tryGetProperty(p.getBus(), p.getId(), p.getPropertyId(Puck::STAT), &stat, 50000000);
 		if (ret == 0  &&  stat == STATUS_READY) {
 			(*i)->updateStatus();
 		} else {
 			if (ret == 0) {
 				(logMessage("Puck::%s(): Failed to wake Puck ID=%d. "
 						"STAT=%d.")
-						% __func__ % (*i)->getId() % stat).raise<std::runtime_error>();
+						% __func__ % p.getId() % stat).raise<std::runtime_error>();
 			} else {
 				(logMessage("Puck::%s(): Failed to wake Puck ID=%d. "
 						"No response after waiting %.2fs.")
-						% __func__ % (*i)->getId() % (WAKE_UP_TIME/1e9)).raise<std::runtime_error>();
+						% __func__ % p.getId() % (WAKE_UP_TIME/1e9)).raise<std::runtime_error>();
 			}
 		}
 	}
