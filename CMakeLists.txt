@@ -104,3 +104,8 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
 
+# Installs or updates configuration files
+add_custom_target(install_config
+	./install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=/etc/barrett/
+	WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/programs/" VERBATIM
+)
