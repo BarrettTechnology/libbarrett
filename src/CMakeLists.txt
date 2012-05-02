@@ -81,7 +81,6 @@ set_target_properties(barrett PROPERTIES
 )
 
 install(TARGETS barrett
-	EXPORT libbarrett
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 )
