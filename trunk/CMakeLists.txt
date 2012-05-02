@@ -81,7 +81,6 @@ link_directories(${Boost_LIBRARY_DIRS})
 if (WITH_PYTHON)
 	find_package(PythonLibs REQUIRED)
 	include_directories(${PYTHON_INCLUDE_PATH})
-	link_directories(${PYTHON_LIBRARIES})
 endif()
 
 
