@@ -48,6 +48,12 @@ message(STATUS "When installed, config files will be owned by: ${CONFIG_FILE_OWN
 
 ### Dependencies
 
+# Record these for when the library is installed
+set(exported_include_dirs ${CMAKE_INSTALL_PREFIX}/include)  # For libbarrett headers
+set(exported_link_dirs ${CMAKE_INSTALL_PREFIX}/lib)  # For libbarrett libs
+set(exported_definitions "")
+
+
 ## Xenomai
 if (NON_REALTIME)
 	message(STATUS "NON_REALTIME: Not using Xeonmai")
@@ -55,12 +61,16 @@ else()
 	find_package(Xenomai REQUIRED)
 	include_directories(${XENOMAI_INCLUDE_DIR})
 	add_definitions(${XENOMAI_DEFINITIONS})
+	
+	set(exported_include_dirs ${exported_include_dirs} ${XENOMAI_INCLUDE_DIR})
+	set(exported_definitions ${exported_definitions} ${XENOMAI_DEFINITIONS})
 endif()
 
 
 ## GSL
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
+set(exported_include_dirs ${exported_include_dirs} ${GSL_INCLUDE_DIRS})
 
 
 ## Boost
@@ -76,6 +86,9 @@ find_package(Boost 1.45.0 REQUIRED ${boost_components})
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+set(exported_include_dirs ${exported_include_dirs} ${Boost_INCLUDE_DIRS})
+set(exported_link_dirs ${exported_link_dirs} ${Boost_LIBRARY_DIRS})
+
 
 ## Python
 if (WITH_PYTHON)
@@ -84,14 +97,15 @@ if (WITH_PYTHON)
 endif()
 
 
-## curses
-find_package(Curses REQUIRED)
-include_directories(${CURSES_INCLUDE_DIR})
-
-
 ## Eigen2
 find_package(Eigen2 REQUIRED)
 include_directories(${EIGEN2_INCLUDE_DIR})
+set(exported_include_dirs ${exported_include_dirs} ${EIGEN2_INCLUDE_DIR})
+
+
+## curses
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
 
 
 
@@ -114,12 +128,13 @@ install(DIRECTORY include/
 	PATTERN ".svn" EXCLUDE
 )
 
-# TODO(dc): This approach is too simple for exposing libbarrett to other cmake
-#           projects.
-#install(EXPORT libbarrett
-#	DESTINATION share/barrett
-#	FILE barrett-config.cmake
-#)
+# A config file that other cmake projects can use to build against libbarrett
+configure_file(${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake.in ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
+	ESCAPE_QUOTES @ONLY
+)
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
+	DESTINATION share/barrett
+)
 
 # Installs or updates configuration files
 # TODO(dc): Make this path configurable. It's currently hard-coded in:
