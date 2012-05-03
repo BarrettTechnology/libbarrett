@@ -50,12 +50,29 @@ class HapticBox : public HapticObject {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
 public:
-	HapticBox(cp_type center, double xSize, double ySize, double zSize,
-			const std::string& sysName = "HapticBox") :
-		HapticObject(sysName),
-		c(center), size(xSize/2, ySize/2, zSize/2), inBox(false), index(-1), keepOutside(true),
-		depth(0.0), dir(0.0) {}
-	virtual ~HapticBox() { mandatoryCleanUp(); }
+        HapticBox(cp_type center, const math::Vector<3>::type& dimension,
+                        const std::string& sysName = "HapticBox") :
+                HapticObject(sysName),
+                c(center), size(dimension[0]/2, dimension[1]/2, dimension[2]/2), inBox(false), index(-1), keepOutside(true),
+                depth(0.0), dir(0.0) {}
+        virtual ~HapticBox() { mandatoryCleanUp(); }
+
+        void setCenter(const cp_type& newCenter) {
+                BARRETT_SCOPED_LOCK(getEmMutex());
+                c = newCenter;
+        }
+        void setSize(math::Vector<3>::type newSize) {
+                BARRETT_SCOPED_LOCK(getEmMutex());
+                size = newSize;
+        }
+
+        const cp_type& getCenter(){
+                return c;
+        }
+        math::Vector<3>::type getSize() {
+                return size*2;
+        }
+
 
 protected:
 	virtual void operate() {
@@ -131,6 +148,5 @@ public:
 
 }
 }
-
 
 #endif /* BARRETT_SYSTEMS_HAPTIC_BOX_H_ */
