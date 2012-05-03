@@ -50,7 +50,7 @@ class HapticBall : public HapticObject {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
 public:
-	HapticBall(cp_type center, double radius, const std::string& sysName = "HapticBall") :
+	HapticBall(const cp_type& center, double radius, const std::string& sysName = "HapticBall") :
 		HapticObject(sysName),
 		c(center), r(radius), keepOutside(true) /* doesn't matter how this is initialized, it'll fix itself */,
 		depth(0.0), error(0.0) {}
@@ -62,7 +62,7 @@ public:
 	}
 	void setRadius(double newRadius){
 		BARRETT_SCOPED_LOCK(getEmMutex());
-       		r = newRadius;
+		r = newRadius;
 	}
 
 	const cp_type& getCenter() const { return c; }
