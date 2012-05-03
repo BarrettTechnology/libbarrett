@@ -19,13 +19,12 @@ folder.
 
 To get started, look through libbarrett's example code. For additional
 documentation, see:
-    http://support.barrett.com/
-    http://barrett.com/robot/support.htm
-    http://web.barrett.com/libbarrett/
-    http://wiki.barrett.com/libbarrett
+    http://support.barrett.com/            - Barrett product support site
+    http://barrett.com/robot/support.htm   - File download area
+    http://web.barrett.com/libbarrett/     - API documentation for libbarrett
 
 It is possible to use CMake to generate several output formats, including
-Eclipse CTD4 project files. For details, see:
+Eclipse CDT4 project files. For details, see:
     http://www.paraview.org/Wiki/Eclipse_CDT4_Generator
 To generate Eclipse project files, run:
     cmake . -G"Eclipse CDT4 - Unix Makefiles"
@@ -33,7 +32,7 @@ Then import the generated project into your Eclipse workspace using:
     File -> Import -> General -> Existing Projects into Workspace
 
 In order to use libbarrett, you must have the Xenomai (http://www.xenomai.org/)
-real time co-kernel and the SocketCAN RTCAN driver installed  on your system.
+real time co-kernel and its SocketCAN RTCAN driver installed on your system.
 For additional dependencies, see:
     http://web.barrett.com/svn/libbarrett/dependencies/
 
