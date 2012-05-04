@@ -44,7 +44,7 @@ void RateLimiter<T,MathTraits>::setLimit(const T& newLimit)
 	// Limit must be non-negative. Zero is a special value meaning "don't limit".
 	assert(newLimit == math::abs(newLimit));
 	limit = newLimit;
-	delta = T_s * limit;
+	maxDelta = T_s * limit;
 }
 
 template<typename T, typename MathTraits>
@@ -55,8 +55,8 @@ void RateLimiter<T,MathTraits>::operate()
 	if (limit == MT::zero()) {
 		data = x;
 	} else {
-		rate = MT::sub(x, data);
-		data += MT::mult(math::sign(rate), math::min(math::abs(rate), delta));
+		delta = MT::sub(x, data);
+		data += MT::mult(math::sign(delta), math::min(math::abs(delta), maxDelta));
 	}
 
 	this->outputValue->setData(&data);
@@ -72,7 +72,7 @@ void RateLimiter<T,MathTraits>::getSamplePeriodFromEM()
 	} else {
 		T_s = 0.0;
 	}
-	setLimit(limit);  // Update delta
+	setLimit(limit);  // Update maxDelta
 }
 
 
