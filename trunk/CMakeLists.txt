@@ -130,7 +130,12 @@ else()
 	add_subdirectory(programs)
 endif()
 
+# Barrett_DIR allows the examples/CMakeLists.txt to find the correct
+# barrett-config.cmake. There may not be an installed version, and, if there
+# is, we shouldn't use it. 
+set(Barrett_DIR ${PROJECT_SOURCE_DIR}/cmake/)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
+
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
 
