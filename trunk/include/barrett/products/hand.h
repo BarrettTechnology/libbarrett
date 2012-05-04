@@ -69,7 +69,7 @@ public:
 	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
 
 	bool doneMoving(unsigned int whichDigits = WHOLE_HAND, bool realtime = false) const;
-	void waitUntilDoneMoving(unsigned int whichDigits = WHOLE_HAND, int period_us = 100000) const;
+	void waitUntilDoneMoving(unsigned int whichDigits = WHOLE_HAND, double period_s = 0.1) const;
 
 
 	// Basic moves
