@@ -79,14 +79,14 @@ int staticGetProperty(const bus::CommunicationsBus& bus, int id, int propId) {
 	return Puck::getProperty(bus, id, propId, false);
 }
 
-tuple staticTryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, int timeout_ns = -1) {
+tuple staticTryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, double timeout_s = -1.0) {
 	int ret;
 	int result = 0;
 
-	if (timeout_ns <= 0) {
+	if (timeout_s <= 0) {
 		ret = Puck::tryGetProperty(bus, id, propId, &result);
 	} else {
-		ret = Puck::tryGetProperty(bus, id, propId, &result, timeout_ns);
+		ret = Puck::tryGetProperty(bus, id, propId, &result, timeout_s);
 	}
 
 	return make_tuple(ret, result);

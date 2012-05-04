@@ -31,7 +31,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <unistd.h>
 #include <native/task.h>
 
 #include <barrett/os.h>
@@ -174,7 +173,7 @@ void Puck::wake(std::vector<Puck*> pucks)
 
 		// Pucks can take longer to respond when in the process of waking up, so wait for 50ms.
 		Puck& p = **i;
-		ret = Puck::tryGetProperty(p.getBus(), p.getId(), p.getPropertyId(Puck::STAT), &stat, 50000000);
+		ret = Puck::tryGetProperty(p.getBus(), p.getId(), p.getPropertyId(Puck::STAT), &stat, 0.05);
 		if (ret == 0  &&  stat == STATUS_READY) {
 			(*i)->updateStatus();
 		} else {
