@@ -35,8 +35,6 @@
 #include <cstdio>
 #include <cassert>
 
-#include <unistd.h>
-
 #include <boost/lexical_cast.hpp>
 
 #include <barrett/os.h>
@@ -67,7 +65,7 @@ enum SafetyModule::SafetyMode SafetyModule::getMode(bool realtime) const {
 	return static_cast<enum SafetyMode>(mode);
 }
 
-void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int pollingPeriod_us)
+void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, double pollingPeriod_s)
 {
 	if (getMode() == mode) {
 		return;
@@ -77,17 +75,17 @@ void SafetyModule::waitForMode(enum SafetyMode mode, bool printMessage, int poll
 		printf(">>> Please %s the WAM.\n", SafetyModule::getSafetyModeStr(mode));
 	}
 	do {
-		usleep(pollingPeriod_us);
+		btsleep(pollingPeriod_s);
 	} while (getMode() != mode);
 }
 
-enum SafetyModule::SafetyMode SafetyModule::waitForModeChange(int pollingPeriod_us)
+enum SafetyModule::SafetyMode SafetyModule::waitForModeChange(double pollingPeriod_s)
 {
 	const enum SafetyMode originalMode = getMode();
 	enum SafetyMode currentMode;
 
 	do {
-		usleep(pollingPeriod_us);
+		btsleep(pollingPeriod_s);
 		currentMode = getMode();
 	} while (currentMode == originalMode);
 
