@@ -31,8 +31,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <native/task.h>
-
 #include <barrett/os.h>
 #include <barrett/bus/abstract/communications_bus.h>
 #include <barrett/products/puck.h>
@@ -158,10 +156,10 @@ void Puck::wake(std::vector<Puck*> pucks)
 			// bus-off. Wait until this Puck drops off the bus before trying to
 			// wake the next one.
 			// TODO(dc): is there a more robust way of doing this?
-			rt_task_sleep(TURN_OFF_TIME);
+			btsleepRT(TURN_OFF_TIME);
 		}
 
-		rt_task_sleep(WAKE_UP_TIME);
+		btsleepRT(WAKE_UP_TIME);
 	}
 
 	int ret;
@@ -182,9 +180,10 @@ void Puck::wake(std::vector<Puck*> pucks)
 						"STAT=%d.")
 						% __func__ % p.getId() % stat).raise<std::runtime_error>();
 			} else {
+				const double wakeUpTime = WAKE_UP_TIME;
 				(logMessage("Puck::%s(): Failed to wake Puck ID=%d. "
 						"No response after waiting %.2fs.")
-						% __func__ % p.getId() % (WAKE_UP_TIME/1e9)).raise<std::runtime_error>();
+						% __func__ % p.getId() % wakeUpTime).raise<std::runtime_error>();
 			}
 		}
 	}
