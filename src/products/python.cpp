@@ -56,8 +56,8 @@ const int FROM_MASK = Puck::FROM_MASK;
 const int TO_MASK = Puck::TO_MASK;
 const int SET_MASK = Puck::SET_MASK;
 const int PROPERTY_MASK = Puck::PROPERTY_MASK;
-const int WAKE_UP_TIME = Puck::WAKE_UP_TIME;
-const int TURN_OFF_TIME = Puck::TURN_OFF_TIME;
+const double WAKE_UP_TIME = Puck::WAKE_UP_TIME;
+const double TURN_OFF_TIME = Puck::TURN_OFF_TIME;
 
 
 int getProperty(const Puck& p, enum Puck::Property prop) {
