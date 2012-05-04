@@ -35,6 +35,7 @@ set(tests_SOURCES
 	systems/pid_controller.cpp
 	systems/print_to_stream.cpp
 	systems/ramp.cpp
+	systems/rate_limiter.cpp
 	systems/summer.cpp
 	systems/summer-polarity.cpp
 	#systems/tool_orientation.cpp

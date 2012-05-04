@@ -324,6 +324,20 @@ TEST_F(ManualExecutionManagerTest, ExecutionCycle) {
 	}
 }
 
+// See https://www.pivotaltracker.com/story/show/28313197
+TEST_F(ManualExecutionManagerTest, UpdateTokensDontCollide) {
+	eios.operateCalled = false;
+	mem.runExecutionCycle();
+	EXPECT_TRUE(eios.operateCalled);
+
+	systems::ManualExecutionManager localMem;
+	localMem.startManaging(eios);
+
+	eios.operateCalled = false;
+	localMem.runExecutionCycle();
+	EXPECT_TRUE(eios.operateCalled);
+}
+
 
 // death tests
 typedef ManualExecutionManagerTest ManualExecutionManagerDeathTest;
