@@ -53,8 +53,8 @@ public:
 
 	enum SafetyMode getMode(bool realtime = false) const;
 	void waitForMode(enum SafetyMode mode,
-			bool printMessage = true, int pollingPeriod_us = 250000);
-	enum SafetyMode waitForModeChange(int pollingPeriod_us = 250000);
+			bool printMessage = true, double pollingPeriod_s = 0.25);
+	enum SafetyMode waitForModeChange(double pollingPeriod_s = 0.25);
 	static const char* getSafetyModeStr(enum SafetyMode mode) {
 		return safetyModeStrs[mode];
 	}
