@@ -112,10 +112,10 @@ public:
 	template<typename Parser> static void getProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime = false);
 	static int tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId,
-			int* result, int timeout_ns = 1000000);
+			int* result, double timeout_s = 0.001);
 	template<typename Parser> static int tryGetProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
-			int timeout_ns = 1000000);
+			double timeout_s = 0.001);
 	static void setProperty(const bus::CommunicationsBus& bus, int id, int propId,
 			int value, bool blocking = false);
 
@@ -199,7 +199,7 @@ protected:
 private:
 	template<typename Parser>
 	static int getPropertyHelper(const bus::CommunicationsBus& bus,
-			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_ns);
+			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, double timeout_s);
 
 	static const char puckTypeStrs[][12];
 };
