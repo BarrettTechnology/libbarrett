@@ -279,7 +279,7 @@ inline void Wam<DOF>::moveHome(bool blocking, double velocity)
 template<size_t DOF>
 inline void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
-	moveTo(currentPosHelper(getHomePosition()), blocking, velocity, acceleration);
+	moveTo(getHomePosition(), blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
