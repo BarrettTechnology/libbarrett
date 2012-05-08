@@ -1,5 +1,5 @@
 /*
- * master_master.h
+ * ex11_master_master.h
  *
  *  Created on: Feb 22, 2010
  *      Author: Christopher Dellin
