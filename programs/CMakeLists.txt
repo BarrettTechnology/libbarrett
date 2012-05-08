@@ -16,4 +16,11 @@ foreach (prog ${programs})
 	set_target_properties(${prog} PROPERTIES
 		PREFIX "bt-wam-"
 	)
+
+	install(TARGETS ${prog} RUNTIME DESTINATION bin)
 endforeach()
+
+
+# Don't install wamdiscover. It's intended for the development system, not the
+# WAM-PC.
+#install(PROGRAMS wamdiscover DESTINATION bin)

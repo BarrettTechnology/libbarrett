@@ -79,3 +79,11 @@ set_target_properties(barrett PROPERTIES
 	# Prevent executables from having to link with all of libbarrett's dependencies
 	LINK_INTERFACE_LIBRARIES ""
 )
+
+install(TARGETS barrett
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+)
+
+install(CODE "message(STATUS \"Running ldconfig...\")")
+install(CODE "execute_process(COMMAND ldconfig)")

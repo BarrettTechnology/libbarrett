@@ -18,9 +18,6 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # Location of custom Finders
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 
-# Put libbarrett headers in the include path
-include_directories("${PROJECT_SOURCE_DIR}/include/")
-
 
 
 ### Options
@@ -28,7 +25,7 @@ option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system" OFF)
 option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
 option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett (EXPERIMENTAL)" OFF)
-
+option(INSTALL_EXAMPLES "Set to ON to copy libbarrett example programs to the current user's home folder when the library is installed" ON)
 
 if (OPTIMIZE_FOR_PROCESSOR)
 	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
@@ -41,8 +38,34 @@ if (OPTIMIZE_FOR_PROCESSOR)
 	set(NEW_FLAGS)  # unset
 endif()
 
+# Record the name of the user executing the cmake command
+execute_process(COMMAND whoami OUTPUT_VARIABLE current_user OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set(CONFIG_FILE_OWNER ${current_user} CACHE STRING "When installed, config files will be owned by this user.")
+message(STATUS "When installed, config files will be owned by: ${CONFIG_FILE_OWNER}")
+
+set(EXAMPLES_DIR /home/${current_user}/libbarrett_examples CACHE PATH "If installed, example programs will be placed in this directory.")
+set(EXAMPLES_DIR_OWNER ${current_user} CACHE STRING "If installed, example programs will be owned by this user.")
+if (INSTALL_EXAMPLES)
+	message(STATUS "When installed, example code will be placed in: ${EXAMPLES_DIR}")
+	message(STATUS "When installed, example code will be owned by: ${EXAMPLES_DIR_OWNER}")
+endif()
+
+
 
 ### Dependencies
+
+# Record these for when the library is installed
+set(exported_include_dirs "")
+set(exported_link_dirs "")
+set(exported_definitions "")
+
+
+## Put libbarrett headers in the include path
+include_directories("${PROJECT_SOURCE_DIR}/include/")
+set(exported_include_dirs ${exported_include_dirs} ${CMAKE_INSTALL_PREFIX}/include)
+set(exported_link_dirs ${exported_link_dirs} ${CMAKE_INSTALL_PREFIX}/lib)
+
 
 ## Xenomai
 if (NON_REALTIME)
@@ -51,12 +74,16 @@ else()
 	find_package(Xenomai REQUIRED)
 	include_directories(${XENOMAI_INCLUDE_DIR})
 	add_definitions(${XENOMAI_DEFINITIONS})
+	
+	set(exported_include_dirs ${exported_include_dirs} ${XENOMAI_INCLUDE_DIR})
+	set(exported_definitions ${exported_definitions} ${XENOMAI_DEFINITIONS})
 endif()
 
 
 ## GSL
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
+set(exported_include_dirs ${exported_include_dirs} ${GSL_INCLUDE_DIRS})
 
 
 ## Boost
@@ -72,13 +99,21 @@ find_package(Boost 1.45.0 REQUIRED ${boost_components})
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+set(exported_include_dirs ${exported_include_dirs} ${Boost_INCLUDE_DIRS})
+set(exported_link_dirs ${exported_link_dirs} ${Boost_LIBRARY_DIRS})
+
 
 ## Python
 if (WITH_PYTHON)
 	find_package(PythonLibs REQUIRED)
 	include_directories(${PYTHON_INCLUDE_PATH})
-	link_directories(${PYTHON_LIBRARIES})
 endif()
+
+
+## Eigen2
+find_package(Eigen2 REQUIRED)
+include_directories(${EIGEN2_INCLUDE_DIR})
+set(exported_include_dirs ${exported_include_dirs} ${EIGEN2_INCLUDE_DIR})
 
 
 ## curses
@@ -86,13 +121,8 @@ find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
 
-## Eigen2
-find_package(Eigen2 REQUIRED)
-include_directories(${EIGEN2_INCLUDE_DIR})
 
-
-
-# Targets
+### Targets
 add_subdirectory(src)
 if (NON_REALTIME)
 	add_subdirectory(programs EXCLUDE_FROM_ALL)
@@ -100,12 +130,72 @@ else()
 	add_subdirectory(programs)
 endif()
 
+# Barrett_DIR allows the examples/CMakeLists.txt to find the correct
+# barrett-config.cmake. There may not be an installed version, and, if there
+# is, we shouldn't use it. 
+set(Barrett_DIR ${PROJECT_SOURCE_DIR}/cmake/)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
+
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
 
-# Installs or updates configuration files
-add_custom_target(install_config
-	./install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=/etc/barrett/
-	WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/programs/" VERBATIM
+
+
+### Installation
+# The trailing slash in "include/" is important
+install(DIRECTORY include/
+	DESTINATION include
+	PATTERN ".svn" EXCLUDE
+)
+
+
+## A config file that other cmake projects can use to build against libbarrett
+configure_file(${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake.in ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
+	ESCAPE_QUOTES @ONLY
+)
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
+	DESTINATION share/barrett
+)
+
+
+## Installs or updates configuration files
+# TODO(dc): Make this path configurable. It's currently hard-coded in:
+#     src/products/product_manager.cpp
+#     products/zerocal.cpp
+#     products/gravitycal.cpp
+#     ... others?
+set(config_dir /etc/barrett/)
+set(install_config_cmd ${PROJECT_SOURCE_DIR}/programs/install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=${config_dir})
+add_custom_target(install_config ${install_config_cmd} VERBATIM)
+
+install(DIRECTORY DESTINATION ${config_dir})  # Makes an empty directory
+install(CODE "execute_process(COMMAND ${install_config_cmd})")
+
+install(CODE "message(STATUS \"Changing the owner of ${config_dir} to ${CONFIG_FILE_OWNER}...\")")
+install(CODE "execute_process(COMMAND chown -R ${CONFIG_FILE_OWNER}:${CONFIG_FILE_OWNER} ${config_dir})")
+
+
+## Example code
+if (INSTALL_EXAMPLES)
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/examples/
+		USE_SOURCE_PERMISSIONS
+		DESTINATION ${EXAMPLES_DIR}
+		FILES_MATCHING
+		PATTERN "*.h"
+		PATTERN "*.cpp"
+		PATTERN "*.py"
+		PATTERN "*.txt"
+		PATTERN ".svn" EXCLUDE
+		PATTERN "CMakeFiles" EXCLUDE
+	)
+	install(CODE "message(STATUS \"Changing the owner of ${EXAMPLES_DIR} to ${EXAMPLES_DIR_OWNER}...\")")
+	install(CODE "execute_process(COMMAND chown -R ${EXAMPLES_DIR_OWNER}:${EXAMPLES_DIR_OWNER} ${EXAMPLES_DIR})")
+endif()
+
+
+
+### Packaging
+add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${libbarrett_VERSION}
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+	VERBATIM
 )
