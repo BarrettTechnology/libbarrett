@@ -1,18 +1,25 @@
+cmake_minimum_required(VERSION 2.6)
 project(libbarrett_examples)
+
+
+## libbarrett
+find_package(Barrett REQUIRED)
+include_directories(${BARRETT_INCLUDE_DIRS})
+link_directories(${BARRETT_LIBRARY_DIRS})
+add_definitions(${BARRETT_DEFINITIONS})
+
+## curses
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+
 
 function(add_programs)
 	foreach (prog ${ARGV})
 		add_executable(${prog} ${prog}.cpp)
-		target_link_libraries(${prog}
-			barrett
-			${GSL_LIBRARIES}
-			${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}
-		)
+		target_link_libraries(${prog} ${BARRETT_LIBRARIES})
 	endforeach()
 endfunction()
 
-
-add_definitions(${XENOMAI_DEFINITIONS})
 add_programs(
 	ex01_initialize_wam
 	ex02_hold_position
@@ -26,7 +33,6 @@ add_programs(
 	ex11_haptics
 	ex13_master_master
 )
-
 
 # ex04 uses the ncurses library
 target_link_libraries(ex04_display_basic_info ${CURSES_LIBRARIES})

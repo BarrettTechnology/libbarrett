@@ -50,27 +50,42 @@ class HapticBox : public HapticObject {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
 public:
-	HapticBox(cp_type center, double xSize, double ySize, double zSize,
+	HapticBox(const cp_type& center, const math::Vector<3>::type& size,
 			const std::string& sysName = "HapticBox") :
 		HapticObject(sysName),
-		c(center), size(xSize/2, ySize/2, zSize/2), inBox(false), index(-1), keepOutside(true),
-		depth(0.0), dir(0.0) {}
+		c(center), halfSize(0.0), inBox(false), index(-1), keepOutside(true),
+		depth(0.0), dir(0.0)
+	{
+		setSize(size);
+	}
 	virtual ~HapticBox() { mandatoryCleanUp(); }
+
+	void setCenter(const cp_type& newCenter) {
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		c = newCenter;
+	}
+	void setSize(const math::Vector<3>::type& newSize) {
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		halfSize = newSize / 2.0;
+	}
+
+	const cp_type& getCenter() const { return c; }
+	math::Vector<3>::type getSize() const { return halfSize * 2.0; }
 
 protected:
 	virtual void operate() {
 		pos = input.getValue() - c;
 
-		bool outside = (pos.cwise().abs().cwise() > size).any();
+		bool outside = (pos.cwise().abs().cwise() > halfSize).any();
 
 		// if we are inside the box and we shouldn't be
 		if (keepOutside  &&  !outside) {
 			if ( !inBox ) {  // if we weren't in the box last time
 				// find out what side we entered on
-				(size - pos.cwise().abs()).minCoeff(&index);
+				(halfSize - pos.cwise().abs()).minCoeff(&index);
 			}
 
-			depth = size[index] - math::abs(pos[index]);
+			depth = halfSize[index] - math::abs(pos[index]);
 			if (depth > 0.02) {
 				keepOutside = !keepOutside;
 
@@ -86,7 +101,7 @@ protected:
 
 			// if we are outside the box and we shouldn't be
 			if (!keepOutside  &&  outside) {
-				dir = size - pos.cwise().abs();
+				dir = halfSize - pos.cwise().abs();
 				dir = dir.cwise() * (dir.cwise() < 0.0).cast<double>();
 				dir = dir.cwise() * math::sign(pos);
 
@@ -110,7 +125,7 @@ protected:
 	}
 
 	cp_type c;
-	math::Vector<3>::type size;
+	math::Vector<3>::type halfSize;
 
 	// state & temporaries
 	cf_type pos;
@@ -131,6 +146,5 @@ public:
 
 }
 }
-
 
 #endif /* BARRETT_SYSTEMS_HAPTIC_BOX_H_ */
