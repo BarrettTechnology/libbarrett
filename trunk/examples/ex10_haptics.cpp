@@ -1,5 +1,5 @@
 /*
- * haptics.cpp
+ * ex10_haptics.cpp
  *
  *  Created on: Feb 19, 2010
  *      Author: dc
@@ -18,7 +18,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "ex11_haptics.h"
+#include "ex10_haptics.h"
 
 
 using namespace barrett;

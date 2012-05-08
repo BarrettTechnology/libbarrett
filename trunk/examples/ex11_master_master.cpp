@@ -1,5 +1,5 @@
 /*
- * master_master.cpp
+ * ex11_master_master.cpp
  *
  *  Created on: Feb 22, 2010
  *      Author: Christopher Dellin
@@ -23,7 +23,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "ex13_master_master.h"
+#include "ex11_master_master.h"
 
 
 using namespace barrett;
