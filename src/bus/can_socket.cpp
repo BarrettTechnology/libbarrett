@@ -197,17 +197,17 @@ void CANSocket::close()
 
 int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 {
-	BARRETT_SCOPED_LOCK(mutex);
-
-	int ret;
+	boost::unique_lock<thread::RealTimeMutex> ul(mutex);
 
 	struct can_frame frame;
 	frame.can_id = busId;
 	frame.can_dlc = len;
 	memcpy(frame.data, data, len);
 
-	ret = rt_dev_send(handle, (void *) &frame, sizeof(can_frame_t), 0);
+	int ret = rt_dev_send(handle, (void *) &frame, sizeof(can_frame_t), 0);
 	if (ret < 0) {
+		ul.unlock();
+
 		switch (ret) {
 		case -EAGAIN: // -EWOULDBLOCK
 			logMessage("CANSocket::%s: "
