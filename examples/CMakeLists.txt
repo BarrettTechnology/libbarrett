@@ -26,12 +26,12 @@ add_programs(
 	ex03_simple_move
 	ex04_display_basic_info
 	ex05_systems_intro
-	ex07_realtime_move
-	ex08_realtime_data_logging
-	ex09_teach_and_play
-	ex10_torque_control
-	ex11_haptics
-	ex13_master_master
+	ex06_realtime_move
+	ex07_realtime_data_logging
+	ex08_teach_and_play
+	ex09_torque_control
+	ex10_haptics
+	ex11_master_master
 )
 
 # ex04 uses the ncurses library

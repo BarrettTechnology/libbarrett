@@ -170,7 +170,7 @@ LL = Puck.LowLevel
 assert LL.getProperty(bm, P_ID, 5) == 2
 assert LL.tryGetProperty(bm, P_ID, 5) == (0, 2)
 assert LL.tryGetProperty(bm, BAD_P_ID, 5) == (1, 0)
-assert LL.tryGetProperty(bm, BAD_P_ID, 5, 100000000) == (1, 0)
+assert LL.tryGetProperty(bm, BAD_P_ID, 5, 0.1) == (1, 0)
 
 assert p.getProperty(Puck.HSG) == nHsg
 LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), oHsg)

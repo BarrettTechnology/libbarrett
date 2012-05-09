@@ -6,7 +6,7 @@ project(libbarrett_tests)
 #file(GLOB_RECURSE tests_SOURCES "*.cpp")
 set(tests_SOURCES
 	log/reader.cpp
-	#log/real_time_writer.cpp
+	log/real_time_writer.cpp
 	log/verify_file_contents.cpp
 	log/writer.cpp
 

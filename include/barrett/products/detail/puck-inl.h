@@ -28,8 +28,6 @@
  *      Author: dc
  */
 
-#include <native/task.h>
-
 #include <boost/thread/locks.hpp>
 
 #include <barrett/os.h>
@@ -59,7 +57,7 @@ inline int Puck::getProperty(const bus::CommunicationsBus& bus, int id, int prop
 template<typename Parser>
 void Puck::getProperty(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime)
 {
-	int ret = getPropertyHelper<Parser>(bus, id, propId, result, true, realtime, 0);
+	int ret = getPropertyHelper<Parser>(bus, id, propId, result, true, realtime, 0.0);
 	if (ret != 0) {
 		(logMessage("Puck::%s(): Failed to receive reply. "
 				"Puck::receiveGetPropertyReply() returned error %d.")
@@ -67,14 +65,14 @@ void Puck::getProperty(const bus::CommunicationsBus& bus, int id, int propId, ty
 	}
 }
 
-inline int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, int* result, int timeout_ns)
+inline int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, int* result, double timeout_s)
 {
-	return tryGetProperty<StandardParser>(bus, id, propId, result, timeout_ns);
+	return tryGetProperty<StandardParser>(bus, id, propId, result, timeout_s);
 }
 template<typename Parser>
-int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, int timeout_ns)
+int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, double timeout_s)
 {
-	int ret = getPropertyHelper<Parser>(bus, id, propId, result, false, false, timeout_ns);
+	int ret = getPropertyHelper<Parser>(bus, id, propId, result, false, false, timeout_s);
 	if (ret != 0  &&  ret != 1) {  // some error other than "would block" occurred
 		(logMessage("Puck::%s(): Receive error. "
 				"Puck::receiveGetPropertyReply() returned error %d.")
@@ -84,7 +82,7 @@ int Puck::tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId, 
 }
 
 template<typename Parser>
-int Puck::getPropertyHelper(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_ns)
+int Puck::getPropertyHelper(const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, double timeout_s)
 {
 	boost::unique_lock<thread::Mutex> ul(bus.getMutex(), boost::defer_lock);
 	if (realtime) {
@@ -98,8 +96,8 @@ int Puck::getPropertyHelper(const bus::CommunicationsBus& bus, int id, int propI
 				% __func__ % ret).template raise<std::runtime_error>();
 	}
 
-	if (timeout_ns != 0) {
-		rt_task_sleep(timeout_ns);
+	if (timeout_s != 0.0) {
+		btsleepRT(timeout_s);
 	}
 
 	return receiveGetPropertyReply<Parser>(bus, id, propId, result, blocking, realtime);

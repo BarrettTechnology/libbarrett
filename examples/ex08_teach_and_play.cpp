@@ -1,5 +1,5 @@
 /*
- * teach.cpp
+ * ex08_teach_and_play.cpp
  *
  *  Created on: Sep 29, 2009
  *      Author: dc
