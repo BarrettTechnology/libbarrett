@@ -33,8 +33,6 @@
 #include <algorithm>
 #include <limits>
 
-#include <unistd.h>
-
 #include <boost/thread/locks.hpp>
 
 #include <barrett/os.h>
@@ -133,10 +131,10 @@ bool Hand::doneMoving(unsigned int whichDigits, bool realtime) const
 	}
 	return true;
 }
-void Hand::waitUntilDoneMoving(unsigned int whichDigits, int period_us) const
+void Hand::waitUntilDoneMoving(unsigned int whichDigits, double period_s) const
 {
 	while ( !doneMoving(whichDigits) ) {
-		usleep(period_us);
+		btsleep(period_s);
 	}
 }
 

@@ -115,6 +115,11 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	connect(toolOrientation.output, toolPose.getInput<1>());
 
 	connect(llww.jvOutput, jvFilter.input);
+	if (em != NULL) {
+		// Keep the jvFilter updated so it will provide accurate values for
+		// calls to Wam::getJointVelocities().
+		em->startManaging(jvFilter);
+	}
 
 	supervisoryController.registerConversion(makeIOConversion(
 			jtPassthrough.input, jtPassthrough.output));
@@ -279,7 +284,7 @@ inline void Wam<DOF>::moveHome(bool blocking, double velocity)
 template<size_t DOF>
 inline void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
-	moveTo(currentPosHelper(getHomePosition()), blocking, velocity, acceleration);
+	moveTo(getHomePosition(), blocking, velocity, acceleration);
 }
 
 template<size_t DOF>

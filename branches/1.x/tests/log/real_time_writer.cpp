@@ -42,7 +42,7 @@ void fillLogVerify(size_t n, size_t period) {
 	ASSERT_TRUE(mkstemp(tmpFile) != -1);
 
 	double* ds = new double[n];
-	log::RealTimeWriter<double> lw(tmpFile, 10000, 100);
+	log::RealTimeWriter<double> lw(tmpFile, 0.01, 100);
 
 	for (size_t i = 0; i < n; ++i) {
 		ds[i] = i*1103.58 - 7e6;

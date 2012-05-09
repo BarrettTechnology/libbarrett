@@ -372,7 +372,7 @@ systems::Wam<4>* ProductManager::getWam4(bool waitForShiftActivate, const char* 
 
 		// Check rapidly in case the user wants to perform some action (like
 		// enabling gravity compensation) immediately after Shift-activate.
-		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 50000);
+		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 0.05);
 	}
 
 	return wam4;
@@ -402,7 +402,7 @@ systems::Wam<7>* ProductManager::getWam7(bool waitForShiftActivate, const char* 
 
 		// Check rapidly in case the user wants to perform some action (like
 		// enabling gravity compensation) immediately after Shift-activate.
-		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 50000);
+		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 0.05);
 	}
 
 	return wam7;

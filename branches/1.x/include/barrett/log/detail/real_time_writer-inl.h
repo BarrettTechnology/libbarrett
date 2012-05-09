@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * real_time_writer-inl.h
  *
  *  Created on: Dec 30, 2009
@@ -10,10 +33,10 @@
 #include <algorithm>
 #include <fstream>
 
-#include <unistd.h>  // usleep
-
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+
+#include <barrett/os.h>
 
 
 namespace barrett {
@@ -22,7 +45,7 @@ namespace log {
 
 template<typename T, typename Traits>
 RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPeriod_s) :
-	Writer<T, Traits>(fileName), period(0), singleBufferSize(0),
+	Writer<T, Traits>(fileName), period(0.0), singleBufferSize(0),
 	inBuff(NULL), outBuff(NULL), endInBuff(NULL), endOutBuff(NULL), currentPos(NULL), writeToDisk(false),
 	stopRunning(false), thread()
 {
@@ -33,19 +56,19 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPer
 	// keep the single buffer size below 16KB
 	size_t recordsInSingleBuffer = 16384 / this->recordLength;
 
-	// with a factor of safety of 5, how many microseconds to fill a single buffer?
-	period = static_cast<size_t>( (1e6 * recordsInSingleBuffer * recordPeriod_s) / 5.0 );
-	if (period < 3000) {
+	// with a factor of safety of 5, how many seconds to fill a single buffer?
+	period = static_cast<size_t>( (recordsInSingleBuffer * recordPeriod_s) / 5.0 );
+	if (period < 0.003) {
 		throw(std::logic_error("(log::RealTimeWriter::RealTimeWriter()): This constructor was not designed for data rates this high."));
 	}
-	period = std::min(period, (size_t)1000000u);  // limit period to a maximum of 1 second
+	period = std::min(period, 1.0);  // limit period to a maximum of 1 second
 
 	init(recordsInSingleBuffer);
 }
 
 template<typename T, typename Traits>
-RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, size_t approxPeriod_us, size_t recordsInSingleBuffer) :
-	Writer<T, Traits>(fileName), period(approxPeriod_us),
+RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double approxPeriod_s, size_t recordsInSingleBuffer) :
+	Writer<T, Traits>(fileName), period(approxPeriod_s),
 	inBuff(NULL), outBuff(NULL), endInBuff(NULL), endOutBuff(NULL), currentPos(NULL), writeToDisk(false),
 	stopRunning(false), thread()
 {
@@ -118,7 +141,7 @@ template<typename T, typename Traits>
 void RealTimeWriter<T, Traits>::writeToDiskEntryPoint()
 {
 	while ( !stopRunning ) {
-		usleep(period);
+		btsleep(period);
 
 		if (writeToDisk) {
 			this->file.write(outBuff, singleBufferSize);
