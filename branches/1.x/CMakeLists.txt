@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 project(libbarrett)
 set(libbarrett_VERSION_MAJOR 1)
 set(libbarrett_VERSION_MINOR 0)
-set(libbarrett_VERSION_PATCH 0)
+set(libbarrett_VERSION_PATCH 1)
 set(libbarrett_VERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${libbarrett_VERSION_PATCH}")
 set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}")
 
