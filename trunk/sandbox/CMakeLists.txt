@@ -49,6 +49,7 @@ set(programs
 	tuning
 	two_wams
 	vibrate_wam
+	voltage_control
 	wrist
 	wrist_teach_with_hand
 )
