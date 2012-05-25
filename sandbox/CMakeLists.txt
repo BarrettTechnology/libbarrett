@@ -40,6 +40,7 @@ set(programs
 	low_level_wam
 #	mouse_follow
 	os_test
+	point_to_point_moves
 	puck_terminal
 	quaternion_interpolation
 	read_pendant_state
