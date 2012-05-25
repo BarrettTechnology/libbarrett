@@ -43,6 +43,7 @@ set(programs
 	puck_terminal
 	quaternion_interpolation
 	read_pendant_state
+	record_jp
 	safety_module
 	tactile_test
 	teach_with_hand
