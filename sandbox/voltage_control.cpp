@@ -21,6 +21,33 @@
 using namespace barrett;
 
 
+template<size_t DOF>
+void switchToVoltageControl(ProductManager& pm, systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
+	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
+	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
+
+	wam.jpController.setKi(v_type(0.0));
+	wam.jpController.setKd(v_type(0.0));
+	wam.jpController.resetIntegrator();
+}
+
+template<size_t DOF>
+void switchToCurrentControl(ProductManager& pm, systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+	for (size_t i = 0; i < DOF; ++i) {
+		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
+		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
+		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
+	}
+
+	wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
+}
+
+
 template<int R, int C, typename Units>
 bool parseDoubles(math::Matrix<R,C, Units>* dest, const std::string& str) {
 	const char* cur = str.c_str();
@@ -112,24 +139,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		case 'v':
 			printf("Switching to voltage control!\n");
-			wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
-			wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
-			wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
-
-			wam.jpController.setKi(v_type(0.0));
-			wam.jpController.setKd(v_type(0.0));
-			wam.jpController.resetIntegrator();
+			switchToVoltageControl(pm, wam);
 			break;
 
 		case 'c':
 			printf("Switching to current control!\n");
-			for (size_t i = 0; i < DOF; ++i) {
-				wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
-				wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
-				wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
-			}
-
-			wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
+			switchToCurrentControl(pm, wam);
 			break;
 
 		case 'q':
