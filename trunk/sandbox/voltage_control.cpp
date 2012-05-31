@@ -47,6 +47,26 @@ void switchToCurrentControl(ProductManager& pm, systems::Wam<DOF>& wam) {
 	wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
 }
 
+template<size_t DOF>
+void calculateTorqueGain(systems::Wam<DOF>& wam) {
+	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+	jp_type jp(0.0);
+	jp[1] = -M_PI_2;
+	jp[2] = M_PI_4;
+	jp[3] = M_PI_4;
+	wam.moveTo(jp);
+
+	jt_type gravity = wam.jtSum.getInput(systems::Wam<DOF>::GRAVITY_INPUT).getValue();
+	jt_type supporting = wam.llww.input.getValue();
+	double scale = (gravity.dot(supporting) / gravity.norm()) / gravity.norm();
+
+	std::cout << gravity << "\n";
+	std::cout << supporting << "\n";
+	std::cout << scale << "\n";
+	std::cout << jt_type(supporting - scale*gravity) << "\n";
+}
+
 
 template<int R, int C, typename Units>
 bool parseDoubles(math::Matrix<R,C, Units>* dest, const std::string& str) {
@@ -145,6 +165,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		case 'c':
 			printf("Switching to current control!\n");
 			switchToCurrentControl(pm, wam);
+			break;
+
+		case 'g':
+			printf("Calculating torque gain...\n");
+			calculateTorqueGain(wam);
 			break;
 
 		case 'q':
