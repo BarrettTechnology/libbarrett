@@ -11,6 +11,9 @@
 #include <string>
 #include <cstdlib>  // For strtod()
 
+#include <libconfig.h++>
+
+#include <barrett/os.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
@@ -48,23 +51,58 @@ void switchToCurrentControl(ProductManager& pm, systems::Wam<DOF>& wam) {
 }
 
 template<size_t DOF>
-void calculateTorqueGain(systems::Wam<DOF>& wam) {
+void calculateTorqueGain(ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	jp_type jp(0.0);
-	jp[1] = -M_PI_2;
-	jp[2] = M_PI_4;
-	jp[3] = M_PI_4;
-	wam.moveTo(jp);
+	libconfig::Config config;
+	config.readFile("/etc/barrett/calibration.conf");
+	libconfig::Setting& setting = config.lookup("gravitycal")[pm.getWamDefaultConfigPath()];
 
-	jt_type gravity = wam.jtSum.getInput(systems::Wam<DOF>::GRAVITY_INPUT).getValue();
-	jt_type supporting = wam.llww.input.getValue();
-	double scale = (gravity.dot(supporting) / gravity.norm()) / gravity.norm();
 
-	std::cout << gravity << "\n";
-	std::cout << supporting << "\n";
-	std::cout << scale << "\n";
-	std::cout << jt_type(supporting - scale*gravity) << "\n";
+	const double MAX_SCALE = 4.0;
+	const double MIN_SCALE = 0.25;
+
+	int scaleCount = 0;
+	double scaleSum = 0.0;
+	double maxScale = MIN_SCALE;
+	double minScale = MAX_SCALE;
+
+	for (int i = 0; i < setting.getLength(); ++i) {
+		wam.moveTo(jp_type(setting[i]));
+		btsleep(1.0);
+
+		jt_type gravity = wam.jtSum.getInput(systems::Wam<DOF>::GRAVITY_INPUT).getValue();
+		jt_type supporting = wam.llww.input.getValue();
+		double scale = (gravity.dot(supporting) / gravity.norm()) / gravity.norm();
+		jt_type error = supporting - scale*gravity;
+
+		std::cout << "Gravity: " << gravity << ", " << gravity.norm() << "\n";
+		std::cout << "Supporting: " << supporting << ", " << supporting.norm() << "\n";
+		std::cout << "Scale: " << scale << "\n";
+		std::cout << "Error: " << error << ", " << error.norm() << "\n";
+
+		bool good = true;
+		if (scale < MIN_SCALE  ||  scale > MAX_SCALE) {
+			printf("Scale is out of range.\n");
+			good = false;
+		}
+		if (error.norm() > 0.2 * supporting.norm()) {
+			printf("Error is too big.\n");
+			good = false;
+		}
+
+		if (good) {
+			scaleCount++;
+			scaleSum += scale;
+			maxScale = math::max(maxScale, scale);
+			minScale = math::min(minScale, scale);
+		}
+
+		printf("\n");
+	}
+
+	double meanScale = scaleSum/scaleCount;
+	printf("SCALE: %f (+%f, -%f)\n", meanScale, maxScale - meanScale, meanScale - minScale);
 }
 
 
@@ -169,7 +207,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		case 'g':
 			printf("Calculating torque gain...\n");
-			calculateTorqueGain(wam);
+			calculateTorqueGain(pm, wam);
 			break;
 
 		case 'q':
