@@ -25,85 +25,131 @@ using namespace barrett;
 
 
 template<size_t DOF>
-void switchToVoltageControl(ProductManager& pm, systems::Wam<DOF>& wam) {
+class ControlModeSwitcher {
+public:
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
+	enum ControlMode { CURRENT, VOLTAGE };
 
-	wam.jpController.setKi(v_type(0.0));
-	wam.jpController.setKd(v_type(0.0));
-	wam.jpController.resetIntegrator();
-}
-
-template<size_t DOF>
-void switchToCurrentControl(ProductManager& pm, systems::Wam<DOF>& wam) {
-	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
-
-	for (size_t i = 0; i < DOF; ++i) {
-		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
-		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
-		wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
+	ControlModeSwitcher(ProductManager& pm_, systems::Wam<DOF>& wam_, double currentTorqueGain, double voltageTorqueGain) :
+		pm(pm_), wam(wam_), mode(VOLTAGE), cGain(currentTorqueGain), vGain(voltageTorqueGain), torqueGainSys(vGain)
+	{
+		systems::connect(wam.jtSum.output, torqueGainSys.input);
+		systems::reconnect(torqueGainSys.output, wam.llww.input);
+		currentControl();
+	}
+	~ControlModeSwitcher() {
+		systems::reconnect(wam.jtSum.output, wam.llww.input);
 	}
 
-	wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
-}
-
-template<size_t DOF>
-void calculateTorqueGain(ProductManager& pm, systems::Wam<DOF>& wam) {
-	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
-
-	libconfig::Config config;
-	config.readFile("/etc/barrett/calibration.conf");
-	libconfig::Setting& setting = config.lookup("gravitycal")[pm.getWamDefaultConfigPath()];
-
-
-	const double MAX_SCALE = 4.0;
-	const double MIN_SCALE = 0.25;
-
-	int scaleCount = 0;
-	double scaleSum = 0.0;
-	double maxScale = MIN_SCALE;
-	double minScale = MAX_SCALE;
-
-	for (int i = 0; i < setting.getLength(); ++i) {
-		wam.moveTo(jp_type(setting[i]));
-		btsleep(1.0);
-
-		jt_type gravity = wam.jtSum.getInput(systems::Wam<DOF>::GRAVITY_INPUT).getValue();
-		jt_type supporting = wam.llww.input.getValue();
-		double scale = (gravity.dot(supporting) / gravity.norm()) / gravity.norm();
-		jt_type error = supporting - scale*gravity;
-
-		std::cout << "Gravity: " << gravity << ", " << gravity.norm() << "\n";
-		std::cout << "Supporting: " << supporting << ", " << supporting.norm() << "\n";
-		std::cout << "Scale: " << scale << "\n";
-		std::cout << "Error: " << error << ", " << error.norm() << "\n";
-
-		bool good = true;
-		if (scale < MIN_SCALE  ||  scale > MAX_SCALE) {
-			printf("Scale is out of range.\n");
-			good = false;
-		}
-		if (error.norm() > 0.2 * supporting.norm()) {
-			printf("Error is too big.\n");
-			good = false;
+	enum ControlMode getMode() const { return mode; }
+	void currentControl() {
+		if (getMode() == CURRENT) {
+			return;
 		}
 
-		if (good) {
-			scaleCount++;
-			scaleSum += scale;
-			maxScale = math::max(maxScale, scale);
-			minScale = math::min(minScale, scale);
+		for (size_t i = 0; i < DOF; ++i) {
+			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
+			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
+			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
 		}
 
-		printf("\n");
+		wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
+		torqueGainSys.setGain(cGain);
+
+		mode = CURRENT;
+	}
+	void voltageControl() {
+		if (getMode() == VOLTAGE) {
+			return;
+		}
+
+		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
+		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
+		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
+
+		wam.jpController.setKi(v_type(0.0));
+		wam.jpController.setKd(v_type(0.0));
+		wam.jpController.resetIntegrator();
+		torqueGainSys.setGain(vGain);
+
+		mode = VOLTAGE;
 	}
 
-	double meanScale = scaleSum/scaleCount;
-	printf("SCALE: %f (+%f, -%f)\n", meanScale, maxScale - meanScale, meanScale - minScale);
-}
+
+	static const double MAX_SCALE = 4.0;
+	static const double MIN_SCALE = 0.25;
+
+	void calculateTorqueGain() {
+		libconfig::Config config;
+		config.readFile("/etc/barrett/calibration.conf");
+		libconfig::Setting& setting = config.lookup("gravitycal")[pm.getWamDefaultConfigPath()];
+
+		int scaleCount = 0;
+		double scaleSum = 0.0;
+		double maxScale = MIN_SCALE;
+		double minScale = MAX_SCALE;
+
+		for (int i = 0; i < setting.getLength(); ++i) {
+			wam.moveTo(jp_type(setting[i]));
+			btsleep(1.0);
+
+			jt_type gravity = wam.jtSum.getInput(systems::Wam<DOF>::GRAVITY_INPUT).getValue();
+			jt_type supporting = wam.llww.input.getValue();
+			double scale = (gravity.dot(supporting) / gravity.norm()) / gravity.norm();
+			jt_type error = supporting - scale*gravity;
+
+			std::cout << "Gravity: " << gravity << ", " << gravity.norm() << "\n";
+			std::cout << "Supporting: " << supporting << ", " << supporting.norm() << "\n";
+			std::cout << "Scale: " << scale << "\n";
+			std::cout << "Error: " << error << ", " << error.norm() << "\n";
+
+			bool good = true;
+			if (scale < MIN_SCALE  ||  scale > MAX_SCALE) {
+				printf("Scale is out of range.\n");
+				good = false;
+			}
+			if (error.norm() > 0.4 * supporting.norm()) {
+				printf("Error is too big.\n");
+				good = false;
+			}
+
+			if (good) {
+				scaleCount++;
+				scaleSum += scale;
+				maxScale = math::max(maxScale, scale);
+				minScale = math::min(minScale, scale);
+			}
+
+			printf("\n");
+		}
+
+		assert(scaleCount >= 3);
+		double meanScale = scaleSum/scaleCount;
+		printf("SCALE: %f (+%f, -%f)\n", meanScale, maxScale - meanScale, meanScale - minScale);
+
+		switch (getMode()) {
+		case CURRENT:
+			cGain = meanScale;
+			torqueGainSys.setGain(cGain);
+			break;
+		case VOLTAGE:
+			vGain = meanScale;
+			torqueGainSys.setGain(vGain);
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+
+protected:
+	ProductManager& pm;
+	systems::Wam<DOF>& wam;
+	enum ControlMode mode;
+	double cGain, vGain;
+	systems::Gain<jt_type, double> torqueGainSys;
+};
 
 
 template<int R, int C, typename Units>
@@ -166,6 +212,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 
 
+	ControlModeSwitcher<DOF> cms(pm, wam, 1.17, 0.82);
+
 	wam.gravityCompensate();
 	printMenu();
 
@@ -197,17 +245,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		case 'v':
 			printf("Switching to voltage control!\n");
-			switchToVoltageControl(pm, wam);
+			cms.voltageControl();
 			break;
 
 		case 'c':
 			printf("Switching to current control!\n");
-			switchToCurrentControl(pm, wam);
+			cms.currentControl();
 			break;
 
 		case 'g':
 			printf("Calculating torque gain...\n");
-			calculateTorqueGain(pm, wam);
+			cms.calculateTorqueGain();
 			break;
 
 		case 'q':
