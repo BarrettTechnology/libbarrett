@@ -41,7 +41,7 @@ RealTimeMutex::RealTimeMutex() :
 {
 	mutex = new RT_MUTEX;
 	int ret = rt_mutex_create(mutex, NULL);
-	if (ret) {
+	if (ret != 0) {
 		syslog(LOG_ERR, "Could not create RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::RealTimeMutex(): Could not create RT_MUTEX.");
 	}
@@ -56,7 +56,7 @@ RealTimeMutex::~RealTimeMutex()
 	delete mutex;
 	mutex = NULL;
 
-	if (ret) {
+	if (ret != 0) {
 		syslog(LOG_ERR, "Could not delete RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::~RealTimeMutex(): Could not delete RT_MUTEX.");
 	}
@@ -82,7 +82,7 @@ void RealTimeMutex::unlock()
 	bool changeMode = lockCount == 0 && !leaveWarnSwitchOn;
 
 	int ret = rt_mutex_release(mutex);
-	if (ret) {
+	if (ret != 0) {
 		syslog(LOG_ERR, "Could not release RT_MUTEX: (%d) %s", -ret, strerror(-ret));
 		throw std::logic_error("thread::RealTimeMutex::unlock(): Could not release RT_MUTEX.");
 	}
@@ -137,6 +137,9 @@ int RealTimeMutex::acquireWrapper(RTIME timeout)
 		rt_task_shadow(new RT_TASK, NULL, 10, 0);
 
 		ret = rt_mutex_acquire(mutex, timeout);
+	}
+	if (ret != 0) {
+		return ret;
 	}
 
 	if (lockCount == 0) {
