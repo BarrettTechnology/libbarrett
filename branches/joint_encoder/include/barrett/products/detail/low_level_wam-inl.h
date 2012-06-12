@@ -208,7 +208,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// If there are joint encoders, look up counts per revolution from the config file
 	if (numJe != 0) {
-		syslog(LOG_ERR, "  Found %d joint encoders (%d are initialized)", numJe, numInitializedJe);
+		logMessage("  Found %d joint encoders (%d are initialized)") % numJe % numInitializedJe;
 
 		v_type e_cpr(setting["joint_encoder_counts"]);
 		e2jp = 2*M_PI * e_cpr.cwise().inverse();
