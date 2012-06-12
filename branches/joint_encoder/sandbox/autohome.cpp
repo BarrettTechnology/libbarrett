@@ -67,8 +67,8 @@ private:
 			else other[joint] = wam.getJointPositions()[joint]-0.2;
 		}
 		setPoint[joint] = position;
-		if (joint==6) wam.moveTo(other, jv_type(0.0), setPoint, blocking, 2*SPEED, 3*SPEED);
-		else wam.moveTo(other, jv_type(0.0), setPoint, blocking, SPEED, SPEED);
+		if (joint==6) wam.moveTo(other, /*jv_type(0.0),*/ setPoint, blocking, 2*SPEED, 3*SPEED);
+		else wam.moveTo(other, /*jv_type(0.0),*/ setPoint, blocking, SPEED, SPEED);
 	}
 
 	// Figures out the zero position for the given joint
@@ -97,13 +97,10 @@ public:
 		setPoint = wam.getJointPositions();
 
 		// Set control signal limits in the WAM.  These values prevent erratic behavior.
-		/* TODO(cj): fix PIDController::getControlSignalLimit() to work here
-		// For the time being, the Control Signal Limit in the config file
-			must have a value of at least 50 for joint 2 and no more than 3 for joint 7.
 		wam.jpController.getControlSignalLimit()[1] = 50;
-		if (DOF > 4) {
+		if (DOF >= 7) {
 			wam.jpController.getControlSignalLimit()[6] = 3;
-		}*/
+		}
 
 		// Set up expected joint ranges
 		jointRange[0] = 5.2;
@@ -128,7 +125,8 @@ public:
 		if (pm.foundHand()) {
 			Hand* hand = pm.getHand();
 			hand->initialize();
-			hand->trapezoidalMove(Hand::jp_type(M_PI), false);
+			hand->close(Hand::SPREAD);
+			hand->close(Hand::GRASP, false);
 		}
 
 		// Handle the wrist if it's present
@@ -164,13 +162,11 @@ public:
 
 		// Now move to the home position
 		if (pm.foundHand()) {
-			Hand::jp_type handPos(1.6);
-			handPos[3] = 3.14;
-			pm.getHand()->trapezoidalMove(handPos, false);
+			pm.getHand()->trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP, false);
 		}
 
 		jp_type home = setPoint + wam.getHomePosition();
-		wam.moveTo(setPoint, jv_type(0.0), home, true, 0.5, 0.5);
+		wam.moveTo(setPoint, /*jv_type(0.0),*/ home, true, 0.5, 0.5);
 
 		// Pause at the end for idle
 		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);

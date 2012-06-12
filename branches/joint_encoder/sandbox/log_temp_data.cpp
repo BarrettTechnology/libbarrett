@@ -153,17 +153,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				printf(".");
 				fflush(stdout);
 
-				wam.moveTo(prev, jv_type(), a, true, 0.5, 0.5);
+				wam.moveTo(prev, /*jv_type(),*/ a, true, 0.5, 0.5);
 				prev = a;
 
 				if ( !going ) {
 					break;
 				}
 
-				wam.moveTo(prev, jv_type(), b, true, 0.5, 0.5);
+				wam.moveTo(prev, /*jv_type(),*/ b, true, 0.5, 0.5);
 				prev = b;
 			}
-			wam.moveTo(prev, jv_type(), wam.getHomePosition(), true, 0.5, 0.5);
+			wam.moveTo(prev, /*jv_type(),*/ wam.getHomePosition(), true, 0.5, 0.5);
 			prev = wam.getHomePosition();
 		}
 

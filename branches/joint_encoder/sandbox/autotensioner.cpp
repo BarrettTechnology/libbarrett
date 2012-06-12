@@ -34,6 +34,8 @@ const double SPEED = 1.0; // How fast we'll move the arm while we're going
 const double WIGGLE = 5.0; // Max allowable difference between iterations (micrometers)
 const double TENSION_TORQUES[7] = {0.85, 0.85, 0.85, 0.5, 0.23, 0.23, 0.0};
 		// Torques we'll apply to tension (newton-meters)
+const double HIGH_STOP[7] = {2.6, 2.0, 2.8, 3.1, 1.24, 1.6, 3.0};
+const double LOW_STOP[7] = {-2.6, -2.0, -2.8, -0.9, -4.76, -1.6, -3.0};
 
 bool notCanceled = true; // to handle CTRL-C interrupts
 void sigint_handler(int steve) {
@@ -93,27 +95,32 @@ private:
 		switch(motor)
 		{
 			case 0:
-				temp[0] = -2.6;
+				temp[0] = LOW_STOP[0];
 				break;
 			case 1:
-				temp[0] = -2.6; temp[1] = 2.0; temp[2] = -2.8; temp[3] = 3.0;
+				temp[0] = LOW_STOP[0]; temp[1] = HIGH_STOP[1]; temp[2] = LOW_STOP[2]; temp[3] = HIGH_STOP[3];
 				break;
 			case 2:
-				temp[1] = -2.0; temp[2] = -2.8; temp[3] = -0.8;
+				temp[1] = LOW_STOP[1]; temp[2] = LOW_STOP[2]; temp[3] = LOW_STOP[3];
 				break;
 			case 3:
-				temp[1] = -1.0; temp[3] = -0.9;
+				temp[3] = LOW_STOP[3];
 				break;
 			case 4:
-				temp[4] = 1.24; temp[5] = -1.6;
+				temp[4] = HIGH_STOP[4]; temp[5] = LOW_STOP[5];
 				break;
 			case 5:
-				temp[4] = 1.24; temp[5] = 1.6;
+				temp[4] = HIGH_STOP[4]; temp[5] = HIGH_STOP[5];
 				break;
 		}
 		setPoint = wam.getJointPositions();
 		temp = j2mp*temp;
-		temp[motor] -= 20.0;
+		if (motor>3) {
+			temp[motor] -= 6*M_PI;
+		}
+		else {
+			temp[motor] -= 8*M_PI;
+		}
 		for (size_t i=0; i<DOF; i++) {
 			temp[i] = temp[i] - fmod(temp[i], 2*M_PI) + tangPositions[i] - 0.4;
 					// Puts all tang notches just behind the tangs
@@ -132,50 +139,49 @@ private:
 
 	// Moves the WAM to the given position, handling high torques against stops smoothly
 	void moveTheWAM(jp_type position, bool blocking = true) {
-		wam.moveTo(setPoint, jv_type(0.0), position, blocking, SPEED, SPEED);
+		wam.moveTo(setPoint, /*jv_type(0.0),*/ position, blocking, SPEED, SPEED);
 		for(size_t i=0; i<DOF; i++) setPoint[i] = position[i];
 	}
 
 	// Distributes the slack for the given motor through the WAM.
 	void distribute(int motor) {
 		setPoint = wam.getJointPositions();
-		jp_type stop1(0.0), stop2(0.0);
-		switch (motor)
-		{
-			case 0:
-				stop1[0] = -2.6;
-				stop2[0] = 2.6;
-				break;
-			case 1:
-				stop1[0] = -2.6; stop1[1] = 2.0; stop1[2] = -2.8; stop1[3] = 3.0;
-				stop2[1] = -2.0; stop2[2] = 2.8; stop2[3] = -0.8;
-				break;
-			case 2:
-				stop2[1] = -2.0; stop2[2] = -2.8; stop2[3] = -0.8;
-				stop1[0] = 2.6; stop1[1] = 2.0; stop1[2] = 2.8; stop1[3] = 3.0;
-				break;
-			case 3:
-				stop1[1] = -1.0; stop2[3] = -0.9;
-				stop2[1] = -2.0; stop2[3] = 3.0;
-				break;
-			case 4:
-				stop1[4] = 1.24; stop1[5] = -1.6;
-				stop2[4] = -4.76; stop2[5] = 1.6;
-				break;
-			case 5:
-				stop1[4] = 1.24; stop1[5] = 1.6;
-				stop1[4] = -4.76; stop1[5] = -1.6;
-				break;
-		}
-		for(int rep=0; rep<5; rep++)
-		{
-			moveTheWAM(stop1);
-			moveTheWAM(stop2);
+		for(int rep=0; rep<5; rep++) {
+			jp_type stop1(0.0), stop2(0.0);
+			switch (motor)
+			{
+				case 0:
+					stop1[0] = LOW_STOP[0];
+					stop2[0] = HIGH_STOP[0];
+					break;
+				case 1:
+					stop1[0] = LOW_STOP[0]; stop1[1] = HIGH_STOP[1]; stop1[2] = LOW_STOP[2]; stop1[3] = (rand()%300)/100;
+					stop2[1] = LOW_STOP[1]; stop2[2] = HIGH_STOP[2]; stop2[3] = -((rand()%60)+20.0)/100.0;
+					break;
+				case 2:
+					stop2[1] = LOW_STOP[1]; stop2[2] = LOW_STOP[2]; stop2[3] = -((rand()%60)+20.0)/100.0;
+					stop1[0] = HIGH_STOP[0]; stop1[1] = HIGH_STOP[1]; stop1[2] = HIGH_STOP[2]; stop1[3] = (rand()%300)/100.0;
+					break;
+				case 3:
+					stop1[1] = -0.7; stop1[3] = LOW_STOP[3];
+					stop2[1] = -0.7; stop2[3] = HIGH_STOP[3];
+					break;
+				case 4:
+					stop1[4] = HIGH_STOP[4]; stop1[5] = LOW_STOP[5];
+					stop2[4] = LOW_STOP[4]; stop2[5] = HIGH_STOP[5];
+					break;
+				case 5:
+					stop1[4] = HIGH_STOP[4]; stop1[5] = HIGH_STOP[5];
+					stop2[4] = LOW_STOP[4]; stop2[5] = LOW_STOP[5];
+					break;
+			}
+		moveTheWAM(stop1);
+		moveTheWAM(stop2);
 		}
 	}
 
 	// Rolls the given motor forward until it encounters a stop (hopefully the tang) or until it times out
-	void rollForward(int motor, double timeout = 30.0) {
+	void rollForward(int motor, double timeout = 14.0) { // Timeout of 14 seconds is roughly 1.25 revolutions
 		holdSetPoint.setValue(setPoint); // Tell it to hold position
 		watcher.activate(motor, 0.5); // Start watching for the torque spike
 		motorPos.setOutput((j2mp*setPoint)[motor]); //Set the ramp to the proper start position
@@ -195,24 +201,24 @@ private:
 	// finds the tang locations for the wrist
 	void findTangs() {
 		if (DOF > 4) {
-			moveTheWAM(jp_type(0.0));
+			moveTheWAM(jp_type(0.0)); // Move to zero position
 			setTang(4, 1); // Open the tang
 			while (true) {
-				jp_type start = wam.getJointPositions();
-				rollForward(4, 14);
-				if (!watcher.watching) {
+				jp_type start = wam.getJointPositions(); // Remember where we start
+				rollForward(4); // Roll forward to hit the tang
+				if (!watcher.watching) { // If we actually hit the tang go on
 					break;
 				}
-				increment(5, start);
+				increment(5, start); // If we timed out increment the other motor from our starting position
 			}
 			std::cout << "Found the M5 tang notch!\n";
-			setPoint=wam.getJointPositions();
-			rollForward(5);
+			setPoint=wam.getJointPositions(); // Update setPoint to account for motion
+			rollForward(5); // Roll forward on to the other tang
 			std::cout << "Found the M6 tang notch!\n";
-			tangPositions[4] = fmod((j2mp*wam.getJointPositions())[4], 2*M_PI);
+			tangPositions[4] = fmod((j2mp*wam.getJointPositions())[4], 2*M_PI); // Record the tang positions relative to the motor's arbitrary "zero"
 			tangPositions[5] = fmod((j2mp*wam.getJointPositions())[5], 2*M_PI);
 
-			setPoint=wam.getJointPositions();
+			setPoint=wam.getJointPositions(); // Update to account for motion
 			setTang(4, 0); // Close the tang
 			jp_type temp = j2mp*setPoint;
 			temp[4] -= 1.0;
@@ -231,41 +237,42 @@ private:
 		holdSetPoint.setValue(setPoint); // Tell it to hold position
 		setTang(tangMotor, 1); // Open the tang
 		rollForward(motor); // Rolls forward into the tang
-		
+		setTang(tangMotor, 0); // Disengane the tang to save the Puck
+
 		double startPos = (j2mp * wam.getJointPositions())[motor]; // record our starting point
-		double tangLoc = wam.getJointPositions()[motor];
 		wam.moveTo(wam.getJointPositions()); // tell it to stay still
 		torqueSetPoint.setValue(TENSION_TORQUES[motor]); // set the torque
 		connect(torqueSetPoint.output, torqueSetter.getElementInput(motor)); // apply the torque
-		//std::cout << "Applying torque now!\n";
 		sleep(5.0); // wait a few seconds
 		double endPos = (j2mp*wam.getJointPositions())[motor]; //record our ending point
-		tangLoc = fabs(tangLoc - wam.getJointPositions()[motor]);
 		disconnect(torqueSetPoint.output); //stop applying the torque
-
-		setTang(tangMotor, 0); //Close the tang
-		setPoint = wam.getJointPositions();
+		
+		setPoint = wam.getJointPositions(); // Update setPoint to account for movement
 		jp_type temp = j2mp*setPoint;
 		temp[motor] -= 1.0;
 		temp = m2jp*temp;
 		moveTheWAM(temp); // Back off the tang so it will close
 
 		distribute(motor); // Run the WAM between extremes for the motor spindle to distribute tension
-		tangPositions[motor] += tangLoc;
+		tangPositions[motor] = fmod(endPos, 2*M_PI); // Update the tang position
 		return fabs(startPos-endPos); // Return how much slack we've taken up
 	}
 
 public:
 
 	// Run the tensioning procedure
-	int tension(int argc, char** argv)
-	{	//std::cout << argc << " " << argv[1][0] << " " << argv[1][1] << "\n";
-		bool toDo[DOF] = {false}; // = {false, false, false, false, false, false, false};
-		if (argc > 1) {
+	int tension(int argc, char** argv) {
+		bool toDo[DOF] = {false}; // Array that determines which motors we'll do
+		if (argc > 1) { // If we got an argument
 			if (argv[1][0] == 'w') { // If the 1st argument is 'w', do the wrist only
-				toDo[4] = true;
-				toDo[5] = true;
-				std::cout << "Tensioning wrist ONLY\n";
+				if (DOF > 4) {
+					toDo[4] = true;
+					toDo[5] = true;
+					std::cout << "Tensioning wrist ONLY\n";
+				}
+				else {
+					std::cout << "No wrist detected.  Exiting...\n";
+				}
 			}
 			else { // If there is a list of motors for arguments, do those
 				std::cout << "Tensioning motors: ";
@@ -286,25 +293,27 @@ public:
 			std::cout << "Tensioning entire WAM";
 		}
 
-		if (DOF>4) {
-			std::cout << "Finding the Wrist tang locations now\n";
-			findTangs(); // find the tangs for the wrist if it's there
+		if (DOF>4) { // If we have a wrist (This could be expanded to find all joint tangs to make the overall process faster)
+			if (toDo[4] || toDo[5]) { // If we are actually tensioning the wrist
+				std::cout << "Finding the wrist tang locations now\n";
+				findTangs(); // find the tangs for the wrist if it's there
+			}
 		}
-		for (size_t j = 0; j<DOF; j++)
+		for (size_t j = 0; j<DOF; j++) // For each motor in the system
 		{
-			int motor;
-			if (toDo[j]) {
+			int motor; // The motor we'll tension
+			if (toDo[j]) { // If we're tensioning this motor set it as the motor to do
 				motor = j;
 			}
-			else {
+			else { // Else check the next motor
 				continue;
 			}
 			notCanceled = true;
-			double multiplier = 9000;
-			if (motor>4) multiplier = 6600;
+			double multiplier = 9000; // This value represents the number of micrometers of cable per radian on the motor shaft
+			if (motor>4) multiplier = 6600;  // This case handles the (smaller) wrist
 
 			std::cout << "Doing motor " << motor+1 << " now...\n";			
-			double slackTaken = 1.0, last = 2.0;
+			double slackTaken = 1.0, last = 2.0; // Represents the amount of slack taken up this iteration and the time before
 			int totalRuns = 0;
 			/* There are three exit cases for each motor's tensioning process:
 			 *  1 - The same amount of "slack" is pulled twice AND it's had at least 3 iterations
@@ -315,15 +324,15 @@ public:
 			while((fabs(slackTaken-last) > WIGGLE/multiplier || totalRuns < 3) && totalRuns < 10 && notCanceled) 
 			{
 				last = slackTaken;
-				slackTaken = iterate(motor);
+				slackTaken = iterate(motor); // Do an iteration
 				totalRuns++;
 				std::cout << slackTaken*multiplier << " micrometers slack removed\n";
 			}
 		}
 
 		moveTheWAM(wam.getHomePosition()); // go home
-		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
-		return 0;
+		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE); // Wait for idle
+		return 0; // Exit
 	}
 
 	// Constructor

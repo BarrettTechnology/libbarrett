@@ -1,5 +1,5 @@
 /*
- * haptics.cpp
+ * ex10_haptics.cpp
  *
  *  Created on: Feb 19, 2010
  *      Author: dc
@@ -18,7 +18,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "ex11_haptics.h"
+#include "ex10_haptics.h"
 
 
 using namespace barrett;
@@ -79,7 +79,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	center << 0.4, -.3, 0.0;
 	systems::HapticBall ball(center, 0.2);
 	center << 0.35, 0.4, 0.0;
-	systems::HapticBox box(center, 0.3,0.3,0.3);
+	math::Vector<3>::type size;
+	size << 0.3, 0.3, 0.3;
+	systems::HapticBox box(center, size);
 
 	systems::Summer<cf_type> dirSum;
 	systems::Summer<double> depthSum;

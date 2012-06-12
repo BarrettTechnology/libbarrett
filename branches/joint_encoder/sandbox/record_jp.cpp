@@ -1,20 +1,15 @@
 /*
- * teach.cpp
+ * record.cpp
  *
- *  Created on: Sep 29, 2009
+ *  Created on: Feb 28, 2012
  *      Author: dc
  */
 
-#include <iostream>
-#include <vector>
-#include <string>
+#include <cstdio>
 
-#include <boost/ref.hpp>
-#include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <barrett/detail/stl_utils.h>  // waitForEnter()
-#include <barrett/math.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/log.h>
@@ -36,6 +31,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 	typedef boost::tuple<double, jp_type> jp_sample_type;
 
+	if (argc != 2) {
+		printf("Usage:  %s <fileName>\n", argv[0]);
+		exit(1);
+	}
+
 	char tmpFile[] = "/tmp/btXXXXXX";
 	if (mkstemp(tmpFile) == -1) {
 		printf("ERROR: Couldn't create temporary file!\n");
@@ -46,14 +46,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	wam.gravityCompensate();
+	pm.getSafetyModule()->setVelocityLimit(1.5);
 
 	systems::Ramp time(pm.getExecutionManager());
 
 	systems::TupleGrouper<double, jp_type> jpLogTg;
 
-	// Record at 1/10th of the loop rate
+	// Record at the loop rate
 	systems::PeriodicDataLogger<jp_sample_type> jpLogger(pm.getExecutionManager(),
-			new barrett::log::RealTimeWriter<jp_sample_type>(tmpFile, 10*T_s), 10);
+			new barrett::log::RealTimeWriter<jp_sample_type>(tmpFile, 1*T_s), 1);
 
 
 	printf("Press [Enter] to start teaching.\n");
@@ -79,40 +80,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	// Build spline between recorded points
 	log::Reader<jp_sample_type> lr(tmpFile);
-	std::vector<jp_sample_type> vec;
-	for (size_t i = 0; i < lr.numRecords(); ++i) {
-		vec.push_back(lr.getRecord());
-	}
-	math::Spline<jp_type> spline(vec);
-
-	printf("Press [Enter] to play back the recorded trajectory.\n");
-	waitForEnter();
-
-	// First, move to the starting position
-	wam.moveTo(spline.eval(spline.initialS()));
-
-	// Then play back the recorded motion
-	time.stop();
-	time.setOutput(spline.initialS());
-
-	systems::Callback<double, jp_type> trajectory(boost::ref(spline));
-	connect(time.output, trajectory.input);
-	wam.trackReferenceSignal(trajectory.output);
-
-	time.start();
-
-	while (trajectory.input.getValue() < spline.finalS()) {
-		usleep(100000);
-	}
-
-
-	printf("Press [Enter] to idle the WAM.\n");
-	waitForEnter();
-	wam.idle();
-
-
+	lr.exportCSV(argv[1]);
+	printf("File saved as: %s\n", argv[1]);
 	std::remove(tmpFile);
-	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
+	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
 }

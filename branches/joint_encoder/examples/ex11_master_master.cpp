@@ -1,5 +1,5 @@
 /*
- * master_master.cpp
+ * ex11_master_master.cpp
  *
  *  Created on: Feb 22, 2010
  *      Author: Christopher Dellin
@@ -23,7 +23,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "ex13_master_master.h"
+#include "ex11_master_master.h"
 
 
 using namespace barrett;
@@ -359,7 +359,7 @@ void handEntryPoint(Hand* hand, const char* remoteHost) {
 			hjv[1] = velCommand(data & (1<<0), data & (1<<1));  // Pointer
 			hjv[2] = velCommand(data & (1<<4), data & (1<<5));  // Thumb
 			hjv[3] = velCommand(data & (1<<6), data & (1<<7));  // Rocker
-			hand->setVelocity(hjv);
+			hand->velocityMove(hjv);
 			std::cout << "Velocity: " << hjv << std::endl;
 
 			data_1 = data;

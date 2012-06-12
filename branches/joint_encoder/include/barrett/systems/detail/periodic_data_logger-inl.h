@@ -1,5 +1,5 @@
 /*
-	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -29,6 +29,7 @@
  */
 
 
+#include <boost/thread.hpp>
 #include <barrett/thread/abstract/mutex.h>
 
 
@@ -65,6 +66,11 @@ inline bool PeriodicDataLogger<T, LogWriterType>::isLogging() {
 template<typename T, typename LogWriterType>
 void PeriodicDataLogger<T, LogWriterType>::closeLog() {
 	if (isLogging()) {
+		// One of the functions below is an interruption point. We must disable
+		// interruption (for the duration of this scope) so that a
+		// boost::thread_interrupted exception doesn't get thrown.
+		boost::this_thread::disable_interruption di;
+
 		thread::Mutex& emMutex = getEmMutex();
 		emMutex.lock();
 		logging = false;

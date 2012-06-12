@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * force_torque_sensor.h
  *
  *  Created on: Nov 8, 2010
@@ -37,6 +60,9 @@ public:
 	const cf_type& getForce() const { return cf; }
 	const ct_type& getTorque() const { return ct; }
 
+	void updateAccel(bool realtime = false);
+	const ca_type& getAccel() const { return ca; }
+
 
 	struct ForceParser {
 		static int busId(int id, int propId) {
@@ -60,6 +86,17 @@ public:
 			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
 		}
 	};
+	struct AccelParser {
+		static int busId(int id, int propId) {
+			return Puck::encodeBusId(id, PuckGroup::FGRP_FT_ACCEL);
+		}
+
+		static const double SCALE_FACTOR = 1024.0;
+		typedef ca_type result_type;
+		static int parse(int id, int propId, result_type* result, const unsigned char* data, size_t len) {
+			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
+		}
+	};
 
 
 protected:
@@ -69,6 +106,7 @@ protected:
 
 	cf_type cf;
 	ct_type ct;
+	ca_type ca;
 
 private:
 	typedef cf_type::Base base_type;

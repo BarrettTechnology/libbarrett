@@ -173,13 +173,13 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 					hjv.setConstant(inputs[4]);
 					hjv[3] = inputs[5];
 
-					hand->updatePosition();
+					hand->update(Hand::S_POSITION);
 					int s = hand->getPrimaryEncoderPosition()[3];
 					if (ct - s > 5000  &&  s - ot > 5000) {
 						hjv[2] = 0.0;
 					}
 
-					hand->setVelocity(hjv);
+					hand->velocityMove(hjv);
 
 					fv_1 = inputs[4];
 					sv_1 = inputs[5];

@@ -1,4 +1,27 @@
 /*
+	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * puck.h
  *
  *  Created on: Aug 20, 2010
@@ -11,8 +34,6 @@
 
 #include <stdexcept>
 #include <vector>
-
-#include <syslog.h>
 
 #include <barrett/bus/abstract/communications_bus.h>
 
@@ -43,6 +64,8 @@ public:
 // include the generated file containing the list of available properties
 #	include <barrett/products/detail/property_list.h>
 	static const char* getPropertyStr(enum Property prop);
+	static enum Property getPropertyEnum(const char* str) throw(std::invalid_argument);
+	static enum Property getPropertyEnumNoThrow(const char* str);
 
 
 public:
@@ -52,12 +75,8 @@ public:
 	void wake();
 
 	int getProperty(enum Property prop, bool realtime = false) const;
-	int tryGetProperty(enum Property prop, int* result, int timeout_ns = 1000000) const;
-
 	template<typename Parser> void getProperty(enum Property prop,
 			typename Parser::result_type* result, bool realtime = false) const;
-	template<typename Parser> int tryGetProperty(enum Property prop, typename Parser::result_type* result, int timeout_ns = 1000000) const;
-
 	void setProperty(enum Property prop, int value, bool blocking = false) const {
 		setProperty(bus, id, getPropertyId(prop), value, blocking);
 	}
@@ -93,10 +112,10 @@ public:
 	template<typename Parser> static void getProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result, bool realtime = false);
 	static int tryGetProperty(const bus::CommunicationsBus& bus, int id, int propId,
-			int* result, int timeout_ns = 1000000);
+			int* result, double timeout_s = 0.001);
 	template<typename Parser> static int tryGetProperty(
 			const bus::CommunicationsBus& bus, int id, int propId, typename Parser::result_type* result,
-			int timeout_ns = 1000000);
+			double timeout_s = 0.001);
 	static void setProperty(const bus::CommunicationsBus& bus, int id, int propId,
 			int value, bool blocking = false);
 
@@ -143,8 +162,8 @@ public:
 	static const int SET_MASK = 0x80;
 	static const int PROPERTY_MASK = 0x7f;
 
-	static const int WAKE_UP_TIME = 1000000000;  // nanoseconds
-	static const int TURN_OFF_TIME = 10000000;  // nanoseconds
+	static const double WAKE_UP_TIME = 1.0;  // seconds
+	static const double TURN_OFF_TIME = 0.01;  // seconds
 
 	struct StandardParser {
 		static int busId(int id, int propId);
@@ -180,7 +199,7 @@ protected:
 private:
 	template<typename Parser>
 	static int getPropertyHelper(const bus::CommunicationsBus& bus,
-			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, int timeout_ns);
+			int id, int propId, typename Parser::result_type* result, bool blocking, bool realtime, double timeout_s);
 
 	static const char puckTypeStrs[][12];
 };

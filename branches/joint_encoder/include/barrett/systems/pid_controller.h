@@ -77,8 +77,8 @@ public:
 	const unitless_type& getIntegratorState() const {  return intError;  }
 	unitless_type& getIntegratorLimit() {  return intErrorLimit;  }
 	const unitless_type& getIntegratorLimit() const {  return intErrorLimit;  }
-	unitless_type& getControlSignalLimit() {  return controlSignalLimit;  }
-	const unitless_type& getControlSignalLimit() const {  return controlSignalLimit;  }
+	OutputType& getControlSignalLimit() {  return controlSignalLimit;  }
+	const OutputType& getControlSignalLimit() const {  return controlSignalLimit;  }
 
 protected:
 	void setSamplePeriod(double timeStep);

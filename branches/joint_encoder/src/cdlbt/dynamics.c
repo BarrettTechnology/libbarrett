@@ -69,8 +69,7 @@ static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
 
 
 int bt_dynamics_create(struct bt_dynamics ** dynptr,
-                       config_setting_t * dynconfig, int ndofs,
-                       struct bt_kinematics * kin)
+                       config_setting_t * dynconfig, int ndofs)
 {
    int err;
    int i;
@@ -89,7 +88,6 @@ int bt_dynamics_create(struct bt_dynamics ** dynptr,
    }
    
    /* Initialize */
-   dyn->kin = kin;
    dyn->link_array = 0;
    dyn->base = 0;
    dyn->link = 0;
@@ -156,7 +154,7 @@ int bt_dynamics_create(struct bt_dynamics ** dynptr,
        ||  (config_setting_length(moving) != ndofs)
    ) {
       syslog(LOG_ERR,"%s: dyn:moving not a list with %d elements.",__func__,ndofs);
-      bt_kinematics_destroy(kin);
+      bt_dynamics_destroy(dyn);
       return -1;
    }
    
@@ -488,8 +486,9 @@ int bt_dynamics_destroy( struct bt_dynamics * dyn )
 
 
 
-int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
-                             gsl_vector * jacc, gsl_vector * jtor)
+int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, const struct bt_kinematics * kin,
+                             const gsl_vector * jvel, const gsl_vector * jacc,
+                             gsl_vector * jtor)
 {
    int j;
    
@@ -499,13 +498,13 @@ int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
    /* Iterate from the base to the toolplate */
    for (j=0; j<dyn->dof; j++)
    {
-      eval_inverse_forward( dyn, dyn->link[j], dyn->kin->link[j],
+      eval_inverse_forward( dyn, dyn->link[j], kin->link[j],
                             gsl_vector_get(jvel,j),
                             gsl_vector_get(jacc,j) );      
    }
    
    /* Evaluate the vels/accs of the fixed toolplate frame */
-   eval_inverse_forward_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
+   eval_inverse_forward_fixed( dyn, dyn->toolplate, kin->toolplate );
    
    /* OK, now we have omega, alpha, and a calculated for all moving links,
     * and the toolplate frame, but not for the tool frame. */
@@ -513,11 +512,11 @@ int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
    
    /* Evaluate the forces of the massless fixed toolplate frame
     * (this produces 0 since the toolplate is the last frame ATM) */
-   eval_inverse_backward_fixed( dyn, dyn->toolplate, dyn->kin->toolplate );
+   eval_inverse_backward_fixed( dyn, dyn->toolplate, kin->toolplate );
    
    for (j=dyn->dof-1; j>=0; j--)
    {
-      eval_inverse_backward( dyn, dyn->link[j], dyn->kin->link[j],
+      eval_inverse_backward( dyn, dyn->link[j], kin->link[j],
                              gsl_vector_ptr(jtor,j) );
    }
    
@@ -786,7 +785,7 @@ static int eval_inverse_backward_fixed( struct bt_dynamics * dyn,
 }
 
 
-int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
+int bt_dynamics_eval_jsim(struct bt_dynamics * dyn, struct bt_kinematics * kin)
 {
    int j;
    
@@ -799,7 +798,7 @@ int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
       struct bt_kinematics_link * kin_link;
       
       link = dyn->link[j];
-      kin_link = dyn->kin->link[j];
+      kin_link = kin->link[j];
       
       /* First, calculate each moving link's Jacobian at the COM */
       
@@ -809,7 +808,7 @@ int bt_dynamics_eval_jsim( struct bt_dynamics * dyn )
                       0.0, dyn->temp1_v3 );
       
       /* Evaluate the jacobian at the link's COM point */
-      bt_kinematics_eval_jacobian( dyn->kin, j+1, dyn->temp1_v3,
+      bt_kinematics_eval_jacobian( kin, j+1, dyn->temp1_v3,
                                    link->com_jacobian );
       
       /* Add in the linear velocity component */

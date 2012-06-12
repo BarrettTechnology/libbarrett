@@ -1,5 +1,5 @@
 /*
- * network_haptics.h
+ * ex10_haptics.h
  *
  *  Created on: Apr 14, 2010
  *      Author: cd

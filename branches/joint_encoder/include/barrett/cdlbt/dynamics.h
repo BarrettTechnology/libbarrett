@@ -165,9 +165,6 @@ struct bt_dynamics_link
  */
 struct bt_dynamics
 {
-   /* We rely on the kin structure */
-   struct bt_kinematics * kin;
-   
    int dof;
    int nlinks;
    struct bt_dynamics_link ** link_array;
@@ -206,8 +203,7 @@ struct bt_dynamics
  * \retval 0 Success
  */
 int bt_dynamics_create(struct bt_dynamics ** dynptr,
-                       config_setting_t * dynconfig, int ndofs,
-                       struct bt_kinematics * kin);
+                       config_setting_t * dynconfig, int ndofs);
 
 
 /** Destroy a bt_dynamics object.
@@ -238,8 +234,10 @@ int bt_dynamics_destroy(struct bt_dynamics * dyn);
  * \param[out] jtor Computed joint torque vector
  * \retval 0 Success
  */
-int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
-                             gsl_vector * jacc, gsl_vector * jtor);
+int bt_dynamics_eval_inverse(struct bt_dynamics * dyn,
+                             const struct bt_kinematics * kin,
+                             const gsl_vector * jvel, const gsl_vector * jacc,
+                             gsl_vector * jtor);
 
 
 /** Calculate the Joint-Space Inertia Matrix (JSIM).
@@ -250,7 +248,7 @@ int bt_dynamics_eval_inverse(struct bt_dynamics * dyn, gsl_vector * jvel,
  *
  * \param[in] dyn bt_dynamics object
  */
-int bt_dynamics_eval_jsim( struct bt_dynamics * dyn );
+int bt_dynamics_eval_jsim(struct bt_dynamics * dyn, struct bt_kinematics * kin);
 
 
 #ifdef __cplusplus

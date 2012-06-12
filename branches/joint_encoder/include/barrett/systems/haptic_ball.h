@@ -1,5 +1,5 @@
 /*
-	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -50,11 +50,23 @@ class HapticBall : public HapticObject {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
 public:
-	HapticBall(cp_type center, double radius, const std::string& sysName = "HapticBall") :
+	HapticBall(const cp_type& center, double radius, const std::string& sysName = "HapticBall") :
 		HapticObject(sysName),
 		c(center), r(radius), keepOutside(true) /* doesn't matter how this is initialized, it'll fix itself */,
 		depth(0.0), error(0.0) {}
 	virtual ~HapticBall() { mandatoryCleanUp(); }
+
+	void setCenter(const cp_type& newCenter){
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		c = newCenter;
+	}
+	void setRadius(double newRadius){
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		r = newRadius;
+	}
+
+	const cp_type& getCenter() const { return c; }
+	double getRadius() const { return r; }
 
 protected:
 	virtual void operate() {

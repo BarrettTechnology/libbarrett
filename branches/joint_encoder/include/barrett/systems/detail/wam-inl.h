@@ -35,6 +35,8 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
+#define EIGEN_USE_NEW_STDVECTOR
+#include<Eigen/StdVector>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -113,6 +115,11 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	connect(toolOrientation.output, toolPose.getInput<1>());
 
 	connect(llww.jvOutput, jvFilter.input);
+	if (em != NULL) {
+		// Keep the jvFilter updated so it will provide accurate values for
+		// calls to Wam::getJointVelocities().
+		em->startManaging(jvFilter);
+	}
 
 	supervisoryController.registerConversion(makeIOConversion(
 			jtPassthrough.input, jtPassthrough.output));
@@ -195,11 +202,14 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 {
 	{
 		BARRETT_SCOPED_LOCK(getEmMutex());
+
+		// Return the filtered velocity, if available.
 		if (jvController1.feedbackInput.valueDefined()) {
 			return jvController1.feedbackInput.getValue();
 		}
 	}
 
+	// Otherwise just return differentiated positions.
 	return llww.getLowLevelWam().getJointVelocities();
 }
 
@@ -238,6 +248,13 @@ inline typename Wam<DOF>::pose_type Wam<DOF>::getToolPose() const
 	return boost::make_tuple(getToolPosition(), getToolOrientation());
 }
 
+template<size_t DOF>
+inline math::Matrix<6,DOF> Wam<DOF>::getToolJacobian() const
+{
+	kin.eval(getJointPositions(), getJointVelocities());
+	return math::Matrix<6,DOF>(kin.impl->tool_jacobian);
+}
+
 
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
@@ -249,13 +266,23 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 	}
 }
 template<size_t DOF>
-bool Wam<DOF>::isGravityCompensated()
+inline bool Wam<DOF>::isGravityCompensated()
 {
 	return jtSum.getInput(GRAVITY_INPUT).isConnected();
 }
 
 template<size_t DOF>
-void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
+inline void Wam<DOF>::moveHome(bool blocking)
+{
+	moveTo(getHomePosition(), blocking);
+}
+template<size_t DOF>
+inline void Wam<DOF>::moveHome(bool blocking, double velocity)
+{
+	moveTo(getHomePosition(), blocking, velocity);
+}
+template<size_t DOF>
+inline void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 {
 	moveTo(getHomePosition(), blocking, velocity, acceleration);
 }
@@ -263,22 +290,28 @@ void Wam<DOF>::moveHome(bool blocking, double velocity, double acceleration)
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const jp_type& destination, bool blocking, double velocity, double acceleration)
 {
-//	moveTo(getJointPositions(), getJointVelocities(), destination, blocking, velocity, acceleration);
-	moveTo(getJointPositions(), jv_type(0.0), destination, blocking, velocity, acceleration);
+//	moveTo(currentPosHelper(getJointPositions()), getJointVelocities(), destination, blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getJointPositions()), /*jv_type(0.0),*/ destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 inline void Wam<DOF>::moveTo(const cp_type& destination, bool blocking, double velocity, double acceleration)
 {
-	moveTo(getToolPosition(), cv_type(0.0), destination, blocking, velocity, acceleration);
+	moveTo(currentPosHelper(getToolPosition()), /*cv_type(0.0),*/ destination, blocking, velocity, acceleration);
+}
+
+template<size_t DOF>
+inline void Wam<DOF>::moveTo(const Eigen::Quaterniond& destination, bool blocking, double velocity, double acceleration)
+{
+	moveTo(currentPosHelper(getToolOrientation()), destination, blocking, velocity, acceleration);
 }
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveTo(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, bool blocking, double velocity, double acceleration)
+void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration)
 {
 	bool started = false;
-	boost::thread(&Wam<DOF>::moveToThread<T>, this, currentPos, currentVel, destination, velocity, acceleration, &started);
+	boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started);
 
 	// wait until move starts
 	while ( !started ) {
@@ -307,15 +340,36 @@ void Wam<DOF>::idle()
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveToThread(const T& currentPos, const typename T::unitless_type& currentVel, const T& destination, double velocity, double acceleration, bool* started)
+T Wam<DOF>::currentPosHelper(const T& currentPos)
 {
-	std::vector<T> vec;
+	System::Input<T>* input = NULL;
+	supervisoryController.getInput(&input);
+	if (input != NULL  &&  input->valueDefined()) {
+		// If we're already using the controller we're about to use in the
+		// moveTo() call, it's best to treat the current *set point* as the
+		// "current position". That way the reference signal is continuous as it
+		// transitions from whatever is happening now to the moveTo() Spline.
+		return input->getValue();
+	}
+
+	// If we're not using the appropriate controller already, then use our
+	// *actual* current position.
+	return currentPos;
+}
+
+template<size_t DOF>
+template<typename T>
+void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started)
+{
+	std::vector<T, Eigen::aligned_allocator<T> > vec;
 	vec.push_back(currentPos);
 	vec.push_back(destination);
-	math::Spline<T> spline(vec, currentVel);
-	// TODO(dc): write a vel/acc traits class to give intelligent defaults for these values
-	math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
-//	math::TrapezoidalVelocityProfile profile(.1, .2, 0, spline.changeInS());
+
+	// TODO(dc): Use currentVel. Requires changes to math::spline<Eigen::Quaternion<T> > specialization.
+	//math::Spline<T> spline(vec, currentVel);
+	//math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
+	math::Spline<T> spline(vec);
+	math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0.0, spline.changeInS());
 
 	Ramp time(NULL, 1.0);
 	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));

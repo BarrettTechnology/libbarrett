@@ -138,7 +138,7 @@ void readWam(ProductManager& pm, systems::Wam<DOF>& wam) {
 		to = wam.getToolOrientation();
 
 		rp.update();
-		usleep(8000);
+		usleep(100000);
 	}
 }
 
@@ -149,7 +149,7 @@ void readFTS(ForceTorqueSensor& fts) {
 		fts.update();
 
 		rp.update();
-		usleep(7000);
+		usleep(100);
 	}
 }
 
@@ -160,15 +160,12 @@ void readHand(Hand& hand) {
 //	int motorTemp[Hand::DOF];
 
 	while ( !boost::this_thread::interruption_requested() ) {
-		hand.updatePosition();
-		hand.updateStrain();
-		hand.updateTactFull();
-
+		hand.update();
 //		hand.getPuckGroup().getProperty(Puck::TEMP, puckTemp);
 //		hand.getPuckGroup().getProperty(Puck::THERM, motorTemp);
 
 		rp.update();
-		usleep(10000);
+		usleep(100);
 	}
 }
 
@@ -253,9 +250,11 @@ void moveAndRead(ProductManager& pm, systems::Wam<DOF>& wam) {
 		threads[i]->join();
 	}
 
-	hand.trapezoidalMove(Hand::jp_type(0.0));
-	hand.trapezoidalMove(Hand::jp_type(0.0, 0.0, 0.0, M_PI));
-//	hand.trapezoidalMove(Hand::jp_type(M_PI_2, M_PI_2, M_PI_2, M_PI));
+	if (pm.foundHand()) {
+		hand.open();
+		hand.close(Hand::SPREAD);
+//		hand.trapezoidalMove(Hand::jp_type(M_PI/2.0), Hand::GRASP);
+	}
 	wam.moveHome();
 }
 
