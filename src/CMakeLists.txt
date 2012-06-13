@@ -27,6 +27,7 @@ if (NOT NON_REALTIME)
 			python.cpp
 			bus/python.cpp
 			products/python/namespace.cpp
+			products/python/product_manager.cpp
 			products/python/puck.cpp
 		)
 	endif()
