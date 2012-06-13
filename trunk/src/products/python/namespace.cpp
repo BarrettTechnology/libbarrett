@@ -31,9 +31,11 @@
 
 #include "../../python.h"
 
+void pythonProductsProductManagerInterface();
 void pythonProductsPuckInterface();
 
 
 void pythonProductsInterface() {
+	pythonProductsProductManagerInterface();
 	pythonProductsPuckInterface();
 }
