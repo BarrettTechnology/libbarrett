@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 2.6)
 project(libbarrett_examples)
 
 
+# By default, build programs with compiler optimizations and debugging symbols
+if (NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+endif()
+
+
 ## libbarrett
 find_package(Barrett REQUIRED)
 include_directories(${BARRETT_INCLUDE_DIRS})

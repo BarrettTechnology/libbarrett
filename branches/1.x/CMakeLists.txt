@@ -59,6 +59,7 @@ endif()
 set(exported_include_dirs "")
 set(exported_link_dirs "")
 set(exported_definitions "")
+set(exported_libraries "")
 
 
 ## Put libbarrett headers in the include path
@@ -119,6 +120,13 @@ set(exported_include_dirs ${exported_include_dirs} ${EIGEN2_INCLUDE_DIR})
 ## curses
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
+
+
+
+### Main target
+# src/CMakeLists.txt sets ${exported_libraries}, so this must be included before
+# barrett-config.cmake is generated.
+add_subdirectory(src)
 
 
 
@@ -183,8 +191,7 @@ add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${lib
 
 
 
-### Targets
-add_subdirectory(src)
+### Other targets
 if (NON_REALTIME)
 	add_subdirectory(programs EXCLUDE_FROM_ALL)
 else()

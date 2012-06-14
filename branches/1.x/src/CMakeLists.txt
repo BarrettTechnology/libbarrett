@@ -58,16 +58,16 @@ set(barrett_SOURCES
 	stl_utils.cpp
 )
 
-
-add_library(barrett ${barrett_SOURCES})
-target_link_libraries(barrett ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
+set(libs ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
 if (NOT NON_REALTIME)
-    target_link_libraries(barrett ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
+	set(libs ${libs} ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
 endif()
 if (WITH_PYTHON)
-	target_link_libraries(barrett ${PYTHON_LIBRARIES})
+	set(libs ${libs} ${PYTHON_LIBRARIES})
 endif()
 
+add_library(barrett ${barrett_SOURCES})
+target_link_libraries(barrett ${libs})
 set_target_properties(barrett PROPERTIES
 	OUTPUT_NAME barrett
 	VERSION ${${PROJECT_NAME}_VERSION}
@@ -75,10 +75,11 @@ set_target_properties(barrett PROPERTIES
 	
 	# Allow creating static and shared libs without conflicts
 	CLEAN_DIRECT_OUTPUT 1
-	
-	# Prevent executables from having to link with all of libbarrett's dependencies
-	LINK_INTERFACE_LIBRARIES ""
 )
+
+# Record the libraries that applications should link against if they want to use libbarrett
+set(exported_libraries ${libs} barrett PARENT_SCOPE)
+
 
 install(TARGETS barrett
 	LIBRARY DESTINATION lib
