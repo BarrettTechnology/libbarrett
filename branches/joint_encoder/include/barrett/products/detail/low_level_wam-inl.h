@@ -211,7 +211,13 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 		logMessage("  Found %d joint encoders (%d are initialized)") % numJe % numInitializedJe;
 
 		v_type e_cpr(setting["joint_encoder_counts"]);
-		e2jp = 2*M_PI * e_cpr.cwise().inverse();
+		for (size_t i = 0; i < DOF; ++i) {
+			if (e_cpr[i] == 0.0) {
+				e2jp[i] = 0.0;
+			} else {
+				e2jp[i] = 2*M_PI / e_cpr[i];
+			}
+		}
 	}
 
 
