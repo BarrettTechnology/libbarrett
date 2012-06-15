@@ -14,16 +14,25 @@
 using namespace barrett;
 
 
-int main() {
+int main(int argc, char** argv) {
 	ProductManager pm;
 	pm.wakeAllPucks();
 
-	for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
-		if (pm.getWamPucks()[i] != NULL) {
-			printf("Puck %d: ECMIN=%d\t\tECMAX=%d\n",
-					pm.getWamPucks()[i]->getId(),
-					pm.getWamPucks()[i]->getProperty(Puck::ECMIN),
-					pm.getWamPucks()[i]->getProperty(Puck::ECMAX));
+	if (argc == 2  &&  strcmp(argv[1], "--reset") == 0) {
+		for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
+			if (pm.getWamPucks()[i] != NULL) {
+				pm.getWamPucks()[i]->setProperty(Puck::ECMIN, 0);
+				pm.getWamPucks()[i]->setProperty(Puck::ECMAX, 0);
+			}
+		}
+	} else {
+		for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
+			if (pm.getWamPucks()[i] != NULL) {
+				printf("Puck %d: ECMIN=%d\t\tECMAX=%d\n",
+						pm.getWamPucks()[i]->getId(),
+						pm.getWamPucks()[i]->getProperty(Puck::ECMIN),
+						pm.getWamPucks()[i]->getProperty(Puck::ECMAX));
+			}
 		}
 	}
 
