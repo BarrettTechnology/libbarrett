@@ -30,7 +30,7 @@
  */
 
 #include <math.h> /* For sqrt() */
-#include <syslog.h>
+#include <barrett/os.h>
 #include <gsl/gsl_blas.h>
 
 #include <barrett/cdlbt/profile.h>

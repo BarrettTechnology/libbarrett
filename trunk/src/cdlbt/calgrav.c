@@ -28,7 +28,7 @@
  * <http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
  */
 
-#include <syslog.h>
+#include <barrett/os.h>
 
 #include <libconfig.h>
 #include <gsl/gsl_matrix.h>
@@ -55,7 +55,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav = (struct bt_calgrav *) malloc(sizeof(struct bt_calgrav));
    if (!grav)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       return -1;
    }
    
@@ -72,7 +72,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav->world_g = gsl_vector_calloc(3);
    if (!grav->world_g)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -82,7 +82,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav->g  = (gsl_vector **) malloc(dof*sizeof(gsl_vector *));
    if (!grav->g)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -91,7 +91,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav->mu = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->mu)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -100,7 +100,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav->t  = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->t)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -109,7 +109,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
    grav->pt = (gsl_vector **) malloc((dof)*sizeof(gsl_vector *));
    if (!grav->pt)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -120,7 +120,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
        ||  (config_setting_type(mus) != CONFIG_TYPE_LIST)
        ||  (config_setting_length(mus) != dof)
    ) {
-      syslog(LOG_ERR,"%s: grav:mus not a list with %u elements.",__func__, (unsigned int)dof);
+      logMessage("%s: grav:mus not a list with %u elements.") % __func__ % (unsigned int)dof;
       bt_calgrav_destroy(grav);
       return -1;
    }
@@ -142,7 +142,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
           || !grav->t[j]
           || !grav->pt[j]
       ) {
-         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         logMessage("%s: Out of memory.") % __func__;
          bt_calgrav_destroy(grav);
          return -1;
       }
@@ -152,7 +152,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
       if (   (config_setting_type(mu) != CONFIG_TYPE_LIST)
           || (config_setting_length(mu) != 3)
       ) {
-         syslog(LOG_ERR,"%s: grav:mu #%d not a 3-element list.",__func__,j);
+         logMessage("%s: grav:mu #%d not a 3-element list.") % __func__ % j;
          bt_calgrav_destroy(grav);
          return -1;
       }
@@ -170,7 +170,7 @@ int bt_calgrav_create(struct bt_calgrav ** gravptr,
                gsl_vector_set( grav->mu[j], i, config_setting_get_float(val) );
                break;
             default:
-               syslog(LOG_ERR,"%s: that's not a number!",__func__);
+               logMessage("%s: that's not a number!") % __func__;
                bt_calgrav_destroy(grav);
                return -1;
          }

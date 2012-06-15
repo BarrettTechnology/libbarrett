@@ -30,7 +30,7 @@
  */
 
 #include <math.h> /* For sin(), cos() */
-#include <syslog.h>
+#include <barrett/os.h>
 
 #include <libconfig.h>
 #include <gsl/gsl_blas.h> /* For fast matrix multiplication */
@@ -68,7 +68,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
    kin = (struct bt_kinematics *) malloc( sizeof(struct bt_kinematics) );
    if (!kin)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       return -1;
    }
    
@@ -92,7 +92,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
       malloc(kin->nlinks*sizeof(struct bt_kinematics_link *));
    if (!kin->link_array)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.", true) % __func__;
       bt_kinematics_destroy(kin);
       return -1;
    }
@@ -105,7 +105,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          malloc(sizeof(struct bt_kinematics_link));
       if (!link)
       {
-         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         logMessage("%s: Out of memory.", true) % __func__;
          bt_kinematics_destroy(kin);
          return -1;
       }
@@ -134,7 +134,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
        ||  (config_setting_type(moving) != CONFIG_TYPE_LIST)
        ||  (config_setting_length(moving) != ndofs)
    ) {
-      syslog(LOG_ERR,"%s: kin:moving not a list with %d elements.",__func__,ndofs);
+      logMessage("%s: kin:moving not a list with %d elements.") % __func__ % ndofs;
       bt_kinematics_destroy(kin);
       return -1;
    }
@@ -160,7 +160,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          if (!link->trans_to_prev)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -169,7 +169,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          if ( (world = config_setting_get_member(kinconfig,"world_to_base")) ) {
             if (    (config_setting_type(world) != CONFIG_TYPE_LIST)
                 ||  (config_setting_length(world) != 4) ) {
-               syslog(LOG_ERR,"%s: kinematics:world_to_base not a list with 4 elements.",__func__);
+               logMessage("%s: kinematics:world_to_base not a list with 4 elements.") % __func__;
                bt_kinematics_destroy(kin);
                return -1;
             }
@@ -180,7 +180,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
                if (   (config_setting_type(world_row) != CONFIG_TYPE_LIST)
                    || (config_setting_length(world_row) != 4)
                ) {
-                  syslog(LOG_ERR,"%s: kinematics:world_to_base #%d not a 4-element list.",__func__,j);
+                  logMessage("%s: kinematics:world_to_base #%d not a 4-element list.") % __func__ % j;
                   bt_kinematics_destroy(kin);
                   return -1;
                }
@@ -190,7 +190,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
                   double val;
 
                   if (bt_gsl_config_get_double(config_setting_get_elem( world_row, k ), &val)) {
-                	  syslog(LOG_ERR,"%s: that's not a number!",__func__);
+                	  logMessage("%s: that's not a number!") % __func__;
                 	  bt_kinematics_destroy(kin);
                   }
 
@@ -219,7 +219,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          if (   !(toolplate_grp = config_setting_get_member(kinconfig,"toolplate"))
              || (config_setting_type(toolplate_grp) != CONFIG_TYPE_GROUP)
          ) {
-            syslog(LOG_ERR,"%s: kin:toolplate not a group.",__func__);
+            logMessage("%s: kin:toolplate not a group.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -231,7 +231,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
             || ( err = bt_gsl_config_double_from_group(toolplate_grp,       "d",&(link->d)    ) )
             )
          {
-            syslog(LOG_ERR,"%s: No alpha_pi, theta_pi, a, and/or d in toolplate, or not a number.",__func__);
+            logMessage("%s: No alpha_pi, theta_pi, a, and/or d in toolplate, or not a number.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -247,7 +247,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          if (!link->trans_to_prev)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -260,7 +260,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_world = gsl_matrix_calloc(4,4);
          if (!link->trans_to_world)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -271,7 +271,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          if (!link->trans_to_prev)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -280,7 +280,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_world = gsl_matrix_calloc(4,4);
          if (!link->trans_to_world)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -297,7 +297,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link_grp = config_setting_get_elem( moving, j );
          if (config_setting_type(link_grp) != CONFIG_TYPE_GROUP)
          {
-            syslog(LOG_ERR,"%s: kin:moving:#%d not a group.",__func__,j);
+            logMessage("%s: kin:moving:#%d not a group.") % __func__ % j;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -308,7 +308,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
             || ( err = bt_gsl_config_double_from_group(link_grp,       "d",&(link->d)    ) )
             )
          {
-            syslog(LOG_ERR,"%s: No alpha_pi, theta_pi, a, and/or d in link %d, or not a number.",__func__,j);
+            logMessage("%s: No alpha_pi, theta_pi, a, and/or d in link %d, or not a number.") % __func__ % j;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -322,7 +322,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_prev = gsl_matrix_calloc(4,4);
          if (!link->trans_to_prev)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -334,7 +334,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->trans_to_world = gsl_matrix_calloc(4,4);
          if (!link->trans_to_world)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -347,7 +347,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->prev_axis_z = (gsl_vector *) malloc(sizeof(gsl_vector));
          if (!link->prev_axis_z)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -357,7 +357,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->prev_origin_pos = (gsl_vector *) malloc(sizeof(gsl_vector));
          if (!link->prev_origin_pos)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -367,7 +367,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->axis_z = (gsl_vector *) malloc(sizeof(gsl_vector));
          if (!link->axis_z)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -377,7 +377,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->origin_pos = (gsl_vector *) malloc(sizeof(gsl_vector));
          if (!link->origin_pos)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -391,7 +391,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->rot_to_prev = (gsl_matrix *) malloc(sizeof(gsl_matrix));
          if (!link->rot_to_prev)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -401,7 +401,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
          link->rot_to_world = (gsl_matrix *) malloc(sizeof(gsl_matrix));
          if (!link->rot_to_world)
          {
-            syslog(LOG_ERR,"%s: Out of memory.",__func__);
+            logMessage("%s: Out of memory.") % __func__;
             bt_kinematics_destroy(kin);
             return -1;
          }
@@ -414,7 +414,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
    kin->tool_jacobian = gsl_matrix_alloc( 6, ndofs );
    if (!kin->tool_jacobian)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_kinematics_destroy(kin);
       return -1;
    }
@@ -424,7 +424,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
       kin->tool_jacobian_linear = (gsl_matrix *) malloc(sizeof(gsl_matrix));
       if (!kin->tool_jacobian_linear)
       {
-         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         logMessage("%s: Out of memory.") % __func__;
          bt_kinematics_destroy(kin);
          return -1;
       }
@@ -434,7 +434,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
       kin->tool_jacobian_angular = (gsl_matrix *) malloc(sizeof(gsl_matrix));
       if (!kin->tool_jacobian_angular)
       {
-         syslog(LOG_ERR,"%s: Out of memory.",__func__);
+         logMessage("%s: Out of memory.") % __func__;
          bt_kinematics_destroy(kin);
          return -1;
       }
@@ -444,14 +444,14 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
    kin->tool_velocity = gsl_vector_alloc( 3 );
    if (!kin->tool_velocity)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_kinematics_destroy(kin);
       return -1;
    }
    kin->tool_velocity_angular = gsl_vector_alloc( 3 );
    if (!kin->tool_velocity_angular)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_kinematics_destroy(kin);
       return -1;
    }
@@ -460,7 +460,7 @@ int bt_kinematics_create(struct bt_kinematics ** kinptr,
    kin->temp_v3 = gsl_vector_alloc(3);
    if (!kin->temp_v3)
    {
-      syslog(LOG_ERR,"%s: Out of memory.",__func__);
+      logMessage("%s: Out of memory.") % __func__;
       bt_kinematics_destroy(kin);
       return -1;
    }
