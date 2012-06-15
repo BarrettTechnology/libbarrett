@@ -29,7 +29,7 @@
  */
 
 #include <math.h> /* For sqrt() */
-#include <barrett/os.h>
+#include <syslog.h>
 
 #include <gsl/gsl_blas.h>
 
