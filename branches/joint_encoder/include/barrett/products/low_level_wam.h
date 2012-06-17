@@ -40,13 +40,13 @@ public:
 	~LowLevelWam();
 
 
-	enum JointPositionSensor { JP_BEST, JP_MOTOR_ENCODER, JP_JOINT_ENCODER };
-	const jp_type& getJointPositions(enum JointPositionSensor sensor = JP_BEST) const {
+	enum PositionSensor { PS_BEST, PS_MOTOR_ENCODER, PS_JOINT_ENCODER };
+	const jp_type& getJointPositions(enum PositionSensor sensor = PS_BEST) const {
 		switch (sensor) {
-		case JP_MOTOR_ENCODER:
+		case PS_MOTOR_ENCODER:
 			return jp_motorEncoder;
 			break;
-		case JP_JOINT_ENCODER:
+		case PS_JOINT_ENCODER:
 			return jp_jointEncoder;
 			break;
 		default:
@@ -57,6 +57,7 @@ public:
 
 
 	bool hasJointEncoders() const { return !noJointEncoders; }
+	void setPositionSensor(enum PositionSensor sensor);
 
 
 	const jp_type& getHomePosition() const { return home; }

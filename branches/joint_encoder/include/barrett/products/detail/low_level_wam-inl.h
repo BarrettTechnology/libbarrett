@@ -191,7 +191,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 
 	// Joint encoders
-	useJointEncoder.assign(false);
+	setPositionSensor(PS_MOTOR_ENCODER);  // Use motor encoders by default
 	int numJe = 0;
 	int numInitializedJe = 0;
 
@@ -199,7 +199,6 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 		if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)) {
 			++numJe;
 			if (motorPucks[i].foundIndexPulse()) {
-				useJointEncoder[i] = true;
 				++numInitializedJe;
 			}
 		}
@@ -236,6 +235,28 @@ template<size_t DOF>
 LowLevelWam<DOF>::~LowLevelWam()
 {
 	detail::purge(torqueGroups);
+}
+
+template<size_t DOF>
+void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
+{
+	switch (sensor) {
+	case PS_MOTOR_ENCODER:
+		useJointEncoder.assign(false);
+		break;
+	case PS_JOINT_ENCODER:
+		for (size_t i = 0; i < DOF; ++i) {
+			if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)  &&  motorPucks[i].foundIndexPulse()) {
+				useJointEncoder[i] = true;
+			} else {
+				useJointEncoder[i] = false;
+			}
+		}
+		break;
+	default:
+		(logMessage("LowLevelWam::%s: Bad sensor value: %d") % __func__ % sensor).template raise<std::logic_error>();
+		break;
+	}
 }
 
 template<size_t DOF>
