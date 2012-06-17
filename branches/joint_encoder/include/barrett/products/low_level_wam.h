@@ -40,8 +40,20 @@ public:
 	~LowLevelWam();
 
 
-	const jp_type& getJointPositions() const { return jp; }
-	const jv_type& getJointVelocities() const { return jv; }
+	enum JointPositionSensor { JP_BEST, JP_MOTOR_ENCODER, JP_JOINT_ENCODER };
+	const jp_type& getJointPositions(enum JointPositionSensor sensor = JP_BEST) const {
+		switch (sensor) {
+		case JP_MOTOR_ENCODER:
+			return jp_motorEncoder;
+			break;
+		case JP_JOINT_ENCODER:
+			return jp_jointEncoder;
+			break;
+		default:
+			return jp_best;
+		}
+	}
+	const jv_type& getJointVelocities() const { return jv_best; }
 
 
 	const jp_type& getHomePosition() const { return home; }
@@ -69,7 +81,7 @@ protected:
 	jp_type home;
 	sqm_type j2mp, m2jp, j2mt;
 	sqm_type j2pp, p2jp, j2pt;
-	v_type e2jp;
+	v_type jointEncoder2jp;
 
 	bool noJointEncoders;
 	boost::array<bool, DOF> useJointEncoder;
@@ -77,8 +89,9 @@ protected:
 	RTIME lastUpdate;
 	v_type pp;
 	math::Matrix<DOF,2> pp_jep;
-	jp_type jp, jp_1;
-	jv_type jv;
+	jp_type jp_motorEncoder, jp_jointEncoder;
+	jp_type jp_best, jp_best_1;
+	jv_type jv_best;
 
 	v_type pt;
 	int torquePropId;

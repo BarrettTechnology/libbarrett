@@ -200,7 +200,6 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 			++numJe;
 			if (motorPucks[i].foundIndexPulse()) {
 				useJointEncoder[i] = true;
-				noJointEncoders = false;
 				++numInitializedJe;
 			}
 		}
@@ -208,14 +207,15 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// If there are joint encoders, look up counts per revolution from the config file
 	if (numJe != 0) {
+		noJointEncoders = false;
 		logMessage("  Found %d joint encoders (%d are initialized)") % numJe % numInitializedJe;
 
-		v_type e_cpr(setting["joint_encoder_counts"]);
+		v_type jointEncoderCpr(setting["joint_encoder_counts"]);
 		for (size_t i = 0; i < DOF; ++i) {
-			if (e_cpr[i] == 0.0) {
-				e2jp[i] = 0.0;
+			if (jointEncoderCpr[i] == 0.0) {
+				jointEncoder2jp[i] = 0.0;
 			} else {
-				e2jp[i] = 2*M_PI / e_cpr[i];
+				jointEncoder2jp[i] = 2*M_PI / jointEncoderCpr[i];
 			}
 		}
 	}
@@ -229,7 +229,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// Get good initial values for jp_1 and lastUpdate
 	update();
-	jv.setZero();
+	jv_best.setZero();
 }
 
 template<size_t DOF>
@@ -245,7 +245,8 @@ void LowLevelWam<DOF>::update()
 
 	if (noJointEncoders) {
 		group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
-		jp = p2jp * pp;  // Convert from Puck positions to joint positions
+		jp_motorEncoder = p2jp * pp;  // Convert from Puck positions to joint positions
+		jp_best = jp_motorEncoder;
 	} else {
 		// Make sure the reinterpret_cast below makes sense.
 		BOOST_STATIC_ASSERT(sizeof(MotorPuck::CombinedPositionParser<double>::result_type) == 2*sizeof(double));
@@ -256,21 +257,27 @@ void LowLevelWam<DOF>::update()
 				Puck::P,
 				reinterpret_cast<MotorPuck::CombinedPositionParser<double>::result_type*>(pp_jep.data()),
 				true);
+		jp_motorEncoder = p2jp * pp_jep.col(0);
 
 		for (size_t i = 0; i < DOF; ++i) {
-			if (useJointEncoder[i]) {
-				assert(pp_jep(i,1) != std::numeric_limits<double>::max());
-				jp[i] = e2jp[i] * pp_jep(i,1);
+			if (pp_jep(i,1) == std::numeric_limits<double>::max()) {
+				jp_jointEncoder[i] = 0.0;
+				jp_best[i] = jp_motorEncoder[i];
 			} else {
-				jp[i] = (p2jp.row(i) * pp_jep.col(0))[0];
+				jp_jointEncoder[i] = jointEncoder2jp[i] * pp_jep(i,1);
+				if (useJointEncoder[i]) {
+					jp_best[i] = jp_jointEncoder[i];
+				} else {
+					jp_best[i] = jp_motorEncoder[i];
+				}
 			}
 		}
 	}
 
-	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
+	jv_best = (jp_best - jp_best_1) / (1e-9 * (now - lastUpdate));
 	// TODO(dc): Detect unreasonably large velocities
 
-	jp_1 = jp;
+	jp_best_1 = jp_best;
 	lastUpdate = now;
 }
 
