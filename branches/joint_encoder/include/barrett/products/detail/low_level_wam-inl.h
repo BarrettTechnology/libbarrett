@@ -64,7 +64,10 @@ const enum Puck::Property LowLevelWam<DOF>::props[] = { Puck::P, Puck::T };
 template<size_t DOF>
 LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_WAM, props, sizeof(props)/sizeof(props[0]), "LowLevelWam::LowLevelWam()"),
-	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), noJointEncoders(true), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
+	safetyModule(_safetyModule), torqueGroups(),
+	home(setting["home"]), j2mp(setting["j2mp"]),
+	noJointEncoders(true), positionSensor(PS_MOTOR_ENCODER),
+	lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
 {
 	logMessage("  Config setting: %s => \"%s\"") % setting.getSourceFile() % setting.getPath();
 
@@ -272,6 +275,8 @@ void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 		(logMessage("LowLevelWam::%s: Bad sensor value: %d") % __func__ % sensor).template raise<std::logic_error>();
 		break;
 	}
+
+	positionSensor = sensor;
 }
 
 

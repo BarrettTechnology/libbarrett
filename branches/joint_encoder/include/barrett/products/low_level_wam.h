@@ -47,6 +47,7 @@ public:
 
 	bool hasJointEncoders() const { return !noJointEncoders; }
 	void setPositionSensor(enum PositionSensor sensor);
+	enum PositionSensor getPositionSensor() const { return positionSensor; }
 	bool usingJoinEncoder(size_t jointIndex) const { return useJointEncoder[jointIndex]; }
 
 
@@ -79,6 +80,7 @@ protected:
 
 	bool noJointEncoders;
 	boost::array<bool, DOF> useJointEncoder;
+	enum PositionSensor positionSensor;
 
 	RTIME lastUpdate;
 	v_type pp;
