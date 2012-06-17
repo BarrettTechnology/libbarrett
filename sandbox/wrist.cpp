@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
 	printf(">>> Press [Enter] to Activate the Wrist. WARNING: This bypasses the Safety Module!");
 	waitForEnter();
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_TORQUE);
+	wam.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_TORQUE);
 
 
 	printf(">>> Press [Enter] to hold position.");
@@ -69,6 +69,6 @@ int main(int argc, char** argv) {
 
 	printf(">>> Press [Enter] to Idle the Wrist.");
 	waitForEnter();
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
+	wam.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
 	return 0;
 }

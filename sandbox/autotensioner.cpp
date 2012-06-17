@@ -338,19 +338,19 @@ public:
 	// Constructor
 	Autotensioner(ProductManager& p, systems::Wam<DOF>& w) :
 		pm(p), wam(w),
-		j2mtSys(w.llww.getLowLevelWam().getJointToMotorTorqueTransform()),
-		m2jtSys(w.llww.getLowLevelWam().getJointToMotorPositionTransform().transpose()),
-		m2jpSys(w.llww.getLowLevelWam().getMotorToJointPositionTransform()),
-		j2mpSys(w.llww.getLowLevelWam().getJointToMotorPositionTransform()),
+		j2mtSys(w.getLowLevelWam().getJointToMotorTorqueTransform()),
+		m2jtSys(w.getLowLevelWam().getJointToMotorPositionTransform().transpose()),
+		m2jpSys(w.getLowLevelWam().getMotorToJointPositionTransform()),
+		j2mpSys(w.getLowLevelWam().getJointToMotorPositionTransform()),
 		watcher(p.getExecutionManager()),
 		motorPos(p.getExecutionManager(), 0.8)
 	{	
 		// Get information from the WAM
-		pucks = wam.llww.getLowLevelWam().getPucks();
-		m2jp = wam.llww.getLowLevelWam().getMotorToJointPositionTransform();
-		j2mp = wam.llww.getLowLevelWam().getJointToMotorPositionTransform();
+		pucks = wam.getLowLevelWam().getPucks();
+		m2jp = wam.getLowLevelWam().getMotorToJointPositionTransform();
+		j2mp = wam.getLowLevelWam().getJointToMotorPositionTransform();
 		m2jt = j2mp.transpose();
-		j2mt = wam.llww.getLowLevelWam().getJointToMotorTorqueTransform();
+		j2mt = wam.getLowLevelWam().getJointToMotorTorqueTransform();
 		setPoint = wam.getJointPositions();
 
 		// Set up systems

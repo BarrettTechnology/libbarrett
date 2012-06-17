@@ -130,7 +130,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	poses.push_back(tmp);
 
 
-	boost::thread logThread(logEntryPoint, boost::ref(wam.llww.getLowLevelWam().getPuckGroup()), argv[1]);
+	boost::thread logThread(logEntryPoint, boost::ref(wam.getLowLevelWam().getPuckGroup()), argv[1]);
 	signal(SIGINT, sigint);
 	printf("Recording!\n");
 
