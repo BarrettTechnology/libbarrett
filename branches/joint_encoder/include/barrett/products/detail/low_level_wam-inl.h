@@ -237,6 +237,21 @@ LowLevelWam<DOF>::~LowLevelWam()
 	detail::purge(torqueGroups);
 }
 
+
+template<size_t DOF>
+inline const typename LowLevelWam<DOF>::jp_type& LowLevelWam<DOF>::getJointPositions(enum PositionSensor sensor) const {
+	switch (sensor) {
+	case PS_MOTOR_ENCODER:
+		return jp_motorEncoder;
+		break;
+	case PS_JOINT_ENCODER:
+		return jp_jointEncoder;
+		break;
+	default:
+		return jp_best;
+	}
+}
+
 template<size_t DOF>
 void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 {
@@ -258,6 +273,7 @@ void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 		break;
 	}
 }
+
 
 template<size_t DOF>
 void LowLevelWam<DOF>::update()

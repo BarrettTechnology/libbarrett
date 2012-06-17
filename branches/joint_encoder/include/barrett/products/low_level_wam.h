@@ -41,18 +41,7 @@ public:
 
 
 	enum PositionSensor { PS_BEST, PS_MOTOR_ENCODER, PS_JOINT_ENCODER };
-	const jp_type& getJointPositions(enum PositionSensor sensor = PS_BEST) const {
-		switch (sensor) {
-		case PS_MOTOR_ENCODER:
-			return jp_motorEncoder;
-			break;
-		case PS_JOINT_ENCODER:
-			return jp_jointEncoder;
-			break;
-		default:
-			return jp_best;
-		}
-	}
+	const jp_type& getJointPositions(enum PositionSensor sensor = PS_BEST) const;
 	const jv_type& getJointVelocities() const { return jv_best; }
 
 
