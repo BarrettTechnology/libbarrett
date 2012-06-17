@@ -291,12 +291,12 @@ int main(int argc, char** argv) {
 
 	printf(">>> Press [Enter] to Activate the Wrist. WARNING: This bypasses the Safety Module!");
 	waitForEnter();
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_TORQUE);
+	wam.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_TORQUE);
 
 
 	int ret = wam_main(argc, argv, pm, wam);
 
 
-	wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
+	wam.getLowLevelWam().getPuckGroup().setProperty(Puck::MODE, MotorPuck::MODE_IDLE);
 	return ret;
 }

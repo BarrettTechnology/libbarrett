@@ -91,7 +91,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::FirstOrderFilter<jp_type> hp2;
 	hp2.setHighPass(jp_type(omega_p), jp_type(omega_p));
 	systems::Gain<jp_type, double, ja_type> changeUnits(1.0);
-	const LowLevelWam<DOF>& llw = wam.llww.getLowLevelWam();
+	const LowLevelWam<DOF>& llw = wam.getLowLevelWam();
 	systems::Gain<ja_type, sqm_type, jt_type> driveInertias(llw.getJointToMotorPositionTransform().transpose() * v_type(config.lookup("drive_inertias")).asDiagonal() * llw.getJointToMotorPositionTransform());
 	systems::InverseDynamics<DOF> id(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["dynamics"]);
 	systems::Summer<jt_type> idSum;

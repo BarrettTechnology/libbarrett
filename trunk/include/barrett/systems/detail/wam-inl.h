@@ -175,7 +175,7 @@ void Wam<DOF>::trackReferenceSignal(System::Output<T>& referenceSignal)
 template<size_t DOF>
 inline const typename Wam<DOF>::jp_type& Wam<DOF>::getHomePosition() const
 {
-	return llww.getLowLevelWam().getHomePosition();
+	return getLowLevelWam().getHomePosition();
 }
 
 template<size_t DOF>
@@ -194,7 +194,7 @@ typename Wam<DOF>::jt_type Wam<DOF>::getJointTorques() const
 template<size_t DOF>
 inline typename Wam<DOF>::jp_type Wam<DOF>::getJointPositions() const
 {
-	return llww.getLowLevelWam().getJointPositions();
+	return getLowLevelWam().getJointPositions();
 }
 
 template<size_t DOF>
@@ -210,7 +210,7 @@ inline typename Wam<DOF>::jv_type Wam<DOF>::getJointVelocities() const
 	}
 
 	// Otherwise just return differentiated positions.
-	return llww.getLowLevelWam().getJointVelocities();
+	return getLowLevelWam().getJointVelocities();
 }
 
 template<size_t DOF>
