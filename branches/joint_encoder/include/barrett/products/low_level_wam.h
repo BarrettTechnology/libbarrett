@@ -56,6 +56,9 @@ public:
 	const jv_type& getJointVelocities() const { return jv_best; }
 
 
+	bool hasJointEncoders() const { return !noJointEncoders; }
+
+
 	const jp_type& getHomePosition() const { return home; }
 
 	const sqm_type& getJointToMotorPositionTransform() const { return j2mp; }
