@@ -15,6 +15,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <barrett/units.h>
+#include <barrett/os.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 #include <barrett/detail/stl_utils.h>
@@ -227,23 +228,21 @@ int openSocket(const char* remoteHost, int port) {
 	sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sock == -1)
 	{
-		syslog(LOG_ERR,"%s: Could not create socket.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("%s: Could not create socket %d.") % __func__ % ret).raise<std::runtime_error>();
 	}
 
 	/* Set socket to non-blocking, set flag associated with open file */
 	flags = fcntl(sock, F_GETFL, 0);
 	if (flags < 0)
 	{
-		syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("%s: Could not get socket flags %d.") % __func__ % ret).raise<std::runtime_error>();
 	}
 	flags |= O_NONBLOCK;
 	err = fcntl(sock, F_SETFL, flags);
 	if (err < 0)
 	{
 		syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		throw std::runtime_error("openSocket(): Failed.");
 	}
 
 	/* Set up the bind address */
@@ -254,7 +253,7 @@ int openSocket(const char* remoteHost, int port) {
 	if (err == -1)
 	{
 		syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		throw std::runtime_error("openSocket(): Failed.");
 	}
 
 	/* Set up the other guy's address */
@@ -264,7 +263,7 @@ int openSocket(const char* remoteHost, int port) {
 	if (err)
 	{
 		syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		throw std::runtime_error("openSocket(): Failed.");
 	}
 
 	/* Call "connect" to set datagram destination */
@@ -272,7 +271,7 @@ int openSocket(const char* remoteHost, int port) {
 	if (err)
 	{
 		syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		throw std::runtime_error("openSocket(): Failed.");
 	}
 
 	return sock;
