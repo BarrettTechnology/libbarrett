@@ -87,8 +87,8 @@ void RealTimeMutex::lock()
 {
     int ret = acquireWrapper(TM_INFINITE);
     if (ret != 0) {
-	(logMessage("RealTimeMutex::lock(): %s returned %d") %__func__ %ret).raise<boost::thread_resource_error(ret)>();
-	//...error(ret) might need to be changed ...error()
+	logMessage("RealTimeMutex::lock(): %s returned %d") %__func__ % ret;
+	throw boost::thread_resource_error(ret);
     }
 }
 
