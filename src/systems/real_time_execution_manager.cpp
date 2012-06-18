@@ -134,7 +134,7 @@ void rtemEntryPoint(void* cookie)
 
     logMessage("RealTimeExecutionManager control-loop stats (microseconds):");
     logMessage("  target period = %u") %period_us;
-    logMessage("  min = %u" %min;
+    logMessage("  min = %u") %min;
     logMessage("  ave = %.3f") %mean;
     logMessage("  max = %u") %max;
     logMessage("  stdev = %.3f") %stdev;
@@ -188,19 +188,19 @@ void RealTimeExecutionManager::start()
 		int ret = 0;
 		ret = rt_task_create(task, name.c_str(), 0, priority, T_JOINABLE);
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  See /var/log/syslog for details.  %s: rt_task_create(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  %s: rt_task_create(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
 		}
 
 		ret = rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  See var/log/syslog for details.  %s: rt_task_start(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_start(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
 		}
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
 			ret = rt_task_sleep(detail::secondsToRTIME(period / 10.0));
 			if (ret != 0) {
-				(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  See var/log/syslog for details.  %s: rt_task_sleep(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+				(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_sleep(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
 			}
 		}
 	}
@@ -214,7 +214,7 @@ void RealTimeExecutionManager::stop()
 	// According to Xenomai docs, rt_task_join() also performs the rt_task_delete() behaviors.
 	int ret = rt_task_join(task);
 	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task. See /var/log/syslog for details.  %s: rt_task_join(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task.  %s: rt_task_join(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
 	}
 
 	delete task;
@@ -231,7 +231,7 @@ void RealTimeExecutionManager::clearError()
 	stopRunning = true;
 	int ret = rt_task_delete(task);
 	if (ret != 0) {
-		logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. See /var/log/syslog for details.  %s: rt_task_delete(): (%d) %s\n", %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. %s: rt_task_delete(): (%d) %s\n") % __func__ % __func__ % -ret %strerror(-ret)).raise<std::runtime_error>();
 	}
 	delete task;
 	task = NULL;
