@@ -263,6 +263,10 @@ void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 		useJointEncoder.assign(false);
 		break;
 	case PS_JOINT_ENCODER:
+		if ( !hasJointEncoders() ) {
+			(logMessage("LowLevelWam::%s: This WAM is not equipped with joint encoders.")
+					% __func__ % sensor).template raise<std::logic_error>();
+		}
 		for (size_t i = 0; i < DOF; ++i) {
 			if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)  &&  motorPucks[i].foundIndexPulse()) {
 				useJointEncoder[i] = true;
@@ -272,7 +276,8 @@ void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 		}
 		break;
 	default:
-		(logMessage("LowLevelWam::%s: Bad sensor value: %d") % __func__ % sensor).template raise<std::logic_error>();
+		(logMessage("LowLevelWam::%s: Bad sensor value: %d")
+				% __func__ % sensor).template raise<std::logic_error>();
 		break;
 	}
 
