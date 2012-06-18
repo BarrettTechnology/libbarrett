@@ -6,8 +6,8 @@
  */
 
 #include <stdexcept>
-#include <syslog.h>
 
+#include <barrett/os.h>
 #include <barrett/bus/abstract/communications_bus.h>
 
 
@@ -24,11 +24,7 @@ int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& l
 	}
 
 	if (actualBusId != expectedBusId) {
-		syslog(LOG_ERR, "CommunicationsBus::receive(): Received a message "
-				"from busId=%d while expecting a message from busId=%d.",
-				actualBusId, expectedBusId);
-		throw std::runtime_error("CommunicationsBus::receive(): Received "
-				"unexpected message. Check /var/log/syslog for details.");
+		logMessage("CommunicationsBus::%s: Received unexpected message from busId=%d while expecting a message from busId=%d.  Check /var/log/syslog for details.") %__func__ %actualBusId %expectedBusId).raise<std::runtime_error>();
 	}
 
 	return 0;
