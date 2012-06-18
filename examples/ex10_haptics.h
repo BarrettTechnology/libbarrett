@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * ex10_haptics.h
  *
  *  Created on: Apr 14, 2010
@@ -12,7 +35,7 @@
 
 #include <stdexcept>
 
-#include <syslog.h>
+#include <os.h>
 #include <unistd.h> /* for close() */
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
@@ -44,23 +67,20 @@ public:
 		sock = socket(PF_INET, SOCK_DGRAM, 0);
 		if (sock == -1)
 		{
-			syslog(LOG_ERR,"%s: Could not create socket.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not create socket: %d") % __func__ % ret).raise<std::runtime_error>();
 		}
 
 		/* Set socket to non-blocking, set flag associated with open file */
 		flags = fcntl(sock, F_GETFL, 0);
 		if (flags < 0)
 		{
-			syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get socket flags %d") % __func__ % ret).raise<std::runtime_error>();
 		}
 		flags |= O_NONBLOCK;
 		err = fcntl(sock, F_SETFL, flags);
 		if (err < 0)
 		{
-			syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set socket flags %d") % __func__ % ret).raise<std::runtime_error>();
 		}
 
 		/* Maybe set UDP buffer size? */
@@ -68,28 +88,25 @@ public:
 		err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
 		if (err)
 		{
-			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not get output buffer size %d") % __func__ % ret).raise<std::runtime_error>();
 		}
-		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
+		(logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
 
 		buflenlen = sizeof(buflen);
 		buflen = 5 * SIZE_OF_MSG;
 		err = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, buflenlen);
 		if (err)
 		{
-			syslog(LOG_ERR,"%s: Could not set output buffer size.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not set output buffer size %d") % __func__ % ret).raise<std::runtime_error();
 		}
 
 		buflenlen = sizeof(buflen);
 		err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
 		if (err)
 		{
-			syslog(LOG_ERR,"%s: Could not get output buffer size.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get output buffer size %d") % __func__ % ret).raise<std::runtime_error();
 		}
-		syslog(LOG_ERR,"%s: Note, output buffer is %d bytes.",__func__,buflen);
+		(logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
 
 		/* Set up the bind address */
 		bind_addr.sin_family = AF_INET;
@@ -98,8 +115,7 @@ public:
 		err = bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
 		if (err == -1)
 		{
-			syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not bind to socket on port %d") % __func__ % ret).raise<std::runtime_error();
 		}
 
 		/* Set up the other guy's address */
@@ -108,16 +124,14 @@ public:
 		err = ! inet_pton(AF_INET, remoteHost, &their_addr.sin_addr);
 		if (err)
 		{
-			syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Bad IP argument '%s'.") %__func__ % remoteHost).raise<std::runtime_error>();
 		}
 
 		/* Call "connect" to set datagram destination */
 		err = connect(sock, (struct sockaddr *)&their_addr, sizeof(struct sockaddr));
 		if (err)
 		{
-			syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
-			throw std::runtime_error("(NetworkHaptics::NetworkHaptics): Ctor failed. Check /var/log/syslog.");
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set datagram destination.") % __func__ % ret)raise<std::runtime_error();
 		}
 
 
