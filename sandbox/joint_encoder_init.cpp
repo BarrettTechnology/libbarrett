@@ -29,7 +29,7 @@ const double TOLERANCE = 10 * M_PI/180.0;
 
 template<size_t DOF> void printEncoderStatus(const systems::Wam<DOF>& wam) {
 	for (size_t i = 0; i < DOF; ++i) {
-		printf("  Encoder %u ", (unsigned int)i);
+		printf("  Encoder %u ", (unsigned int)i+1);
 		if (wam.getLowLevelWam().getMotorPucks()[i].foundIndexPulse()) {
 			printf("initialized\n");
 		} else {
