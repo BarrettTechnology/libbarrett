@@ -48,7 +48,7 @@ public:
 	bool hasJointEncoders() const { return !noJointEncoders; }
 	void setPositionSensor(enum PositionSensor sensor);
 	enum PositionSensor getPositionSensor() const { return positionSensor; }
-	bool usingJoinEncoder(size_t jointIndex) const { return useJointEncoder[jointIndex]; }
+	bool usingJointEncoder(size_t jointIndex) const { return useJointEncoder[jointIndex]; }
 
 
 	const jp_type& getHomePosition() const { return home; }
