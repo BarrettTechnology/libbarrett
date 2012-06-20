@@ -60,6 +60,7 @@ public:
 	const sqm_type& getJointToPuckPositionTransform() const { return j2pp; }
 	const sqm_type& getPuckToJointPositionTransform() const { return p2jp; }
 	const sqm_type& getJointToPuckTorqueTransform() const { return j2pt; }
+	const v_type& getJointEncoderToJointPositionTransform() const { return jointEncoder2jp; }
 
 
 	void update();
