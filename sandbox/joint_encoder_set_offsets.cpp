@@ -53,13 +53,18 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	int angleIdx = 0;
+	char* zeroStr = NULL;
 	const v_type& je2jp = wam.getLowLevelWam().getJointEncoderToJointPositionTransform();
 	try {
 		for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
 			if (pm.getWamPucks()[i] != NULL  &&  pm.getWamPucks()[i]->hasOption(Puck::RO_OpticalEncOnEnc)) {
 				assert(je2jp[i] > 0.0);
 
-				double zeroAngle = boost::lexical_cast<double>(argv[angleIdx + 1]);
+				zeroStr = argv[angleIdx + 1];
+				if (zeroStr[strlen(zeroStr) - 1] == ',') {
+					zeroStr[strlen(zeroStr) - 1] = '\0';
+				}
+				double zeroAngle = boost::lexical_cast<double>(zeroStr);
 				int zeroCounts = floor(zeroAngle / je2jp[i] + 0.5);
 				int offset = pm.getWamPucks()[i]->getProperty(Puck::JOFST);
 
@@ -72,7 +77,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 	} catch (boost::bad_lexical_cast& e) {
-		printf("ERROR: \"%s\" is not a number\n", argv[angleIdx + 1]);
+		printf("ERROR: \"%s\" is not a number\n", zeroStr);
 		return 1;
 	}
 
