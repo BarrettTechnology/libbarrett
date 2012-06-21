@@ -40,15 +40,18 @@ set(programs
 	low_level_wam
 #	mouse_follow
 	os_test
+	point_to_point_moves
 	puck_terminal
 	quaternion_interpolation
 	read_pendant_state
+	record_jp
 	safety_module
 	tactile_test
 	teach_with_hand
 	tuning
 	two_wams
 	vibrate_wam
+	voltage_control
 	wrist
 	wrist_teach_with_hand
 )
