@@ -94,16 +94,14 @@ protected:
 		double sLow = sNearest - COARSE_STEP;
 		double sHigh = sNearest + COARSE_STEP;
 		for (double s = sLow; s <= sHigh; s += FINE_STEP) {
-			nearest = spline->eval(s);
-			double dist = (nearest - cp).norm();
+			double dist = (spline->eval(s) - cp).norm();
 			if (dist < minDist) {
 				minDist = dist;
 				sNearest = s;
 			}
 		}
-		nearest = spline->eval(sNearest);
 
-		dir = (nearest - cp).normalized();
+		dir = (spline->eval(sNearest) - cp).normalized();
 		depthOutputValue->setData(&minDist);
 		directionOutputValue->setData(&dir);
 	}
@@ -114,7 +112,6 @@ protected:
 
 	std::vector<cp_type> coarsePath;
 	math::Spline<cp_type>* spline;
-	cp_type nearest;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(HapticPath);
