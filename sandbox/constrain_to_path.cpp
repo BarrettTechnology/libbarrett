@@ -53,7 +53,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	wam.gravityCompensate();
-//	pm.getSafetyModule()->setVelocityLimit(1.5);
+	pm.getSafetyModule()->setVelocityLimit(1.5);
 
 
 	{
@@ -80,8 +80,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	for (size_t i = 0; i < lr.numRecords(); ++i) {
 		vec.push_back(lr.getRecord());
 	}
-	math::Spline<cp_type> spline(vec);
-	systems::HapticPath hp(&spline);
+	systems::HapticPath hp(vec);
 
 
 	systems::PIDController<double, double> comp;

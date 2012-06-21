@@ -34,6 +34,7 @@
 
 #include <cmath>
 #include <cassert>
+#include <vector>
 
 #include <Eigen/Core>
 
@@ -50,53 +51,70 @@ namespace systems {
 class HapticPath : public HapticObject {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
-public:
-	HapticPath(const math::Spline<cp_type>* pathPtr, const std::string& sysName = "HapticPath") :
-		HapticObject(sysName), path(*pathPtr)
-	{
-		sLow = path.initialS();
-		sHigh = path.finalS();
-		sNearest = (sLow + sHigh) / 2.0;
+	static const double COARSE_STEP = 0.01;
+	static const double FINE_STEP = 0.0001;
 
-		low = path.eval(sLow);
-		nearest = path.eval(sNearest);
-		high = path.eval(sHigh);
+public:
+	HapticPath(const std::vector<cp_type>& path, const std::string& sysName = "HapticPath") :
+		HapticObject(sysName), nearestIndex(0), spline(NULL)
+	{
+		// Sample the path
+		cp_type prev = path[0];
+		for (size_t i = 0; i < path.size(); ++i) {
+			if ((path[i] - prev).norm() > COARSE_STEP) {
+				coarsePath.push_back(path[i]);
+				prev = path[i];
+			}
+		}
+		spline = new math::Spline<cp_type>(coarsePath);
 	}
-	virtual ~HapticPath() { mandatoryCleanUp(); }
+
+	virtual ~HapticPath() {
+		mandatoryCleanUp();
+		delete spline;
+	}
 
 protected:
-	// The WAM is typically configured to velocity fault at 1.5 m/s. With a
-	// loop-rate of 500 Hz, this corresponds to a maximum change in position of
-	// 0.003 m per execution cycle. It's very unlikely for the WAM to move more
-	// than 0.005 m in one EC.
-	static const double SEARCH_WIDTH = 0.005;
-	static const double TOLERANCE = 0.001;
 	virtual void operate() {
 		const cp_type& cp = input.getValue();
 
-		minDist = (nearest - cp).norm();
-		for (double s = sLow; s <= sHigh; s += SEARCH_WIDTH) {
-			nearest = path.eval(s);
+		// Coarse search
+		minDist = (coarsePath[nearestIndex] - cp).norm();
+		for (size_t i = 0; i < coarsePath.size(); ++i) {
+			double dist = (coarsePath[i] - cp).norm();
+			if (dist < minDist) {
+				minDist = dist;
+				nearestIndex = i;
+			}
+		}
+
+		// Fine search
+		// TODO(dc): Can we do this without relying on Spline's implementation?
+		double sNearest = spline->getImplementation()->ss[nearestIndex];
+		double sLow = sNearest - COARSE_STEP;
+		double sHigh = sNearest + COARSE_STEP;
+		for (double s = sLow; s <= sHigh; s += FINE_STEP) {
+			nearest = spline->eval(s);
 			double dist = (nearest - cp).norm();
 			if (dist < minDist) {
 				minDist = dist;
 				sNearest = s;
 			}
 		}
-		nearest = path.eval(sNearest);
+		nearest = spline->eval(sNearest);
 
 		dir = (nearest - cp).normalized();
-
 		depthOutputValue->setData(&minDist);
 		directionOutputValue->setData(&dir);
 	}
 
 	double minDist;
+	size_t nearestIndex;
 	cf_type dir;
 
-	const math::Spline<cp_type>& path;
-	double sLow, sNearest, sHigh;
-	cp_type low, nearest, high;
+	std::vector<cp_type> coarsePath;
+	math::Spline<cp_type>* spline;
+	cp_type nearest;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(HapticPath);
