@@ -18,6 +18,7 @@ set(programs
 	autotensioner
 	can_terminal
 	can_timing
+	constrain_to_path
 	cv_moves
 	ft_persistent_tare
 	full_system_test
