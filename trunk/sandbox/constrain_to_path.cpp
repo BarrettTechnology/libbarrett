@@ -87,6 +87,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::Constant<double> zero(0.0);
 	systems::TupleGrouper<cf_type, double> tg;
 	systems::Callback<boost::tuple<cf_type, double>, cf_type> mult(scale);
+	systems::Gain<cp_type, double, cf_type> tangentGain(0.0);
+	systems::Summer<cf_type> tfSum;
 	systems::ToolForceToJointTorques<DOF> tf2jt;
 
 	jt_type jtLimits(35.0);
@@ -110,7 +112,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(comp.controlOutput, tg.getInput<1>());
 
 	connect(tg.output, mult.input);
-	connect(mult.output, tf2jt.input);
+	connect(mult.output, tfSum.getInput(0));
+
+	connect(hp.tangentDirectionOutput, tangentGain.input);
+	connect(tangentGain.output, tfSum.getInput(1));
+
+	connect(tfSum.output, tf2jt.input);
 	connect(tf2jt.output, jtSat.input);
 
 	connect(jtSat.output, wam.input);

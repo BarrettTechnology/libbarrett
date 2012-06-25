@@ -54,9 +54,15 @@ class HapticPath : public HapticObject {
 	static const double COARSE_STEP = 0.01;
 	static const double FINE_STEP = 0.0001;
 
+public:		System::Output<cp_type> tangentDirectionOutput;
+protected:	System::Output<cp_type>::Value* tangentDirectionOutputValue;
+
 public:
-	HapticPath(const std::vector<cp_type>& path, const std::string& sysName = "HapticPath") :
-		HapticObject(sysName), nearestIndex(0), spline(NULL)
+	HapticPath(const std::vector<cp_type>& path,
+			const std::string& sysName = "HapticPath") :
+		HapticObject(sysName),
+		tangentDirectionOutput(this, &tangentDirectionOutputValue),
+		nearestIndex(0), spline(NULL)
 	{
 		// Sample the path
 		cp_type prev = path[0];
@@ -102,13 +108,17 @@ protected:
 		}
 
 		dir = (spline->eval(sNearest) - cp).normalized();
+		tangentDir = spline->evalDerivative(sNearest).normalized();
+
 		depthOutputValue->setData(&minDist);
 		directionOutputValue->setData(&dir);
+		tangentDirectionOutputValue->setData(&tangentDir);
 	}
 
 	double minDist;
 	size_t nearestIndex;
 	cf_type dir;
+	cp_type tangentDir;
 
 	std::vector<cp_type> coarsePath;
 	math::Spline<cp_type>* spline;
