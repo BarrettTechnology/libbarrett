@@ -11,7 +11,7 @@
 #include <string>  // For std::string and std::getline()
 #include <cstdlib>  // For std::atexit()
 
-#include <unistd.h>  // For usleep()
+#include <barrett/os.h>  // For usleep()
 
 // The ncurses library allows us to write text to any location on the screen
 #include <curses.h>
@@ -231,7 +231,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 		refresh();  // Ask ncurses to display the new text
-		usleep(100000);  // Slow the loop rate down to roughly 10 Hz
+		btsleep(0.1);  // Slow the loop rate down to roughly 10 Hz
 	}
 
 	return 0;
