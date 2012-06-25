@@ -71,6 +71,7 @@ public:
 	double changeInS() const;
 
 	T eval(double s) const;
+	T evalDerivative(double s) const;
 
 	typedef T result_type;  ///< For use with boost::bind().
 	result_type operator() (double s) const {
