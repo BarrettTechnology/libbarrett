@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-#include <barrett/os.h>
-
 #include <boost/thread.hpp>
 
 #include <barrett/os.h>
@@ -306,7 +304,7 @@ void ghcEntryPoint(GimbalsHandController* ghc, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		btsleep(0.1);
+		btsleep(0.01);
 	}
 
 	close(sock);
@@ -360,7 +358,7 @@ void handEntryPoint(Hand* hand, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		btsleep(0.1);
+		btsleep(0.01);
 	}
 
 	close(sock);

@@ -5,8 +5,6 @@
  *      Author: dc
  */
 
-#include <barrett/os.h>  // btsleep
-
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
