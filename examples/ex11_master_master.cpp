@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include <barrett/os.h>
 
 #include <boost/thread.hpp>
 
@@ -98,7 +98,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				mm.tryLink();
 				wam.trackReferenceSignal(mm.output);
 
-				usleep(100000);  // wait an execution cycle or two
+				btsleep(0.1);  // wait an execution cycle or two
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
 				} else {
@@ -306,7 +306,7 @@ void ghcEntryPoint(GimbalsHandController* ghc, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		usleep(10000);
+		btsleep(0.1);
 	}
 
 	close(sock);
@@ -360,7 +360,7 @@ void handEntryPoint(Hand* hand, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		usleep(10000);
+		btsleep(0.1);
 	}
 
 	close(sock);
