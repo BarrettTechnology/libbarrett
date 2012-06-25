@@ -45,6 +45,7 @@
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 
+#include <barrett/os.h>
 #include <barrett/cdlbt/gsl.h>
 #include <barrett/cdlbt/kinematics.h>
 #include <barrett/cdlbt/calgrav.h>
@@ -358,7 +359,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		mvprintw(11, 0, "Recent Statistics:");
 
 		refresh();
-		usleep(50000);
+		btsleep(0.05);
 
 		/* Move through the state machine */
 		switch (phase) {
