@@ -391,7 +391,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_ty
 		if ( !trajectory.output.isConnected() ) {
 			return;
 		}
-	btsleep(0.01);
+		btsleep(0.01);
 	}
 
 	doneMoving = true;
