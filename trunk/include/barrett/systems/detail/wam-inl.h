@@ -42,6 +42,7 @@
 
 #include <libconfig.h>
 
+#include <barrett/os.h>
 #include <barrett/units.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
@@ -315,12 +316,12 @@ void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& cu
 
 	// wait until move starts
 	while ( !started ) {
-		usleep(1000);
+		btsleep(0.001);
 	}
 
 	if (blocking) {
 		while (!moveIsDone()) {
-			usleep(10000);
+			btsleep(0.01);
 		}
 	}
 }
@@ -390,14 +391,14 @@ void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_ty
 		if ( !trajectory.output.isConnected() ) {
 			return;
 		}
-		usleep(10000);
+	btsleep(0.01);
 	}
 
 	doneMoving = true;
 
 	// wait until the trajectory is no longer referenced by supervisoryController
 	while (trajectory.output.isConnected()) {
-		usleep(10000);
+		btsleep(0.01);
 	}
 }
 
