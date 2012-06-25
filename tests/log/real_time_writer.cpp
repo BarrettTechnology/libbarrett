@@ -9,9 +9,8 @@
 #include <cstdio>
 #include <stdexcept>
 
-#include <unistd.h>  // usleep
-
 #include <gtest/gtest.h>
+#include <barrett/os.h>
 #include <barrett/log/real_time_writer.h>
 #include "./verify_file_contents.h"
 
@@ -49,7 +48,7 @@ void fillLogVerify(size_t n, size_t period) {
 		lw.putRecord(ds[i]);
 
 		if (period != 0) {
-			usleep(period);
+			btsleep(period*0.000001);
 		}
 	}
 	lw.close();
