@@ -11,7 +11,7 @@
 #include <string>  // For std::string and std::getline()
 #include <cstdlib>  // For std::atexit()
 
-#include <barrett/os.h>  // For usleep()
+#include <barrett/os.h>  // For btsleep()
 
 // The ncurses library allows us to write text to any location on the screen
 #include <curses.h>
