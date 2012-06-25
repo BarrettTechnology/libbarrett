@@ -2,10 +2,13 @@
  * constrain_to_path.cpp
  *
  *  Created on: Jun 21, 2012
- *      Author: robot
+ *      Author: dc
  */
 
+#include <iostream>
+#include <string>
 #include <cstdio>
+#include <cstdlib>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -124,6 +127,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.idle();
 
+
+	std::string line;
+	bool going = true;
+	while (going) {
+		printf(">>> Set tangent force: ");
+		std::getline(std::cin, line);
+
+		double f = strtod(line.c_str(), NULL);
+		tangentGain.setGain(f);
+	}
 
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
