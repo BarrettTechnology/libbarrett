@@ -54,91 +54,97 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		return 1;
 	}
 
+	pm.getSafetyModule()->setVelocityLimit(1.25);
 
-	wam.gravityCompensate();
-	pm.getSafetyModule()->setVelocityLimit(1.5);
+	while (true) {
+		pm.getSafetyModule()->waitForMode(SafetyModule::ACTIVE);
+		wam.gravityCompensate();
+
+		do {
+			{
+				const double T_s = pm.getExecutionManager()->getPeriod();
+				// Record at 1/10th of the loop rate
+				systems::PeriodicDataLogger<cp_type> tpLogger(pm.getExecutionManager(),
+						new barrett::log::RealTimeWriter<cp_type>(tmpFile, 10*T_s), 10);
 
 
-	{
-		const double T_s = pm.getExecutionManager()->getPeriod();
-		// Record at 1/10th of the loop rate
-		systems::PeriodicDataLogger<cp_type> tpLogger(pm.getExecutionManager(),
-				new barrett::log::RealTimeWriter<cp_type>(tmpFile, 10*T_s), 10);
+				printf("Press [Enter] to start recording path.\n");
+				waitForEnter();
+				connect(wam.toolPosition.output, tpLogger.input);
+
+				printf("Press [Enter] to stop recording.\n");
+				waitForEnter();
+				wam.moveTo(wam.getToolPosition());  // Hold position at one end point
+				tpLogger.closeLog();
+			}
+
+			// Build spline between recorded points
+			log::Reader<cp_type> lr(tmpFile);
+			std::vector<cp_type> vec;
+			for (size_t i = 0; i < lr.numRecords(); ++i) {
+				vec.push_back(lr.getRecord());
+			}
+			systems::HapticPath hp(vec);
 
 
-		printf("Press [Enter] to start recording path.\n");
-		waitForEnter();
-		connect(wam.toolPosition.output, tpLogger.input);
+			systems::PIDController<double, double> comp;
+			systems::Constant<double> zero(0.0);
+			systems::TupleGrouper<cf_type, double> tg;
+			systems::Callback<boost::tuple<cf_type, double>, cf_type> mult(scale);
+			systems::Gain<cp_type, double, cf_type> tangentGain(0.0);
+			systems::Summer<cf_type> tfSum;
+			systems::ToolForceToJointTorques<DOF> tf2jt;
 
-		printf("Press [Enter] to stop recording.\n");
-		waitForEnter();
-		tpLogger.closeLog();
+			jt_type jtLimits(35.0);
+			systems::Callback<jt_type> jtSat(boost::bind(saturateJt<DOF>, _1, jtLimits));
 
-		wam.moveTo(wam.getToolPosition());  // Hold position at one end point
+			// configure Systems
+			double kp = 3e3;
+			double kd = 3e1;
+
+			comp.setKp(kp);
+			comp.setKd(kd);
+
+			// connect Systems
+			connect(wam.toolPosition.output, hp.input);
+
+			connect(wam.kinematicsBase.kinOutput, tf2jt.kinInput);
+			connect(hp.directionOutput, tg.getInput<0>());
+
+			connect(hp.depthOutput, comp.referenceInput);
+			connect(zero.output, comp.feedbackInput);
+			connect(comp.controlOutput, tg.getInput<1>());
+
+			connect(tg.output, mult.input);
+			connect(mult.output, tfSum.getInput(0));
+
+			connect(hp.tangentDirectionOutput, tangentGain.input);
+			connect(tangentGain.output, tfSum.getInput(1));
+
+			connect(tfSum.output, tf2jt.input);
+			connect(tf2jt.output, jtSat.input);
+
+			connect(jtSat.output, wam.input);
+
+			wam.idle();
+
+
+			std::string line;
+			while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
+				printf(">>> Set tangent force ('x' to record another path): ");
+				std::getline(std::cin, line);
+
+				if (line[0] == 'x') {
+					break;
+				}
+
+				double f = strtod(line.c_str(), NULL);
+				tangentGain.setGain(f);
+			}
+		} while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE);
+
+		wam.gravityCompensate(false);
 	}
-
-	// Build spline between recorded points
-	log::Reader<cp_type> lr(tmpFile);
-	std::vector<cp_type> vec;
-	for (size_t i = 0; i < lr.numRecords(); ++i) {
-		vec.push_back(lr.getRecord());
-	}
-	systems::HapticPath hp(vec);
-
-
-	systems::PIDController<double, double> comp;
-	systems::Constant<double> zero(0.0);
-	systems::TupleGrouper<cf_type, double> tg;
-	systems::Callback<boost::tuple<cf_type, double>, cf_type> mult(scale);
-	systems::Gain<cp_type, double, cf_type> tangentGain(0.0);
-	systems::Summer<cf_type> tfSum;
-	systems::ToolForceToJointTorques<DOF> tf2jt;
-
-	jt_type jtLimits(35.0);
-	systems::Callback<jt_type> jtSat(boost::bind(saturateJt<DOF>, _1, jtLimits));
-
-	// configure Systems
-	double kp = 3e3;
-	double kd = 3e1;
-
-	comp.setKp(kp);
-	comp.setKd(kd);
-
-	// connect Systems
-	connect(wam.toolPosition.output, hp.input);
-
-	connect(wam.kinematicsBase.kinOutput, tf2jt.kinInput);
-	connect(hp.directionOutput, tg.getInput<0>());
-
-	connect(hp.depthOutput, comp.referenceInput);
-	connect(zero.output, comp.feedbackInput);
-	connect(comp.controlOutput, tg.getInput<1>());
-
-	connect(tg.output, mult.input);
-	connect(mult.output, tfSum.getInput(0));
-
-	connect(hp.tangentDirectionOutput, tangentGain.input);
-	connect(tangentGain.output, tfSum.getInput(1));
-
-	connect(tfSum.output, tf2jt.input);
-	connect(tf2jt.output, jtSat.input);
-
-	connect(jtSat.output, wam.input);
-
-	wam.idle();
-
-
-	std::string line;
-	bool going = true;
-	while (going) {
-		printf(">>> Set tangent force: ");
-		std::getline(std::cin, line);
-
-		double f = strtod(line.c_str(), NULL);
-		tangentGain.setGain(f);
-	}
-
-	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 
 	std::remove(tmpFile);
 	return 0;
