@@ -35,17 +35,19 @@
 
 #include <stdexcept>
 
-#include <os.h>
 #include <unistd.h> /* for close() */
 #include <sys/socket.h> /* For sockets */
 #include <fcntl.h>      /* To change socket to nonblocking mode */
 #include <arpa/inet.h>  /* For inet_pton() */
 
+#include <barrett/os.h>
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
 #include <barrett/systems/abstract/single_io.h>
 #include <barrett/thread/disable_secondary_mode_warning.h>
 
+
+using namespace barrett;
 
 class NetworkHaptics : public barrett::systems::SingleIO<barrett::units::CartesianPosition::type, barrett::units::CartesianForce::type> {
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
@@ -67,20 +69,20 @@ public:
 		sock = socket(PF_INET, SOCK_DGRAM, 0);
 		if (sock == -1)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not create socket: %d") % __func__ % ret).raise<std::runtime_error>();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not create socket.") % __func__ ).raise<std::runtime_error>();
 		}
 
 		/* Set socket to non-blocking, set flag associated with open file */
 		flags = fcntl(sock, F_GETFL, 0);
 		if (flags < 0)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get socket flags %d") % __func__ % ret).raise<std::runtime_error>();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get socket flags.") % __func__).raise<std::runtime_error>();
 		}
 		flags |= O_NONBLOCK;
 		err = fcntl(sock, F_SETFL, flags);
 		if (err < 0)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set socket flags %d") % __func__ % ret).raise<std::runtime_error>();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set socket flags.") % __func__ ).raise<std::runtime_error>();
 		}
 
 		/* Maybe set UDP buffer size? */
@@ -88,7 +90,7 @@ public:
 		err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
 		if (err)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not get output buffer size %d") % __func__ % ret).raise<std::runtime_error>();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not get output buffer size.") % __func__ ).raise<std::runtime_error>();
 		}
 		(logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
 
@@ -97,14 +99,14 @@ public:
 		err = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, buflenlen);
 		if (err)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not set output buffer size %d") % __func__ % ret).raise<std::runtime_error();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not set output buffer size.") % __func__ ).raise<std::runtime_error>();
 		}
 
 		buflenlen = sizeof(buflen);
 		err = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&buflen, &buflenlen);
 		if (err)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get output buffer size %d") % __func__ % ret).raise<std::runtime_error();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get output buffer size.") % __func__ ).raise<std::runtime_error>();
 		}
 		(logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
 
@@ -115,7 +117,7 @@ public:
 		err = bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
 		if (err == -1)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not bind to socket on port %d") % __func__ % ret).raise<std::runtime_error();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not bind to socket on port %d") % __func__ % port).raise<std::runtime_error>();
 		}
 
 		/* Set up the other guy's address */
@@ -131,7 +133,7 @@ public:
 		err = connect(sock, (struct sockaddr *)&their_addr, sizeof(struct sockaddr));
 		if (err)
 		{
-			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set datagram destination.") % __func__ % ret)raise<std::runtime_error();
+			(logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not set datagram destination.") % __func__ ).raise<std::runtime_error>();
 		}
 
 
