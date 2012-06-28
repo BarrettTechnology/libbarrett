@@ -32,10 +32,13 @@
 
 #include <stdexcept>
 #include <vector>
+#include <limits>
 #include <cmath>
+#include <cassert>
 
 #include <native/timer.h>
 
+#include <boost/static_assert.hpp>
 #include <Eigen/LU>
 #include <libconfig.h++>
 
@@ -61,7 +64,10 @@ const enum Puck::Property LowLevelWam<DOF>::props[] = { Puck::P, Puck::T };
 template<size_t DOF>
 LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _safetyModule, const libconfig::Setting& setting, std::vector<int> torqueGroupIds) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_WAM, props, sizeof(props)/sizeof(props[0]), "LowLevelWam::LowLevelWam()"),
-	safetyModule(_safetyModule), torqueGroups(), home(setting["home"]), j2mp(setting["j2mp"]), lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
+	safetyModule(_safetyModule), torqueGroups(),
+	home(setting["home"]), j2mp(setting["j2mp"]),
+	noJointEncoders(true), positionSensor(PS_MOTOR_ENCODER),
+	lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
 {
 	logMessage("  Config setting: %s => \"%s\"") % setting.getSourceFile() % setting.getPath();
 
@@ -187,6 +193,36 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	}
 
 
+	// Joint encoders
+	setPositionSensor(PS_MOTOR_ENCODER);  // Use motor encoders by default
+	int numJe = 0;
+	int numInitializedJe = 0;
+
+	for (size_t i = 0; i < DOF; ++i) {
+		if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)) {
+			++numJe;
+			if (motorPucks[i].foundIndexPulse()) {
+				++numInitializedJe;
+			}
+		}
+	}
+
+	// If there are joint encoders, look up counts per revolution from the config file
+	if (numJe != 0) {
+		noJointEncoders = false;
+		logMessage("  Found %d joint encoders (%d are initialized)") % numJe % numInitializedJe;
+
+		v_type jointEncoderCpr(setting["joint_encoder_counts"]);
+		for (size_t i = 0; i < DOF; ++i) {
+			if (jointEncoderCpr[i] == 0.0) {
+				jointEncoder2jp[i] = 0.0;
+			} else {
+				jointEncoder2jp[i] = 2*M_PI / jointEncoderCpr[i];
+			}
+		}
+	}
+
+
 	// Prevent velocity faults on startup due to WAM motion while no program was running.
 	if (safetyModule != NULL) {
 		safetyModule->ignoreNextVelocityFault();
@@ -195,7 +231,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 
 	// Get good initial values for jp_1 and lastUpdate
 	update();
-	jv.setZero();
+	jv_best.setZero();
 }
 
 template<size_t DOF>
@@ -204,17 +240,91 @@ LowLevelWam<DOF>::~LowLevelWam()
 	detail::purge(torqueGroups);
 }
 
+
+template<size_t DOF>
+inline const typename LowLevelWam<DOF>::jp_type& LowLevelWam<DOF>::getJointPositions(enum PositionSensor sensor) const {
+	switch (sensor) {
+	case PS_MOTOR_ENCODER:
+		return jp_motorEncoder;
+		break;
+	case PS_JOINT_ENCODER:
+		return jp_jointEncoder;
+		break;
+	default:
+		return jp_best;
+	}
+}
+
+template<size_t DOF>
+void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
+{
+	switch (sensor) {
+	case PS_MOTOR_ENCODER:
+		useJointEncoder.assign(false);
+		break;
+	case PS_JOINT_ENCODER:
+		if ( !hasJointEncoders() ) {
+			(logMessage("LowLevelWam::%s: This WAM is not equipped with joint encoders.")
+					% __func__).template raise<std::logic_error>();
+		}
+		for (size_t i = 0; i < DOF; ++i) {
+			if (pucks[i]->hasOption(Puck::RO_OpticalEncOnEnc)  &&  motorPucks[i].foundIndexPulse()) {
+				useJointEncoder[i] = true;
+			} else {
+				useJointEncoder[i] = false;
+			}
+		}
+		break;
+	default:
+		(logMessage("LowLevelWam::%s: Bad sensor value: %d")
+				% __func__ % sensor).template raise<std::logic_error>();
+		break;
+	}
+
+	positionSensor = sensor;
+}
+
+
 template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
 	RTIME now = rt_timer_read();
-	group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
 
-	jp = p2jp * pp;  // Convert from Puck positions to joint positions
-	jv = (jp - jp_1) / (1e-9 * (now - lastUpdate));
+	if (noJointEncoders) {
+		group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
+		jp_motorEncoder = p2jp * pp;  // Convert from Puck positions to joint positions
+		jp_best = jp_motorEncoder;
+	} else {
+		// Make sure the reinterpret_cast below makes sense.
+		BOOST_STATIC_ASSERT(sizeof(MotorPuck::CombinedPositionParser<double>::result_type) == 2*sizeof(double));
+
+		// PuckGroup::getProperty() will fill pp_jep.data() with 2*DOF doubles:
+		// Primary Encoder 1, Secondary Encoder 1, Primary Encoder 2, Secondary Encoder 2, ...
+		group.getProperty<MotorPuck::CombinedPositionParser<double> >(
+				Puck::P,
+				reinterpret_cast<MotorPuck::CombinedPositionParser<double>::result_type*>(pp_jep.data()),
+				true);
+		jp_motorEncoder = p2jp * pp_jep.col(0);
+
+		for (size_t i = 0; i < DOF; ++i) {
+			if (pp_jep(i,1) == std::numeric_limits<double>::max()) {
+				jp_jointEncoder[i] = 0.0;
+				jp_best[i] = jp_motorEncoder[i];
+			} else {
+				jp_jointEncoder[i] = jointEncoder2jp[i] * pp_jep(i,1);
+				if (useJointEncoder[i]) {
+					jp_best[i] = jp_jointEncoder[i];
+				} else {
+					jp_best[i] = jp_motorEncoder[i];
+				}
+			}
+		}
+	}
+
+	jv_best = (jp_best - jp_best_1) / (1e-9 * (now - lastUpdate));
 	// TODO(dc): Detect unreasonably large velocities
 
-	jp_1 = jp;
+	jp_best_1 = jp_best;
 	lastUpdate = now;
 }
 

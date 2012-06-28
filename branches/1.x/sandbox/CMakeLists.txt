@@ -29,6 +29,8 @@ set(programs
 	inverse_dynamics_test
 	inverse_dynamics_test_teach_and_play
 	inverse_dynamics_test_teach_and_play_accel
+	joint_encoder_index_adjustments
+	joint_encoder_init
 	load_ft_cal
 #	log_ft_data_with_wam
 	log_ft_data

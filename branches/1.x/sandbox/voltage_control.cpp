@@ -49,9 +49,9 @@ public:
 		}
 
 		for (size_t i = 0; i < DOF; ++i) {
-			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
-			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
-			wam.llww.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
+			wam.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKCOR);
+			wam.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKP);
+			wam.getLowLevelWam().getPucks()[i]->resetProperty(Puck::IKI);
 		}
 
 		wam.jpController.setFromConfig(pm.getConfig().lookup(pm.getWamDefaultConfigPath())["joint_position_control"]);
@@ -64,9 +64,9 @@ public:
 			return;
 		}
 
-		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
-		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
-		wam.llww.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
+		wam.getLowLevelWam().getPuckGroup().setProperty(Puck::IKI, 0);
+		wam.getLowLevelWam().getPuckGroup().setProperty(Puck::IKP, 8000);
+		wam.getLowLevelWam().getPuckGroup().setProperty(Puck::IKCOR, 0);
 
 		wam.jpController.setKi(v_type(0.0));
 		wam.jpController.setKd(v_type(0.0));
@@ -208,7 +208,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	for (size_t i = 0; i < DOF; ++i) {
-		assert(wam.llww.getLowLevelWam().getPucks()[i]->getVers() >= 200);
+		assert(wam.getLowLevelWam().getPucks()[i]->getVers() >= 200);
 	}
 
 
