@@ -1,5 +1,5 @@
 /*
-	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -40,6 +40,7 @@
 
 #include <barrett/detail/ca_macro.h>
 #include <barrett/units.h>
+#include <barrett/products/low_level_wam.h>
 #include <barrett/products/puck.h>
 #include <barrett/products/safety_module.h>
 #include <barrett/math/kinematics.h>
@@ -146,6 +147,9 @@ public:
 
 
 	thread::Mutex& getEmMutex() const { return llww.getEmMutex(); }
+
+	LowLevelWam<DOF>& getLowLevelWam() { return llww.getLowLevelWam(); }
+	const LowLevelWam<DOF>& getLowLevelWam() const { return llww.getLowLevelWam(); }
 
 protected:
 	template<typename T> T currentPosHelper(const T& currentPos);

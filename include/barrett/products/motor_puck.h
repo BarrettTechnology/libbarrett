@@ -48,6 +48,10 @@ public:
 	int getIpnm() const { return ipnm; }
 	int nm2i(double torque) const { return floor(math::saturate(torque*ipnm, MAX_PUCK_TORQUE)); }
 
+	bool foundIndexPulse() const {
+		return (p->getProperty(Puck::ECMIN) != 0)  ||  (p->getProperty(Puck::ECMAX) != 0);
+	}
+
 
 	static void sendPackedTorques(const bus::CommunicationsBus& bus, int groupId, int propId,
 			const double* pt, int numTorques);

@@ -13,6 +13,7 @@
 #include <vector>
 #include <native/timer.h>
 
+#include <boost/array.hpp>
 #include <Eigen/Core>
 #include <libconfig.h++>
 
@@ -39,8 +40,15 @@ public:
 	~LowLevelWam();
 
 
-	const jp_type& getJointPositions() const { return jp; }
-	const jv_type& getJointVelocities() const { return jv; }
+	enum PositionSensor { PS_BEST, PS_MOTOR_ENCODER, PS_JOINT_ENCODER };
+	const jp_type& getJointPositions(enum PositionSensor sensor = PS_BEST) const;
+	const jv_type& getJointVelocities() const { return jv_best; }
+
+
+	bool hasJointEncoders() const { return !noJointEncoders; }
+	void setPositionSensor(enum PositionSensor sensor);
+	enum PositionSensor getPositionSensor() const { return positionSensor; }
+	bool usingJoinEncoder(size_t jointIndex) const { return useJointEncoder[jointIndex]; }
 
 
 	const jp_type& getHomePosition() const { return home; }
@@ -68,11 +76,18 @@ protected:
 	jp_type home;
 	sqm_type j2mp, m2jp, j2mt;
 	sqm_type j2pp, p2jp, j2pt;
+	v_type jointEncoder2jp;
+
+	bool noJointEncoders;
+	boost::array<bool, DOF> useJointEncoder;
+	enum PositionSensor positionSensor;
 
 	RTIME lastUpdate;
 	v_type pp;
-	jp_type jp, jp_1;
-	jv_type jv;
+	math::Matrix<DOF,2> pp_jep;
+	jp_type jp_motorEncoder, jp_jointEncoder;
+	jp_type jp_best, jp_best_1;
+	jv_type jv_best;
 
 	v_type pt;
 	int torquePropId;
