@@ -86,6 +86,55 @@ b.close()
 
 ### products
 
+# ProductManager
+assertHasattrs(ProductManager, "DEFAULT_CONFIG_FILE MAX_WAM_DOF SAFETY_MODULE_ID FORCE_TORQUE_SENSOR_ID")
+assertHasattrs(ProductManager, "enumerate cleanUpAfterEstop waitForWam startExecutionManager")
+
+pm = ProductManager()
+pm = ProductManager("../config/default.conf")
+bus = bus.BusManager(CAN_PORT)
+pm = ProductManager("../config/default.conf", bus)
+
+pm.getPuck(1).setProperty(Puck.STAT, 0)
+pm.getPuck(2).setProperty(Puck.STAT, 0)
+sleep(1)
+assert pm.getPuck(1).getProperty(Puck.STAT) == 0
+assert pm.getPuck(2).getProperty(Puck.STAT) == 0
+pm.wakeAllPucks()
+assert pm.getPuck(1).getProperty(Puck.STAT) == 2
+assert pm.getPuck(2).getProperty(Puck.STAT) == 2
+
+assert pm.foundSafetyModule()
+
+assert pm.foundWam()
+if pm.foundWam4():
+	assert not pm.foundWam7()
+	assert not pm.foundWam7Wrist()
+	assert not pm.foundWam7Gimbals()
+	assert pm.getWamDefaultConfigPath() == "wam4"
+elif pm.foundWam7Wrist():
+	assert not pm.foundWam4()
+	assert pm.foundWam7()
+	assert not pm.foundWam7Gimbals()
+	assert pm.getWamDefaultConfigPath() == "wam7w"
+elif pm.foundWam7Gimbals():
+	assert not pm.foundWam4()
+	assert pm.foundWam7()
+	assert not pm.foundWam7Wrist()
+	assert pm.getWamDefaultConfigPath() == "wam7g"
+else:
+	assert False
+
+assert not pm.foundForceTorqueSensor()
+
+assert not pm.foundHand()
+
+assert not pm.foundGimbalsHandController()
+
+for i in range(1,5):
+	assert pm.getPuck(i).getId() == i
+assert pm.getPuck(9) is None
+
 # Puck
 assertHasattrs(Puck, "RO_MagEncOnSerial RO_Strain RO_OpticalEncOnEnc")
 

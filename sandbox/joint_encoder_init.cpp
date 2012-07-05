@@ -26,10 +26,13 @@ const double OFFSET = 15 * M_PI/180.0;
 // ... plus or minus 10 degrees.
 const double TOLERANCE = 10 * M_PI/180.0;
 
+// Currently JE's are only available for the first 4 DOF
+const size_t NUM_JOINT_ENCODERS = 4;
+
 
 template<size_t DOF> void printEncoderStatus(const systems::Wam<DOF>& wam) {
-	for (size_t i = 0; i < DOF; ++i) {
-		printf("  Encoder %u ", (unsigned int)i);
+	for (size_t i = 0; i < NUM_JOINT_ENCODERS; ++i) {
+		printf("  Encoder %u ", (unsigned int)i+1);
 		if (wam.getLowLevelWam().getMotorPucks()[i].foundIndexPulse()) {
 			printf("initialized\n");
 		} else {
@@ -55,8 +58,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	indexPositions[2] = 0.0 - OFFSET;
 	indexPositions[3] = M_PI - OFFSET;
 
-	v_type dir = math::sign(indexPositions - wam.getJointPositions());
+	jp_type jp = wam.getJointPositions();
+	v_type dir = math::sign(indexPositions - jp);
 	jp_type farSideOfIndexes = indexPositions + TOLERANCE * dir;
+
+	// The wrist doesn't need to move.
+	for (size_t i = NUM_JOINT_ENCODERS; i < DOF; ++i) {
+		farSideOfIndexes[i] = jp[i];
+	}
 
 
 	printf("Before:\n");

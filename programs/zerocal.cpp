@@ -44,6 +44,7 @@
 #include <Eigen/Core>
 #include <libconfig.h++>
 
+#include <barrett/os.h>
 #include <barrett/exception.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
@@ -215,19 +216,27 @@ public:
 
 			case K_ENTER:
 				if (wam.moveIsDone()) {
+					LowLevelWam<DOF>& llw = wam.getLowLevelWam();
+
 					// Record actual joint position, not commanded joint position
 					zeroPos[j] = wam.getJointPositions()[j];
 
 					// Record the motor angles that affect this joint
-					const sqm_type& m2jp = wam.getLowLevelWam().getMotorToJointPositionTransform();
+					const sqm_type& m2jp = llw.getMotorToJointPositionTransform();
 					double tolerance = m2jp.cwise().abs().maxCoeff() * 1e-5;
 					for (size_t i = 0; i < DOF; ++i) {
 						// If the j,i entry is non-zero, then Motor i is in some way connected to Joint j
 						if (math::abs(m2jp(j,i)) > tolerance) {
-							int mech = wam.getLowLevelWam().getPucks()[i]->getProperty(Puck::MECH);
-							zeroAngle[i] = wam.getLowLevelWam().getMotorPucks()[i].counts2rad(mech);
+							int mech = llw.getPucks()[i]->getProperty(Puck::MECH);
+							zeroAngle[i] = llw.getMotorPucks()[i].counts2rad(mech);
 						}
 					}
+
+					// Log joint encoder data for factory calibration
+					if (llw.hasJointEncoders()) {
+						logMessage("Joint encoder angles: %s") % llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
+					}
+
 					return false;  // Move on to the next joint!
 				}
 				break;

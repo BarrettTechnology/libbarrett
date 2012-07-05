@@ -16,6 +16,7 @@ using namespace barrett;
 
 int main(int argc, char** argv) {
 	ProductManager pm;
+	pm.waitForWam(false);
 	pm.wakeAllPucks();
 
 	if (argc == 2  &&  strcmp(argv[1], "--reset") == 0) {
