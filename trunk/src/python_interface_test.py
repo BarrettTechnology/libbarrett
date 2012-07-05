@@ -135,8 +135,6 @@ for i in range(1,5):
 	assert pm.getPuck(i).getId() == i
 assert pm.getPuck(9) is None
 
-exit()
-
 # Puck
 assertHasattrs(Puck, "RO_MagEncOnSerial RO_Strain RO_OpticalEncOnEnc")
 
