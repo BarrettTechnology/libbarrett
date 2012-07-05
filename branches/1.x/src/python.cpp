@@ -59,11 +59,6 @@ bool isWamActivated(ProductManager& pm) {
 	return pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE;
 }
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_getExecutionManager_overloads, getExecutionManager, 0, 2)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_waitForWam_overloads, waitForWam, 0, 1)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_getWam4_overloads, getWam4, 0, 2)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ProductManager_getWam7_overloads, getWam7, 0, 2)
-
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(Wam_gravityCompensate_overloads, gravityCompensate, 0, 1)
 template<size_t DOF>
@@ -90,17 +85,4 @@ BOOST_PYTHON_MODULE(libbarrett)
 	wrapWam<7>();
 
 	def("isWamActivated", &isWamActivated);
-
-	class_<ProductManager, boost::noncopyable>("ProductManager")
-		.def("getExecutionManager", &ProductManager::getExecutionManager,
-				ProductManager_getExecutionManager_overloads()[return_internal_reference<>()])
-		.def("waitForWam", &ProductManager::waitForWam, ProductManager_waitForWam_overloads())
-		.def("wakeAllPucks", &ProductManager::wakeAllPucks)
-		.def("foundWam7", &ProductManager::foundWam7)
-		.def("getWam7", &ProductManager::getWam7,
-				ProductManager_getWam7_overloads()[return_internal_reference<>()])
-		.def("foundWam4", &ProductManager::foundWam4)
-		.def("getWam4", &ProductManager::getWam4,
-				ProductManager_getWam4_overloads()[return_internal_reference<>()])
-	;
 }
