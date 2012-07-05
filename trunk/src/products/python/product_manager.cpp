@@ -38,8 +38,6 @@
 #include <barrett/systems/wam.h>
 #include <barrett/systems/real_time_execution_manager.h>
 
-//#include "../../python.h"
-
 
 using namespace barrett;
 using namespace boost::python;
