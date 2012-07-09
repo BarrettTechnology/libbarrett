@@ -24,7 +24,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system" OFF)
 option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
-option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett (EXPERIMENTAL)" OFF)
+option(WITH_PYTHON "Set to OFF to remove avoid building Python bindings for libbarrett" ON)
 option(INSTALL_EXAMPLES "Set to ON to copy libbarrett example programs to the current user's home folder when the library is installed" ON)
 
 if (OPTIMIZE_FOR_PROCESSOR)
