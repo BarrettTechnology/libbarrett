@@ -92,8 +92,8 @@ assertHasattrs(ProductManager, "enumerate cleanUpAfterEstop waitForWam startExec
 
 pm = ProductManager()
 pm = ProductManager("../config/default.conf")
-bus = bus.BusManager(CAN_PORT)
-pm = ProductManager("../config/default.conf", bus)
+bm = bus.BusManager(CAN_PORT)
+pm = ProductManager("../config/default.conf", bm)
 
 pm.getPuck(1).setProperty(Puck.STAT, 0)
 pm.getPuck(2).setProperty(Puck.STAT, 0)
