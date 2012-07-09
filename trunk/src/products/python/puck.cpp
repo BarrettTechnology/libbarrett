@@ -126,6 +126,7 @@ void pythonProductsPuckInterface() {
 				Puck_setProperty_overloads())
 
 		.def("saveProperty", &Puck::saveProperty)
+		.def("saveAllProperties", &Puck::saveAllProperties)
 		.def("resetProperty", &Puck::resetProperty)
 
 		.def("respondsToProperty", (bool (Puck::*)(enum Puck::Property) const) &Puck::respondsToProperty)
