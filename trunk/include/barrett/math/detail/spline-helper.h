@@ -30,6 +30,7 @@
 
 
 #include <vector>
+#include <cassert>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -60,7 +61,7 @@ struct TupleSplineHolder :
 
 	template<template<typename, typename> class Container, typename Allocator>
 	TupleSplineHolder(const Container<typename parent_spline_type::tuple_type, Allocator>& samples, bool saturateS) :
-		inherited_type(samples, saturateS), spline(NULL)
+		inherited_type(samples, saturateS), spline(NULL), rateAdjustment(1.0)
 	{
 		std::vector<typename current_spline_type::tuple_type> currentSamples;
 		currentSamples.reserve(samples.size());
@@ -71,11 +72,13 @@ struct TupleSplineHolder :
 		}
 
 		spline = new current_spline_type(currentSamples, saturateS);
+		this->initialS = spline->initialS();
+		this->maxChangeInS = spline->changeInS();
 	}
 
 	template<template<typename, typename> class Container, typename Allocator>
 	TupleSplineHolder(const Container<typename parent_spline_type::data_type, Allocator>& points, bool saturateS) :
-		inherited_type(points, saturateS), spline(NULL)
+		inherited_type(points, saturateS), spline(NULL), rateAdjustment(0.0)
 	{
 		std::vector<current_data_type> currentPoints;
 		currentPoints.reserve(points.size());
@@ -86,6 +89,8 @@ struct TupleSplineHolder :
 		}
 
 		spline = new current_spline_type(currentPoints, saturateS);
+		this->initialS = spline->initialS();
+		updateRateAdjustments();
 	}
 
 	~TupleSplineHolder() {
@@ -93,12 +98,25 @@ struct TupleSplineHolder :
 		spline = NULL;
 	}
 
+	void updateRateAdjustments() {
+		double changeInS = spline->changeInS();
+		this->maxChangeInS = math::max(changeInS, this->maxChangeInS);
+
+		inherited_type::updateRateAdjustments();
+
+		rateAdjustment = changeInS / this->maxChangeInS;
+		assert(rateAdjustment <= 1.0);
+	}
+
 	void collectValues(double s) const {
 		inherited_type::collectValues(s);
-		boost::get<N-1>(this->data) = spline->eval(s);
+
+		// Scale s so that all of the component Splines have the same final value.
+		boost::get<N-1>(this->data) = spline->eval(s * rateAdjustment);
 	}
 
 	current_spline_type* spline;
+	double rateAdjustment;
 };
 
 // Specialization for the inheritance base case:
@@ -111,13 +129,18 @@ struct TupleSplineHolder<0, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 	typedef Spline<tuple_type> parent_spline_type;
 
 	template<template<typename, typename> class Container, typename Allocator>
-	TupleSplineHolder(const Container<typename parent_spline_type::tuple_type, Allocator>& samples, bool saturateS)	{}
+	TupleSplineHolder(const Container<typename parent_spline_type::tuple_type, Allocator>& samples, bool saturateS) :
+		initialS(0.0), maxChangeInS(0.0) {}
 
 	template<template<typename, typename> class Container, typename Allocator>
-	TupleSplineHolder(const Container<typename parent_spline_type::data_type, Allocator>& points, bool saturateS) {}
+	TupleSplineHolder(const Container<typename parent_spline_type::data_type, Allocator>& points, bool saturateS) :
+		initialS(0.0), maxChangeInS(0.0) {}
 
+	void updateRateAdjustments() {}
 	void collectValues(double s) const {}
 
+	double initialS;
+	double maxChangeInS;
 	mutable tuple_type data;
 };
 
