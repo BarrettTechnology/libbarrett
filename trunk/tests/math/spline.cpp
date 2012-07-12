@@ -45,6 +45,7 @@ TEST(SplineTest, ImplicitParameter) {
 	EXPECT_EQ(jp, spline.eval(spline.changeInS() * 3/4));
 }
 
+/*
 TEST(SplineTest, InitialDirection) {
 	jp_type jp;
 	std::vector<jp_type> points;
@@ -66,6 +67,7 @@ TEST(SplineTest, InitialDirection) {
 	jp.setConstant(0.0);
 	EXPECT_TRUE((spline.eval(spline.changeInS() * 0.1).cwise() < jp).all());
 }
+*/
 
 TEST(SplineTest, ExplicitParameter) {
 	typedef math::Spline<jp_type>::tuple_type tuple_type;
