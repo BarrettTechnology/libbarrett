@@ -160,7 +160,10 @@ public:
 	double finalS() const { return 0.0; }
 	double changeInS() const { return finalS() - initialS(); }
 
-	data_type eval(double s) const;
+	data_type eval(double s) const {
+		holder.collectValues(s);
+		return holder.data;
+	}
 
 	typedef data_type result_type;  ///< For use with boost::bind().
 	result_type operator() (double s) const {
