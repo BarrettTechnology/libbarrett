@@ -60,7 +60,7 @@ struct TupleSplineHolder :
 
 	// initialDirection is ignored for boost::tuple types
 	template<template<typename, typename> class Container, typename Allocator>
-	TupleSplineHolder(const Container<typename spline_type::T, Allocator>& points, bool saturateS = true);
+	TupleSplineHolder(const Container<typename spline_type::data_type, Allocator>& points, bool saturateS = true);
 
 	spline_type* spline;
 };
