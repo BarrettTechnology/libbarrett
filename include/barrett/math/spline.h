@@ -64,7 +64,7 @@ public:
 
 	// initialDirection will be normalized internally
 	template<template<typename, typename> class Container, typename Allocator>
-	Spline(const Container<T, Allocator>& points, const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0), bool saturateS = true);
+	Spline(const Container<T, Allocator>& points, /*const typename T::unitless_type& initialDirection = typename T::unitless_type(0.0),*/ bool saturateS = true);
 
 	~Spline();
 

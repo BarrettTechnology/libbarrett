@@ -62,7 +62,7 @@ Spline<T>::Spline(const Container<tuple_type, Allocator>& samples, bool saturate
 
 template<typename T>
 template<template<typename, typename> class Container, typename Allocator>
-Spline<T>::Spline(const Container<T, Allocator>& points, const typename T::unitless_type& initialDirection, bool saturateS) :
+Spline<T>::Spline(const Container<T, Allocator>& points, /*const typename T::unitless_type& initialDirection,*/ bool saturateS) :
 	impl(NULL), sat(saturateS), s_0(0.0), s_f(0.0)
 {
 	bt_spline_create(&impl, points[0].asGslType(), BT_SPLINE_MODE_ARCLEN);
@@ -72,9 +72,13 @@ Spline<T>::Spline(const Container<T, Allocator>& points, const typename T::unitl
 		bt_spline_add(impl, (*i).asGslType(), 0);
 	}
 
+	/*
 	// local copy because init modifies its 3rd parameter
 	typename T::unitless_type id(initialDirection);
 	bt_spline_init(impl, NULL, id.asGslType());
+	*/
+	bt_spline_init(impl, NULL, NULL);
+
 	s_f = s_0 + changeInS();
 }
 
