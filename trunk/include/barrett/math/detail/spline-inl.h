@@ -1,4 +1,27 @@
 /*
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
  * spline-inl.h
  *
  *  Created on: Dec 22, 2009
@@ -95,7 +118,7 @@ inline T Spline<T>::evalDerivative(double s) const
 }
 
 
-// Specialization for Eigen::Quaternion  types
+// Specialization for Eigen::Quaternion types
 template<typename Scalar>
 template<template<typename, typename> class Container, typename Allocator>
 Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<tuple_type, Allocator>& samples, bool saturateS) :
@@ -109,7 +132,7 @@ Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<tuple_type, Allocator
 
 template<typename Scalar>
 template<template<typename, typename> class Container, typename Allocator>
-Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<T, Allocator>& points, bool saturateS) :
+Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<data_type, Allocator>& points, bool saturateS) :
 	data(points.size()), sat(saturateS), index(0), rate(-1.0)
 {
 	double s = 0.0;
@@ -129,7 +152,7 @@ Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<T, Allocator>& points
 }
 
 template<typename Scalar>
-typename Spline<Eigen::Quaternion<Scalar> >::T Spline<Eigen::Quaternion<Scalar> >::eval(double s) const
+typename Spline<Eigen::Quaternion<Scalar> >::data_type Spline<Eigen::Quaternion<Scalar> >::eval(double s) const
 {
 	s = saturate(s, initialS(), finalS());
 
