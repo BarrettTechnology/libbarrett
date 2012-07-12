@@ -144,12 +144,17 @@ public:
 	typedef boost::tuple<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> data_type;
 	typedef boost::tuple<double, data_type> tuple_type;
 
+	static const size_t TUPLE_LEN = boost::tuples::length<data_type>::value;
+	typedef detail::TupleSplineHolder<TUPLE_LEN, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> holder_type;
+
 	template<template<typename, typename> class Container, typename Allocator>
-	Spline(const Container<tuple_type, Allocator>& samples, bool saturateS = true);
+	Spline(const Container<tuple_type, Allocator>& samples, bool saturateS = true) :
+		holder(samples, saturateS) {}
 
 	// initialDirection is ignored for boost::tuple types
 	template<template<typename, typename> class Container, typename Allocator>
-	Spline(const Container<data_type, Allocator>& points, bool saturateS = true);
+	Spline(const Container<data_type, Allocator>& points, bool saturateS = true) :
+		holder(points, saturateS) {}
 
 	double initialS() const { return 0.0; }
 	double finalS() const { return 0.0; }
@@ -163,8 +168,7 @@ public:
 	}
 
 protected:
-	static const size_t TUPLE_LEN = boost::tuples::length<data_type>::value;
-	detail::TupleSplineHolder<TUPLE_LEN, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> holder;
+	holder_type holder;
 
 private:
 	// TODO(dc): write a real copy constructor and assignment operator?
