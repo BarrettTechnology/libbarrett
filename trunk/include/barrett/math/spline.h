@@ -156,9 +156,9 @@ public:
 	Spline(const Container<data_type, Allocator>& points, bool saturateS = true) :
 		holder(points, saturateS) {}
 
-	double initialS() const { return 0.0; }
-	double finalS() const { return 0.0; }
-	double changeInS() const { return finalS() - initialS(); }
+	double initialS() const { return holder.initialS; }
+	double finalS() const { return initialS() + changeInS(); }
+	double changeInS() const { return holder.maxChangeInS; }
 
 	data_type eval(double s) const {
 		holder.collectValues(s);
