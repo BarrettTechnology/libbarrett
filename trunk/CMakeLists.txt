@@ -218,6 +218,12 @@ add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${lib
 
 
 ### Other targets
+
+## Set the version number in the Doxyfile
+configure_file(${PROJECT_SOURCE_DIR}/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile
+	ESCAPE_QUOTES @ONLY
+)
+
 if (NON_REALTIME)
 	add_subdirectory(programs EXCLUDE_FROM_ALL)
 else()
