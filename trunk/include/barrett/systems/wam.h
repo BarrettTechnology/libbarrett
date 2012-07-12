@@ -141,6 +141,7 @@ public:
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const cp_type& destination, bool blocking = true, double velocity = 0.1, double acceleration = 0.2);
 	void moveTo(const Eigen::Quaterniond& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
+	void moveTo(const pose_type& destination, bool blocking = true, double velocity = 0.1, double acceleration = 0.2);
 	template<typename T> void moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration);
 	bool moveIsDone() const;
 	void idle();
