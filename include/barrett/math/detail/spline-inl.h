@@ -142,7 +142,12 @@ Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<data_type, Allocator>
 	double s = 0.0;
 	for (size_t i = 0; i < data.size(); ++i) {
 		if (i > 0) {
-			s += points.at(i).angularDistance(points.at(i-1));
+			double ad = points.at(i).angularDistance(points.at(i-1));
+			assert(ad >= 0.0);
+
+			// If the points are too close together, enforce an artificial
+			// minimum distance. This keeps division by delta-s under control.
+			s += math::max(ad, 1e-4);
 		}
 
 		boost::get<0>(data[i]) = s;
