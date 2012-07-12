@@ -93,6 +93,11 @@ struct TupleSplineHolder :
 		spline = NULL;
 	}
 
+	void collectValues(double s) const {
+		inherited_type::collectValues(s);
+		boost::get<N-1>(this->data) = spline->eval(s);
+	}
+
 	current_spline_type* spline;
 };
 
@@ -110,6 +115,10 @@ struct TupleSplineHolder<0, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 
 	template<template<typename, typename> class Container, typename Allocator>
 	TupleSplineHolder(const Container<typename parent_spline_type::data_type, Allocator>& points, bool saturateS) {}
+
+	void collectValues(double s) const {}
+
+	mutable tuple_type data;
 };
 
 
