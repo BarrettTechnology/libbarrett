@@ -14,7 +14,6 @@
 
 #include <barrett/cdlbt/bus.h>
 #include <barrett/cdlbt/bus_can.h>
-#include <barrett/os.h>
 #include <barrett/log.h>
 #include <barrett/systems.h>
 #include <barrett/detail/stacktrace.h>
@@ -46,7 +45,7 @@ void waitForEnter() {
 
 void warnOnSwitchToSecondaryMode(int)
 {
-	logMessage("WARNING: Switched out of RealTime. Stack-trace:");
+	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
 	detail::syslog_stacktrace();
 	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
 }

@@ -5,10 +5,11 @@
  *      Author: dc
  */
 
+#include <unistd.h>  // usleep
+
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include <barrett/os.h>
 #include <barrett/exception.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>

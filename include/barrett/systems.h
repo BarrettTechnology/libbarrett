@@ -74,7 +74,6 @@
 
 #include <barrett/systems/haptic_ball.h>
 #include <barrett/systems/haptic_box.h>
-#include <barrett/systems/haptic_path.h>
 
 #include <barrett/systems/summer.h>
 #include <barrett/systems/gain.h>

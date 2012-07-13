@@ -32,8 +32,6 @@
 #include <iostream>
 #include <cassert>
 
-#include <gsl/gsl_interp.h>
-
 #include <barrett/math/utils.h>
 #include <barrett/cdlbt/spline.h>
 
@@ -104,20 +102,6 @@ inline T Spline<T>::eval(double s) const
 
 	T result;
 	bt_spline_get(impl, result.asGslType(), s - s_0);
-	return result;
-}
-
-template<typename T>
-inline T Spline<T>::evalDerivative(double s) const
-{
-	if (sat) {
-		s = saturate(s, s_0, s_f);
-	}
-
-	T result;
-	for (int i = 0; i < impl->dimension; ++i) {
-		result[i] = gsl_interp_eval_deriv(impl->interps[i], impl->ss, impl->points[i], s - s_0, impl->acc);
-	}
 	return result;
 }
 

@@ -33,6 +33,7 @@
 #include <limits>
 #include <cmath>
 
+#include <syslog.h>
 #include <errno.h>
 #include <sys/mman.h>
 
@@ -42,7 +43,6 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <barrett/os.h>
 #include <barrett/thread/real_time_mutex.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/real_time_execution_manager.h>
@@ -85,7 +85,7 @@ void rtemEntryPoint(void* cookie)
 
 	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 	if (ret != 0) {
-		logMessage("%s: rt_task_set_periodic(): (%d) %s") %__func__ %-ret %strerror(-ret);
+		syslog(LOG_ERR, "%s: rt_task_set_periodic(): (%d) %s\n", __func__, -ret, strerror(-ret));
 		exit(2);
 	}
 
@@ -94,7 +94,7 @@ void rtemEntryPoint(void* cookie)
 		while ( !rtem->stopRunning ) {
 			ret = rt_task_wait_period(&newMissedReleasePoints);
 			if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
-				logMessage("%s: rt_task_wait_period(): (%d) %s") %__func__ %-ret %strerror(-ret);
+				syslog(LOG_ERR, "%s: rt_task_wait_period(): (%d) %s\n", __func__, -ret, strerror(-ret));
 				exit(2);
 			}
 			missedReleasePoints += newMissedReleasePoints;
@@ -132,15 +132,15 @@ void rtemEntryPoint(void* cookie)
 	double mean = (double)sum / loopCount;
 	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
 
-    logMessage("RealTimeExecutionManager control-loop stats (microseconds):");
-    logMessage("  target period = %u") %period_us;
-    logMessage("  min = %u") %min;
-    logMessage("  ave = %.3f") %mean;
-    logMessage("  max = %u") %max;
-    logMessage("  stdev = %.3f") %stdev;
-    logMessage("  num total cycles = %u") %loopCount;
-    logMessage("  num missed release points = %u") %missedReleasePoints;
-    logMessage("  num overruns = %u") %overruns;
+    syslog(LOG_ERR, "RealTimeExecutionManager control-loop stats (microseconds):");
+    syslog(LOG_ERR, "  target period = %u", period_us);
+    syslog(LOG_ERR, "  min = %u", min);
+    syslog(LOG_ERR, "  ave = %.3f", mean);
+    syslog(LOG_ERR, "  max = %u", max);
+    syslog(LOG_ERR, "  stdev = %.3f", stdev);
+    syslog(LOG_ERR, "  num total cycles = %u", loopCount);
+    syslog(LOG_ERR, "  num missed release points = %u", missedReleasePoints);
+    syslog(LOG_ERR, "  num overruns = %u", overruns);
 }
 
 
@@ -188,19 +188,22 @@ void RealTimeExecutionManager::start()
 		int ret = 0;
 		ret = rt_task_create(task, name.c_str(), 0, priority, T_JOINABLE);
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  %s: rt_task_create(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			syslog(LOG_ERR, "%s: rt_task_create(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
 		}
 
 		ret = rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_start(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			syslog(LOG_ERR, "%s: rt_task_start(): (%d) %s\n", __func__, -ret, strerror(-ret));
+			throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
 		}
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
 			ret = rt_task_sleep(detail::secondsToRTIME(period / 10.0));
 			if (ret != 0) {
-				(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_sleep(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+				syslog(LOG_ERR, "%s: rt_task_sleep(): (%d) %s\n", __func__, -ret, strerror(-ret));
+				throw std::runtime_error("systems::RealTimeExecutionManager::start(): Couldn't start the realtime task. See /var/log/syslog for details.");
 			}
 		}
 	}
@@ -214,7 +217,8 @@ void RealTimeExecutionManager::stop()
 	// According to Xenomai docs, rt_task_join() also performs the rt_task_delete() behaviors.
 	int ret = rt_task_join(task);
 	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task.  %s: rt_task_join(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+		syslog(LOG_ERR, "%s: rt_task_join(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		throw std::runtime_error("systems::RealTimeExecutionManager::stop(): Couldn't stop the realtime task. See /var/log/syslog for details.");
 	}
 
 	delete task;
@@ -231,7 +235,8 @@ void RealTimeExecutionManager::clearError()
 	stopRunning = true;
 	int ret = rt_task_delete(task);
 	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. %s: rt_task_delete(): (%d) %s\n") % __func__ % __func__ % -ret %strerror(-ret)).raise<std::runtime_error>();
+		syslog(LOG_ERR, "%s: rt_task_delete(): (%d) %s\n", __func__, -ret, strerror(-ret));
+		throw std::runtime_error("systems::RealTimeExecutionManager::clearError(): Couldn't delete the realtime task. See /var/log/syslog for details.");
 	}
 	delete task;
 	task = NULL;

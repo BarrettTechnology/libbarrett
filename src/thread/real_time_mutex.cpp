@@ -1,27 +1,4 @@
 /*
-	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
-
-	This file is part of libbarrett.
-
-	This version of libbarrett is free software: you can redistribute it
-	and/or modify it under the terms of the GNU General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This version of libbarrett is distributed in the hope that it will be
-	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License along
-	with this version of libbarrett.  If not, see
-	<http://www.gnu.org/licenses/>.
-
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
-*/
-
-/*
  * real_time_mutex.cpp
  *
  *  Created on: Dec 15, 2009
@@ -31,12 +8,12 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <syslog.h>
 #include <signal.h>
 
 #include <native/task.h>
 #include <native/mutex.h>
 
-#include <barrett/os.h>
 #include <barrett/detail/stacktrace.h>
 #include <barrett/thread/real_time_mutex.h>
 
@@ -49,9 +26,9 @@ extern "C" {
 
 void warnOnSwitchToSecondaryMode(int)
 {
-	logMessage("WARNING: Switched out of RealTime. Stack-trace:");	
+	syslog(LOG_ERR, "WARNING: Switched out of RealTime. Stack-trace:");
 	barrett::detail::syslog_stacktrace();
-	logMessage("WARNING: Switched out of RealTime. Stack-trace in syslog.");
+	std::cerr << "WARNING: Switched out of RealTime. Stack-trace in syslog.\n";
 }
 
 
@@ -65,7 +42,8 @@ RealTimeMutex::RealTimeMutex() :
 	mutex = new RT_MUTEX;
 	int ret = rt_mutex_create(mutex, NULL);
 	if (ret != 0) {
-		(logMessage("thread::RealTimeMutex::%s:  Could not create RT_MUTEX: (%d) %s") %__func__ %-ret %strerror(-ret)).raise<std::logic_error>();
+		syslog(LOG_ERR, "Could not create RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::RealTimeMutex(): Could not create RT_MUTEX.");
 	}
 
 	// Handler for warnings about falling out of real time mode
@@ -79,7 +57,8 @@ RealTimeMutex::~RealTimeMutex()
 	mutex = NULL;
 
 	if (ret != 0) {
-		(logMessage("thread::RealTimeMutex::%s:  Could not delete RT_MUTEX: (%d) %s") %__func__ %-ret %strerror(-ret)).raise<std::logic_error>();
+		syslog(LOG_ERR, "Could not delete RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::~RealTimeMutex(): Could not delete RT_MUTEX.");
 	}
 }
 
@@ -87,8 +66,8 @@ void RealTimeMutex::lock()
 {
     int ret = acquireWrapper(TM_INFINITE);
     if (ret != 0) {
-	logMessage("RealTimeMutex::lock(): %s returned %d") %__func__ % ret;
-	throw boost::thread_resource_error(ret);
+            syslog(LOG_ERR, "RealTimeMutex::lock(): acquireWrapper() returned %d", ret);
+            throw boost::thread_resource_error(ret);
     }
 }
 
@@ -104,7 +83,8 @@ void RealTimeMutex::unlock()
 
 	int ret = rt_mutex_release(mutex);
 	if (ret != 0) {
-		(logMessage("thread::RealTimeMutex::%s:  Could not release RT_MUTEX: (%d) %s") %__func__ %-ret %strerror(-ret)).raise<std::logic_error>();
+		syslog(LOG_ERR, "Could not release RT_MUTEX: (%d) %s", -ret, strerror(-ret));
+		throw std::logic_error("thread::RealTimeMutex::unlock(): Could not release RT_MUTEX.");
 	}
 
 	if (changeMode) {
@@ -119,7 +99,8 @@ int RealTimeMutex::fullUnlock()
 {
 	int lc = lockCount;
 	if (lc <= 0) {
-		(logMessage("thread::RealTimeMutex::%s Bad lockCount value.  lockCount = %d") %__func__ %lc).raise<std::logic_error>();
+		syslog(LOG_ERR, "thread::RealTimeMutex::fullUnlock() called when lockCount = %d", lc);
+		throw std::logic_error("thread::RealTimeMutex::fullUnlock(): Bad lockCount value.");
 	}
 
 	while (lockCount > 1) {

@@ -36,6 +36,7 @@
 #include <cmath>
 #include <cstring>
 
+#include <unistd.h>  // For usleep()
 #include <syslog.h>
 
 #include <curses.h>
@@ -300,7 +301,7 @@ public:
 protected:
 	void move() {
 		while ( !wam.moveIsDone() ) {
-			btsleep(0.02);
+			usleep(20000);
 		}
 		wam.moveTo(jp_type(calPos + calOffset), false);
 	}
@@ -454,7 +455,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 		refresh();
 
-		btsleep(0.1);  // Slow loop down to ~10Hz
+		usleep(100000);  // Slow loop down to ~10Hz
 	}
 	endwin();  // Turn off ncurses
 	detail::purge(steps);
