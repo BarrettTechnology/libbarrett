@@ -1,0 +1,268 @@
+#!/usr/bin/python
+
+"""
+	Copyright 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+"""
+
+"""
+This utility makes it easy to discover the (dynamic) IP address of a remote
+WAM-PC or PC/104 computer. Copy it to /usr/local/bin/ on your local machine so
+that you can find your WAM on the network.
+
+The script sends a UDP broadcast to request that any target systems identify
+themselves. If the corresponding daemon is running on a target system, it will
+reply with a human-readable name and an IP address. This daemon is installed by
+default on all Barrett systems. The WAM and the local machine must be connected
+to the same subnet.
+"""
+
+from sys import exit, stdout
+import os
+import subprocess
+import string
+from glob import glob
+from socket import *
+import argparse
+import curses
+
+
+PORT = 1337
+TIMEOUT = 0.5  # seconds
+SEPERATOR = '|'
+DEFAULT_USERNAME = "robot"
+VALID_NAME_CHARACTERS = string.ascii_letters + string.digits + " _-."
+MOUNT_DIR = os.path.expanduser("~/wamdiscover/")
+GVFS_GLOB_TEMPLATE = os.path.expanduser("~/.gvfs/*%s")
+
+
+def wamStr(w, width=0):
+	return "%s (%s)" % (w[0].ljust(width), w[1])
+
+def maxNameLen(wams):
+	return max(map(lambda w: len(w[0]), wams))
+
+def alreadyMounted(w):
+	return subprocess.call("gvfs-mount --list | grep \"%s\" > /dev/null" % w[1], shell=True) == 0
+
+def niceString(s):
+	return len(s.translate(None, VALID_NAME_CHARACTERS)) == 0
+
+# curses interface
+def getChoice(wams):
+	win = curses.initscr()
+	try:
+		curses.cbreak()
+		curses.noecho()
+		win.keypad(1)
+
+		line = 0
+
+		win.addstr(line,0, "WAMDISCOVER  --  Choose a WAM. Press 'x' to cancel.")
+		line += 3
+
+		WAM_Y = line
+		IP_X = maxNameLen(wams) + 7
+		for i,w in enumerate(wams):
+			win.addstr(line,0, "%d)  %s" % (i, w[0]))
+			win.addstr(line,IP_X, w[1])
+			line += 1
+
+		line += 2
+		win.addstr(line,0, "Choice: ")
+		C_Y,C_X = win.getyx()
+
+		class HighlightLine:
+			NONE = -2  # Easier to handle arrow keys if this is < -1
+			
+			def __init__(self):
+				self.line = HighlightLine.NONE
+			
+			def up(self):
+				self.setLine(self.line - 1)
+			def down(self):
+				self.setLine(self.line + 1)
+				
+			def setLine(self, newLine):
+				NONE = HighlightLine.NONE
+				
+				# Ignore bad lines
+				if newLine != NONE  and  (newLine < 0  or  newLine >= len(wams)):
+					return False
+		
+				# If the old line is valid
+				if self != NONE:
+					win.chgat(WAM_Y + self.line,0, curses.A_NORMAL)  # Make the old line normal
+		
+				if newLine != NONE:
+					win.chgat(WAM_Y + newLine,0, curses.A_STANDOUT)  # Highlight the new line
+					win.addstr(C_Y,C_X, str(newLine))  # Display the number
+					self.line = newLine
+				else:  # Special case: NONE means deselect
+					win.addstr(C_Y,C_X, " ")  # Display the number
+					self.line = NONE
+		
+				win.refresh()
+				return self.line != NONE
+			def getLine(self):
+				return self.line
+
+		chosenWam = HighlightLine()
+		chosenWam.setLine(0)
+
+		while True:
+			k = win.getch(C_Y,C_X)
+		
+			# Handle keypad characters first
+			if k == curses.KEY_UP:
+				chosenWam.up()
+			elif k == curses.KEY_DOWN:
+				chosenWam.down()
+			elif k < 256:
+				# Then normal characters
+				ck = chr(k).upper()
+	
+				if k == 27 or ck == 'Q' or ck == 'X':  # Escape, q, Q, x, X
+					chosenWam.setLine(HighlightLine.NONE)
+					break
+				if k == 10:  # Enter
+					break
+				if ck.isdigit():  # 0 through 9
+					if chosenWam.setLine(int(ck)):  # Is choice valid?
+						break
+			# Otherwise, ignore
+	finally:
+		curses.endwin()
+	
+	return chosenWam.getLine()
+
+
+# Parse arguments
+ap = argparse.ArgumentParser(description="Find WAM-PCs or PC/104s on the local network.")
+ap.add_argument("-u", "--user", default=DEFAULT_USERNAME, help="the username to login with (default: %(default)s)")
+ap.add_argument("-g", "--gvfs", action="store_true", help="use gvfs-mount the mount the remote filesystem")
+ap.add_argument("name", nargs=argparse.REMAINDER, help="optional: name of the WAM you want to connect to")
+args = ap.parse_args()
+
+
+# Broadcast
+sock = socket(AF_INET, SOCK_DGRAM)
+sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+sock.sendto("", ("<broadcast>", PORT))
+
+
+# Discover
+sock.settimeout(TIMEOUT)
+replies = []
+try:
+	while True:
+		replies.append(sock.recv(4096))  # Arbitrary buffer size
+except timeout:
+	pass
+wams = map(lambda r: r.split(SEPERATOR), sorted(replies, key=str.lower))
+print "Found:"
+print "    " + "\n    ".join(map(lambda w: wamStr(w, maxNameLen(wams)), wams))
+
+
+# Choose
+if len(args.name) > 0:  # They passed a name on the command line. See if we can match it.
+	name = " ".join(args.name).lower()
+	choice = -1
+	for i,w in enumerate(wams):
+		if w[0].lower().find(name) != -1:
+			# Multiple matches is an error
+			if choice != -1:
+				choice = -2
+				break
+			else:
+				choice = i
+	if choice == -1:
+		print "ERROR: No WAM matching \"%s\" found." % name
+	elif choice == -2:
+		print "ERROR: More than one WAM matching \"%s\" found." % name
+else:  # No args, use curses
+	choice = getChoice(wams)
+if choice not in range(len(wams)):
+	exit(1)
+w = wams[choice]
+
+
+# GVFS
+if args.gvfs:
+	# See if it's already mounted
+	if alreadyMounted(w):
+		print "Remote filesystem already mounted."
+	else:
+		# Mount it
+		print "Mounting remote filesystem..."
+		stdout.flush()
+		try:
+			subprocess.call(["gvfs-mount", "sftp://" + w[1]])
+		except KeyboardInterrupt:
+			pass
+		
+		# Did the mount succeed?
+		if alreadyMounted(w):
+			# Is the name a valid directory name?
+			if niceString(w[0]):
+				path = MOUNT_DIR + w[0]
+				
+				# Does the directory exist?
+				# Use normpath() to catch directories *and* files with that
+				# name. exists() gets confused by trailing '/' characters.
+				if not os.path.exists(os.path.normpath(MOUNT_DIR)):
+					os.makedirs(MOUNT_DIR)
+				
+				if os.path.isdir(MOUNT_DIR):  # Maybe it's a file?
+					# If there's a link (not some other kind of file) with that name, remove it
+					if os.path.islink(path):
+						os.remove(path)
+					
+					# Is there already a file by that name?
+					if os.path.exists(path):
+						print "WARNING: Skipping symlink. The path \"%s\" already exists." % path
+					else:
+						# Different versions of GVFS use different file name conventions
+						gvfsPaths = glob(GVFS_GLOB_TEMPLATE % w[1])
+						# Is there exactly one candidate for the GVFS directory?
+						if len(gvfsPaths) == 1:
+							# Link it!
+							os.symlink(gvfsPaths[0], path)
+							print "Remote filesystem available at:"
+							print "    " + path
+						else:
+							print "WARNING: Skipping symlink. Couldn't find GVFS directory."
+				else:
+					print "WARNING: Skipping symlink. \"%s\" is not a directory." % MOUNT_DIR
+			else:
+				print "WARNING: Skipping symlink. WAM name contains illegal characters."
+
+
+# Connect
+print "Connecting to:"
+print "    " + wamStr(w, maxNameLen(wams))
+stdout.flush()
+
+try:
+	subprocess.call(["ssh", args.user + "@" + w[1]])
+except KeyboardInterrupt:
+	pass
+
