@@ -121,7 +121,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	std::vector<jp_type> vec;
 	vec.push_back(startPos);
 	vec.push_back(endPos);
-	math::Spline<jp_type> spline(vec, jv_type(0.0));
+	math::Spline<jp_type> spline(vec);
 	math::TrapezoidalVelocityProfile profile(5.0, 100.0, 0.0, spline.changeInS());
 //	math::TrapezoidalVelocityProfile profile(0.5, 0.5, 0.0, spline.changeInS());
 

@@ -57,7 +57,7 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPer
 	size_t recordsInSingleBuffer = 16384 / this->recordLength;
 
 	// with a factor of safety of 5, how many seconds to fill a single buffer?
-	period = static_cast<size_t>( (recordsInSingleBuffer * recordPeriod_s) / 5.0 );
+	period = (recordsInSingleBuffer * recordPeriod_s) / 5.0;
 	if (period < 0.003) {
 		throw(std::logic_error("(log::RealTimeWriter::RealTimeWriter()): This constructor was not designed for data rates this high."));
 	}

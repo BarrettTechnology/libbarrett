@@ -82,6 +82,7 @@ public:
 	}
 
 	void saveProperty(enum Property prop) const;
+	void saveAllProperties() const;
 	void resetProperty(enum Property prop) const;
 
 	bool respondsToProperty(enum Property prop) const {

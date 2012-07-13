@@ -92,14 +92,16 @@ assertHasattrs(ProductManager, "enumerate cleanUpAfterEstop waitForWam startExec
 
 pm = ProductManager()
 pm = ProductManager("../config/default.conf")
-bus = bus.BusManager(CAN_PORT)
-pm = ProductManager("../config/default.conf", bus)
+bm = bus.BusManager(CAN_PORT)
+pm = ProductManager("../config/default.conf", bm)
 
 pm.getPuck(1).setProperty(Puck.STAT, 0)
 pm.getPuck(2).setProperty(Puck.STAT, 0)
 sleep(1)
 assert pm.getPuck(1).getProperty(Puck.STAT) == 0
 assert pm.getPuck(2).getProperty(Puck.STAT) == 0
+pm.getPuck(1).updateStatus()
+pm.getPuck(2).updateStatus()
 pm.wakeAllPucks()
 assert pm.getPuck(1).getProperty(Puck.STAT) == 2
 assert pm.getPuck(2).getProperty(Puck.STAT) == 2
@@ -183,6 +185,11 @@ if oHsg > 5:
 	nHsg = oHsg - 1
 else:
 	nHsg = oHsg + 1
+oLsg = p.getProperty(Puck.LSG)
+if oLsg > 5:
+	nLsg = oLsg - 1
+else:
+	nLsg = oLsg + 1
 p.setProperty(Puck.HSG, nHsg)
 assert p.getProperty(Puck.HSG) == nHsg
 p.resetProperty(Puck.HSG)
@@ -205,6 +212,17 @@ assert p.getPropertyIdNoThrow(Puck.CTS) == -1
 p.wake()
 assert p.getProperty(Puck.HSG) == nHsg
 
+p.setProperty(Puck.HSG, oHsg)  # Change two properties
+p.setProperty(Puck.LSG, nLsg)
+p.saveAllProperties()
+p.setProperty(Puck.STAT, 0)
+sleep(2)
+p.updateStatus()
+p.wake()
+sleep(1)
+assert p.getProperty(Puck.HSG) == oHsg
+assert p.getProperty(Puck.LSG) == nLsg
+
 pucks = [Puck(bm, 1), Puck(bm, 3), Puck(bm, 2)]
 map(lambda p: p.setProperty(Puck.STAT, 0), pucks)
 sleep(2)
@@ -221,11 +239,11 @@ assert LL.tryGetProperty(bm, P_ID, 5) == (0, 2)
 assert LL.tryGetProperty(bm, BAD_P_ID, 5) == (1, 0)
 assert LL.tryGetProperty(bm, BAD_P_ID, 5, 0.1) == (1, 0)
 
-assert p.getProperty(Puck.HSG) == nHsg
-LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), oHsg)
 assert p.getProperty(Puck.HSG) == oHsg
-LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), nHsg, True)
+LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), nHsg)
 assert p.getProperty(Puck.HSG) == nHsg
+LL.setProperty(bm, P_ID, p.getPropertyId(Puck.HSG), oHsg, True)
+assert p.getProperty(Puck.HSG) == oHsg
 
 assert LL.sendGetPropertyRequest(bm, P_ID, 5) == 0
 assert LL.receiveGetPropertyReply(bm, P_ID, 5, True) == (0, 2)

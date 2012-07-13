@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(libbarrett)
 set(libbarrett_VERSION_MAJOR 1)
-set(libbarrett_VERSION_MINOR 0)
-set(libbarrett_VERSION_PATCH 1)
+set(libbarrett_VERSION_MINOR 1)
+set(libbarrett_VERSION_PATCH 0)
 set(libbarrett_VERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${libbarrett_VERSION_PATCH}")
 set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}")
 
@@ -24,8 +24,9 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system" OFF)
 option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized for this specific computer and can't be copied to other machines" OFF)
-option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett (EXPERIMENTAL)" OFF)
+option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett" ON)
 option(INSTALL_EXAMPLES "Set to ON to copy libbarrett example programs to the current user's home folder when the library is installed" ON)
+option(INSTALL_SANDBOX "Set to ON to copy libbarrett sandbox programs to the current user's home folder when the library is installed" ON)
 
 if (OPTIMIZE_FOR_PROCESSOR)
 	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
@@ -49,6 +50,13 @@ set(EXAMPLES_DIR_OWNER ${current_user} CACHE STRING "If installed, example progr
 if (INSTALL_EXAMPLES)
 	message(STATUS "When installed, example code will be placed in: ${EXAMPLES_DIR}")
 	message(STATUS "When installed, example code will be owned by: ${EXAMPLES_DIR_OWNER}")
+endif()
+
+set(SANDBOX_DIR /home/${current_user}/libbarrett_sandbox CACHE PATH "If installed, sandbox programs will be placed in this directory.")
+set(SANDBOX_DIR_OWNER ${current_user} CACHE STRING "If installed, sandbox programs will be owned by this user.")
+if (INSTALL_SANDBOX)
+	message(STATUS "When installed, sandbox code will be placed in: ${SANDBOX_DIR}")
+	message(STATUS "When installed, sandbox code will be owned by: ${SANDBOX_DIR_OWNER}")
 endif()
 
 
@@ -182,6 +190,24 @@ if (INSTALL_EXAMPLES)
 endif()
 
 
+## Sandbox code
+if (INSTALL_SANDBOX)
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/sandbox/
+		USE_SOURCE_PERMISSIONS
+		DESTINATION ${SANDBOX_DIR}
+		FILES_MATCHING
+		PATTERN "*.h"
+		PATTERN "*.cpp"
+		PATTERN "*.py"
+		PATTERN "*.txt"
+		PATTERN ".svn" EXCLUDE
+		PATTERN "CMakeFiles" EXCLUDE
+	)
+	install(CODE "message(STATUS \"Changing the owner of ${SANDBOX_DIR} to ${SANDBOX_DIR_OWNER}...\")")
+	install(CODE "execute_process(COMMAND chown -R ${SANDBOX_DIR_OWNER}:${SANDBOX_DIR_OWNER} ${SANDBOX_DIR})")
+endif()
+
+
 
 ### Packaging
 add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${libbarrett_VERSION}
@@ -192,18 +218,24 @@ add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${lib
 
 
 ### Other targets
+
+## Set the version number in the Doxyfile
+configure_file(${PROJECT_SOURCE_DIR}/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile
+	ESCAPE_QUOTES @ONLY
+)
+
 if (NON_REALTIME)
 	add_subdirectory(programs EXCLUDE_FROM_ALL)
 else()
 	add_subdirectory(programs)
 endif()
 
-# Barrett_DIR allows the examples/CMakeLists.txt to find the correct
-# barrett-config.cmake. There may not be an installed version, and, if there
-# is, we shouldn't use it. We must add the examples/ directory after
-# cmake/barrett-config.cmake has been generated.
+# Barrett_DIR allows the examples/CMakeLists.txt and sandbox/CMakeLists.txt to
+# find the correct barrett-config.cmake. There may not be an installed version,
+# and, if there is, we shouldn't use it. We must add the examples/ and sandbox/
+# directories after cmake/barrett-config.cmake has been generated.
 set(Barrett_DIR ${PROJECT_SOURCE_DIR}/cmake/)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
-
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
+
 add_subdirectory(tests EXCLUDE_FROM_ALL)
