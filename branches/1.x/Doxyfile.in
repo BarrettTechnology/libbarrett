@@ -31,7 +31,7 @@ PROJECT_NAME           = libbarrett
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = 0.2
+PROJECT_NUMBER         = @libbarrett_VERSION_MAJOR@.@libbarrett_VERSION_MINOR@
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 

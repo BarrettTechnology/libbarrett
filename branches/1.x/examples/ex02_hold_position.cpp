@@ -16,15 +16,15 @@
  *
  * If you change the WAM's mass distribution (for instance, by attaching a tool
  * to the end), you'll need to recalibrate before gravity compensation will
- * behave correctly. To do this, run the bt-wam-gravitycal program and then
- * update the information in the appropriate configuration file. The gravity
- * compensation and calibration routines rely on having an accurately zeroed
- * robot, so consider performing zero calibration (bt-wam-zerocal) first. These
- * routines also rely on knowing the orientation of the WAM relative to gravity.
- * The default configuration files assume the WAM is in its standard orientation
- * (the plane containing the four mounting holes is horizontal). Make sure to
- * adjust the "world_to_base" homogeneous transform in the configuration files
- * if your WAM is mounted in a different orientation.
+ * behave correctly. To do this, run the bt-wam-gravitycal program. This will
+ * update the information in the appropriate configuration file for you. The
+ * gravity compensation and calibration routines rely on having an accurately
+ * zeroed robot, so consider performing zero calibration (bt-wam-zerocal) first.
+ * These routines also rely on knowing the orientation of the WAM relative to
+ * gravity. The default configuration files assume the WAM is in its standard
+ * orientation (the plane containing the four mounting holes is horizontal).
+ * Make sure to adjust the "world_to_base" homogeneous transform in the
+ * configuration files if your WAM is mounted in a different orientation.
  */
 
 
@@ -56,10 +56,6 @@ void printMenu() {
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
-	// See note on "Holding tool orientation" below
-	systems::ExposedOutput<Eigen::Quaterniond> orientationSetPoint;
-	systems::ExposedOutput<typename systems::Wam<DOF>::pose_type> poseSetPoint;
-
 	wam.gravityCompensate();
 	printMenu();
 
@@ -82,29 +78,19 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		case 'o':
 			printf("Holding tool orientation.\n");
-
-			// Note that we can't use the systems::Wam<DOF>::moveTo() function
-			// to hold tool orientation like we do in the other cases. We should
-			// be able to, but the ability to smoothly transition from one
-			// orientation to an other has not been implemented in libbarrett
-			// yet. Stay tuned! (If you look at the implementation of the
-			// Wam::moveTo() function, you'll see that it makes use of the same
-			// Wam::trackReferenceSignal() function that we use below.)
-			orientationSetPoint.setValue(wam.getToolOrientation());
-			wam.trackReferenceSignal(orientationSetPoint.output);
+			wam.moveTo(wam.getToolOrientation());
 			break;
 
 		case 'b':
 			printf("Holding both tool position and orientation.\n");
-			poseSetPoint.setValue(wam.getToolPose());
-			wam.trackReferenceSignal(poseSetPoint.output);
+			wam.moveTo(wam.getToolPose());
 			break;
 
 		case 'i':
 			printf("WAM idled.\n");
 
 			// Note that this use of the word "idle" does not mean "Shift-idle".
-			// Calling Wam::idle() will remove any of the controllers that may
+			// Calling Wam::idle() will disable any of the controllers that may
 			// be connected (joint position, tool position, tool orientation,
 			// etc.) leaving only gravity compensation. (More specifically,
 			// Wam::idle() disconnects any inputs that were connected using

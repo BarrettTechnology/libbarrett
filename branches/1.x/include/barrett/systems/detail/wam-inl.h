@@ -307,6 +307,12 @@ inline void Wam<DOF>::moveTo(const Eigen::Quaterniond& destination, bool blockin
 }
 
 template<size_t DOF>
+inline void Wam<DOF>::moveTo(const pose_type& destination, bool blocking, double velocity, double acceleration)
+{
+	moveTo(currentPosHelper(getToolPose()), destination, blocking, velocity, acceleration);
+}
+
+template<size_t DOF>
 template<typename T>
 void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration)
 {

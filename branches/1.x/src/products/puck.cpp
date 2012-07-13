@@ -64,6 +64,10 @@ void Puck::saveProperty(enum Property prop) const
 {
 	setProperty(SAVE, getPropertyId(prop), true);
 }
+void Puck::saveAllProperties() const
+{
+	setProperty(SAVE, -1, true);
+}
 void Puck::resetProperty(enum Property prop) const
 {
 	setProperty(DEF, getPropertyId(prop));
