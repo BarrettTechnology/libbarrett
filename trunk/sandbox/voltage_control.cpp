@@ -43,6 +43,7 @@ public:
 		currentControl();
 	}
 	~ControlModeSwitcher() {
+		currentControl();  // Revert back to current control.
 		systems::reconnect(wam.jtSum.output, wam.llww.input);
 	}
 
