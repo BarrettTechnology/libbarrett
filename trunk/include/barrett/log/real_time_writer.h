@@ -48,9 +48,10 @@ template<typename T, typename Traits = Traits<T> >
 class RealTimeWriter : public Writer<T, Traits> {
 public:
 	typedef typename Writer<T, Traits>::parameter_type parameter_type;
+	static const int DEFAULT_PRIORITY = 20;
 
-	RealTimeWriter(const char* fileName, double recordPeriod_s);
-	RealTimeWriter(const char* fileName, double approxPeriod_s, size_t recordsInSingleBuffer);
+	RealTimeWriter(const char* fileName, double recordPeriod_s, int priority_ = DEFAULT_PRIORITY);
+	RealTimeWriter(const char* fileName, double approxPeriod_s, size_t recordsInSingleBuffer, int priority_ = DEFAULT_PRIORITY);
 	~RealTimeWriter();
 
 	void putRecord(parameter_type data);
@@ -71,6 +72,7 @@ protected:
 
 	bool stopRunning;
 	boost::thread thread;
+	int priority;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(RealTimeWriter);

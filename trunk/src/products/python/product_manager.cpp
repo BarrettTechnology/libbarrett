@@ -25,7 +25,7 @@
  * product_manager.cpp
  *
  *  Created on: Jun 13, 2012
- *      Author: robot
+ *      Author: dc
  */
 
 
