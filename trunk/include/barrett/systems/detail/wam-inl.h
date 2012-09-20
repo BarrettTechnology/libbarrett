@@ -1,5 +1,5 @@
 /*
-	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -36,7 +36,7 @@
 #include <boost/thread.hpp>
 
 #define EIGEN_USE_NEW_STDVECTOR
-#include<Eigen/StdVector>
+#include <Eigen/StdVector>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -164,6 +164,9 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 template<size_t DOF>
 Wam<DOF>::~Wam()
 {
+	// Make sure any outstanding moveTo() threads are cleaned up
+	mtThreadGroup.interrupt_all();
+	mtThreadGroup.join_all();
 }
 
 template<size_t DOF>
@@ -318,7 +321,7 @@ template<typename T>
 void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration)
 {
 	bool started = false;
-	boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started);
+	mtThreadGroup.add_thread(new boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started));
 
 	// wait until move starts
 	while ( !started ) {
@@ -394,17 +397,17 @@ void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_ty
 	// before calling getValue().
 	while ( !trajectory.input.valueDefined()  ||  trajectory.input.getValue() < profile.finalT()) {
 		// if the move is interrupted, clean up and end the thread
-		if ( !trajectory.output.isConnected() ) {
+		if ( !trajectory.output.isConnected() ||  boost::this_thread::interruption_requested() ) {
 			return;
 		}
-		btsleep(0.01);
+		btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
 	}
 
 	doneMoving = true;
 
-	// wait until the trajectory is no longer referenced by supervisoryController
-	while (trajectory.output.isConnected()) {
-		btsleep(0.01);
+	// Wait until the trajectory is no longer referenced by supervisoryController
+	while (trajectory.output.isConnected()  &&  !boost::this_thread::interruption_requested()) {
+		btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
 	}
 }
 

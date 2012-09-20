@@ -35,6 +35,7 @@
 
 #include <vector>
 
+#include <boost/thread.hpp>
 #include <Eigen/Core>
 #include <libconfig.h++>
 
@@ -157,6 +158,7 @@ protected:
 	template<typename T> void moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started);
 
 	bool doneMoving;
+	boost::thread_group mtThreadGroup;
 
 	// Used to calculate TP and TO if the values aren't already being calculated in the control loop.
 	mutable math::Kinematics<DOF> kin;
