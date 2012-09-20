@@ -417,7 +417,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_ty
 			doneMoving = true;
 
 			// Wait until the trajectory is no longer referenced by supervisoryController
-			while (trajectory.output.isConnected()  &&  !boost::this_thread::interruption_requested()) {
+			while (trajectory.hasExecutionManager()  &&  !boost::this_thread::interruption_requested()) {
 				btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
 			}
 			removeThread = true;
