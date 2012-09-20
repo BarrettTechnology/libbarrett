@@ -325,7 +325,6 @@ void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& cu
 	boost::shared_future<boost::thread*> threadPtrFuture(threadPtrPromise.get_future());
 	boost::thread* threadPtr = new boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started, threadPtrFuture);
 	mtThreadGroup.add_thread(threadPtr);
-	fprintf(stderr, "Added %p\n", threadPtr);
 	threadPtrPromise.set_value(threadPtr);
 	
 
