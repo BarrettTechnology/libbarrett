@@ -426,6 +426,7 @@ void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_ty
 	
 	if (removeThread) {
 		mtThreadGroup.remove_thread(threadPtrFuture.get());
+		delete threadPtrFuture.get();
 	}
 }
 
