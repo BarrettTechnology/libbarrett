@@ -321,7 +321,13 @@ template<typename T>
 void Wam<DOF>::moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration)
 {
 	bool started = false;
-	mtThreadGroup.add_thread(new boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started));
+	boost::promise<boost::thread*> threadPtrPromise;
+	boost::shared_future<boost::thread*> threadPtrFuture(threadPtrPromise.get_future());
+	boost::thread* threadPtr = new boost::thread(&Wam<DOF>::moveToThread<T>, this, boost::ref(currentPos), /*currentVel,*/ boost::ref(destination), velocity, acceleration, &started, threadPtrFuture);
+	mtThreadGroup.add_thread(threadPtr);
+	fprintf(stderr, "Added %p\n", threadPtr);
+	threadPtrPromise.set_value(threadPtr);
+	
 
 	// wait until move starts
 	while ( !started ) {
@@ -369,45 +375,58 @@ T Wam<DOF>::currentPosHelper(const T& currentPos)
 
 template<size_t DOF>
 template<typename T>
-void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started)
+void Wam<DOF>::moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started, boost::shared_future<boost::thread*> threadPtrFuture)
 {
-	std::vector<T, Eigen::aligned_allocator<T> > vec;
-	vec.push_back(currentPos);
-	vec.push_back(destination);
+	// Only remove this thread from mtThreadGroup on orderly exit. (Don't remove on exception.)
+	bool removeThread = false;
+	
+	try {
+		std::vector<T, Eigen::aligned_allocator<T> > vec;
+		vec.push_back(currentPos);
+		vec.push_back(destination);
 
-	// TODO(dc): Use currentVel. Requires changes to math::spline<Eigen::Quaternion<T> > specialization.
-	//math::Spline<T> spline(vec, currentVel);
-	//math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
-	math::Spline<T> spline(vec);
-	math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0.0, spline.changeInS());
+		// TODO(dc): Use currentVel. Requires changes to math::spline<Eigen::Quaternion<T> > specialization.
+		//math::Spline<T> spline(vec, currentVel);
+		//math::TrapezoidalVelocityProfile profile(velocity, acceleration, currentVel.norm(), spline.changeInS());
+		math::Spline<T> spline(vec);
+		math::TrapezoidalVelocityProfile profile(velocity, acceleration, 0.0, spline.changeInS());
 
-	Ramp time(NULL, 1.0);
-	Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
+		Ramp time(NULL, 1.0);
+		Callback<double, T> trajectory(boost::bind(boost::ref(spline), boost::bind(boost::ref(profile), _1)));
 
-	connect(time.output, trajectory.input);
-	trackReferenceSignal(trajectory.output);
-	time.start();
+		connect(time.output, trajectory.input);
+		trackReferenceSignal(trajectory.output);
+		time.start();
 
-	doneMoving = false;
-	*started = true;
+		doneMoving = false;
+		*started = true;
 
-	// The value of trajectory.input will be undefined until the next execution cycle.
-	// It may become undefined again if trajectory.output is disconnected and this chain
-	// of Systems loses its ExecutionManager. We must check that the value is defined
-	// before calling getValue().
-	while ( !trajectory.input.valueDefined()  ||  trajectory.input.getValue() < profile.finalT()) {
-		// if the move is interrupted, clean up and end the thread
-		if ( !trajectory.output.isConnected() ||  boost::this_thread::interruption_requested() ) {
-			return;
+		// The value of trajectory.input will be undefined until the next execution cycle.
+		// It may become undefined again if trajectory.output is disconnected and this chain
+		// of Systems loses its ExecutionManager. We must check that the value is defined
+		// before calling getValue().
+		while ( !trajectory.input.valueDefined()  ||  trajectory.input.getValue() < profile.finalT()) {
+			// if the move is interrupted, clean up and end the thread
+			if ( !trajectory.output.isConnected() ||  boost::this_thread::interruption_requested() ) {
+				removeThread = true;
+				break;
+			}
+			btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
 		}
-		btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
-	}
 
-	doneMoving = true;
+		if ( !removeThread ) {
+			doneMoving = true;
 
-	// Wait until the trajectory is no longer referenced by supervisoryController
-	while (trajectory.output.isConnected()  &&  !boost::this_thread::interruption_requested()) {
-		btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
+			// Wait until the trajectory is no longer referenced by supervisoryController
+			while (trajectory.output.isConnected()  &&  !boost::this_thread::interruption_requested()) {
+				btsleep(0.01);  // Interruption point. May throw boost::thread_interrupted
+			}
+			removeThread = true;
+		}
+	} catch (const boost::thread_interrupted& e) {}
+	
+	if (removeThread) {
+		mtThreadGroup.remove_thread(threadPtrFuture.get());
 	}
 }
 
