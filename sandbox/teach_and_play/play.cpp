@@ -486,7 +486,6 @@ int wam_main(int argc, char** argv, ProductManager& pm,
 		}
 	}
 
-	//displayThread.join();
 	wam.moveHome();
 	printf("\n\n");
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
