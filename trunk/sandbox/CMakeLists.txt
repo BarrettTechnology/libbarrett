@@ -47,7 +47,6 @@ add_programs(
 	joint_encoder_init
 	joint_encoder_set_offsets
 	load_ft_cal
-#	log_ft_data_with_wam
 	log_ft_data
 	log_hand_jp
 	log_hand_tact

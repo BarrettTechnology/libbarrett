@@ -89,7 +89,7 @@ public:
 		{
 			(barrett::logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not get output buffer size.") % __func__ ).raise<std::runtime_error>();
 		}
-		(barrett::logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
+		barrett::logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen;
 
 		buflenlen = sizeof(buflen);
 		buflen = 5 * SIZE_OF_MSG;
@@ -105,7 +105,7 @@ public:
 		{
 			(barrett::logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed  %s: Could not get output buffer size.") % __func__ ).raise<std::runtime_error>();
 		}
-		(barrett::logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen);
+		barrett::logMessage("%s: Note, output buffer is %d bytes.") % __func__ % buflen;
 
 		/* Set up the bind address */
 		bind_addr.sin_family = AF_INET;
