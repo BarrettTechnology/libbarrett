@@ -110,7 +110,7 @@ int BusManager::updateBuffers() const
 void BusManager::storeMessage(int busId, const unsigned char* data, size_t len) const
 {
 	if (messageBuffers[busId].full()) {
-		(logMessage("BusManager::%s: Buffer overflow. Check /var/log/syslog for details. ID = %d") %__func__ %busId).raise<std::runtime_error>();
+		(logMessage("BusManager::%s: Buffer overflow. ID = %d",true) %__func__ %busId).raise<std::runtime_error>();
 	}
 	messageBuffers[busId].push_back(Message(data, len));
 }

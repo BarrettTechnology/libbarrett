@@ -49,9 +49,8 @@ extern "C" {
 
 void warnOnSwitchToSecondaryMode(int)
 {
-	logMessage("WARNING: Switched out of RealTime. Stack-trace:");	
+	logMessage("WARNING: Switched out of RealTime. Stack-trace:",true);
 	barrett::detail::syslog_stacktrace();
-	logMessage("WARNING: Switched out of RealTime. Stack-trace in syslog.");
 }
 
 
