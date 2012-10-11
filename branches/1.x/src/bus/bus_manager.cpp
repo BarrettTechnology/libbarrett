@@ -7,11 +7,10 @@
 
 #include <stdexcept>
 
-#include <syslog.h>
-
 #include <native/task.h>
 #include <native/timer.h>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
 #include <barrett/bus/abstract/communications_bus.h>
@@ -73,7 +72,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 
 		if ((rt_timer_read() - start) > CommunicationsBus::TIMEOUT) {
 			m.unlock();
-			syslog(LOG_ERR, "BusManager::receive(): timed out");
+			logMessage("BusManager::receive(): timed out", true);
 			return 2;
 		}
 
@@ -111,8 +110,7 @@ int BusManager::updateBuffers() const
 void BusManager::storeMessage(int busId, const unsigned char* data, size_t len) const
 {
 	if (messageBuffers[busId].full()) {
-		syslog(LOG_ERR, "BusManager::storeMessage(): Buffer overflow. ID = %d", busId);
-		throw std::runtime_error("BusManager::storeMessage(): Buffer overflow. Check /var/log/syslog for details.");
+		(logMessage("BusManager::%s: Buffer overflow. ID = %d",true) %__func__ %busId).raise<std::runtime_error>();
 	}
 	messageBuffers[busId].push_back(Message(data, len));
 }

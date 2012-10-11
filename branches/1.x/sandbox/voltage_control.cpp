@@ -34,11 +34,16 @@ public:
 	ControlModeSwitcher(ProductManager& pm_, systems::Wam<DOF>& wam_, double currentTorqueGain, double voltageTorqueGain) :
 		pm(pm_), wam(wam_), mode(VOLTAGE), cGain(currentTorqueGain), vGain(voltageTorqueGain), torqueGainSys(vGain)
 	{
+		for (size_t i = 0; i < DOF; ++i) {
+			assert(wam.getLowLevelWam().getPucks()[i]->getVers() >= 200);
+		}
+
 		systems::connect(wam.jtSum.output, torqueGainSys.input);
 		systems::reconnect(torqueGainSys.output, wam.llww.input);
 		currentControl();
 	}
 	~ControlModeSwitcher() {
+		currentControl();  // Revert back to current control.
 		systems::reconnect(wam.jtSum.output, wam.llww.input);
 	}
 
@@ -205,11 +210,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	jp_type jp;
 	cp_type cp;
-
-
-	for (size_t i = 0; i < DOF; ++i) {
-		assert(wam.getLowLevelWam().getPucks()[i]->getVers() >= 200);
-	}
 
 
 	ControlModeSwitcher<DOF> cms(pm, wam, 1.17, 0.82);

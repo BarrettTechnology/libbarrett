@@ -31,6 +31,7 @@ add_programs(
 	autotensioner
 	can_terminal
 	can_timing
+	constrain_to_path
 	cv_moves
 	ft_persistent_tare
 	full_system_test
@@ -46,7 +47,6 @@ add_programs(
 	joint_encoder_init
 	joint_encoder_set_offsets
 	load_ft_cal
-#	log_ft_data_with_wam
 	log_ft_data
 	log_hand_jp
 	log_hand_tact

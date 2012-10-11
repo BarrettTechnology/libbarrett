@@ -5,8 +5,6 @@
  *      Author: dc
  */
 
-#include <unistd.h>  // usleep
-
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
