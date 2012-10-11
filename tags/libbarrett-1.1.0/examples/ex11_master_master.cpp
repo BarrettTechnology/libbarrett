@@ -11,10 +11,9 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
-
 #include <boost/thread.hpp>
 
+#include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
@@ -97,7 +96,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				mm.tryLink();
 				wam.trackReferenceSignal(mm.output);
 
-				usleep(100000);  // wait an execution cycle or two
+				btsleep(0.1);  // wait an execution cycle or two
 				if (mm.isLinked()) {
 					printf("Linked with remote WAM.\n");
 				} else {
@@ -235,23 +234,20 @@ int openSocket(const char* remoteHost, int port = 3333) {
 	sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sock == -1)
 	{
-		syslog(LOG_ERR,"%s: Could not create socket.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Could not create socket.")  % __func__).raise<std::runtime_error>();
 	}
 
 	/* Set socket to non-blocking, set flag associated with open file */
 	flags = fcntl(sock, F_GETFL, 0);
 	if (flags < 0)
 	{
-		syslog(LOG_ERR,"%s: Could not get socket flags.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Could not get socket flags.")  % __func__).raise<std::runtime_error>();
 	}
 	flags |= O_NONBLOCK;
 	err = fcntl(sock, F_SETFL, flags);
 	if (err < 0)
 	{
-		syslog(LOG_ERR,"%s: Could not set socket flags.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Could not set socket flags.")  % __func__).raise<std::runtime_error>();
 	}
 
 	/* Set up the bind address */
@@ -261,8 +257,7 @@ int openSocket(const char* remoteHost, int port = 3333) {
 	err = bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
 	if (err == -1)
 	{
-		syslog(LOG_ERR,"%s: Could not bind to socket on port %d.",__func__,port);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Could not bind to socket on port %d.")  % __func__  % port).raise<std::runtime_error>();
 	}
 
 	/* Set up the other guy's address */
@@ -271,16 +266,14 @@ int openSocket(const char* remoteHost, int port = 3333) {
 	err = ! inet_pton(AF_INET, remoteHost, &their_addr.sin_addr);
 	if (err)
 	{
-		syslog(LOG_ERR,"%s: Bad IP argument '%s'.",__func__,remoteHost);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Bad IP argument '%s'.")  % __func__  % remoteHost).raise<std::runtime_error>();
 	}
 
 	/* Call "connect" to set datagram destination */
 	err = connect(sock, (struct sockaddr *)&their_addr, sizeof(struct sockaddr));
 	if (err)
 	{
-		syslog(LOG_ERR,"%s: Could not set datagram destination.",__func__);
-		throw std::runtime_error("openSocket(): Failed. Check /var/log/syslog.");
+		(logMessage("openSocket(): Failed.  %s: Could not set datagram destination.")  % __func__).raise<std::runtime_error>();
 	}
 
 	return sock;
@@ -311,7 +304,7 @@ void ghcEntryPoint(GimbalsHandController* ghc, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		usleep(10000);
+		btsleep(0.01);
 	}
 
 	close(sock);
@@ -365,7 +358,7 @@ void handEntryPoint(Hand* hand, const char* remoteHost) {
 			data_1 = data;
 		}
 
-		usleep(10000);
+		btsleep(0.01);
 	}
 
 	close(sock);
