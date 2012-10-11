@@ -66,18 +66,28 @@ void PIDController<InputType, OutputType, MathTraits>::setFromConfig(const libco
 {
 	if (setting.exists("kp")) {
 		setKp(unitless_type(setting["kp"]));
+	} else {
+		setKp(unitless_type(0.0));
 	}
 	if (setting.exists("ki")) {
 		setKi(unitless_type(setting["ki"]));
+	} else {
+		setKi(unitless_type(0.0));
 	}
 	if (setting.exists("kd")) {
 		setKd(unitless_type(setting["kd"]));
+	} else {
+		setKd(unitless_type(0.0));
 	}
 	if (setting.exists("integrator_limit")) {
 		setIntegratorLimit(unitless_type(setting["integrator_limit"]));
+	} else {
+		setIntegratorLimit(unitless_type(0.0));
 	}
 	if (setting.exists("control_signal_limit")) {
 		setControlSignalLimit(unitless_type(setting["control_signal_limit"]));
+	} else {
+		setControlSignalLimit(unitless_type(0.0));
 	}
 }
 

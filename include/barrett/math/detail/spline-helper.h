@@ -34,6 +34,8 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include <barrett/math/utils.h>
+
 
 namespace barrett {
 namespace math {
