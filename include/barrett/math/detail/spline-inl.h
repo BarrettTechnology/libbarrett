@@ -32,6 +32,8 @@
 #include <iostream>
 #include <cassert>
 
+#include <gsl/gsl_interp.h>
+
 #include <barrett/math/utils.h>
 #include <barrett/cdlbt/spline.h>
 
@@ -105,8 +107,22 @@ inline T Spline<T>::eval(double s) const
 	return result;
 }
 
+template<typename T>
+inline T Spline<T>::evalDerivative(double s) const
+{
+	if (sat) {
+		s = saturate(s, s_0, s_f);
+	}
 
-// Specialization for Eigen::Quaternion types
+	T result;
+	for (int i = 0; i < impl->dimension; ++i) {
+		result[i] = gsl_interp_eval_deriv(impl->interps[i], impl->ss, impl->points[i], s - s_0, impl->acc);
+	}
+	return result;
+}
+
+
+// Specialization for Eigen::Quaternion  types
 template<typename Scalar>
 template<template<typename, typename> class Container, typename Allocator>
 Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<tuple_type, Allocator>& samples, bool saturateS) :

@@ -32,9 +32,13 @@
 #include <stdexcept>
 #include <algorithm>
 #include <fstream>
+#include <string>
+
+#include <native/task.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <barrett/os.h>
 
@@ -44,10 +48,10 @@ namespace log {
 
 
 template<typename T, typename Traits>
-RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPeriod_s) :
+RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPeriod_s, int priority_) :
 	Writer<T, Traits>(fileName), period(0.0), singleBufferSize(0),
 	inBuff(NULL), outBuff(NULL), endInBuff(NULL), endOutBuff(NULL), currentPos(NULL), writeToDisk(false),
-	stopRunning(false), thread()
+	stopRunning(false), thread(), priority(priority_)
 {
 	if (this->recordLength > 1024) {
 		throw(std::logic_error("(log::RealTimeWriter::RealTimeWriter()): This constructor was not designed for records this big."));
@@ -67,10 +71,10 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double recordPer
 }
 
 template<typename T, typename Traits>
-RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double approxPeriod_s, size_t recordsInSingleBuffer) :
+RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double approxPeriod_s, size_t recordsInSingleBuffer, int priority_) :
 	Writer<T, Traits>(fileName), period(approxPeriod_s),
 	inBuff(NULL), outBuff(NULL), endInBuff(NULL), endOutBuff(NULL), currentPos(NULL), writeToDisk(false),
-	stopRunning(false), thread()
+	stopRunning(false), thread(), priority(priority_)
 {
 	init(recordsInSingleBuffer);
 }
@@ -140,8 +144,31 @@ void RealTimeWriter<T, Traits>::close()
 template<typename T, typename Traits>
 void RealTimeWriter<T, Traits>::writeToDiskEntryPoint()
 {
+	std::string name = "RTW: " + boost::lexical_cast<std::string>(this);
+
+	int ret;
+
+	ret = rt_task_shadow(NULL, name.c_str(), priority, 0);
+	if (ret != 0) {
+		logMessage("log::RealTimeWriter::%s: rt_task_shadow(): (%d) %s")
+				% __func__ % -ret % strerror(-ret);
+		exit(2);
+	}
+	ret = rt_task_set_periodic(NULL, TM_NOW, static_cast<RTIME>(period * 1e9 + 0.5));
+	if (ret != 0) {
+		logMessage("log::RealTimeWriter::%s: rt_task_set_periodic(): (%d) %s")
+				% __func__ % -ret % strerror(-ret);
+		exit(2);
+	}
+
+
 	while ( !stopRunning ) {
-		btsleep(period);
+		ret = rt_task_wait_period(NULL);
+		if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
+			logMessage("log::RealTimeWriter::%s: rt_task_wait_period(): (%d) %s")
+					% __func__ % -ret % strerror(-ret);
+			exit(2);
+		}
 
 		if (writeToDisk) {
 			this->file.write(outBuff, singleBufferSize);
