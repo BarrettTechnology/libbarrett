@@ -232,6 +232,13 @@ typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 }
 
 template<size_t DOF>
+typename Wam<DOF>::cv_type Wam<DOF>::getToolVelocity() const
+{
+	kin.eval(getJointPositions(), getJointVelocities());
+	return cv_type(kin.impl->tool_velocity);
+}
+
+template<size_t DOF>
 Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
 	{
@@ -258,7 +265,6 @@ inline math::Matrix<6,DOF> Wam<DOF>::getToolJacobian() const
 	kin.eval(getJointPositions(), getJointVelocities());
 	return math::Matrix<6,DOF>(kin.impl->tool_jacobian);
 }
-
 
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)

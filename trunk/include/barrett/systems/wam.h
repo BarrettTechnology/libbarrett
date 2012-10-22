@@ -128,6 +128,7 @@ public:
 	jp_type getJointPositions() const;
 	jv_type getJointVelocities() const;
 	cp_type getToolPosition() const;
+	cv_type getToolVelocity() const;
 	Eigen::Quaterniond getToolOrientation() const;
 	pose_type getToolPose() const;
 	math::Matrix<6,DOF> getToolJacobian() const;
