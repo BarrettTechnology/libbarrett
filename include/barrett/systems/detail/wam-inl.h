@@ -70,6 +70,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),
 	toolPosition(),
+	toolVelocity(),
 	toolOrientation(),
 	toolPose(),
 
@@ -104,6 +105,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	// Don't connect gravity.output here. Gravity compensation is off by default.
 
 	connect(kinematicsBase.kinOutput, toolPosition.kinInput);
+	connect(kinematicsBase.kinOutput, toolVelocity.kinInput);
 	connect(kinematicsBase.kinOutput, toolOrientation.kinInput);
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);

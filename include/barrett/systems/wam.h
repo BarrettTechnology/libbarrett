@@ -57,6 +57,7 @@
 #include <barrett/systems/kinematics_base.h>
 #include <barrett/systems/gravity_compensator.h>
 #include <barrett/systems/tool_position.h>
+#include <barrett/systems/tool_velocity.h>
 #include <barrett/systems/tool_orientation.h>
 
 #include <barrett/systems/pid_controller.h>
@@ -81,6 +82,7 @@ public:
 	GravityCompensator<DOF> gravity;
 	FirstOrderFilter<jv_type> jvFilter;
 	ToolPosition<DOF> toolPosition;
+	ToolVelocity<DOF> toolVelocity;
 	ToolOrientation<DOF> toolOrientation;
 	TupleGrouper<cp_type, Eigen::Quaterniond> toolPose;
 
