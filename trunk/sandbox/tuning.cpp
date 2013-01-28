@@ -80,7 +80,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		case 'j':
 			joint = (joint + 1) % DOF;
-			printf("Step joint %d.\n", joint+1);
+			printf("Step joint %zu.\n", joint+1);
 			break;
 
 		case 'g':
