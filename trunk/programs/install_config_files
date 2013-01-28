@@ -47,6 +47,8 @@ MAIN_CONFIG_FILES = [MAIN_VERS_FILE, "wam4.conf", "wam7g.conf", "wam7w.conf", "c
 CAL_VERS_FILE = "calibration.conf"
 CAL_CONFIG_FILES = [CAL_VERS_FILE]
 
+AUTOTENS_VERS_FILE = "autotension.conf"
+AUTOTENS_CONFIG_FILES = [AUTOTENS_VERS_FILE]
 
 def main():
 	args = parseArguments()
@@ -58,6 +60,7 @@ def main():
 	
 	installConfig(args.source, args.dest, backupDir, MAIN_VERS_FILE, MAIN_CONFIG_FILES)
 	installConfig(args.source, args.dest, backupDir, CAL_VERS_FILE, CAL_CONFIG_FILES)
+	installConfig(args.source, args.dest, backupDir, AUTOTENS_VERS_FILE, AUTOTENS_CONFIG_FILES)
 	
 	# If backupDir is empty, delete it.
 	try:
