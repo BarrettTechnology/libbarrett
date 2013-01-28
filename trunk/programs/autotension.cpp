@@ -22,8 +22,7 @@ using namespace barrett;
 
 const int PORT = 0; // CAN Port, needed for communication with puck to engage tang
 
-const char CAL_CONFIG_FILE[] = "autotension.conf";
-//const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
+const char CAL_CONFIG_FILE[] = "/etc/barrett/autotension.conf";
 
 template<size_t DOF>
 std::vector<int> check_args(int argc, char** argv) {
