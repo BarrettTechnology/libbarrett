@@ -394,6 +394,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	steps[selected]->setSelected(true);
 	int active = 0;
 	steps[active]->setActive(true);
+	int maxStep = 0;
 
 	enum Key k;
 	bool done = false;
@@ -408,7 +409,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				break;
 			case K_DOWN:
 				steps[selected]->setSelected(false);
-				selected = std::min((int)steps.size()-1, selected+1);
+				selected = std::min(maxStep, selected+1);
 				steps[selected]->setSelected(true);
 				break;
 			case K_ENTER:
@@ -433,6 +434,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 					steps[selected]->setSelected(false);
 					steps[active]->setActive(false);
 					++selected;
+					if (selected > maxStep)
+						maxStep = selected;
 					if (selected < (int)steps.size()) {
 						active = selected;
 						steps[selected]->setSelected(true);
