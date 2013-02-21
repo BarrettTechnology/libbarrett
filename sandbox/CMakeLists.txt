@@ -28,7 +28,6 @@ endfunction()
 
 add_programs(
 	autohome
-	autotensioner
 	can_terminal
 #	can_timing
 	constrain_to_path
