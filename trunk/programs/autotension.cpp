@@ -14,13 +14,10 @@
 #include <barrett/units.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
-#include <barrett/bus/bus_manager.h>
 #include <barrett/products/puck.h>
 #include <barrett/standard_main_function.h>
 
 using namespace barrett;
-
-const int PORT = 0; // CAN Port, needed for communication with puck to engage tang
 
 const char CAL_CONFIG_FILE[] = "/etc/barrett/autotension.conf";
 
@@ -30,11 +27,15 @@ std::vector<int> check_args(int argc, char** argv) {
 	printf("\n"
 			"                  *** Barrett WAM Autotensioning Utility ***\n"
 			"\n"
-			"This utility will autotension the cables of the specified joints for your WAM Arm.\n"
-			"This utility is necessary after replacing any cables on your WAM Arm, or after\n"
-			"signs of the cables becoming loose after extended use. After completion of this\n"
-			"routine, you must zero calibrate and gravity calibrate the WAM, as pulling tension from \n"
-			"the cables will introduce offsets to your zero calibration.\n"
+			"This utility will autotension the specified cables of your WAM Arm.\n"
+			"Cable tensioning is necessary after signs of the WAM cables becoming\n"
+			"loose after extended use, or after replacing any cables on your WAM Arm.\n"
+			"After completion of this routine, you must zero calibrate and gravity\n"
+			"calibrate the WAM, as pulling tension from the cables will introduce\n"
+			"offsets to your previous calibrations.\n"
+			"\n"
+			"WAMs with serial numbers < 5 and WAM wrists with serial numbers < 9 are not\n"
+			"eligible for autotensioning.\n"
 			"\n"
 			"This program assumes the WAM is mounted such that the base is horizontal.\n"
 			"\n"
@@ -174,7 +175,6 @@ class AutoTension {
 protected:
 	systems::Wam<DOF>& wam;
 	const libconfig::Setting& setting;
-	bus::BusManager bus;
 	std::vector<Puck*> puck;
 
 	TorqueWatchdog<DOF> watchdog;
@@ -191,7 +191,7 @@ protected:
 
 	std::vector<int> jointList;
 	std::vector<jp_type> jpInitial, jpStart, jpSlack1, jpSlack2;
-	jp_type jpSignalLimits, tensionDefaults, motorRatios, jpStopHigh, jpStopLow, tangBuffer, slackThreshold;
+	jp_type jpSignalLimits, tensionDefaults, motorRatios, jpStopHigh, jpStopLow, tangBuffer, tangMiss, slackThreshold;
 	sqm_type j2mp, m2jp;
 	double motorSlackPulled, j1SlackPulled;
 	int motor;
@@ -199,11 +199,12 @@ protected:
 public:
 	Hand* hand;
 	AutoTension(systems::Wam<DOF>& wam_, const libconfig::Setting& setting_) :
-			wam(wam_), setting(setting_), bus(PORT), j2mtSys(wam.getLowLevelWam().getJointToMotorTorqueTransform()), gravtor2mtSys(
+			wam(wam_), setting(setting_), j2mtSys(wam.getLowLevelWam().getJointToMotorTorqueTransform()), gravtor2mtSys(
 					wam.getLowLevelWam().getJointToMotorTorqueTransform()), m2jtSys(wam.getLowLevelWam().getJointToMotorPositionTransform().transpose()), m2jpSys(
 					wam.getLowLevelWam().getMotorToJointPositionTransform()), j2mpSys(wam.getLowLevelWam().getJointToMotorPositionTransform()), motorRamp(NULL,
 					0.8), tensionDefaults(setting["tens_default"]), motorRatios(setting["motor_ratios"]), jpStopHigh(setting["jp_stop_high"]), jpStopLow(
-					setting["jp_stop_low"]), tangBuffer(setting["tang_buffer"]), slackThreshold(setting["slack_thresh"]), hand(NULL) {
+					setting["jp_stop_low"]), tangBuffer(setting["tang_buffer"]), tangMiss(setting["tang_miss"]), slackThreshold(setting["slack_thresh"]), hand(
+					NULL) {
 	}
 	void
 	init(ProductManager& pm, std::vector<int> args);
@@ -293,7 +294,6 @@ void AutoTension<DOF>::init(ProductManager& pm, std::vector<int> args) {
 	jpSlack1[1] = jpStart[1];
 	jpSlack1[1][1] += tangBuffer[1] / 2.0; // This is so we dont drive into and wear the joint stops
 	jpSlack1[1][2] -= tangBuffer[2] / 2.0;
-	jpSlack1[1][3] = jpStopHigh[3] - tangBuffer[3] / 2.0;
 	jpSlack2[1] = jpSlack1[1];
 	jpSlack2[1][1] = jpStopLow[1] + tangBuffer[1] / 2.0;
 	jpSlack2[1][2] = jpStopHigh[2] - tangBuffer[2] / 2.0;
@@ -309,7 +309,6 @@ void AutoTension<DOF>::init(ProductManager& pm, std::vector<int> args) {
 	jpSlack1[2] = jpStart[2];
 	jpSlack1[2][1] -= tangBuffer[1] / 2.0;
 	jpSlack1[2][2] -= tangBuffer[2] / 2.0;
-	jpSlack1[2][3] = jpStopLow[3] + tangBuffer[3] / 2.0;
 	jpSlack2[2] = jpSlack1[2];
 	jpSlack2[2][1] = jpStopHigh[1] - tangBuffer[1] / 2.0;
 	jpSlack2[2][2] = jpStopHigh[2] - tangBuffer[2] / 2.0;
@@ -408,7 +407,7 @@ std::vector<int> AutoTension<DOF>::tensionJoint(std::vector<int> joint_list) {
 			{
 				updateJ5(motor, 3.5);
 				wam.moveTo(jpStart[motor]);
-				if (wam.getJointPositions()[4] < jpStopLow[4]) {
+				if (wam.getJointPositions()[4] < jpStopLow[4] + tangBuffer[4]) {
 					puck[4]->setProperty(Puck::TENSION, false);
 					joint_list.resize(0);
 					printf("Error - Failed to engage tang for joint 5\n");
@@ -480,8 +479,8 @@ bool AutoTension<DOF>::engage(int motor, double timeout = 20.0) {
 	double timer = 0.0;
 	btsleep(0.1); // eliminate obscure transient torque readings
 	watchdog.activate(motor, 0.5); // Start watching for the torque spike
-	while (watchdog.watching && timer < timeout) //Currently hitting the timeout as we cannot identify a torque spike..
-	{
+	while (watchdog.watching && timer < timeout && wam.getJointPositions()[motor] > jpStopLow[motor] + tangMiss[motor]
+			&& wam.getJointPositions()[motor] < jpStopHigh[motor] - tangMiss[motor]) {
 		btsleep(0.05); // waiting for the torque spike indicating the tang has engaged
 		timer += 0.05;
 	}
