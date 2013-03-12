@@ -365,11 +365,11 @@ std::vector<int> AutoTension<DOF>::tensionJoint(std::vector<int> joint_list) {
 		j1tens = true;
 
 	motor = joint - 1; // Joint indexing
-	motorSlackPulled = 1.0;
-	j1SlackPulled = 1.0;
 
 	while (motorSlackPulled > slackThreshold[motor] || !diff_tens) // Check to see if we have met the slack thresholds
 	{
+		motorSlackPulled = 1.0; // Large initial slack value for comparison against threshold
+		j1SlackPulled = 1.0;
 		if (std::find(joint_list.begin(), joint_list.end(), 1) != joint_list.end())
 			j1tens = true;
 		wam.moveTo(jpInitial[motor], 1.2, 0.75);
@@ -407,8 +407,8 @@ std::vector<int> AutoTension<DOF>::tensionJoint(std::vector<int> joint_list) {
 			updateJ1Moves(4, j1tens);
 			updateJ1Moves(5, j1tens);
 			printf("Tensioning Joint %s\n", (j1tens && joint != 1) ? "1, 5, and 6" : "5 and 6");
-
 			// Pull tension from J5
+			wam.moveTo(jpStart[4], 1.2, 0.75);
 			puck[4]->setProperty(Puck::TENSION, true);
 			if (j6TangPos == 0.0) {
 				while (!engage(5, 10.0)) {
