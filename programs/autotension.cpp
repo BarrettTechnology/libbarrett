@@ -13,35 +13,17 @@
 
 #include <barrett/math.h>
 #include <barrett/units.h>
+#include <barrett/exception.h>
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 #include <barrett/products/puck.h>
-#include <barrett/standard_main_function.h>
 
 using namespace barrett;
 
 const char CAL_CONFIG_FILE[] = "/etc/barrett/autotension.conf";
 
 template<size_t DOF>
-std::vector<int> check_args(int argc, char** argv) {
-	// Message to user
-	printf("\n"
-			"                  *** Barrett WAM Autotensioning Utility ***\n"
-			"\n"
-			"This utility will autotension the specified cables of your WAM Arm.\n"
-			"Cable tensioning is necessary after signs of the WAM cables becoming\n"
-			"loose after extended use, or after replacing any cables on your WAM Arm.\n"
-			"After completion of this routine, you must zero calibrate and gravity\n"
-			"calibrate the WAM, as pulling tension from the cables will introduce\n"
-			"offsets to your previous calibrations.\n"
-			"\n"
-			"WAMs with serial numbers < 5 and WAM wrists with serial numbers < 9 are not\n"
-			"eligible for autotensioning.\n"
-			"\n"
-			"This program assumes the WAM is mounted such that the base is horizontal.\n"
-			"\n"
-			"\n");
-
+std::vector<int> validate_args(int argc, char** argv) {
 	// Some DOF dependent items
 	int jnts2Tens = 4;
 	std::vector<int> args;
@@ -50,8 +32,8 @@ std::vector<int> check_args(int argc, char** argv) {
 
 	// Check our arguments and create vector accordingly.
 	if (argc == 1) {
-		printf("No arguments provided - Default\n");
-		printf("Program will autotension joints 1-%d\n", (DOF == 4) ? 4 : 6);
+		printf("\nNo arguments provided - Default\n");
+		printf("Program will autotension joints 1-%d\n\n", (DOF == 4) ? 4 : 6);
 		args.resize(jnts2Tens);
 		for (int i = 0; i < jnts2Tens; i++)
 			args[i] = i + 1;
@@ -59,19 +41,19 @@ std::vector<int> check_args(int argc, char** argv) {
 		args.resize(argc - 1);
 		for (int i = 0; i < argc - 1; i++) {
 			if (atoi(argv[i + 1]) < 1 || atoi(argv[i + 1]) > jnts2Tens) {
-				printf("EXITING: Arguments out of range - Must provide valid joints 1-%d (ex. 1 2 4)\n\n", (DOF == 4) ? 4 : 6);
+				printf("\nEXITING: Arguments out of range - Must provide valid joints 1-%d (ex. 1 2 4)\n\n", (DOF == 4) ? 4 : 6);
 				args.resize(0);
 				return args;
 			}
 		}
-		printf("Program will autotension joints ");
+		printf("\nProgram will autotension joints ");
 		for (int j = 0; j < argc - 1; j++) {
 			printf("%d", atoi(argv[j + 1]));
 			args[j] = atoi(argv[j + 1]);
 			if (j < argc - 2)
 				printf(", ");
 			else
-				printf("\n");
+				printf("\n\n");
 		}
 	}
 
@@ -93,22 +75,11 @@ public:
 		this->mandatoryCleanUp();
 	}
 
+public:
 	void activate(int m, double l) {
 		motor = m;
 		limit = l;
 		watching = true;
-	}
-
-	double getCurrentTorque() {
-		return fabs(torques[motor]);
-	}
-
-	double getMaxTorque() {
-		return max_torque;
-	}
-
-	double getMinTorque() {
-		return min_torque;
 	}
 
 	void deactivate() {
@@ -357,7 +328,6 @@ void AutoTension<DOF>::init(ProductManager& pm, std::vector<int> args) {
 
 template<size_t DOF>
 std::vector<int> AutoTension<DOF>::tensionJoint(std::vector<int> joint_list) {
-
 	int joint = joint_list[joint_list.size() - 1];
 	bool j1tens = false;
 	bool diff_tens = false;
@@ -661,7 +631,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	}
 	const libconfig::Setting& setting = config.lookup("autotension")[pm.getWamDefaultConfigPath()];
 
-	std::vector<int> arg_list = check_args<DOF>(argc, argv);
+	std::vector<int> arg_list = validate_args<DOF>(argc, argv);
 	if (arg_list.size() == 0) {
 		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 		return 1;
@@ -688,4 +658,38 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	printf("Autotensioning Routine Complete\n");
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 	return 0;
+}
+
+int main(int argc, char** argv) {
+
+	// Message to user
+	printf("\n"
+			"                  *** Barrett WAM Autotensioning Utility ***\n"
+			"\n"
+			"This utility will autotension the specified cables of your WAM Arm.\n"
+			"Cable tensioning is necessary after signs of the WAM cables becoming\n"
+			"loose after extended use, or after replacing any cables on your WAM Arm.\n"
+			"After completion of this routine, you must zero calibrate and gravity\n"
+			"calibrate the WAM, as pulling tension from the cables will introduce\n"
+			"offsets to your previous calibrations.\n"
+			"\n"
+			"WAMs with serial numbers < 5 and WAM wrists with serial numbers < 9 are not\n"
+			"eligible for autotensioning.\n"
+			"\n"
+			"This program assumes the WAM is mounted such that the base is horizontal.\n"
+			"\n"
+			"\n");
+
+	// For clean stack traces
+	barrett::installExceptionHandler();
+
+	// Create our product manager
+	ProductManager pm;
+	pm.waitForWam();
+
+	if (pm.foundWam4()) {
+		return wam_main<4>(argc, argv, pm, *pm.getWam4(true, NULL));
+	} else if (pm.foundWam7()) {
+		return wam_main<7>(argc, argv, pm, *pm.getWam7(true, NULL));
+	}
 }

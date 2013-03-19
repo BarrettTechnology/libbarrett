@@ -274,7 +274,7 @@ if (CONFIG_PACKAGE)
 	set(CPACK_SOURCE_PACKAGE_FILE_NAME "libbarrett-${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 	set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.txt")
 	set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING.txt")	
-	set(CPACK_SOURCE_IGNORE_FILES "libbarrett_programming_manual.doc;build_tgz_package;property_list.py;barrett-config.cmake$;bt-wam*;libbarrett.so*;Doxyfile$;install_manifest.txt;CMakeCache.txt;CMakeFiles/;cmake_install.cmake;^/CPack;.*/_CPack;.*/CPack;/.*\\\\.tar\\\\.gz;/.*\\\\.deb;.project;.cproject;.pyproject;Makefile;//CVS/;/\\\\.svn/;\\\\.swp$")
+	set(CPACK_SOURCE_IGNORE_FILES "libbarrett_programming_manual.doc;property_list.py;cmake/barrett-config.cmake$;bt-wam*;libbarrett.so*;Doxyfile$;install_manifest.txt;CMakeCache.txt;CMakeFiles/;cmake_install.cmake;^/CPack;.*/_CPack;.*/CPack;/.*\\\\.tar\\\\.gz;/.*\\\\.deb;.project;.cproject;.pyproject;Makefile;//CVS/;/\\\\.svn/;\\\\.swp$")
 	
 	set(CPACK_DEBIAN_PACKAGE_NAME "libbarrett-dev")
 	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_CONTACT}")
