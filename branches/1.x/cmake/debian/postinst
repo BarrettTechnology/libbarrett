@@ -29,6 +29,9 @@ cd /usr/local/share/barrett/config
 sudo ./install_config_files
 cd ../
 sudo rm -rf config
+
+chown -R $CUR_USR:$CUR_USR /etc/barrett/
+
 sudo ldconfig
 echo "Libbarrett Installation Complete"
 
