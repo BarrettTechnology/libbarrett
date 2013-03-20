@@ -135,14 +135,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	printf("Recording!\n");
 
 	const size_t NUM_REPS = 30;
-	printf("Total reps: %d\n", NUM_REPS);
+	printf("Total reps: %zu\n", NUM_REPS);
 	printf("REP    PROGRESS\n");
 
 	size_t i;
 	jp_type a, b;
 	jp_type prev = wam.getJointPositions();
 	for (size_t reps = 0; going  &&  reps < NUM_REPS; ++reps) {
-		printf("%3d    ", reps + 1);
+		printf("%3zu    ", reps + 1);
 		fflush(stdout);
 
 		i = 0;

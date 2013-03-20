@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
 	waitForEnter();
 	puck = pm.getPuck(streamId);
 	if (puck == NULL) {
-		printf("ERROR: Puck %d was not found on the bus.\n", streamId);
+		printf("ERROR: Puck %zu was not found on the bus.\n", streamId);
 		return 1;
 	}
 	tactPuck.setPuck(puck);

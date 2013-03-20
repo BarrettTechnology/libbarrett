@@ -28,9 +28,8 @@ endfunction()
 
 add_programs(
 	autohome
-	autotensioner
 	can_terminal
-	can_timing
+#	can_timing
 	constrain_to_path
 	cv_moves
 	ft_persistent_tare
@@ -38,7 +37,7 @@ add_programs(
 	gimbals_hand_controller
 	hand
 #	hand_buttons_test
-	hand_self_preservation
+#	hand_self_preservation
 	high_level_wam
 	inverse_dynamics_test
 	inverse_dynamics_test_teach_and_play
@@ -47,10 +46,10 @@ add_programs(
 	joint_encoder_init
 	joint_encoder_set_offsets
 	load_ft_cal
-	log_ft_data
-	log_hand_jp
-	log_hand_tact
-	log_sg_data
+#	log_ft_data
+#	log_hand_jp
+#	log_hand_tact
+#	log_sg_data
 	log_temp_data
 #	log_velocity
 	low_level_wam
