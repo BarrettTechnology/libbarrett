@@ -1,0 +1,57 @@
+This directory contains Barrett Technology's Teach and Play Suite.
+
+** Note: This software will only work with WAM firmware versions >= 200 **
+
+Recommendation: Any time the load present at the end-effector is changed, run the following routines:
+$ bt-wam-gravitycal
+$ ./bt-wam-ccg
+
+Files:
+
+control_mode_switcher.h - Header file containing convenient calls to switch between current and voltage control modes.
+
+calibrate_control_gains.cpp - Routine to calibrate the control gains for use of the WAM in voltage control mode. After compilation, this routine is run with the command ./bt-wam-ccg
+
+calibration4.conf & calibration7.conf - Configuration files loaded at runtime containing gain information necessary for playback.
+
+teach.cpp - Program to record and save a trajectory based on human interaction with the WAM. The trajectories can be saved in joint or Cartesian space.
+
+play.cpp - Program to load and play back a trajectory. Playback is capable of playing back joint or Cartesian trajectories in either current or voltage control.
+
+Instructions:
+
+Compile all files in the directory - 
+$ cmake .
+$ make
+
+Calibrate the control gains - 
+$ ./bt-wam-ccg
+
+Teach a Trajectory -
+$ ./teach <Name_of_file> <jp / pose>
+ex: 
+$ ./teach figure_eight pose
+This will prompt the user to press enter to start teaching the WAM a trajectory in Cartesian space. A trajectory will be recorded at 500Hz. 
+After the user completes the trajectory, they press enter again to stop teaching the trajectory.
+The trajectory will be saved in the recorded directory as a .csv file.
+
+The default is to record in joint space.
+
+Play a Trajectory - 
+$ ./play <Path_to_file> <cc / vc>
+ex:
+$ ./play recorded/figure_eight.csv cc
+The trajectory will be loaded and the user will be prompted with the following options:
+p - Play - Plays back the trajectory once.
+i - Pause - Pauses the trajectory playback.
+s - Stop - Stops the trajectory playback.
+l - Loop - Continuously playback the trajectory.
+q - Quit - Stops the playback, sends the robot home, and prompts the user to shift-idle.
+[Enter] - Pressing enter at any time will open or close the hand if present.
+
+The default is to playback the trajectory in current control mode.
+
+
+
+
+
