@@ -1,0 +1,181 @@
+#!/usr/bin/python
+
+"""
+	Copyright 2012 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+"""
+
+"""
+This utility installs libbarrett configuration files into the specified
+directory. If there are already configuration files in the directory, they will
+be backed-up and updated as necessary according to the value of the
+CONFIG_VERSION setting.
+"""
+
+import sys, os
+from datetime import date
+import re, shutil, errno
+import argparse
+
+
+DEFAULT_SOURCE_DIR = "../config/"
+DEFAULT_DEST_DIR = "/etc/barrett/"
+
+VERS_PATTERN = "^CONFIG_VERSION\s*=\s*(\d+);$"
+
+MAIN_VERS_FILE = "default.conf"
+MAIN_CONFIG_FILES = [MAIN_VERS_FILE, "wam4.conf", "wam7g.conf", "wam7w.conf", "calibration_data"]
+
+CAL_VERS_FILE = "calibration.conf"
+CAL_CONFIG_FILES = [CAL_VERS_FILE]
+
+AUTOTENS_VERS_FILE = "autotension.conf"
+AUTOTENS_CONFIG_FILES = [AUTOTENS_VERS_FILE]
+
+def main():
+	args = parseArguments()
+	print ">>> Source: %s" % args.source
+	print ">>> Destination: %s" % args.dest
+	
+	backupDir = getBackupDirName(args.dest)
+	os.mkdir(backupDir)
+	
+	installConfig(args.source, args.dest, backupDir, MAIN_VERS_FILE, MAIN_CONFIG_FILES)
+	installConfig(args.source, args.dest, backupDir, CAL_VERS_FILE, CAL_CONFIG_FILES)
+	installConfig(args.source, args.dest, backupDir, AUTOTENS_VERS_FILE, AUTOTENS_CONFIG_FILES)
+	
+	# If backupDir is empty, delete it.
+	try:
+		os.rmdir(backupDir)
+	except OSError:
+		pass
+	
+	print ">>> Done!"
+
+
+def parseArguments():
+	ap = argparse.ArgumentParser(description="Install or upgrade libbarrett configuration files.")
+	ap.add_argument("-s", "--source", default=DEFAULT_SOURCE_DIR, help="the source directory (default: %(default)s)")
+	ap.add_argument("-d", "--dest", default=DEFAULT_DEST_DIR, help="the destination directory (default: %(default)s)")
+
+	args = ap.parse_args()
+	args.dest = cleanDirPath(args.dest)
+	args.source = cleanDirPath(args.source)
+	return args
+
+def cleanDirPath(p):
+	p = os.path.abspath(os.path.expanduser(p))
+	if not os.path.isdir(p):
+		print "ERROR: %s is not a directory." % p
+		sys.exit(1)
+	return p
+
+
+def getBackupDirName(d):
+	base = date.today().strftime("BACKUP-%Y%m%d-")
+	i = 0
+	while True:
+		p = joinPaths(d, base + str(i))
+		if not os.path.exists(p):
+			break
+		i += 1
+	return p
+
+def joinPaths(a, b):
+	return os.path.abspath(a + "/" + b)
+
+
+def installConfig(s, d, backupDir, versFile, configFiles):
+	print ">>> Updating configuration group: %s" % versFile
+	
+	sVers = getConfigVers(s, versFile)
+	if sVers == -1:
+		print "ERROR: \"%s\" not present in source directory." % versFile
+		return
+	dVers = getConfigVers(d, versFile)
+	print "  --> Source version:", sVers
+	print "  --> Destination version:",
+	if dVers == -1:
+		print "(none)"
+	else:
+		print dVers
+	
+	if sVers == dVers:
+		print "  --> Group is already up to date"
+		return
+	else:
+		# Only announce the backup if we found a versFile...
+		if dVers != -1:
+			print "  --> Creating backup in:", backupDir
+		# ... but perform the backup always, just in case.
+		copyGroup(d, backupDir, configFiles, False, True)
+		print "  --> Copying new configuration files"
+		copyGroup(s, d, configFiles, True, False)
+
+def getConfigVers(d, f):
+	""" Special values: -1 means file not present, 0 means CONFIG_VERSION not present"""
+	
+	p = joinPaths(d, f)
+	if not os.path.exists(p):
+		return -1
+	if not os.path.isfile(p):
+		print "ERROR: %s is not a file." % p
+		sys.exit(1)
+	
+	vers = 0
+	fh = open(p, 'r')
+	for line in fh:
+		m = re.match(VERS_PATTERN, line)
+		if m:
+			if vers != 0:
+				# Then there were two matches
+				print "ERROR: %s has multiple CONFIG_VERSION settings." % p
+				sys.exit(1)
+			vers = int(m.group(1))
+	return vers
+
+def copyGroup(src, dst, fileList, srcMustExist, dstMustNotExist):
+	for f in fileList:
+		sPath = joinPaths(src, f)
+		if not os.path.exists(sPath):
+			if srcMustExist:
+				print "ERROR: %s does not exist." % sPath
+				sys.exit(2)
+			else:
+				continue
+		dPath = joinPaths(dst, f)
+		if dstMustNotExist and os.path.exists(dPath):
+				print "ERROR: %s already exists." % dPath
+				sys.exit(2)
+		copyFileOrDir(sPath, dPath)
+
+def copyFileOrDir(src, dst):
+	if os.path.isdir(src):
+		if os.path.exists(dst):
+			shutil.rmtree(dst)
+		shutil.copytree(src, dst, ignore=shutil.ignore_patterns('.svn'))
+	else:
+		shutil.copy2(src, dst)
+
+
+if __name__ == "__main__":
+	main()
+
