@@ -153,7 +153,16 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake.in ${PROJECT_SOU
 if (CONFIG_DEBIAN)	
 	message(STATUS "Using standard barrett-config.cmake for Debian installation.")
 	install(FILES ${PROJECT_SOURCE_DIR}/cmake/debian/barrett-config.cmake
-	DESTINATION share/barrett
+		DESTINATION share/barrett
+	)
+	message(STATUS "Temporarily installing configuration files.")
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/config/
+    	DESTINATION share/barrett/config
+    	PATTERN ".svn" EXCLUDE
+    )
+   	message(STATUS "Temporarily installing install_config_files Python script.")
+    install(FILES ${PROJECT_SOURCE_DIR}/programs/install_config_files
+    	DESTINATION share/barrett/config
 	)
 else()
 	message(STATUS "Using compile-time generated barrett-config.cmake.")
@@ -278,7 +287,7 @@ if (CONFIG_PACKAGE)
 	
 	set(CPACK_DEBIAN_PACKAGE_NAME "libbarrett-dev")
 	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_CONTACT}")
-	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libconfig-barrett (>=1.4.5), libbarrett-config, libboost-thread-dev (>= 1.45.0), libboost-python-dev (>=1.45.0), libgsl0-dev (>=1.14), libncurses5-dev, python-dev (>=2.7)")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libconfig-barrett (>=1.4.5), libboost-thread-dev (>= 1.45.0), libboost-python-dev (>=1.45.0), libgsl0-dev (>=1.14), libncurses5-dev, python-dev (>=2.7)")
 	if (NOT NON_REALTIME)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libxenomai-dev (>= 2.5.5.2)")
 	endif()
