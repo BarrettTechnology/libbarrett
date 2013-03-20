@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(libbarrett)
 set(libbarrett_VERSION_MAJOR 1)
-set(libbarrett_VERSION_MINOR 1)
-set(libbarrett_VERSION_PATCH 1)
+set(libbarrett_VERSION_MINOR 2)
+set(libbarrett_VERSION_PATCH 0)
 set(libbarrett_VERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${libbarrett_VERSION_PATCH}")
 set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}")
 
@@ -18,8 +18,6 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 # Location of custom Finders
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 
-
-
 ### Options
 option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
 option(NON_REALTIME "Set to ON to avoid building code that depends on a real-time operating system" OFF)
@@ -27,6 +25,8 @@ option(OPTIMIZE_FOR_PROCESSOR "Set to ON to build binaries that are optimized fo
 option(WITH_PYTHON "Set to ON to build Python bindings for libbarrett" ON)
 option(INSTALL_EXAMPLES "Set to ON to copy libbarrett example programs to the current user's home folder when the library is installed" ON)
 option(INSTALL_SANDBOX "Set to ON to copy libbarrett sandbox programs to the current user's home folder when the library is installed" ON)
+option(CONFIG_PACKAGE "Set to ON to set up CPACK variables necessary for packaging" OFF)
+option(CONFIG_DEBIAN "Set to ON to copy standard barrett-config.cmake, required for Debian packaging" OFF)
 
 if (OPTIMIZE_FOR_PROCESSOR)
 	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
@@ -150,9 +150,26 @@ install(DIRECTORY include/
 configure_file(${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake.in ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
 	ESCAPE_QUOTES @ONLY
 )
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
+if (CONFIG_DEBIAN)	
+	message(STATUS "Using standard barrett-config.cmake for Debian installation.")
+	install(FILES ${PROJECT_SOURCE_DIR}/cmake/debian/barrett-config.cmake
+		DESTINATION share/barrett
+	)
+	message(STATUS "Temporarily installing configuration files.")
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/config/
+    	DESTINATION share/barrett/config
+    	PATTERN ".svn" EXCLUDE
+    )
+   	message(STATUS "Temporarily installing install_config_files Python script.")
+    install(FILES ${PROJECT_SOURCE_DIR}/programs/install_config_files
+    	DESTINATION share/barrett/config
+	)
+else()
+	message(STATUS "Using compile-time generated barrett-config.cmake.")
+	install(FILES ${PROJECT_SOURCE_DIR}/cmake/barrett-config.cmake
 	DESTINATION share/barrett
-)
+	)
+endif()
 
 
 ## Installs or updates configuration files
@@ -190,6 +207,7 @@ if (INSTALL_EXAMPLES)
 endif()
 
 
+
 ## Sandbox code
 if (INSTALL_SANDBOX)
 	install(DIRECTORY ${PROJECT_SOURCE_DIR}/sandbox/
@@ -206,15 +224,6 @@ if (INSTALL_SANDBOX)
 	install(CODE "message(STATUS \"Changing the owner of ${SANDBOX_DIR} to ${SANDBOX_DIR_OWNER}...\")")
 	install(CODE "execute_process(COMMAND chown -R ${SANDBOX_DIR_OWNER}:${SANDBOX_DIR_OWNER} ${SANDBOX_DIR})")
 endif()
-
-
-
-### Packaging
-add_custom_target(package ${PROJECT_SOURCE_DIR}/programs/build_tgz_package ${libbarrett_VERSION}
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	VERBATIM
-)
-
 
 
 ### Other targets
@@ -239,3 +248,57 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(sandbox EXCLUDE_FROM_ALL)
 
 add_subdirectory(tests EXCLUDE_FROM_ALL)
+
+### Tarball
+add_custom_target(tarball COMMAND rm CMakeCache.txt
+    COMMAND "${CMAKE_COMMAND}" -D CONFIG_PACKAGE=ON .
+    COMMAND make package_source
+)
+
+### Debian
+add_custom_target(debian COMMAND rm CMakeCache.txt
+    COMMAND "${CMAKE_COMMAND}" -D CONFIG_DEBIAN=ON -D CONFIG_PACKAGE=ON .
+    COMMAND make package
+)
+
+### Packaging Options
+if (CONFIG_PACKAGE)
+	include(InstallRequiredSystemLibraries)
+
+	set(CPACK_SET_DESTDIR "on")
+	set(CPACK_SOURCE_GENERATOR "TGZ")
+	set(CPACK_GENERATOR "DEB")
+
+	set(CPACK_PACKAGE_NAME "libbarrett-${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+	set(CPACK_PACKAGE_DIRECTORY "${PROJECT_SOURCE_DIR}/debian")
+	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Barrett Technology C++ real-time controls library")
+	set(CPACK_PACKAGE_DESCRIPTION "Libbarrett is a real-time controls library written in C++ that runs Barrett Technology's products, including the WAM Arm and the BH8-280 BarrettHand.")
+	set(CPACK_PACKAGE_VENDOR "Barrett Technology")
+	set(CPACK_PACKAGE_CONTACT "Barrett Support <support@barrett.com>")	
+
+	set(CPACK_PACKAGE_VERSION_MAJOR "${libbarrett_VERSION_MAJOR}")
+	set(CPACK_PACKAGE_VERSION_MINOR "${libbarrett_VERSION_MINOR}")
+	set(CPACK_PACKAGE_VERSION_PATCH "${libbarrett_VERSION_PATCH}")
+	set(CPACK_PACKAGE_FILE_NAME "libbarrett-${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}_${CMAKE_SYSTEM_PROCESSOR}")
+	set(CPACK_SOURCE_PACKAGE_FILE_NAME "libbarrett-${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+	set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.txt")
+	set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING.txt")	
+	set(CPACK_SOURCE_IGNORE_FILES "libbarrett_programming_manual.doc;property_list.py;cmake/barrett-config.cmake$;bt-wam*;libbarrett.so*;Doxyfile$;install_manifest.txt;CMakeCache.txt;CMakeFiles/;cmake_install.cmake;^/CPack;.*/_CPack;.*/CPack;/.*\\\\.tar\\\\.gz;/.*\\\\.deb;.project;.cproject;.pyproject;Makefile;//CVS/;/\\\\.svn/;\\\\.swp$")
+	
+	set(CPACK_DEBIAN_PACKAGE_NAME "libbarrett-dev")
+	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_CONTACT}")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libconfig-barrett (>=1.4.5), libboost-thread-dev (>= 1.45.0), libboost-python-dev (>=1.45.0), libgsl0-dev (>=1.14), libncurses5-dev, python-dev (>=2.7)")
+	if (NOT NON_REALTIME)
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libxenomai-dev (>= 2.5.5.2)")
+	endif()
+	set(CPACK_DEBIAN_PACKAGE_DESCRIPTION_SUMMARY "${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+	set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}")
+	set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+	set(CPACK_DEBIAN_PACKAGE_SECTION "library")
+	set(CPACK_DEBIAN_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+	set(CPACK_DEBIAN_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+	set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/cmake/debian/postinst")
+	
+	include(CPack)
+endif()
+

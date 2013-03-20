@@ -70,6 +70,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	gravity(setting["gravity_compensation"]),
 	jvFilter(setting["joint_velocity_filter"]),
 	toolPosition(),
+	toolVelocity(),
 	toolOrientation(),
 	toolPose(),
 
@@ -104,6 +105,7 @@ Wam<DOF>::Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 	// Don't connect gravity.output here. Gravity compensation is off by default.
 
 	connect(kinematicsBase.kinOutput, toolPosition.kinInput);
+	connect(kinematicsBase.kinOutput, toolVelocity.kinInput);
 	connect(kinematicsBase.kinOutput, toolOrientation.kinInput);
 	connect(kinematicsBase.kinOutput, tf2jt.kinInput);
 	connect(kinematicsBase.kinOutput, toController.kinInput);
@@ -232,6 +234,13 @@ typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 }
 
 template<size_t DOF>
+typename Wam<DOF>::cv_type Wam<DOF>::getToolVelocity() const
+{
+	kin.eval(getJointPositions(), getJointVelocities());
+	return cv_type(kin.impl->tool_velocity);
+}
+
+template<size_t DOF>
 Eigen::Quaterniond Wam<DOF>::getToolOrientation() const
 {
 	{
@@ -258,7 +267,6 @@ inline math::Matrix<6,DOF> Wam<DOF>::getToolJacobian() const
 	kin.eval(getJointPositions(), getJointVelocities());
 	return math::Matrix<6,DOF>(kin.impl->tool_jacobian);
 }
-
 
 template<size_t DOF>
 void Wam<DOF>::gravityCompensate(bool compensate)
