@@ -8,7 +8,6 @@
 #include <stdexcept>
 
 #include <native/task.h>
-#include <native/timer.h>
 
 #include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
@@ -49,7 +48,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 	thread::Mutex& m = getMutex();
 	m.lock();
 
-	RTIME start = rt_timer_read();
+	double start = highResolutionSystemTime();
 
 	if (retrieveMessage(expectedBusId, data, len)) {
 		m.unlock();
@@ -70,7 +69,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 			return 1;
 		}
 
-		if ((rt_timer_read() - start) > CommunicationsBus::TIMEOUT) {
+		if ((highResolutionSystemTime() - start) > CommunicationsBus::TIMEOUT) {
 			m.unlock();
 			logMessage("BusManager::receive(): timed out", true);
 			return 2;
