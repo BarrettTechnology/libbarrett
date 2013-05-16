@@ -198,10 +198,7 @@ void RealTimeExecutionManager::start()
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
-			ret = rt_task_sleep(detail::secondsToRTIME(period / 10.0));
-			if (ret != 0) {
-				(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_sleep(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
-			}
+			btsleepRT(period / 10.0);
 		}
 	}
 	// TODO(dc): else, throw an exception?

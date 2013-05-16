@@ -78,8 +78,7 @@ int BusManager::receive(int expectedBusId, unsigned char* data, size_t& len, boo
 
 		if (!realtime) {
 			int lc = m.fullUnlock();
-//			usleep(100);
-			rt_task_sleep(100000);
+			btsleepRT(0.0001);
 			m.relock(lc);
 		}
 	}
