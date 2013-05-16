@@ -46,7 +46,7 @@ using namespace boost::python;
 
 // Reserve storage for static constants.
 const size_t MAX_MESSAGE_LEN = CommunicationsBus::MAX_MESSAGE_LEN;
-const size_t TIMEOUT = CommunicationsBus::TIMEOUT;
+const double TIMEOUT = CommunicationsBus::TIMEOUT;
 
 
 void send(const CommunicationsBus& cb, int busId, object pyData) {

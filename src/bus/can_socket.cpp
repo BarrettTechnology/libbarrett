@@ -172,7 +172,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
 
-	nanosecs_rel_t timeout = (nanosecs_rel_t) CommunicationsBus::TIMEOUT;
+	nanosecs_rel_t timeout = (nanosecs_rel_t) 1e9 * CommunicationsBus::TIMEOUT;
 	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (ret != 0) {
 		close();
