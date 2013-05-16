@@ -37,7 +37,6 @@
 #include <sys/mman.h>
 
 #include <native/task.h>
-#include <native/timer.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -70,7 +69,7 @@ void rtemEntryPoint(void* cookie)
 	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
 
 	uint32_t period_us = rtem->period * 1e6;
-	RTIME start;
+	double start;
 	uint32_t duration;
 	uint32_t min = std::numeric_limits<unsigned int>::max();
 	uint32_t max = 0;
@@ -85,7 +84,7 @@ void rtemEntryPoint(void* cookie)
 
 	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
 	if (ret != 0) {
-		logMessage("%s: rt_task_set_periodic(): (%d) %s") %__func__ %-ret %strerror(-ret);
+		logMessage("%s: rt_task_set_periodic(): (%d) %s") % __func__ % -ret % strerror(-ret);
 		exit(2);
 	}
 
@@ -94,15 +93,15 @@ void rtemEntryPoint(void* cookie)
 		while ( !rtem->stopRunning ) {
 			ret = rt_task_wait_period(&newMissedReleasePoints);
 			if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
-				logMessage("%s: rt_task_wait_period(): (%d) %s") %__func__ %-ret %strerror(-ret);
+				logMessage("%s: rt_task_wait_period(): (%d) %s") % __func__ % -ret % strerror(-ret);
 				exit(2);
 			}
 			missedReleasePoints += newMissedReleasePoints;
-			start = rt_timer_read();
+			start = highResolutionSystemTime();
 
 			rtem->runExecutionCycle();
 
-            duration = (rt_timer_read() - start) / 1000;
+            duration = (highResolutionSystemTime() - start) * 1e6;
 			if (duration < min) {
 				min = duration;
 			}
@@ -133,14 +132,14 @@ void rtemEntryPoint(void* cookie)
 	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
 
     logMessage("RealTimeExecutionManager control-loop stats (microseconds):");
-    logMessage("  target period = %u") %period_us;
-    logMessage("  min = %u") %min;
-    logMessage("  ave = %.3f") %mean;
-    logMessage("  max = %u") %max;
-    logMessage("  stdev = %.3f") %stdev;
-    logMessage("  num total cycles = %u") %loopCount;
-    logMessage("  num missed release points = %u") %missedReleasePoints;
-    logMessage("  num overruns = %u") %overruns;
+    logMessage("  target period = %u") % period_us;
+    logMessage("  min = %u") % min;
+    logMessage("  ave = %.3f") % mean;
+    logMessage("  max = %u") % max;
+    logMessage("  stdev = %.3f") % stdev;
+    logMessage("  num total cycles = %u") % loopCount;
+    logMessage("  num missed release points = %u") % missedReleasePoints;
+    logMessage("  num overruns = %u") % overruns;
 }
 
 
@@ -188,12 +187,12 @@ void RealTimeExecutionManager::start()
 		int ret = 0;
 		ret = rt_task_create(task, name.c_str(), 0, priority, T_JOINABLE);
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  %s: rt_task_create(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  %s: rt_task_create(): (%d) %s") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 		}
 
 		ret = rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
 		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_start(): (%d) %s\n") %__func__  %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_start(): (%d) %s\n") % __func__  % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 		}
 
 		// block until the thread starts reporting its new state
@@ -211,7 +210,7 @@ void RealTimeExecutionManager::stop()
 	// According to Xenomai docs, rt_task_join() also performs the rt_task_delete() behaviors.
 	int ret = rt_task_join(task);
 	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task.  %s: rt_task_join(): (%d) %s") %__func__ %__func__ %-ret %strerror(-ret)).raise<std::runtime_error>();
+		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task.  %s: rt_task_join(): (%d) %s") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
 
 	delete task;
@@ -228,7 +227,7 @@ void RealTimeExecutionManager::clearError()
 	stopRunning = true;
 	int ret = rt_task_delete(task);
 	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. %s: rt_task_delete(): (%d) %s\n") % __func__ % __func__ % -ret %strerror(-ret)).raise<std::runtime_error>();
+		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. %s: rt_task_delete(): (%d) %s\n") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
 	delete task;
 	task = NULL;
