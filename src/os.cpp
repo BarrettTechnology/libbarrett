@@ -35,6 +35,7 @@
 
 #include <syslog.h>
 #include <native/task.h>
+#include <native/timer.h>
 
 #include <boost/thread.hpp>
 
@@ -67,6 +68,12 @@ void btsleep(double duration_s, bool realtime)
 	} else {
 		btsleep(duration_s);
 	}
+}
+
+
+double highResolutionSystemTime()
+{
+	return 1e-9 * rt_timer_read();
 }
 
 
