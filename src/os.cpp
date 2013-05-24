@@ -43,6 +43,12 @@
 #include <barrett/os.h>
 
 
+// Xenomai helper function
+inline RTIME secondsToRTIME(double s) {
+	return static_cast<RTIME>(s * 1e9);
+}
+
+
 namespace barrett {
 
 
@@ -74,6 +80,28 @@ void btsleep(double duration_s, bool realtime)
 double highResolutionSystemTime()
 {
 	return 1e-9 * rt_timer_read();
+}
+
+
+
+PeriodicLoopTimer::PeriodicLoopTimer(double period)
+{
+	int ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(period));
+	if (ret != 0) {
+		(logMessage("%s: rt_task_set_periodic(): (%d) %s") % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
+	}
+
+}
+
+unsigned long PeriodicLoopTimer::wait()
+{
+	unsigned long missedReleasePoints;
+	int ret = rt_task_wait_period(&missedReleasePoints);
+	if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
+		(logMessage("%s: rt_task_wait_period(): (%d) %s") % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
+	}
+
+	return missedReleasePoints;
 }
 
 
