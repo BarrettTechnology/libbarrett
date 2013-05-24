@@ -49,7 +49,7 @@ double highResolutionSystemTime();
 
 class PeriodicLoopTimer {
 public:
-	explicit PeriodicLoopTimer(double period);
+	explicit PeriodicLoopTimer(double period, int threadPriority = 10);
 
 	unsigned long wait();
 };

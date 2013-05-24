@@ -84,11 +84,22 @@ double highResolutionSystemTime()
 
 
 
-PeriodicLoopTimer::PeriodicLoopTimer(double period)
+PeriodicLoopTimer::PeriodicLoopTimer(double period, int threadPriority)
 {
-	int ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(period));
+	int ret;
+
+	// Try to become a Xenomai task
+	ret = rt_task_shadow(NULL, NULL, threadPriority, 0);
+	// EBUSY indicates the current thread is already a Xenomai task
+	if (ret != 0  &&  ret != -EBUSY) {
+		(logMessage("log::RealTimeWriter::%s: rt_task_shadow(): (%d) %s")
+				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
+	}
+
+	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(period));
 	if (ret != 0) {
-		(logMessage("%s: rt_task_set_periodic(): (%d) %s") % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
+		(logMessage("%s: rt_task_set_periodic(): (%d) %s")
+				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
 
 }

@@ -138,7 +138,7 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 	uint32_t overruns = 0;
 	uint32_t missedReleasePoints = 0;
 
-	PeriodicLoopTimer loopTimer(period);
+	PeriodicLoopTimer loopTimer(period, priority);
 	running = true;
 	try {
 		while ( !boost::this_thread::interruption_requested() ) {
