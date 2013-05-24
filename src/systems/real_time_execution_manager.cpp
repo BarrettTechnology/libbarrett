@@ -32,11 +32,10 @@
 #include <string>
 #include <limits>
 #include <cmath>
+#include <cassert>
 
 #include <errno.h>
 #include <sys/mman.h>
-
-#include <native/task.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -54,109 +53,16 @@ namespace systems {
 // TODO(dc): test!
 
 
-namespace detail {
-
-
-inline RTIME secondsToRTIME(double s) {
-	return static_cast<RTIME>(s * 1e9);
-}
-
-
-extern "C" {
-
-void rtemEntryPoint(void* cookie)
-{
-	RealTimeExecutionManager* rtem = reinterpret_cast<RealTimeExecutionManager*>(cookie);
-
-	uint32_t period_us = rtem->period * 1e6;
-	double start;
-	uint32_t duration;
-	uint32_t min = std::numeric_limits<unsigned int>::max();
-	uint32_t max = 0;
-	uint64_t sum = 0;
-	uint64_t sumSq = 0;
-	uint32_t loopCount = 0;
-	uint32_t overruns = 0;
-	uint32_t missedReleasePoints = 0;
-	unsigned long newMissedReleasePoints = 0;
-
-	int ret;
-
-	ret = rt_task_set_periodic(NULL, TM_NOW, secondsToRTIME(rtem->period));
-	if (ret != 0) {
-		logMessage("%s: rt_task_set_periodic(): (%d) %s") % __func__ % -ret % strerror(-ret);
-		exit(2);
-	}
-
-	rtem->running = true;
-	try {
-		while ( !rtem->stopRunning ) {
-			ret = rt_task_wait_period(&newMissedReleasePoints);
-			if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
-				logMessage("%s: rt_task_wait_period(): (%d) %s") % __func__ % -ret % strerror(-ret);
-				exit(2);
-			}
-			missedReleasePoints += newMissedReleasePoints;
-			start = highResolutionSystemTime();
-
-			rtem->runExecutionCycle();
-
-            duration = (highResolutionSystemTime() - start) * 1e6;
-			if (duration < min) {
-				min = duration;
-			}
-			if (duration > max) {
-				max = duration;
-			}
-			sum += duration;
-			sumSq += duration * duration;
-			++loopCount;
-			if (duration > period_us) {
-				++overruns;
-			}
-		}
-	} catch (const ExecutionManagerException& e) {
-		BARRETT_SCOPED_LOCK(rtem->getMutex());
-
-		rtem->error = true;
-		rtem->errorStr = e.what();
-
-		if (rtem->errorCallback) {
-			rtem->errorCallback(rtem, e);
-		}
-	}
-	rtem->running = false;
-
-
-	double mean = (double)sum / loopCount;
-	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
-
-    logMessage("RealTimeExecutionManager control-loop stats (microseconds):");
-    logMessage("  target period = %u") % period_us;
-    logMessage("  min = %u") % min;
-    logMessage("  ave = %.3f") % mean;
-    logMessage("  max = %u") % max;
-    logMessage("  stdev = %.3f") % stdev;
-    logMessage("  num total cycles = %u") % loopCount;
-    logMessage("  num missed release points = %u") % missedReleasePoints;
-    logMessage("  num overruns = %u") % overruns;
-}
-
-
-}
-}
-
-
 RealTimeExecutionManager::RealTimeExecutionManager(double period_s, int rt_priority) :
 	ExecutionManager(period_s),
-	task(NULL), priority(rt_priority), running(false), stopRunning(false), error(false), errorStr(), errorCallback()
+	thread(), priority(rt_priority), running(false), error(false), errorStr(), errorCallback()
 {
 	init();
 }
 
 RealTimeExecutionManager::RealTimeExecutionManager(const libconfig::Setting& setting) :
 	ExecutionManager(setting),
-	task(NULL), priority(), running(false), stopRunning(false), error(false), errorStr(), errorCallback()
+	thread(), priority(), running(false), error(false), errorStr(), errorCallback()
 {
 	priority = setting["thread_priority"];
 	init();
@@ -180,20 +86,8 @@ void RealTimeExecutionManager::start()
 	}
 
 	if ( !isRunning() ) {
-		stopRunning = false;
-		task = new RT_TASK;
-
-		std::string name = "RTEM: " + boost::lexical_cast<std::string>(this);
-		int ret = 0;
-		ret = rt_task_create(task, name.c_str(), 0, priority, T_JOINABLE);
-		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s: Couldn't start the realtime task.  %s: rt_task_create(): (%d) %s") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
-		}
-
-		ret = rt_task_start(task, &detail::rtemEntryPoint, reinterpret_cast<void*>(this));
-		if (ret != 0) {
-			(logMessage("systems::RealTimeExecutionManager::%s:  Couldn't start the realtime task.  %s: rt_task_start(): (%d) %s\n") % __func__  % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
-		}
+		boost::thread tmpThread(&RealTimeExecutionManager::executionLoopEntryPoint, this);
+		thread.swap(tmpThread);
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
@@ -205,16 +99,9 @@ void RealTimeExecutionManager::start()
 
 void RealTimeExecutionManager::stop()
 {
-	stopRunning = true;
-
-	// According to Xenomai docs, rt_task_join() also performs the rt_task_delete() behaviors.
-	int ret = rt_task_join(task);
-	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't stop the realtime task.  %s: rt_task_join(): (%d) %s") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
-	}
-
-	delete task;
-	task = NULL;
+	thread.interrupt();
+	thread.join();
+	assert( !isRunning() );
 }
 
 void RealTimeExecutionManager::clearError()
@@ -223,14 +110,7 @@ void RealTimeExecutionManager::clearError()
 
 	error = false;
 	errorStr = "";
-
-	stopRunning = true;
-	int ret = rt_task_delete(task);
-	if (ret != 0) {
-		(logMessage("systems::RealTimeExecutionManager::%s: Couldn't delete the realtime task. %s: rt_task_delete(): (%d) %s\n") % __func__ % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
-	}
-	delete task;
-	task = NULL;
+	stop();
 }
 
 void RealTimeExecutionManager::setErrorCallback(callback_type callback)
@@ -243,6 +123,69 @@ void RealTimeExecutionManager::setErrorCallback(callback_type callback)
 void RealTimeExecutionManager::clearErrorCallback()
 {
 	setErrorCallback(callback_type());
+}
+
+void RealTimeExecutionManager::executionLoopEntryPoint()
+{
+	uint32_t period_us = period * 1e6;
+	double start;
+	uint32_t duration;
+	uint32_t min = std::numeric_limits<unsigned int>::max();
+	uint32_t max = 0;
+	uint64_t sum = 0;
+	uint64_t sumSq = 0;
+	uint32_t loopCount = 0;
+	uint32_t overruns = 0;
+	uint32_t missedReleasePoints = 0;
+
+	PeriodicLoopTimer loopTimer(period);
+	running = true;
+	try {
+		while ( !boost::this_thread::interruption_requested() ) {
+			missedReleasePoints += loopTimer.wait();
+			start = highResolutionSystemTime();
+
+			runExecutionCycle();
+
+            duration = (highResolutionSystemTime() - start) * 1e6;
+			if (duration < min) {
+				min = duration;
+			}
+			if (duration > max) {
+				max = duration;
+			}
+			sum += duration;
+			sumSq += duration * duration;
+			++loopCount;
+			if (duration > period_us) {
+				++overruns;
+			}
+		}
+	} catch (const ExecutionManagerException& e) {
+		BARRETT_SCOPED_LOCK(getMutex());
+
+		error = true;
+		errorStr = e.what();
+
+		if (errorCallback) {
+			errorCallback(this, e);
+		}
+	}
+	running = false;
+
+
+	double mean = (double)sum / loopCount;
+	double stdev = std::sqrt( ((double)sumSq/loopCount) - mean*mean );
+
+    logMessage("RealTimeExecutionManager control-loop stats (microseconds):");
+    logMessage("  target period = %u") % period_us;
+    logMessage("  min = %u") % min;
+    logMessage("  ave = %.3f") % mean;
+    logMessage("  max = %u") % max;
+    logMessage("  stdev = %.3f") % stdev;
+    logMessage("  num total cycles = %u") % loopCount;
+    logMessage("  num missed release points = %u") % missedReleasePoints;
+    logMessage("  num overruns = %u") % overruns;
 }
 
 void RealTimeExecutionManager::init()
