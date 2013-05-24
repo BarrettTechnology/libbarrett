@@ -70,7 +70,6 @@ protected:
 	char* currentPos;
 	bool writeToDisk;
 
-	bool stopRunning;
 	boost::thread thread;
 	int priority;
 
