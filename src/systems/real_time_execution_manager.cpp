@@ -42,6 +42,7 @@
 
 #include <barrett/os.h>
 #include <barrett/thread/real_time_mutex.h>
+#include <barrett/thread/disable_secondary_mode_warning.h>
 #include <barrett/systems/abstract/execution_manager.h>
 #include <barrett/systems/real_time_execution_manager.h>
 
@@ -86,12 +87,14 @@ void RealTimeExecutionManager::start()
 	}
 
 	if ( !isRunning() ) {
+		thread::DisableSecondaryModeWarning dsmw;
+
 		boost::thread tmpThread(&RealTimeExecutionManager::executionLoopEntryPoint, this);
 		thread.swap(tmpThread);
 
 		// block until the thread starts reporting its new state
 		while ( !isRunning() ) {
-			btsleepRT(period / 10.0);
+			btsleep(period / 10.0);
 		}
 	}
 	// TODO(dc): else, throw an exception?
