@@ -45,6 +45,9 @@ namespace barrett {
 namespace thread {
 
 namespace detail {
+
+struct mutex_impl : public rt_mutex_placeholder {};
+
 extern "C" {
 
 void warnOnSwitchToSecondaryMode(int)
@@ -61,7 +64,7 @@ void warnOnSwitchToSecondaryMode(int)
 RealTimeMutex::RealTimeMutex() :
 	mutex(NULL), lockCount(0), leaveWarnSwitchOn(false)
 {
-	mutex = new RT_MUTEX;
+	mutex = new detail::mutex_impl;
 	int ret = rt_mutex_create(mutex, NULL);
 	if (ret != 0) {
 		(logMessage("thread::RealTimeMutex::%s:  Could not create RT_MUTEX: (%d) %s") %__func__ %-ret %strerror(-ret)).raise<std::logic_error>();
@@ -84,7 +87,7 @@ RealTimeMutex::~RealTimeMutex()
 
 void RealTimeMutex::lock()
 {
-    int ret = acquireWrapper(TM_INFINITE);
+    int ret = acquireWrapper(true);
     if (ret != 0) {
 	logMessage("RealTimeMutex::lock(): %s returned %d") %__func__ % ret;
 	throw boost::thread_resource_error(ret);
@@ -93,7 +96,7 @@ void RealTimeMutex::lock()
 
 bool RealTimeMutex::try_lock()
 {
-	return acquireWrapper(TM_NONBLOCK) == 0;
+	return acquireWrapper(false) == 0;
 }
 
 void RealTimeMutex::unlock()
@@ -138,8 +141,9 @@ void RealTimeMutex::relock(int lc)
 }
 
 
-int RealTimeMutex::acquireWrapper(RTIME timeout)
+int RealTimeMutex::acquireWrapper(bool blocking)
 {
+	const RTIME timeout = blocking ? TM_INFINITE : TM_NONBLOCK;
 	int ret;
 
 	ret = rt_mutex_acquire(mutex, timeout);
