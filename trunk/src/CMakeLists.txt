@@ -33,19 +33,33 @@ set(barrett_SOURCES
 	thread/null_mutex.cpp
 
 	exception.cpp
-	os.cpp
 	stl_utils.cpp
 )
 
-# If NON_REALTIME build option is enabled, don't build sources that depend on Xenomai
-if (NON_REALTIME)
-else()
-	list(APPEND barrett_SOURCES
-		bus/can_socket.cpp
-		
-		thread/disable_secondary_mode_warning.cpp
-		thread/real_time_mutex.cpp
-	)
+set(OS_dependent_sources
+	bus/can_socket.cpp
+
+	thread/disable_secondary_mode_warning.cpp
+	thread/real_time_mutex.cpp
+
+	os.cpp
+)
+# Always compile OS-dependent sources
+list(APPEND barrett_SOURCES ${OS_dependent_sources})
+
+if (NOT NON_REALTIME)
+	foreach (src_file ${OS_dependent_sources})
+		message(STATUS "Blah!" ${src_file})
+		# Define BARRETT_XENOMAI preprocessor symbol
+		set_property(
+			SOURCE ${src_file}
+			APPEND PROPERTY COMPILE_DEFINITIONS BARRETT_XENOMAI
+		)
+	endforeach()
+	
+	# Xenomai only sources
+#	list(APPEND barrett_SOURCES
+#	)
 endif()
 
 # Maybe include Python sources
