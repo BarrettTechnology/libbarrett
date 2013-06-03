@@ -60,6 +60,7 @@ add_programs(
 	quaternion_interpolation
 	read_pendant_state
 	record_jp
+	robust_cartesian
 	safety_module
 	tactile_test
 	teach_with_hand
