@@ -34,10 +34,12 @@
 #include <cassert>
 
 #include <syslog.h>
+
 #include <native/task.h>
 #include <native/timer.h>
 
 #include <boost/thread.hpp>
+#include <boost/date_time.hpp>
 
 #include <barrett/detail/os.h>
 #include <barrett/os.h>
@@ -60,11 +62,15 @@ void btsleep(double duration_s)
 
 void btsleepRT(double duration_s)
 {
+#ifdef BARRETT_XENOMAI
 	assert(duration_s > 1e-9);  // Minimum duration is 1 ns
 	int ret = rt_task_sleep(RTIME(duration_s * 1e9));
 	if (ret != 0) {
 		(logMessage("%s: rt_task_sleep() returned error %d.") % __func__ % ret).raise<std::runtime_error>();
 	}
+#else
+	btsleep(duration_s);
+#endif
 }
 
 void btsleep(double duration_s, bool realtime)
@@ -76,10 +82,17 @@ void btsleep(double duration_s, bool realtime)
 	}
 }
 
-
+#ifndef BARRETT_XENOMAI
+// Record the time program execution began
+const boost::posix_time::ptime START_OF_PROGRAM_TIME = boost::posix_time::microsec_clock::local_time();
+#endif
 double highResolutionSystemTime()
 {
+#ifdef BARRETT_XENOMAI
 	return 1e-9 * rt_timer_read();
+#else
+	return (boost::posix_time::microsec_clock::local_time() - START_OF_PROGRAM_TIME).total_nanoseconds() * 1e-9;
+#endif
 }
 
 
