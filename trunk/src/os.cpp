@@ -97,8 +97,10 @@ double highResolutionSystemTime()
 
 
 
-PeriodicLoopTimer::PeriodicLoopTimer(double period, int threadPriority)
+PeriodicLoopTimer::PeriodicLoopTimer(double period_, int threadPriority) :
+		period(period_), releasePoint(-1.0)
 {
+#ifdef BARRETT_XENOMAI
 	int ret;
 
 	// Try to become a Xenomai task
@@ -114,18 +116,39 @@ PeriodicLoopTimer::PeriodicLoopTimer(double period, int threadPriority)
 		(logMessage("PeriodicLoopTimer::%s: rt_task_set_periodic(): (%d) %s")
 				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
-
+#endif
 }
 
 unsigned long PeriodicLoopTimer::wait()
 {
+#ifdef BARRETT_XENOMAI
 	unsigned long missedReleasePoints;
+
 	int ret = rt_task_wait_period(&missedReleasePoints);
 	if (ret != 0  &&  ret != -ETIMEDOUT) {  // ETIMEDOUT means that we missed a release point
 		(logMessage("%s: rt_task_wait_period(): (%d) %s") % __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
 
 	return missedReleasePoints;
+#else
+	const double now = highResolutionSystemTime();
+	const double remainder = releasePoint - now;
+	if (remainder <= 0) {
+		releasePoint = now + period;
+
+		if (releasePoint < 0.0) {  // First run
+			return 0;
+		} else {
+			return ceil(-remainder / period);
+		}
+	} else {
+		// Calculate the new releasePoint based on the old one.
+		// This eliminates drift (on average) due to over/under sleeping.
+		releasePoint += period;
+		btsleep(remainder);
+		return 0;
+	}
+#endif
 }
 
 
