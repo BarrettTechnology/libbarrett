@@ -5,10 +5,10 @@
  *      Author: dc
  */
 
-
 #include <boost/thread.hpp>
 
 #include <gtest/gtest.h>
+
 #include <barrett/os.h>
 
 
@@ -16,18 +16,29 @@ namespace {
 using namespace barrett;
 
 
-TEST(HighResolutionSystemTimeTest, AgreesWithBoostThreadSleep) {
+void verifySleepDurations(void (*sleepFunction)(double)) {
 	for (int i = 1; i <= 10; ++i) {
 		double duration = i * 0.01;
 
 		double before = highResolutionSystemTime();
-		boost::this_thread::sleep(boost::posix_time::microseconds(long(duration * 1e6)));
+		sleepFunction(duration);
 		double after = highResolutionSystemTime();
 
-		// Because this test relies on the and OS environment and scheduler,
-		// occasional failures are expected :(
+		// Because this test relies on the scheduler, occasional failures are expected :(
 		ASSERT_NEAR(duration, after - before, 0.001);
 	}
+}
+
+void boostSleep(double duration) {
+	boost::this_thread::sleep(boost::posix_time::microseconds(long(duration * 1e6)));
+}
+
+TEST(HighResolutionSystemTimeTest, AgreesWithBoostThreadSleep) {
+	verifySleepDurations(&boostSleep);
+}
+
+TEST(BtsleepTest, AgreesWithHRST) {
+	verifySleepDurations(&btsleep);
 }
 
 
