@@ -24,8 +24,8 @@ void verifySleepDurations(void (*sleepFunction)(double)) {
 		sleepFunction(duration);
 		double after = highResolutionSystemTime();
 
-		// Because this test relies on the scheduler, occasional failures are expected :(
-		ASSERT_NEAR(duration, after - before, 0.001);
+		ASSERT_NEAR(duration, after - before, 0.001)
+			<< "Because this test relies on the Linux scheduler, occasional failures are expected.";
 	}
 }
 
