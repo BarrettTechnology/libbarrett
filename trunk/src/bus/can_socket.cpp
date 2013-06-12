@@ -33,7 +33,6 @@
 #include <cstring>
 
 #include <errno.h>
-#include <sys/mman.h>
 
 #include <rtdm/rtcan.h>
 
@@ -50,13 +49,11 @@ namespace bus {
 CANSocket::CANSocket() :
 	mutex(), handle(NULL_HANDLE)
 {
-	init();
 }
 
 CANSocket::CANSocket(int port) throw(std::runtime_error) :
 	mutex(), handle(NULL_HANDLE)
 {
-	init();
 	open(port);
 }
 
@@ -288,11 +285,6 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 	}
 
 	return 0;
-}
-
-void CANSocket::init() {
-	// Avoids memory swapping for this program
-	mlockall(MCL_CURRENT|MCL_FUTURE);
 }
 
 
