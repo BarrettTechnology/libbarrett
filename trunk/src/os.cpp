@@ -45,10 +45,12 @@
 #include <barrett/os.h>
 
 
+#ifdef BARRETT_XENOMAI
 // Xenomai helper function
 inline RTIME secondsToRTIME(double s) {
 	return static_cast<RTIME>(s * 1e9);
 }
+#endif
 
 
 namespace barrett {
