@@ -35,7 +35,6 @@
 #include <cassert>
 
 #include <errno.h>
-#include <sys/mman.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -193,9 +192,6 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 
 void RealTimeExecutionManager::init()
 {
-	// Avoids memory swapping for this program
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-
 	// install a more appropriate mutex
 	delete mutex;
 	mutex = new thread::RealTimeMutex;  // ~ExecutionManager() will delete this

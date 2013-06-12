@@ -34,6 +34,7 @@
 #include <cassert>
 
 #include <syslog.h>
+#include <sys/mman.h>
 
 #include <native/task.h>
 #include <native/timer.h>
@@ -49,6 +50,22 @@
 // Xenomai helper function
 inline RTIME secondsToRTIME(double s) {
 	return static_cast<RTIME>(s * 1e9);
+}
+
+// Xenomai requires at least one call to mlockall() per process
+namespace {  // Using an anonymous namespace because no other code needs to
+			 // interact with this class or the ix vaiable. It simply needs to
+			 // be constructed once.
+	class InitXenomai {
+	public:
+		InitXenomai() {
+			// Avoids memory swapping for this program
+			mlockall(MCL_CURRENT|MCL_FUTURE);
+		}
+	};
+	// Static variables are initialized when the module is loaded. This causes the
+	// InitXenomai::InitXenomai() ctor to be called at module load time.
+	static InitXenomai ix;
 }
 #endif
 
