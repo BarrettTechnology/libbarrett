@@ -54,8 +54,7 @@ inline RTIME secondsToRTIME(double s) {
 
 // Xenomai requires at least one call to mlockall() per process
 namespace {  // Using an anonymous namespace because no other code needs to
-			 // interact with this class or the ix vaiable. It simply needs to
-			 // be constructed once.
+			 // interact with this class. It simply needs to be constructed once.
 	class InitXenomai {
 	public:
 		InitXenomai() {
@@ -65,7 +64,7 @@ namespace {  // Using an anonymous namespace because no other code needs to
 	};
 	// Static variables are initialized when the module is loaded. This causes the
 	// InitXenomai::InitXenomai() ctor to be called at module load time.
-	static InitXenomai ix;
+	static InitXenomai ignore;
 }
 #endif
 
