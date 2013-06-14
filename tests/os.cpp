@@ -42,4 +42,23 @@ TEST(BtsleepTest, AgreesWithHRST) {
 }
 
 
+TEST(PeriodicLoopTimerTest, LoopRateIsCorrect) {
+	const int LOOP_COUNT = 10;
+
+	for (double period = 0.05; period <= 0.10; period += 0.025) {
+		PeriodicLoopTimer plt(period);
+		plt.wait();  // There might be first-run timing effects. These are not important.
+
+		double before = highResolutionSystemTime();
+		for (int i = 0; i < LOOP_COUNT; ++i) {
+			plt.wait();
+		}
+		double after = highResolutionSystemTime();
+
+		// Average jitter should be small compared to a 1kHz loop rate.
+		ASSERT_NEAR(period, (after - before) / LOOP_COUNT, 0.00001);
+	}
+}
+
+
 }
