@@ -24,7 +24,7 @@ void verifySleepDurations(void (*sleepFunction)(double)) {
 		sleepFunction(duration);
 		double after = highResolutionSystemTime();
 
-		ASSERT_NEAR(duration, after - before, 0.001)
+		EXPECT_NEAR(duration, after - before, 0.001)
 			<< "Because this test relies on the Linux scheduler, occasional failures are expected.";
 	}
 }
@@ -65,7 +65,7 @@ TEST(PeriodicLoopTimerTest, CountsMissedRelesePoints) {
 	PeriodicLoopTimer plt(PERIOD);
 
 	for (int i = 0; i < 5; ++i) {
-		EXPECT_EQ(i, plt.wait());
+		EXPECT_EQ(i, plt.wait()) << "This test is known to fail under Xenomai.";
 		btsleep(PERIOD * (i + 1.5));
 	}
 }
