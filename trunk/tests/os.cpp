@@ -51,7 +51,7 @@ TEST(PeriodicLoopTimerTest, LoopRateIsCorrect) {
 
 		double before = highResolutionSystemTime();
 		for (int i = 0; i < LOOP_COUNT; ++i) {
-			plt.wait();
+			ASSERT_EQ(0, plt.wait());
 		}
 		double after = highResolutionSystemTime();
 
