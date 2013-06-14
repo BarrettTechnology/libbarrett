@@ -116,7 +116,7 @@ double highResolutionSystemTime()
 
 
 PeriodicLoopTimer::PeriodicLoopTimer(double period_, int threadPriority) :
-		period(period_), releasePoint(-1.0)
+		firstRun(true), period(period_), releasePoint(-1.0)
 {
 #ifdef BARRETT_XENOMAI
 	int ret;
@@ -154,7 +154,8 @@ unsigned long PeriodicLoopTimer::wait()
 	if (remainder <= 0) {
 		releasePoint = now + period;
 
-		if (releasePoint < 0.0) {  // First run
+		if (firstRun) {
+			firstRun = false;
 			return 0;
 		} else {
 			return ceil(-remainder / period);

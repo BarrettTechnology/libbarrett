@@ -54,6 +54,7 @@ public:
 	unsigned long wait();
 
 protected:
+	bool firstRun;
 	double period;
 	double releasePoint;
 };
