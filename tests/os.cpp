@@ -60,5 +60,14 @@ TEST(PeriodicLoopTimerTest, LoopRateIsCorrect) {
 	}
 }
 
+TEST(PeriodicLoopTimerTest, CountsMissedRelesePoints) {
+	const double PERIOD = 0.05;
+	PeriodicLoopTimer plt(PERIOD);
+
+	for (int i = 0; i < 5; ++i) {
+		EXPECT_EQ(i, plt.wait());
+		btsleep(PERIOD * (i + 1.5));
+	}
+}
 
 }
