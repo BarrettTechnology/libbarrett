@@ -22,7 +22,7 @@
 */
 
 /*
- * real_time_mutex.cpp
+ * real_time_mutex-xenomai.cpp
  *
  *  Created on: Dec 15, 2009
  *      Author: dc

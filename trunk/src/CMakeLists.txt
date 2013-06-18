@@ -40,7 +40,6 @@ set(OS_dependent_sources
 	bus/can_socket.cpp
 
 	thread/disable_secondary_mode_warning.cpp
-	thread/real_time_mutex.cpp
 
 	os.cpp
 )
@@ -57,8 +56,9 @@ if (NOT NON_REALTIME)
 	endforeach()
 	
 	# Xenomai only sources
-#	list(APPEND barrett_SOURCES
-#	)
+	list(APPEND barrett_SOURCES
+		thread/real_time_mutex-xenomai.cpp
+	)
 endif()
 
 # Maybe include Python sources
