@@ -55,9 +55,14 @@ if (NOT NON_REALTIME)
 		)
 	endforeach()
 	
-	# Xenomai only sources
+	# Xenomai-only sources
 	list(APPEND barrett_SOURCES
 		thread/real_time_mutex-xenomai.cpp
+	)
+else()
+	# Linux-only sources
+	list(APPEND barrett_SOURCES
+		thread/real_time_mutex-linux.cpp
 	)
 endif()
 
