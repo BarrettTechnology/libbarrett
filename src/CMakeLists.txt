@@ -49,7 +49,6 @@ list(APPEND barrett_SOURCES ${OS_dependent_sources})
 
 if (NOT NON_REALTIME)
 	foreach (src_file ${OS_dependent_sources})
-		message(STATUS "Blah!" ${src_file})
 		# Define BARRETT_XENOMAI preprocessor symbol
 		set_property(
 			SOURCE ${src_file}
