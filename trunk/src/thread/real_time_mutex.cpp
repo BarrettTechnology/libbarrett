@@ -22,7 +22,7 @@
 */
 
 /*
- * real_time_mutex-xenomai.cpp
+ * real_time_mutex.cpp
  *
  *  Created on: Dec 15, 2009
  *      Author: dc
@@ -31,10 +31,13 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <signal.h>
+
 #include <native/task.h>
 #include <native/mutex.h>
 
 #include <barrett/os.h>
+#include <barrett/detail/stacktrace.h>
 #include <barrett/thread/real_time_mutex.h>
 
 
@@ -42,7 +45,19 @@ namespace barrett {
 namespace thread {
 
 namespace detail {
-	struct mutex_impl : public rt_mutex_placeholder {};
+
+struct mutex_impl : public rt_mutex_placeholder {};
+
+extern "C" {
+
+void warnOnSwitchToSecondaryMode(int)
+{
+	logMessage("WARNING: Switched out of RealTime. Stack-trace:",true);
+	barrett::detail::syslog_stacktrace();
+}
+
+
+}
 }
 
 
@@ -54,6 +69,9 @@ RealTimeMutex::RealTimeMutex() :
 	if (ret != 0) {
 		(logMessage("thread::RealTimeMutex::%s:  Could not create RT_MUTEX: (%d) %s") %__func__ %-ret %strerror(-ret)).raise<std::logic_error>();
 	}
+
+	// Handler for warnings about falling out of real time mode
+	signal(SIGXCPU, &detail::warnOnSwitchToSecondaryMode);
 }
 
 RealTimeMutex::~RealTimeMutex()

@@ -34,7 +34,6 @@
 #include <cassert>
 
 #include <syslog.h>
-#include <signal.h>
 #include <sys/mman.h>
 
 #include <native/task.h>
@@ -43,7 +42,6 @@
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 
-#include <barrett/detail/stacktrace.h>
 #include <barrett/detail/os.h>
 #include <barrett/os.h>
 
@@ -54,29 +52,14 @@ inline RTIME secondsToRTIME(double s) {
 	return static_cast<RTIME>(s * 1e9);
 }
 
-// Xenomai requires at least one call to mlockall() per process. Also, a signal
-// handler is installed to trap transitions from primary execution mode to
-// secondary execution mode; this aids in identifying code that breaks Xenomai's
-// realtime guarantee.
+// Xenomai requires at least one call to mlockall() per process
 namespace {  // Using an anonymous namespace because no other code needs to
-			 // interact with these declarations. It is necessary to construct a
-			 // single instance of InitXenomai.
-	extern "C" {
-	void warnOnSwitchToSecondaryMode(int)
-	{
-		barrett::logMessage("WARNING: Switched out of RealTime. Stack-trace:", true);
-		barrett::detail::syslog_stacktrace();
-	}
-	}
-
+			 // interact with this class. It simply needs to be constructed once.
 	class InitXenomai {
 	public:
 		InitXenomai() {
 			// Avoids memory swapping for this program
 			mlockall(MCL_CURRENT|MCL_FUTURE);
-
-			// Handler for warnings about falling out of primary mode
-			signal(SIGXCPU, &warnOnSwitchToSecondaryMode);
 		}
 	};
 	// Static variables are initialized when the module is loaded. This causes the
