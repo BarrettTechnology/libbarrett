@@ -36,9 +36,17 @@
 
 
 #ifdef BARRETT_XENOMAI
-#include "real_time_mutex_impl-xenomai.cpp"
+	#include "real_time_mutex_impl-xenomai.cpp"
 #else
-#include "real_time_mutex_impl-xenomai.cpp"
+	#include <boost/thread/recursive_mutex.hpp>
+
+	namespace barrett {
+	namespace thread {
+	namespace detail {
+		class mutex_impl : public boost::recursive_mutex {};
+	}
+	}
+	}
 #endif
 
 
