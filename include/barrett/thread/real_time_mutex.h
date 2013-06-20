@@ -17,9 +17,8 @@ namespace barrett {
 namespace thread {
 
 
-// Forward declaration
 namespace detail {
-struct mutex_impl;
+class mutex_impl;  // OS-dependent implementation
 }
 
 
@@ -36,11 +35,8 @@ public:
 	virtual void relock(int lc);
 
 protected:
-	int acquireWrapper(bool blocking);
-
 	detail::mutex_impl* mutex;
 	int lockCount;
-	bool leaveWarnSwitchOn;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(RealTimeMutex);
