@@ -27,7 +27,7 @@ public:
 
 	virtual void open(int port) = 0;
 	virtual void close() = 0;
-	virtual bool isOpen() = 0;
+	virtual bool isOpen() const = 0;
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const = 0;
 	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true, bool realtime = false) const;

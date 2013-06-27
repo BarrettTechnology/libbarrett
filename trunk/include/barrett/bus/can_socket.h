@@ -61,7 +61,7 @@ public:
 
 	virtual void open(int port) throw(std::logic_error, std::runtime_error);
 	virtual void close();
-	virtual bool isOpen();
+	virtual bool isOpen() const;
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const;
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const;

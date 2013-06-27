@@ -206,7 +206,7 @@ void CANSocket::close()
 	}
 }
 
-bool CANSocket::isOpen()
+bool CANSocket::isOpen() const
 {
 	return handle->isValid();
 }
