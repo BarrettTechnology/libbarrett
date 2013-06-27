@@ -22,7 +22,7 @@
 */
 
 /*
- * can_socket.cpp
+ * can_socket-rtcan.cpp
  *
  *  Created on: Aug 18, 2010
  *      Author: dc
@@ -46,13 +46,25 @@ namespace barrett {
 namespace bus {
 
 
+namespace detail {
+struct can_handle {
+	typedef int handle_type;
+	static const handle_type NULL_HANDLE = -1;
+	handle_type h;
+
+	can_handle() : h(NULL_HANDLE) {}
+	bool isValid() const { return h != NULL_HANDLE; }
+};
+}
+
+
 CANSocket::CANSocket() :
-	mutex(), handle(NULL_HANDLE)
+	mutex(), handle(new detail::can_handle)
 {
 }
 
 CANSocket::CANSocket(int port) throw(std::runtime_error) :
-	mutex(), handle(NULL_HANDLE)
+	mutex(), handle(new detail::can_handle)
 {
 	open(port);
 }
@@ -60,6 +72,8 @@ CANSocket::CANSocket(int port) throw(std::runtime_error) :
 CANSocket::~CANSocket()
 {
 	close();
+	delete handle;
+	handle = NULL;
 }
 
 
@@ -70,7 +84,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 				% __func__).raise<std::logic_error>();
 	}
 
-	logMessage("CANSocket::open(%d)") % port;
+	logMessage("CANSocket::open(%d) using RTCAN driver") % port;
 
 	int ret;
 
@@ -80,14 +94,14 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_socket(): (%d) %s")
 				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
-	handle = ret;
+	handle->h = ret;
 
 	struct ifreq ifr;
 	char devname[10];
 	sprintf(devname, "rtcan%d", port);
 	strncpy(ifr.ifr_name, devname, IFNAMSIZ);
 
-	ret = rt_dev_ioctl(handle, SIOCGCANSTATE, &ifr);
+	ret = rt_dev_ioctl(handle->h, SIOCGCANSTATE, &ifr);
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_ioctl(SIOCGCANSTATE): (%d) %s")
@@ -122,7 +136,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 				can_mode_t* mode = (can_mode_t*) &ifr.ifr_ifru;
 				*mode = CAN_MODE_START;
-				ret = rt_dev_ioctl(handle, SIOCSCANMODE, &ifr);
+				ret = rt_dev_ioctl(handle->h, SIOCSCANMODE, &ifr);
 				if (ret != 0) {
 					close();
 					(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_ioctl(SIOCSCANMODE): (%d) %s")
@@ -140,7 +154,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	struct can_filter recvFilter[1];
 	recvFilter[0].can_id = (Puck::HOST_ID << Puck::NODE_ID_WIDTH) | CAN_INV_FILTER;
 	recvFilter[0].can_mask = Puck::FROM_MASK;
-	ret = rt_dev_setsockopt(handle, SOL_CAN_RAW, CAN_RAW_FILTER, &recvFilter, sizeof(recvFilter));
+	ret = rt_dev_setsockopt(handle->h, SOL_CAN_RAW, CAN_RAW_FILTER, &recvFilter, sizeof(recvFilter));
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_setsockopt(CAN_RAW_FILTER): (%d) %s")
@@ -151,7 +165,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	// otherwise rt_dev_send() will fail with ret = -6 (No such device or
 	// address). The ifr.ifr_index gets overwritten because it is actually a
 	// member of the ifr.ifr_ifru union.
-	ret = rt_dev_ioctl(handle, SIOCGIFINDEX, &ifr);
+	ret = rt_dev_ioctl(handle->h, SIOCGIFINDEX, &ifr);
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_ioctl(SIOCGIFINDEX): (%d) %s")
@@ -162,7 +176,7 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	memset(&toAddr, 0, sizeof(toAddr));
 	toAddr.can_ifindex = ifr.ifr_ifindex;
 	toAddr.can_family = AF_CAN;
-	ret = rt_dev_bind(handle, (struct sockaddr *) &toAddr, sizeof(toAddr));
+	ret = rt_dev_bind(handle->h, (struct sockaddr *) &toAddr, sizeof(toAddr));
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_bind(): (%d) %s")
@@ -170,13 +184,13 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 	}
 
 	nanosecs_rel_t timeout = (nanosecs_rel_t) 1e9 * CommunicationsBus::TIMEOUT;
-	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
+	ret = rt_dev_ioctl(handle->h, RTCAN_RTIOC_RCV_TIMEOUT, &timeout);
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_ioctl(RCV_TIMEOUT): (%d) %s")
 				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
 	}
-	ret = rt_dev_ioctl(handle, RTCAN_RTIOC_SND_TIMEOUT, &timeout);
+	ret = rt_dev_ioctl(handle->h, RTCAN_RTIOC_SND_TIMEOUT, &timeout);
 	if (ret != 0) {
 		close();
 		(logMessage("CANSocket::%s(): Could not open CAN port. rt_dev_ioctl(SND_TIMEOUT): (%d) %s")
@@ -187,9 +201,14 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 void CANSocket::close()
 {
 	if (isOpen()) {
-		rt_dev_close(handle);
-		handle = NULL_HANDLE;
+		rt_dev_close(handle->h);
+		handle->h = detail::can_handle::NULL_HANDLE;
 	}
+}
+
+bool CANSocket::isOpen()
+{
+	return handle->isValid();
 }
 
 int CANSocket::send(int busId, const unsigned char* data, size_t len) const
@@ -201,7 +220,7 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 	frame.can_dlc = len;
 	memcpy(frame.data, data, len);
 
-	int ret = rt_dev_send(handle, (void *) &frame, sizeof(can_frame_t), 0);
+	int ret = rt_dev_send(handle->h, (void *) &frame, sizeof(can_frame_t), 0);
 	if (ret < 0) {
 		ul.unlock();
 
@@ -239,7 +258,7 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 	BARRETT_SCOPED_LOCK(mutex);
 
 	struct can_frame frame;
-	int ret = rt_dev_recv(handle, (void *) &frame, sizeof(can_frame_t), blocking ? 0 : MSG_DONTWAIT);
+	int ret = rt_dev_recv(handle->h, (void *) &frame, sizeof(can_frame_t), blocking ? 0 : MSG_DONTWAIT);
 
 	if (ret < 0) {
 		switch (ret) {

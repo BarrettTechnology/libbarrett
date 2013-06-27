@@ -37,8 +37,6 @@ set(barrett_SOURCES
 )
 
 set(OS_dependent_sources
-	bus/can_socket.cpp
-
 	thread/disable_secondary_mode_warning.cpp
 	thread/real_time_mutex.cpp
 
@@ -47,7 +45,12 @@ set(OS_dependent_sources
 # Always compile OS-dependent sources
 list(APPEND barrett_SOURCES ${OS_dependent_sources})
 
-if (NOT NON_REALTIME)
+if (NON_REALTIME)
+	# Linux only sources
+	list(APPEND barrett_SOURCES
+		bus/can_socket-pcan.cpp
+	)
+else()
 	foreach (src_file ${OS_dependent_sources})
 		# Define BARRETT_XENOMAI preprocessor symbol
 		set_property(
@@ -57,8 +60,9 @@ if (NOT NON_REALTIME)
 	endforeach()
 	
 	# Xenomai only sources
-#	list(APPEND barrett_SOURCES
-#	)
+	list(APPEND barrett_SOURCES
+		bus/can_socket-rtcan.cpp
+	)
 endif()
 
 # Maybe include Python sources
