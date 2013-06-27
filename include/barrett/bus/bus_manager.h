@@ -34,7 +34,7 @@ public:
 
 	virtual void open(int port) { bus->open(port); }
 	virtual void close() { bus->close(); }
-	virtual bool isOpen() { return bus->isOpen(); }
+	virtual bool isOpen() const { return bus->isOpen(); }
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const
 		{ return bus->send(busId, data, len); }
