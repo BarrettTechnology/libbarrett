@@ -29,12 +29,14 @@
  */
 
 #include <stdexcept>
-#include <cstdio>
-#include <cstring>
+#include <string>
 
 #include <errno.h>
+#include <fcntl.h>  // O_RDWR
 
 #include <libpcan.h>
+
+#include <boost/lexical_cast.hpp>
 
 #include <barrett/os.h>
 #include <barrett/thread/real_time_mutex.h>
@@ -87,13 +89,27 @@ void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
 
 	logMessage("CANSocket::open(%d) using PCAN driver") % port;
 
-	// ...
+	int ret;
+
+	std::string devname = "/dev/pcanusb" + boost::lexical_cast<std::string>(port);
+	handle->h = LINUX_CAN_Open(devname.c_str(), O_RDWR);
+	if ( !handle->isValid() ) {
+		(logMessage("CANSocket::%s(): Could not open CAN port. LINUX_CAN_Open(): (%d) %s")
+				% __func__ % errno % strerror(errno)).raise<std::runtime_error>();
+	}
+
+	ret = CAN_Init(handle->h, CAN_BAUD_1M, CAN_INIT_TYPE_ST);
+	if (ret != 0) {
+		(logMessage("CANSocket::%s(): Could not configure CAN port. CAN_Init(): (%d) %s")
+				% __func__ % -ret % strerror(-ret)).raise<std::runtime_error>();
+	}
+	//CAN_MsgFilter
 }
 
 void CANSocket::close()
 {
 	if (isOpen()) {
-		// ...
+		CAN_Close(handle->h);
 		handle->h = detail::can_handle::NULL_HANDLE;
 	}
 }
