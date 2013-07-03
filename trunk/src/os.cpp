@@ -37,8 +37,10 @@
 #include <signal.h>
 #include <sys/mman.h>
 
+#ifdef BARRETT_XENOMAI
 #include <native/task.h>
 #include <native/timer.h>
+#endif
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>

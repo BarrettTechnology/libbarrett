@@ -7,8 +7,6 @@
 
 #include <stdexcept>
 
-#include <native/task.h>
-
 #include <barrett/os.h>
 #include <barrett/detail/stl_utils.h>
 #include <barrett/thread/abstract/mutex.h>
