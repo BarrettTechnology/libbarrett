@@ -77,16 +77,39 @@ set(exported_link_dirs ${exported_link_dirs} ${CMAKE_INSTALL_PREFIX}/lib)
 
 
 ## Xenomai
-#if (NON_REALTIME)
+if (NON_REALTIME)
 	message(STATUS "NON_REALTIME: Not using Xeonmai")
-#else()
+else()
 	find_package(Xenomai REQUIRED)
 	include_directories(${XENOMAI_INCLUDE_DIR})
 	add_definitions(${XENOMAI_DEFINITIONS})
 	
 	set(exported_include_dirs ${exported_include_dirs} ${XENOMAI_INCLUDE_DIR})
 	set(exported_definitions ${exported_definitions} ${XENOMAI_DEFINITIONS})
-#endif()
+endif()
+
+
+## PCAN
+if (NON_REALTIME)
+	set(header_name libpcan.h)
+	find_path(PCAN_INCLUDE_DIR ${header_name})
+	if (NOT PCAN_INCLUDE_DIR)
+		message(FATAL_ERROR "PCAN library is required. Couldn't find ${header_name}")
+	endif()
+	unset(header_name)
+	
+	set(lib_name pcan)
+	find_library(PCAN_LIB ${lib_name})
+	if (NOT PCAN_LIB)
+		message(FATAL_ERROR "PCAN library is required. Couldn't find ${lib_name}")
+	endif()
+	unset(lib_name)
+	
+	message(STATUS "Found PCAN: ${PCAN_LIB}")
+
+	include_directories(${PCAN_INCLUDE_DIR})
+	set(exported_include_dirs ${exported_include_dirs} ${PCAN_INCLUDE_DIR})
+endif()
 
 
 ## GSL
