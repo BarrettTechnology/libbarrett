@@ -54,10 +54,14 @@ struct can_handle {
 	static const handle_type NULL_HANDLE;
 	handle_type h;
 
+	static const int TIMEOUT_US;
+
 	can_handle() : h(NULL_HANDLE) {}
 	bool isValid() const { return h != NULL_HANDLE; }
 };
+
 const can_handle::handle_type can_handle::NULL_HANDLE = NULL;
+const int can_handle::TIMEOUT_US = CommunicationsBus::TIMEOUT * 1e6;
 }
 
 
@@ -121,18 +125,63 @@ bool CANSocket::isOpen() const
 
 int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 {
-	boost::unique_lock<thread::RealTimeMutex> ul(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
-	// ...
+	TPCANMsg msg;
+	msg.ID = busId;
+	msg.MSGTYPE = MSGTYPE_STANDARD;
+	msg.LEN = len;
+	memcpy(msg.DATA, data, len);
 
-	return 0;
+	int ret = LINUX_CAN_Write_Timeout(handle->h, &msg, detail::can_handle::TIMEOUT_US);
+	if (ret == 0) {
+		return 0;
+	} else if (ret == CAN_ERR_QXMTFULL) {
+		logMessage("CANSocket::%s: LINUX_CAN_Write_Timeout(): "
+				"data would block during non-blocking send (output buffer full)")
+				% __func__;
+		return 1;
+	} else {
+		logMessage("CANSocket::%s: LINUX_CAN_Write_Timeout(): "
+				"returned error code %d")
+				% __func__ % ret;
+		return 2;
+	}
 }
 
 int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking) const
 {
 	BARRETT_SCOPED_LOCK(mutex);
 
-	// ...
+	TPCANRdMsg rdMsg;
+	int ret = LINUX_CAN_Read_Timeout(handle->h, &rdMsg, blocking ? detail::can_handle::TIMEOUT_US : 0);
+	if (ret != 0) {
+		if (ret == CAN_ERR_QRCVEMPTY) {
+			if (blocking) {
+				logMessage("CANSocket::%s: LINUX_CAN_Read_Timeout(): timed out")
+						% __func__;
+				return 2;
+			} else {
+				// When non-blocking, timeouts are expected
+				return 1;
+			}
+		}
+
+		logMessage("CANSocket::%s: LINUX_CAN_Read_Timeout(): "
+				"returned error code %d")
+				% __func__ % ret;
+		return 2;
+	}
+
+	TPCANMsg* msg = &rdMsg.Msg;
+	if (msg->MSGTYPE != MSGTYPE_STANDARD) {
+		logMessage("CANSocket::%s: Bad message type (%d)")
+				% __func__ % msg->MSGTYPE;
+		return 2;
+	}
+	busId = msg->ID;
+	len = msg->LEN;
+	memcpy(data, msg->DATA, len);
 
 	return 0;
 }
