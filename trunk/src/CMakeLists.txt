@@ -47,8 +47,9 @@ list(APPEND barrett_SOURCES ${OS_dependent_sources})
 
 if (NON_REALTIME)
 	# Linux only sources
-#	list(APPEND barrett_SOURCES
-#	)
+	list(APPEND barrett_SOURCES
+		bus/can_socket-linux.cpp
+	)
 else()
 	foreach (src_file ${OS_dependent_sources})
 		# Define BARRETT_XENOMAI preprocessor symbol
