@@ -47,9 +47,8 @@ list(APPEND barrett_SOURCES ${OS_dependent_sources})
 
 if (NON_REALTIME)
 	# Linux only sources
-	list(APPEND barrett_SOURCES
-		bus/can_socket-pcan.cpp
-	)
+#	list(APPEND barrett_SOURCES
+#	)
 else()
 	foreach (src_file ${OS_dependent_sources})
 		# Define BARRETT_XENOMAI preprocessor symbol
@@ -78,9 +77,7 @@ endif()
 
 
 set(libs ${Boost_LIBRARIES} ${GSL_LIBRARIES} config config++)  #TODO(dc): libconfig finder?
-if (NON_REALTIME)
-	set(libs ${libs} ${PCAN_LIB})
-else()
+if (NOT NON_REALTIME)
 	set(libs ${libs} ${XENOMAI_LIBRARY_NATIVE} ${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_RTDM})
 endif()
 if (WITH_PYTHON)

@@ -89,29 +89,6 @@ else()
 endif()
 
 
-## PCAN
-if (NON_REALTIME)
-	set(header_name libpcan.h)
-	find_path(PCAN_INCLUDE_DIR ${header_name})
-	if (NOT PCAN_INCLUDE_DIR)
-		message(FATAL_ERROR "PCAN library is required. Couldn't find ${header_name}")
-	endif()
-	unset(header_name)
-	
-	set(lib_name pcan)
-	find_library(PCAN_LIB ${lib_name})
-	if (NOT PCAN_LIB)
-		message(FATAL_ERROR "PCAN library is required. Couldn't find ${lib_name}")
-	endif()
-	unset(lib_name)
-	
-	message(STATUS "Found PCAN: ${PCAN_LIB}")
-
-	include_directories(${PCAN_INCLUDE_DIR})
-	set(exported_include_dirs ${exported_include_dirs} ${PCAN_INCLUDE_DIR})
-endif()
-
-
 ## GSL
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
