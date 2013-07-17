@@ -144,8 +144,7 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 	running = true;
 	try {
 		while (true) {
-			// Explicit interruption point, just in case.
-			// (btsleep() is also an interruption point.)
+			// Explicit interruption point
 			boost::this_thread::interruption_point();
 
 			missedReleasePoints += loopTimer.wait();
