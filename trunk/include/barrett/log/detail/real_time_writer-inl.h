@@ -34,8 +34,6 @@
 #include <fstream>
 #include <string>
 
-#include <native/task.h>
-
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
