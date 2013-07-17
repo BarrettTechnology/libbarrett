@@ -168,7 +168,7 @@ bool CANSocket::isOpen() const
 
 int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 {
-	boost::unique_lock<thread::RealTimeMutex> ul(mutex);
+	BARRETT_SCOPED_LOCK(mutex);
 
 	struct can_frame frame;
 	frame.can_id = busId;
@@ -177,7 +177,7 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 
 	int ret = ::send(handle->h, (void *) &frame, sizeof(struct can_frame), 0);
 	if (ret < 0) {
-		ul.unlock();
+		ret = -errno;  // Specific error info is in errno. Save a copy.
 
 		switch (ret) {
 		case -EAGAIN: // -EWOULDBLOCK
@@ -203,6 +203,10 @@ int CANSocket::send(int busId, const unsigned char* data, size_t len) const
 					% __func__ % -ret % strerror(-ret);
 			return 2;
 		}
+	} else if (ret != sizeof(struct can_frame)) {
+		logMessage("CANSocket::%s: sent incomplete CAN frame (ret = %d")
+				% __func__ % ret;
+		return 2;
 	}
 
 	return 0;
@@ -216,6 +220,8 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 	int ret = recv(handle->h, (void *) &frame, sizeof(struct can_frame), blocking ? 0 : MSG_DONTWAIT);
 
 	if (ret < 0) {
+		ret = -errno;  // Specific error info is in errno. Save a copy.
+
 		switch (ret) {
 		case -EAGAIN: // -EWOULDBLOCK
 			//logMessage("CANSocket::%s: "
@@ -242,15 +248,18 @@ int CANSocket::receiveRaw(int& busId, unsigned char* data, size_t& len, bool blo
 			return 2;
 			break;
 		}
+	} else if (ret != sizeof(struct can_frame)) {
+		logMessage("CANSocket::%s: received incomplete CAN frame (ret = %d")
+				% __func__ % ret;
+		return 2;
+	} else if (frame.can_id & CAN_ERR_FLAG) {
+		logMessage("CANSocket::%s: CAN_ERR_FLAG was set") % __func__;
+		return 2;
 	}
 
 	busId = frame.can_id;
 	len = frame.can_dlc;
 	memcpy(data, frame.data, len);
-
-	if (frame.can_id & CAN_ERR_FLAG) {
-		return 2;
-	}
 
 	return 0;
 }
