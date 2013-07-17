@@ -143,7 +143,11 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 	PeriodicLoopTimer loopTimer(period, priority);
 	running = true;
 	try {
-		while ( !boost::this_thread::interruption_requested() ) {
+		while (true) {
+			// Explicit interruption point, just in case.
+			// (btsleep() is also an interruption point.)
+			boost::this_thread::interruption_point();
+
 			missedReleasePoints += loopTimer.wait();
 			start = highResolutionSystemTime();
 
@@ -163,6 +167,8 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 				++overruns;
 			}
 		}
+	} catch (const boost::thread_interrupted& e) {
+		// Interruption requested, probably by stop(). Do nothing.
 	} catch (const ExecutionManagerException& e) {
 		BARRETT_SCOPED_LOCK(getMutex());
 
