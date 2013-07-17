@@ -1,6 +1,6 @@
 libbarrett -- README
 Barrett Technology
-2012-05-02
+2013-07-17
 
 
 Libbarrett is a real-time controls library written in C++ that runs Barrett
@@ -31,8 +31,13 @@ To generate Eclipse project files, run:
 Then import the generated project into your Eclipse workspace using:
     File -> Import -> General -> Existing Projects into Workspace
 
-In order to use libbarrett, you must have the Xenomai (http://www.xenomai.org/)
-real time co-kernel and its SocketCAN RTCAN driver installed on your system.
+In order to use libbarrett as a hard real time library, you must have the
+Xenomai (http://www.xenomai.org/) real time co-kernel and its RTSocketCAN
+driver installed on your system. If a hard real time guarantee is not important
+for your application, you may use the SocketCAN driver from the standard Linux
+kernel. To use the Linux SocketCAN driver, add "-DNON_REALTIME=true" to your
+cmake command.
+
 For additional dependencies, see:
     http://web.barrett.com/svn/libbarrett/dependencies/
 
