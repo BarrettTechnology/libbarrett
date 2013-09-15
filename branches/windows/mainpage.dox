@@ -1,0 +1,37 @@
+/** @mainpage
+
+@section sec_intro Introduction
+
+This is the documentation for the \c libbarrett real-time controls library,
+written and maintained by Barrett Technology, Inc. Libbarrett is written in C++
+and runs Barrett Technology's products, including the WAM Arm and the BH8-280
+BarrettHand. For further information, see the documentation at:
+	http://support.barrett.com/wiki/Libbarrett
+
+The best way to get started with libbarrett is by reading and experimenting with
+the programs in the \c examples directory.
+
+The library provides both a high-level interface (initialize the Hand, move the
+WAM to a position in joint-space, etc.) and a low-level interface (for
+performing torque calculations in hard real-time).
+
+This version of libbarrett is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published by the
+Free Software Foundation.
+
+Contact us at:
+<pre>
+support@barrett.com
+http://www.barrett.com/
++1-617-252-9000
+
+Barrett Technology 
+625 Mount Auburn Street
+Cambridge, MA 02138
+USA
+</pre>
+*/
+
+/** @namespace barrett
+The root namespace for libbarrett.
+*/

@@ -1,0 +1,37 @@
+#/bin/bash
+
+# Exit if any command fails
+set -e
+
+if [ "$(id -u)" != "0" ]; then
+	echo "EXITING - THIS SCRIPT MUST BE RUN AS ROOT."
+	exit 1
+fi
+
+CUR_USR=$SUDO_USER
+echo "Current user is = $CUR_USR"
+EXAMPLES_DIR=/home/$CUR_USR/libbarrett_examples
+SANDBOX_DIR=/home/$CUR_USR/libbarrett_sandbox
+echo "Changing owner of examples directory located: $EXAMPLES_DIR to $CUR_USR"
+chown -R $CUR_USR:$CUR_USR ${EXAMPLES_DIR}
+echo "Changing owner of sandbox directory located: $SANDBOX_DIR to $CUR_USR"
+chown -R $CUR_USR:$CUR_USR ${SANDBOX_DIR}
+
+DIRECTORY=/etc/barrett/
+if [ ! -d "$DIRECTORY" ]; then
+	echo "Creating directory /etc/barrett"
+    sudo mkdir /etc/barrett
+fi
+
+echo "Updating configuration files if necessary"
+chmod +x /usr/local/share/barrett/config/install_config_files
+cd /usr/local/share/barrett/config
+sudo ./install_config_files
+cd ../
+sudo rm -rf config
+
+chown -R $CUR_USR:$CUR_USR /etc/barrett/
+
+sudo ldconfig
+echo "Libbarrett Installation Complete"
+

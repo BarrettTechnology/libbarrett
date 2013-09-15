@@ -1,0 +1,4 @@
+set(BARRETT_INCLUDE_DIRS @exported_include_dirs@)
+set(BARRETT_LIBRARY_DIRS @exported_link_dirs@)
+set(BARRETT_DEFINITIONS @exported_definitions@)
+set(BARRETT_LIBRARIES @exported_libraries@)
