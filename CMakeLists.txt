@@ -12,8 +12,13 @@ if (NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-# Fail to link if there are undefined symbols in a shared library
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
+if (UNIX)
+	# Fail to link if there are undefined symbols in a shared library
+	set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
+endif(UNIX)
+if (WIN32)
+	add_definitions(-D__func__=__FUNCTION__)
+endif(WIN32)
 
 # Location of custom Finders
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
@@ -49,8 +54,8 @@ if (OPTIMIZE_FOR_PROCESSOR)
 	set(NEW_FLAGS)  # unset
 endif()
 
-# Record the name of the user executing the cmake command
 if (UNIX)
+	# Record the name of the user executing the cmake command
 	execute_process(COMMAND whoami OUTPUT_VARIABLE current_user OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	set(CONFIG_FILE_OWNER ${current_user} CACHE STRING "When installed, config files will be owned by this user.")
