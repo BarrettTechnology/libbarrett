@@ -45,25 +45,27 @@ set(OS_dependent_sources
 # Always compile OS-dependent sources
 list(APPEND barrett_SOURCES ${OS_dependent_sources})
 
-if (NON_REALTIME)
-	# Linux only sources
-	list(APPEND barrett_SOURCES
-		bus/can_socket-linux.cpp
-	)
-else()
-	foreach (src_file ${OS_dependent_sources})
-		# Define BARRETT_XENOMAI preprocessor symbol
-		set_property(
-			SOURCE ${src_file}
-			APPEND PROPERTY COMPILE_DEFINITIONS BARRETT_XENOMAI
+if (UNIX)
+	if (NON_REALTIME)
+		# Linux only sources
+		list(APPEND barrett_SOURCES
+			bus/can_socket-linux.cpp
 		)
-	endforeach()
-	
-	# Xenomai only sources
-	list(APPEND barrett_SOURCES
-		bus/can_socket-rtcan.cpp
-	)
-endif()
+	else()
+		foreach (src_file ${OS_dependent_sources})
+			# Define BARRETT_XENOMAI preprocessor symbol
+			set_property(
+				SOURCE ${src_file}
+				APPEND PROPERTY COMPILE_DEFINITIONS BARRETT_XENOMAI
+			)
+		endforeach()
+		
+		# Xenomai only sources
+		list(APPEND barrett_SOURCES
+			bus/can_socket-rtcan.cpp
+		)
+	endif()
+endif(UNIX)
 
 # Maybe include Python sources
 if (WITH_PYTHON)
@@ -100,10 +102,12 @@ set_target_properties(barrett PROPERTIES
 set(exported_libraries ${libs} barrett PARENT_SCOPE)
 
 
-install(TARGETS barrett
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-)
+if (UNIX)
+	install(TARGETS barrett
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib
+	)
 
-install(CODE "message(STATUS \"Running ldconfig...\")")
-install(CODE "execute_process(COMMAND ldconfig)")
+	install(CODE "message(STATUS \"Running ldconfig...\")")
+	install(CODE "execute_process(COMMAND ldconfig)")
+endif(UNIX)
