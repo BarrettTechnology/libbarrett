@@ -38,6 +38,9 @@ namespace barrett {
 namespace bus {
 
 
+const double CommunicationsBus::TIMEOUT = 1.0;
+
+
 int CommunicationsBus::receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking, bool realtime) const {
 	int actualBusId;
 	int ret = receiveRaw(actualBusId, data, len, blocking);

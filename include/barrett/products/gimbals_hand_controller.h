@@ -44,7 +44,7 @@ protected:
 
 	static const int KNOB_MIN_VALID = 500;
 	static const int KNOB_MAX_VALID = 2800;
-	static const double COUNTS_PER_RAD = 4096.0 / (2*M_PI);
+	static const double COUNTS_PER_RAD;
 
 
 	Puck& p6;
