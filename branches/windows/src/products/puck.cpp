@@ -40,6 +40,10 @@
 namespace barrett {
 
 
+const double Puck::WAKE_UP_TIME = 1.0;
+const double Puck::TURN_OFF_TIME = 0.01;
+
+
 Puck::Puck(const bus::CommunicationsBus& _bus, int _id) :
 	bus(_bus), id(_id), vers(-1), role(-1), type(PT_Unknown), effectiveType(PT_Unknown)
 {

@@ -12,6 +12,9 @@
 namespace barrett {
 
 
+const double GimbalsHandController::COUNTS_PER_RAD = 4096.0 / (2*M_PI);
+
+
 GimbalsHandController::GimbalsHandController(Puck* _p6, Puck* _p7) :
 	p6(*_p6), p7(*_p7),
 	thumbOpen(false), thumbClose(false),

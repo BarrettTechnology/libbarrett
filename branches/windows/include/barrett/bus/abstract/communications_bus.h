@@ -19,7 +19,7 @@ namespace bus {
 class CommunicationsBus {
 public:
 	static const size_t MAX_MESSAGE_LEN = 8;  //< The maximum of any of the available communications buses
-	static const double TIMEOUT = 1.0;  // seconds
+	static const double TIMEOUT;  // seconds
 
 	virtual ~CommunicationsBus() {}
 
