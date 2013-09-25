@@ -31,6 +31,7 @@
 
 #include <stdexcept>
 #include <limits>
+#include <cmath>
 
 #include <boost/tuple/tuple.hpp>
 

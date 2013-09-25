@@ -17,7 +17,7 @@ if (UNIX)
 	set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 endif(UNIX)
 if (WIN32)
-	add_definitions(-D__func__=__FUNCTION__)
+	add_definitions(-D__func__=__FUNCTION__ -D_USE_MATH_DEFINES)
 endif(WIN32)
 
 # Location of custom Finders

@@ -5,6 +5,8 @@
  *      Author: dc
  */
 
+#include <cmath>
+
 #include <barrett/products/puck.h>
 #include <barrett/products/gimbals_hand_controller.h>
 
