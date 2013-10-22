@@ -43,6 +43,22 @@ void btsleep(double duration_s);
 void btsleepRT(double duration_s);
 void btsleep(double duration_s, bool realtime);
 
+// Current system time, measured in seconds.
+// The resolution is 1 nanosecond when using Xenomai.
+double highResolutionSystemTime();
+
+class PeriodicLoopTimer {
+public:
+	explicit PeriodicLoopTimer(double period_, int threadPriority = 10);
+
+	unsigned long wait();
+
+protected:
+	bool firstRun;
+	double period;
+	double releasePoint;
+};
+
 
 // Returns an object that can be used in the same way as a boost::format object.
 //   http://www.boost.org/doc/libs/1_49_0/libs/format/

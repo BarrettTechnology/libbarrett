@@ -19,7 +19,7 @@ namespace bus {
 class CommunicationsBus {
 public:
 	static const size_t MAX_MESSAGE_LEN = 8;  //< The maximum of any of the available communications buses
-	static const unsigned long long TIMEOUT = 1000000000ULL;  // nanoseconds
+	static const double TIMEOUT = 1.0;  // seconds
 
 	virtual ~CommunicationsBus() {}
 
@@ -27,7 +27,7 @@ public:
 
 	virtual void open(int port) = 0;
 	virtual void close() = 0;
-	virtual bool isOpen() = 0;
+	virtual bool isOpen() const = 0;
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const = 0;
 	virtual int receive(int expectedBusId, unsigned char* data, size_t& len, bool blocking = true, bool realtime = false) const;

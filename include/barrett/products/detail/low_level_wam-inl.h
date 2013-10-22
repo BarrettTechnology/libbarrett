@@ -36,8 +36,6 @@
 #include <cmath>
 #include <cassert>
 
-#include <native/timer.h>
-
 #include <boost/static_assert.hpp>
 #include <Eigen/LU>
 #include <libconfig.h++>
@@ -67,7 +65,7 @@ LowLevelWam<DOF>::LowLevelWam(const std::vector<Puck*>& _pucks, SafetyModule* _s
 	safetyModule(_safetyModule), torqueGroups(),
 	home(setting["home"]), j2mp(setting["j2mp"]),
 	noJointEncoders(true), positionSensor(PS_MOTOR_ENCODER),
-	lastUpdate(0), torquePropId(group.getPropertyId(Puck::T))
+	lastUpdate(0.0), torquePropId(group.getPropertyId(Puck::T))
 {
 	logMessage("  Config setting: %s => \"%s\"") % setting.getSourceFile() % setting.getPath();
 
@@ -288,7 +286,7 @@ void LowLevelWam<DOF>::setPositionSensor(enum PositionSensor sensor)
 template<size_t DOF>
 void LowLevelWam<DOF>::update()
 {
-	RTIME now = rt_timer_read();
+	double now = highResolutionSystemTime();
 
 	if (noJointEncoders) {
 		group.getProperty<MotorPuck::MotorPositionParser<double> >(Puck::P, pp.data(), true);
@@ -321,7 +319,7 @@ void LowLevelWam<DOF>::update()
 		}
 	}
 
-	jv_best = (jp_best - jp_best_1) / (1e-9 * (now - lastUpdate));
+	jv_best = (jp_best - jp_best_1) / (now - lastUpdate);
 	// TODO(dc): Detect unreasonably large velocities
 
 	jp_best_1 = jp_best;
