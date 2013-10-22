@@ -13,15 +13,13 @@
 #include <barrett/thread/abstract/mutex.h>
 
 
-// forward declarations from Xenomai's <native/mutex.h>
-struct rt_mutex_placeholder;
-typedef struct rt_mutex_placeholder RT_MUTEX;
-
-typedef long long unsigned int RTIME;
-
-
 namespace barrett {
 namespace thread {
+
+
+namespace detail {
+class mutex_impl;  // OS-dependent implementation
+}
 
 
 class RealTimeMutex : public Mutex {
@@ -37,11 +35,8 @@ public:
 	virtual void relock(int lc);
 
 protected:
-	int acquireWrapper(RTIME timeout);
-
-	RT_MUTEX* mutex;
+	detail::mutex_impl* mutex;
 	int lockCount;
-	bool leaveWarnSwitchOn;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(RealTimeMutex);

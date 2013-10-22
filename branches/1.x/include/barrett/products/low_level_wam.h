@@ -11,7 +11,6 @@
 
 
 #include <vector>
-#include <native/timer.h>
 
 #include <boost/array.hpp>
 #include <Eigen/Core>
@@ -83,7 +82,7 @@ protected:
 	boost::array<bool, DOF> useJointEncoder;
 	enum PositionSensor positionSensor;
 
-	RTIME lastUpdate;
+	double lastUpdate;
 	v_type pp;
 	math::Matrix<DOF,2> pp_jep;
 	jp_type jp_motorEncoder, jp_jointEncoder;

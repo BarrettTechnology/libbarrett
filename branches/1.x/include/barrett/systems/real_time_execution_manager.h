@@ -35,6 +35,7 @@
 #include <string>
 
 #include <boost/function.hpp>
+#include <boost/thread.hpp>
 
 #include <libconfig.h++>
 
@@ -42,24 +43,8 @@
 #include <barrett/systems/abstract/execution_manager.h>
 
 
-// forward declarations from Xenomai's <native/task.h>
-struct rt_task_placeholder;
-typedef struct rt_task_placeholder RT_TASK;
-
-//typedef long long unsigned int RTIME;
-
-
 namespace barrett {
 namespace systems {
-
-
-namespace detail {
-extern "C" {
-
-void rtemEntryPoint(void* cookie);
-
-}
-}
 
 
 class RealTimeExecutionManager : public ExecutionManager {
@@ -82,18 +67,18 @@ public:
 	void clearErrorCallback();
 
 protected:
-	RT_TASK* task;
+	boost::thread thread;
 	int priority;
-	bool running, stopRunning;
+	bool running;
 
 	bool error;
 	std::string errorStr;
 	callback_type errorCallback;
 
+	void executionLoopEntryPoint();
+
 private:
 	void init();
-
-	friend void detail::rtemEntryPoint(void* cookie);
 
 	DISALLOW_COPY_AND_ASSIGN(RealTimeExecutionManager);
 };

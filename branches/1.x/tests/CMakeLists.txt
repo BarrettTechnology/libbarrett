@@ -39,6 +39,8 @@ set(tests_SOURCES
 	systems/summer.cpp
 	systems/summer-polarity.cpp
 	#systems/tool_orientation.cpp
+	
+	os.cpp
 )
 
 add_executable(tests ${tests_SOURCES})

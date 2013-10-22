@@ -43,10 +43,13 @@ namespace barrett {
 namespace bus {
 
 
+namespace detail {
+struct can_handle;  // OS-dependent implementation
+}
+
+
 // TODO(dc): expose a receive timeout option?
 class CANSocket : public CommunicationsBus {
-	typedef int handle_type;
-
 public:
 	static const size_t MAX_MESSAGE_LEN = 8;  //< The maximum length of a CANbus message. Make sure to update CommunicationsBus::MAX_MESSAGE_LEN!
 
@@ -58,20 +61,16 @@ public:
 
 	virtual void open(int port) throw(std::logic_error, std::runtime_error);
 	virtual void close();
-	virtual bool isOpen() { return handle != NULL_HANDLE; }
+	virtual bool isOpen() const;
 
 	virtual int send(int busId, const unsigned char* data, size_t len) const;
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len, bool blocking = true) const;
 
 protected:
 	mutable thread::RealTimeMutex mutex;
-
-	static const handle_type NULL_HANDLE = -1;
-	handle_type handle;
+	detail::can_handle* handle;
 
 private:
-	void init();
-
 	DISALLOW_COPY_AND_ASSIGN(CANSocket);
 };
 
