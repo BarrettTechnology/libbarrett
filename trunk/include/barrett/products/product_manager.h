@@ -1,8 +1,32 @@
 /*
- * product_manager.h
+	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+
+	This file is part of libbarrett.
+
+	This version of libbarrett is free software: you can redistribute it
+	and/or modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This version of libbarrett is distributed in the hope that it will be
+	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this version of libbarrett.  If not, see
+	<http://www.gnu.org/licenses/>.
+
+	Further, non-binding information about licensing is available at:
+	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
+*/
+
+/*
+ * @file product_manager.h
  *
- *  Created on: Jan 3, 2011
- *      Author: dc
+ * @date Jan 3, 2011
+ * @author D Cody
+ * @author JP Hagstrand
  */
 
 #ifndef BARRETT_PRODUCTS_PRODUCT_MANAGER_H_
@@ -50,7 +74,9 @@ public:
 	SafetyModule* getSafetyModule();
 
 	const std::vector<Puck*>& getWamPucks() const;
-	bool foundWam() const { return foundWam4() || foundWam7(); }
+	bool foundWam() const { return foundWam3() || foundWam4() || foundWam7(); } 
+	// TODO(JH): Rehab Update implement and test
+	bool foundWam3() const;
 	bool foundWam4() const;
 	bool foundWam7() const;
 	bool foundWam7Wrist() const;
@@ -58,6 +84,8 @@ public:
 
 	void waitForWam(bool promptOnZeroing = true);
 	const char* getWamDefaultConfigPath();
+	// TODO(JH): Rehab Update implement and test
+	systems::Wam<3>* getWam3(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::Wam<4>* getWam4(bool waitForShiftActivate = true, const char* configPath = NULL);
 	systems::Wam<7>* getWam7(bool waitForShiftActivate = true, const char* configPath = NULL);
 
@@ -104,6 +132,8 @@ protected:
 
 	SafetyModule* sm;
 	systems::RealTimeExecutionManager* rtem;
+	// TODO(JH): Rehab Update implement and test
+	systems::Wam<3>* wam3;
 	systems::Wam<4>* wam4;
 	systems::Wam<7>* wam7;
 	ForceTorqueSensor* fts;
