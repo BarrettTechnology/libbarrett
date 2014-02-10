@@ -32,8 +32,8 @@
  *   .
  * The behavior is appropriate for many applications, but there is no issue with writing a custom main() function.
  *
- * The wam_main() function must be able to accept a reference to both a 4-DOF and a 7-DOF barrett::systems::Wam. If your
- * code treats these two cases similarly, then define a templated function:
+ * The wam_main() function must be able to accept a reference to both a 3-DOF, 4-DOF and a 7-DOF barrett::systems::Wam. 
+ * If your code treats these two cases similarly, then define a templated function:
  * @include zero_torque.cpp
  *
  * If your code handles these two cases very differently, then define two overloaded functions:
@@ -43,6 +43,7 @@
  * @date Nov 5, 2010
  * @author Dan Cody
  * @author CJ Valle
+ * @author JP Hagstrand
  */
 
 
@@ -105,8 +106,10 @@ int main(int argc, char** argv) {
 
 	pm.waitForWam(BARRETT_SMF_PROMPT_ON_ZEROING);
 	pm.wakeAllPucks();
-
-	if (pm.foundWam4()) {
+	// TODO(JH): Rehab Update implement and test
+	if (pm.foundWam3()) {
+		return wam_main(argc, argv, pm, *pm.getWam3(BARRETT_SMF_WAIT_FOR_SHIFT_ACTIVATE, BARRETT_SMF_WAM_CONFIG_PATH));
+	} else if (pm.foundWam4()) {
 		return wam_main(argc, argv, pm, *pm.getWam4(BARRETT_SMF_WAIT_FOR_SHIFT_ACTIVATE, BARRETT_SMF_WAM_CONFIG_PATH));
 	} else if (pm.foundWam7()) {
 		return wam_main(argc, argv, pm, *pm.getWam7(BARRETT_SMF_WAIT_FOR_SHIFT_ACTIVATE, BARRETT_SMF_WAM_CONFIG_PATH));
