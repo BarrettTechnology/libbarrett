@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 
 project(libbarrett)
-set(libbarrett_VERSION_MAJOR 0)
+set(libbarrett_VERSION_MAJOR 1)
 set(libbarrett_VERSION_MINOR 2)
-set(libbarrett_VERSION_PATCH 0)
+set(libbarrett_VERSION_PATCH 1)
 set(libbarrett_VERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}.${libbarrett_VERSION_PATCH}")
 set(libbarrett_SOVERSION "${libbarrett_VERSION_MAJOR}.${libbarrett_VERSION_MINOR}")
 
@@ -232,6 +232,12 @@ endif()
 configure_file(${PROJECT_SOURCE_DIR}/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile
 	ESCAPE_QUOTES @ONLY
 )
+
+if (NON_REALTIME)
+	add_subdirectory(programs EXCLUDE_FROM_ALL)
+else()
+	add_subdirectory(programs)
+endif()
 
 # Barrett_DIR allows the examples/CMakeLists.txt and sandbox/CMakeLists.txt to
 # find the correct barrett-config.cmake. There may not be an installed version,
