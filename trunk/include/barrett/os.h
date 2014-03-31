@@ -1,5 +1,5 @@
 /*
-	Copyright 2012 Barrett Technology <support@barrett.com>
+	Copyright 2009-2014 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -17,15 +17,12 @@
 	with this version of libbarrett.  If not, see
 	<http://www.gnu.org/licenses/>.
 
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
 */
 
-/*
- * os.h
- *
- *  Created on: Mar 30, 2012
- *      Author: dc
+/**
+ * @file os.h
+ * @date Mar 30, 2012
+ * @author Dan Cody
  */
 
 #ifndef BARRETT_OS_H_
@@ -38,13 +35,16 @@
 
 namespace barrett {
 
-
+/** btsleep and btsleepRT are a functions designed to allow pauses in operation. btsleepRT is real-time safe.
+ *
+ */
 void btsleep(double duration_s);
 void btsleepRT(double duration_s);
 void btsleep(double duration_s, bool realtime);
 
-// Current system time, measured in seconds.
-// The resolution is 1 nanosecond when using Xenomai.
+/** highResolutionSystemTime maintains the current system time measured in seconds.
+ *  The resolution is 1 nanosecond when using Xenomai.
+ */
 double highResolutionSystemTime();
 
 class PeriodicLoopTimer {
@@ -60,14 +60,15 @@ protected:
 };
 
 
-// Returns an object that can be used in the same way as a boost::format object.
-//   http://www.boost.org/doc/libs/1_49_0/libs/format/
-// The formatted message is output to syslog() and optionally stderr. Use the
-// raise<ExceptionType>() member function to throw an exception passing the
-// formatted message as the "what()" string.
-// Examples:
-//   barrett::logMessage("%s: Error %d", true) % __func__ % 5;
-//   (barrett::logMessage("Bad parameter value: %.2f") % 5.3277).raise<std::runtime_error>();
+/** logMessage function returns an object that can be used in the same way as a boost::format object.
+ *   http://www.boost.org/doc/libs/1_49_0/libs/format/
+ * The formatted message is output to syslog() and optionally stderr. Use the
+ * raise<ExceptionType>() member function to throw an exception passing the
+ * formatted message as the "what()" string.
+ * Examples:
+ *   barrett::logMessage("%s: Error %d", true) % __func__ % 5;
+ *   (barrett::logMessage("Bad parameter value: %.2f") % 5.3277).raise<std::runtime_error>();
+ */
 detail::LogFormatter logMessage(const std::string& message,
 		bool outputToStderr = false);
 
