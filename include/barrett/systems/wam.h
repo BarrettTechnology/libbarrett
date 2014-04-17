@@ -1,30 +1,32 @@
-/*
-	Copyright 2009, 2010, 2011, 2012 Barrett Technology <support@barrett.com>
-
-	This file is part of libbarrett.
-
-	This version of libbarrett is free software: you can redistribute it
-	and/or modify it under the terms of the GNU General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This version of libbarrett is distributed in the hope that it will be
-	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License along
-	with this version of libbarrett.  If not, see
-	<http://www.gnu.org/licenses/>.
-
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
-*/
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
+ *
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ *
+ */
 
 /** Defines systems::Wam.
  *
  * @file systems/wam.h
- * @date Sep 25, 2009
+ * @date 09/25/2009
  * @author Dan Cody
  */
 
@@ -108,57 +110,110 @@ public:
 	enum {JT_INPUT = 0, GRAVITY_INPUT, SC_INPUT};
 
 
-// IO
+/** Input/Output Interface definitions available to developers.
+ *
+ *  Joint Torques are passed into the WAM, while providing the output joint positions and joint vectors. 
+ */
 public:		System::Input<jt_type>& input;
 public:		System::Output<jp_type>& jpOutput;
 public:		System::Output<jv_type>& jvOutput;
 
 
 public:
-	// genericPucks must be ordered by joint and must break into torque groups as arranged
+   /** Constructor for Wam
+    *	
+    *	GenericPucks must be ordered by joint and must break into torque groups as arranged.
+    */
 	Wam(ExecutionManager* em, const std::vector<Puck*>& genericPucks,
 			SafetyModule* safetyModule, const libconfig::Setting& setting,
 			std::vector<int> torqueGroupIds = std::vector<int>(),
 			const std::string& sysName = "Wam");
+	/** Destructor for Wam
+	 */
 	~Wam();
-
+	/** trackReferenceSignal() used for following updating input. (any barrett input units for control)
+     */
 	template<typename T>
 	void trackReferenceSignal(System::Output<T>& referenceSignal);  //NOLINT: non-const reference for syntax
-
+	/** getHomePosition() returns home postion of individual joints in Radians
+     */
 	const jp_type& getHomePosition() const;
+	/** getJointTorques() returns joint torques in Newtons per meter
+     */
 	jt_type getJointTorques() const;
+	/** getJointPositions() returns joint Position values in Radians
+     */
 	jp_type getJointPositions() const;
+	/** getJointVelocities() returns joint velocity values in meters per second
+     */
 	jv_type getJointVelocities() const;
+	/** getToolPosition() returns Tool Position in Cartesian Space meters
+     */
 	cp_type getToolPosition() const;
+	/** getToolVelocity() returns Tool velocity in meters per second
+     */
 	cv_type getToolVelocity() const;
+	/** getToolOrientation() returns Tool Orientation in Quaternoionds
+     */
 	Eigen::Quaterniond getToolOrientation() const;
+	/** getToolPose() returns Tool Pose as a combination of 
+     */
 	pose_type getToolPose() const;
+    /** getToolJacobian() returns matrix of first order partial derivatives.
+     */
 	math::Matrix<6,DOF> getToolJacobian() const;
 
-
+    /** gravityCompensate() method activates Gravity Compensation for WAM
+     */
 	void gravityCompensate(bool compensate = true);
+    /** isGravityCompensated() returns flag as to the status of Gravity Compensation
+     */
 	bool isGravityCompensated();
-
+    /** moveHome(bool blocking, double velocity, double acceleration) method sends WAM to stored Home Position 
+     *	
+     *	Blocking Allows/Disallows other functions to happen while Movement is under way
+     *	Velocity Speed value in m/s
+     *	Acceleration Acceleration value in m/s^2
+	 *   Function is overloaded to allow multiple types of calls.
+     */
 	void moveHome(bool blocking = true);
 	void moveHome(bool blocking, double velocity);
 	void moveHome(bool blocking, double velocity, double acceleration);
+    /** moveTo() method sends WAM to desired point based on input type.
+     *	
+ 	 *  Function is overloaded to allow moves any type of Barrett Unit Types input.
+     *	Destination Based on type cartesian(xyz), joint(radians), quaternoind(orientation), pose
+     *	blocking Determines whether program should wait for move to finish before continuing
+     *	velocity Speed at which to move
+     *	acceleration value in radians per second
+     */
 	void moveTo(const jp_type& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const cp_type& destination, bool blocking = true, double velocity = 0.1, double acceleration = 0.2);
 	void moveTo(const Eigen::Quaterniond& destination, bool blocking = true, double velocity = 0.5, double acceleration = 0.5);
 	void moveTo(const pose_type& destination, bool blocking = true, double velocity = 0.1, double acceleration = 0.2);
 	template<typename T> void moveTo(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, bool blocking, double velocity, double acceleration);
+	/** moveIsDone() method returns false while the trajectory controller for the most recent moveTo() command is still active. 
+	 *
+	 *  Only useful if the moveTo() is non-blocking. 
+	 */
 	bool moveIsDone() const;
+	/** idle() method Terminates the position controller (if active). 
+	 *
+	 * To prevent uncontrolled falling, you should ensure you have set gravityCompensate(true) before calling idle().
+	 */
 	void idle();
 
-
+	/** getEmMutex() method allows access to ExecutionManagers Mutex in LowLevelWam Class.
+	 */
 	thread::Mutex& getEmMutex() const { return llww.getEmMutex(); }
-
+	/** getLowLevelWam() method allows access to methods in LowLevelWam Class.
+	 */
 	LowLevelWam<DOF>& getLowLevelWam() { return llww.getLowLevelWam(); }
 	const LowLevelWam<DOF>& getLowLevelWam() const { return llww.getLowLevelWam(); }
 
 protected:
 	template<typename T> T currentPosHelper(const T& currentPos);
-	template<typename T> void moveToThread(const T& currentPos, /*const typename T::unitless_type& currentVel,*/ const T& destination, double velocity, double acceleration, bool* started, boost::shared_future<boost::thread*> threadPtrFuture);
+	template<typename T> void moveToThread(const T& currentPos, const T& destination, double velocity, double acceleration, bool* started, boost::shared_future<boost::thread*> threadPtrFuture);
 
 	bool doneMoving;
 	boost::thread_group mtThreadGroup;
