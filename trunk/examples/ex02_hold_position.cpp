@@ -101,6 +101,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		case 'q':
 		case 'x':
 			printf("Quitting.\n");
+			wam.moveHome();
 			going = false;
 			break;
 
