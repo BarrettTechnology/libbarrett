@@ -6,7 +6,6 @@
  * @date 2008-2009
  */
 
-/* Copyright 2008-2014
 /**
  *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
  *
