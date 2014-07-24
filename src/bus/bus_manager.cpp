@@ -119,7 +119,7 @@ int BusManager::updateBuffers() const
 	while (true) {
 		ret = receiveRaw(busId, data, len, false);  // non-blocking read
 		if (ret == 0) {  // successfully received a message
-			storeMessage(busId, data, len);
+			if (busId != 1344) storeMessage(busId, data, len); // disregard safetyboard broadcast message
 		} else if (ret == 1) {  // would block
 			return 0;
 		} else {  // error
