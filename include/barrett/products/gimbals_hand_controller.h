@@ -42,24 +42,31 @@ namespace barrett {
 
 class GimbalsHandController {
 public:
+	/** GimbalsHandController Constructor */
 	GimbalsHandController(Puck* p6, Puck* p7);
+	/** GimbalsHandController Destructor */
 	~GimbalsHandController() {}
-
+	/** update Method gets the latest status of the pointer, thumb, rocker, middle fingers */
 	void update();
-
+	/** getThumbOpen Method tells whether or not the thumb is open currently */
 	bool getThumbOpen() const { return thumbOpen; }
+	/** getThumbClose Method tells whether or not the thumb is closed currently */
 	bool getThumbClose() const { return thumbClose; }
-
+	/** getPointerOpen Method tells whether or not the pointer is open currently */
 	bool getPointerOpen() const { return pointerOpen; }
+	/** getPointerClose Method tells whether or not the pointer is closed currently */
 	bool getPointerClose() const { return pointerClose; }
-
+	/** getMiddleOpen method tells whether or not the middle is open currently */
 	bool getMiddleOpen() const { return middleOpen; }
+	/** getMiddleClose Method tells whether or not the middle is closed currently */
 	bool getMiddleClose() const { return middleClose; }
-
+	/** getRockerUp Method tells whether or not the rocker is up currently */
 	bool getRockerUp() const { return rockerUp; }
+	/** getRockerDown Method tells whether or not the rocker is down currently */
 	bool getRockerDown() const { return rockerDown; }
-
+	/** getKnob Method returns the current value of the knob position */
 	double getKnob() const { return knob / COUNTS_PER_RAD; }
+	/** setKnob Method changes the current knob value to desired value */
 	void setKnob(double value) { knob = value * COUNTS_PER_RAD; }
 
 protected:

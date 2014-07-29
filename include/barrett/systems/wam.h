@@ -153,7 +153,7 @@ public:
 	/** getToolVelocity() returns Tool velocity in meters per second
      */
 	cv_type getToolVelocity() const;
-	/** getToolOrientation() returns Tool Orientation in Quaternoionds
+	/** getToolOrientation() returns Tool Orientation in Quaternions
      */
 	Eigen::Quaterniond getToolOrientation() const;
 	/** getToolPose() returns Tool Pose as a combination of 

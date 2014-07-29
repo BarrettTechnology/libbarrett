@@ -63,32 +63,45 @@ public:
 	static const unsigned int GRASP      = F1 | F2 | F3;
 	static const unsigned int WHOLE_HAND = GRASP | SPREAD;
 
-
+	/** Hand Constructor */
 	Hand(const std::vector<Puck*>& pucks);
+	/** Hand Destructor */
 	~Hand();
-
+	/** initialize Method */
 	void initialize() const;
+	/** idle Method */
 	void idle() const { group.setProperty(Puck::MODE, MotorPuck::MODE_IDLE); }
-
+	/** doneMoving Method */
 	bool doneMoving(unsigned int whichDigits = WHOLE_HAND, bool realtime = false) const;
+	/** waitUntilDoneMoving Method */
 	void waitUntilDoneMoving(unsigned int whichDigits = WHOLE_HAND, double period_s = 0.1) const;
 
-
 	// Basic moves
+	/** open Method */
 	void open(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	/** open Method */
 	void open(bool blocking) const { open(WHOLE_HAND, blocking); }
+	/** close Method */
 	void close(unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	/** close Method */
 	void close(bool blocking) const { close(WHOLE_HAND, blocking); }
 
 	// Preferred: low control-rate moves
+	/** trapezoidalMove Method */
 	void trapezoidalMove(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND, bool blocking = true) const;
+	/** trapezoidalMove Method */
 	void trapezoidalMove(const jp_type& jp, bool blocking) const { trapezoidalMove(jp, WHOLE_HAND, blocking); }
+	/** velocityMove Method */
 	void velocityMove(const jv_type& jv, unsigned int whichDigits = WHOLE_HAND) const;
 
 	// Advanced: high control-rate moves
+	/** setPositionMode Method */
 	void setPositionMode(unsigned int whichDigits = WHOLE_HAND) const;
+	/** setPositionCommand Method */
 	void setPositionCommand(const jp_type& jp, unsigned int whichDigits = WHOLE_HAND) const;
+	/** setTorqueMode Method */
 	void setTorqueMode(unsigned int whichDigits = WHOLE_HAND) const;
+	/** setTorqueCommand Method */
 	void setTorqueCommand(const jt_type& jt, unsigned int whichDigits = WHOLE_HAND) const;
 
 
@@ -97,27 +110,38 @@ public:
 	static const unsigned int S_FINGERTIP_TORQUE = 1 << 1;
 	static const unsigned int S_TACT_FULL         = 1 << 2;
 	static const unsigned int S_ALL = S_POSITION | S_FINGERTIP_TORQUE | S_TACT_FULL;
+	/** update Method */
 	void update(unsigned int sensors = S_ALL, bool realtime = false);
-
+	/** getInnerLinkPosition Method */
 	const jp_type& getInnerLinkPosition() const { return innerJp; }
+	/** getOuterLinkPosition Method */
 	const jp_type& getOuterLinkPosition() const { return outerJp; }
+	/** getPrimaryEncoderPosition Method */
 	const std::vector<int>& getPrimaryEncoderPosition() const { return primaryEncoder; }
+	/** getSecondaryEncoderPosition Method */
 	const std::vector<int>& getSecondaryEncoderPosition() const { return secondaryEncoder; }
+	/** enableBreakawayEncoders Method actives or deactivates the Secondary Encoders */
 	void enableBreakawayEncoders(bool enable) { useSecondaryEncoders = enable; }  // Enabled by default.
-
+	/** hasFingertipTorqueSensors Method returns status of installed fingertip torque sensors */
 	bool hasFingertipTorqueSensors() const { return hasFtt; }
+	/** getFingertipTorque Method gets the fingertip torques in torque units */
 	const std::vector<int>& getFingertipTorque() const { return ftt; }
-
+	/** hasTactSensors Method returns whether or not Tactile Sensors are present on hand. */
 	bool hasTactSensors() const { return hasTact; }
+	/** getTactilePucks Method creates container of pucks to get tactile sensor data from possible locations */
 	const std::vector<TactilePuck*>& getTactilePucks() const { return tactilePucks; }
 
 
 	static const size_t SPREAD_INDEX = 3;
 
 protected:
+	/** */
 	bool digitsInclude(unsigned int whichDigits, size_t index) const { return whichDigits & (1 << index); }
+	/** */
 	void setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const;
+	/** */
 	void setProperty(unsigned int whichDigits, enum Puck::Property prop, const v_type& values) const;
+	/** */
 	void blockIf(bool blocking, unsigned int whichDigits) const;
 
 
