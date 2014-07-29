@@ -50,22 +50,27 @@ class ForceTorqueSensor : public SpecialPuck {
 public:
 	BARRETT_UNITS_FIXED_SIZE_TYPEDEFS;
 
-
+	/** ForceTorqueSensor Constructor */
 	ForceTorqueSensor(Puck* puck = NULL) : SpecialPuck(/* TODO(dc): Puck::PT_ForceTorque */), bus(NULL) { setPuck(puck); }
+	/** ForceTorqueSensor Destructor */
 	~ForceTorqueSensor() {}
-
+	
+	/** setPuck Method changes puck properties to be ForceTorqueSensor settings  */
 	void setPuck(Puck* puck);
-
+	/** tare Method establishes new baseline for differential calculations. */
 	void tare() { Puck::setProperty(*bus, id, propId, 0); }
-
+	/** update Method establishes new force and torque values from the sensor */
 	void update(bool realtime = false);
+	/** getForce Method returns cartesian force values for each axis in n/m */
 	const cf_type& getForce() const { return cf; }
+	/** getTorque Method returns cartesian torque values for each axis in torque units */
 	const ct_type& getTorque() const { return ct; }
-
+	/** updateAccel Method clears stored acceleration values in each axis */
 	void updateAccel(bool realtime = false);
+	/** getAccel Method returns cartesian acceleration for each axis in n/m^2 */
 	const ca_type& getAccel() const { return ca; }
 
-
+	/** */
 	struct ForceParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_FT_FORCE);
@@ -77,6 +82,7 @@ public:
 			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
 		}
 	};
+	/** */
 	struct TorqueParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_FT_TORQUE);
@@ -88,6 +94,7 @@ public:
 			return ForceTorqueSensor::parse(id, propId, result, data, len, SCALE_FACTOR);
 		}
 	};
+	/** */
 	struct AccelParser {
 		static int busId(int id, int propId) {
 			return Puck::encodeBusId(id, PuckGroup::FGRP_FT_ACCEL);

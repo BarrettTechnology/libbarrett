@@ -41,7 +41,7 @@
 
 namespace barrett {
 
-
+/** setPuck Method changes puck properties to be ForceTorqueSensor settings */
 void ForceTorqueSensor::setPuck(Puck* puck)
 {
 	// Call super
@@ -56,7 +56,7 @@ void ForceTorqueSensor::setPuck(Puck* puck)
 
 	tare();
 }
-
+/** update Method establishes new force and torque values from the sensor */
 void ForceTorqueSensor::update(bool realtime)
 {
 	int ret;
@@ -85,7 +85,7 @@ void ForceTorqueSensor::update(bool realtime)
 				% __func__ % ret % id).raise<std::runtime_error>();
 	}
 }
-
+/** updateAccel Method clears stored acceleration values in each axis */
 void ForceTorqueSensor::updateAccel(bool realtime)
 {
 	int ret;
@@ -107,7 +107,7 @@ void ForceTorqueSensor::updateAccel(bool realtime)
 				% __func__ % ret % id).raise<std::runtime_error>();
 	}
 }
-
+/** parse Method splits data into readable format */
 int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor)
 {
 	if (len != 6  &&  len != 7) {
@@ -123,7 +123,7 @@ int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsign
 
 	return 0;
 }
-
+/** */
 int ForceTorqueSensor::twoByte2int(unsigned char lsb, unsigned char msb)
 {
 	int res = ((int)msb << 8)  |  lsb;

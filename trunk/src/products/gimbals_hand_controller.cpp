@@ -23,11 +23,11 @@
  *	Newton, MA 02458
  *
  */
-/*
- * gimbals_hand_controller.cpp
- *
- *  Created on: Jan 4, 2011
- *      Author: dc
+/**
+ * @file gimbals_hand_controller.cpp
+ * @date 01/04/2011
+ * @author Dan Cody
+ * 
  */
 
 #include <barrett/products/puck.h>
@@ -36,7 +36,7 @@
 
 namespace barrett {
 
-
+/** GimbalsHandController Constructor Elements */
 GimbalsHandController::GimbalsHandController(Puck* _p6, Puck* _p7) :
 	p6(*_p6), p7(*_p7),
 	thumbOpen(false), thumbClose(false),
@@ -58,7 +58,7 @@ GimbalsHandController::GimbalsHandController(Puck* _p6, Puck* _p7) :
 		ana1 = Puck::ANA0;
 	}
 }
-
+/** update Method gets the latest status of the pointer, thumb, rocker, middle fingers */
 void GimbalsHandController::update()
 {
 	int tmp;
