@@ -12,7 +12,7 @@ control_mode_switcher.h - Header file containing convenient calls to switch betw
 
 calibrate_control_gains.cpp - Routine to calibrate the control gains for use of the WAM in voltage control mode. After compilation, this routine is run with the command ./bt-wam-ccg
 
-calibration4.conf & calibration7.conf - Configuration files loaded at runtime containing gain information necessary for playback.
+calibration<n>.conf - Configuration files loaded at runtime containing gain information necessary for playback.
 
 teach.cpp - Program to record and save a trajectory based on human interaction with the WAM. The trajectories can be saved in joint or Cartesian space.
 
