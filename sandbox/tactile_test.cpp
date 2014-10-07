@@ -118,9 +118,13 @@ void board(WINDOW *win, int starty, int startx, int lines, int cols, int tile_wi
 }
 
 void graphCell(WINDOW *win, int starty, int startx, double pressure) {
-    int i, chunk;
-    char c;
-
+    //int i, chunk;
+    //char c;
+    // Numeric display of pressure
+    mvwprintw(win,starty,startx+1,"%.3d",(int)pressure);
+    mvwprintw(win,starty+1,startx+1,"%.3d",(int)(pressure*1000) - (int)pressure*1000);
+#if 0
+    // Symbolic display of pressure
     int value = (int)(pressure * 256.0) / 102;  // integer division
     for (i = 4; i >= 0; --i) {
         chunk = (value <= 7) ? value : 7;
@@ -143,7 +147,7 @@ void graphCell(WINDOW *win, int starty, int startx, double pressure) {
         }
         mvwprintw(win, starty, startx+i, "%c", c);
     }
-
+#endif
 //    wrefresh(win);
 }
 
@@ -181,6 +185,10 @@ int main(int argc, char** argv) {
 	tactPuck.setPuck(puck);
 
 
+for(int i = 11; i <= 14; i++){
+    pm.getPuck(i)->setProperty(Puck::TACT, 3);;
+}
+
 	bool firstRun = true;
 	int numBadTransitions = 0;
 	const TactilePuck::v_type& pressures = tactPuck.getFullData();
@@ -212,7 +220,9 @@ int main(int argc, char** argv) {
 	while (true) {
 		btkey c = btkey_get();
 		if (c != BTKEY_NOKEY) {
-			if (c == BTKEY_UP  &&  activeIndex != 0) {
+			if(c == 't'){
+    				pm.getPuck(streamId)->setProperty(Puck::TACT, 3);;
+			} else if (c == BTKEY_UP  &&  activeIndex != 0) {
 				--activeIndex;
 			} else if (c == BTKEY_DOWN  &&  activeIndex != (numMenuItems - 1)) {
 				++activeIndex;
@@ -256,7 +266,7 @@ int main(int argc, char** argv) {
 		}
 		mvprintw(1,23, "%d", numBadTransitions);
 		pressures_1 = pressures;
-
+		mvprintw(3,20,"Press 't' to re-tare.");
 		refresh();
 	}
 
