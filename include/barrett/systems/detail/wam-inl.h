@@ -277,6 +277,13 @@ void Wam<DOF>::gravityCompensate(bool compensate)
 		disconnect(jtSum.getInput(GRAVITY_INPUT));
 	}
 }
+
+template<size_t DOF>
+bool Wam<DOF>::updateGravity(double val)
+{
+	return (gravity.setGravity(val));
+}
+
 template<size_t DOF>
 inline bool Wam<DOF>::isGravityCompensated()
 {

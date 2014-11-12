@@ -166,6 +166,9 @@ public:
     /** gravityCompensate() method activates Gravity Compensation for WAM
      */
 	void gravityCompensate(bool compensate = true);
+    /** updateGravity() method updates the value of Gravity applied for WAM
+     */
+	bool updateGravity(double val = -9.8);
     /** isGravityCompensated() returns flag as to the status of Gravity Compensation
      */
 	bool isGravityCompensated();
