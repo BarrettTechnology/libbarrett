@@ -63,6 +63,9 @@ public:
 		bt_calgrav_create(&impl, setting.getCSetting(), DOF);
 	}
 
+	bool setGravity(double new_grav) {
+		return(!bt_calgrav_update(impl, new_grav));
+	}
 	virtual ~GravityCompensator() {
 		mandatoryCleanUp();
 

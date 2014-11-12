@@ -134,7 +134,16 @@ int bt_calgrav_destroy(struct bt_calgrav * grav);
 int bt_calgrav_eval(struct bt_calgrav * grav,
         struct bt_kinematics * kin, gsl_vector * jtorque);
 
-
+/** Updates the world gravity.
+ *
+ * This function updates the world component of the gravity with the
+ * requested value
+ *
+ * \param[in] grav bt_calgrav object
+ * \param[in] val new gravity value to be updated
+ * \retval 0 Success
+ */
+int bt_calgrav_update(struct bt_calgrav * grav, double val);
 #ifdef __cplusplus
 }
 #endif
