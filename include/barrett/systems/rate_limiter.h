@@ -63,7 +63,7 @@ public:
 
 	void setLimit(const T& newLimit);
 
-	void setCurPos(const T& newPos);
+	void setCurVal(const T& newPos);
 
 protected:
 	double T_s;

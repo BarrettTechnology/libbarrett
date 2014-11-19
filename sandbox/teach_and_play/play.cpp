@@ -239,7 +239,7 @@ bool Play<DOF>::init() {
 				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3];
 			else if (j == 5)
 				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3], fLine[4];
-			else
+			else if (j == 8)
 				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3], fLine[4], fLine[5], fLine[6], fLine[7];
 			jp_vec.push_back(samp);
 		}
