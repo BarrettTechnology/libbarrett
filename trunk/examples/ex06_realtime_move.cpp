@@ -104,7 +104,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.moveTo(startPos);
 	//Indicate the current position and the maximum rate limit to the rate limiter
-	jp_rl.setCurPos(wam.getJointPositions());
+	jp_rl.setCurVal(wam.getJointPositions());
 	jp_rl.setLimit(rt_jp_cmd);
 
 	JpCircle<DOF> jpc(startPos, JP_AMPLITUDE, FREQUENCY);

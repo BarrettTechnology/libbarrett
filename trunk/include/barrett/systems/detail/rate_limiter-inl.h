@@ -48,7 +48,7 @@ void RateLimiter<T,MathTraits>::setLimit(const T& newLimit)
 }
 
 template<typename T, typename MathTraits>
-void RateLimiter<T,MathTraits>::setCurPos(const T& newPos)
+void RateLimiter<T,MathTraits>::setCurVal(const T& newPos)
 {
 	data = newPos;
 }

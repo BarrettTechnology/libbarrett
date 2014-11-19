@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
 
 
 for(int i = 11; i <= 14; i++){
-    pm.getPuck(i)->setProperty(Puck::TACT, 3);;
+    pm.getPuck(i)->setProperty(Puck::TACT, 3);
 }
 
 	bool firstRun = true;
