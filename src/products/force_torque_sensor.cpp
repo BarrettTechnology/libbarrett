@@ -1,25 +1,28 @@
-/*
-	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
-
-	This file is part of libbarrett.
-
-	This version of libbarrett is free software: you can redistribute it
-	and/or modify it under the terms of the GNU General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This version of libbarrett is distributed in the hope that it will be
-	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License along
-	with this version of libbarrett.  If not, see
-	<http://www.gnu.org/licenses/>.
-
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
-*/
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
+ *
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ *
+ */
 
 /*
  * force_torque_sensor.cpp
@@ -38,7 +41,7 @@
 
 namespace barrett {
 
-
+/** setPuck Method changes puck properties to be ForceTorqueSensor settings */
 void ForceTorqueSensor::setPuck(Puck* puck)
 {
 	// Call super
@@ -53,7 +56,7 @@ void ForceTorqueSensor::setPuck(Puck* puck)
 
 	tare();
 }
-
+/** update Method establishes new force and torque values from the sensor */
 void ForceTorqueSensor::update(bool realtime)
 {
 	int ret;
@@ -82,7 +85,7 @@ void ForceTorqueSensor::update(bool realtime)
 				% __func__ % ret % id).raise<std::runtime_error>();
 	}
 }
-
+/** updateAccel Method clears stored acceleration values in each axis */
 void ForceTorqueSensor::updateAccel(bool realtime)
 {
 	int ret;
@@ -104,7 +107,7 @@ void ForceTorqueSensor::updateAccel(bool realtime)
 				% __func__ % ret % id).raise<std::runtime_error>();
 	}
 }
-
+/** parse Method splits data into readable format */
 int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsigned char* data, size_t len, double scaleFactor)
 {
 	if (len != 6  &&  len != 7) {
@@ -120,7 +123,7 @@ int ForceTorqueSensor::parse(int id, int propId, base_type* result, const unsign
 
 	return 0;
 }
-
+/** */
 int ForceTorqueSensor::twoByte2int(unsigned char lsb, unsigned char msb)
 {
 	int res = ((int)msb << 8)  |  lsb;

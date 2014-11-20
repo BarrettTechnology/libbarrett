@@ -42,7 +42,7 @@ DEFAULT_DEST_DIR = "/etc/barrett/"
 VERS_PATTERN = "^CONFIG_VERSION\s*=\s*(\d+);$"
 
 MAIN_VERS_FILE = "default.conf"
-MAIN_CONFIG_FILES = [MAIN_VERS_FILE, "wam4.conf", "wam7g.conf", "wam7w.conf", "calibration_data"]
+MAIN_CONFIG_FILES = [MAIN_VERS_FILE, "wam3.conf", "wam4.conf", "wam7g.conf", "wam7w.conf", "calibration_data"]
 
 CAL_VERS_FILE = "calibration.conf"
 CAL_CONFIG_FILES = [CAL_VERS_FILE]

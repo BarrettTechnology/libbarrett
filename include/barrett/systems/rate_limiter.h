@@ -63,6 +63,8 @@ public:
 
 	void setLimit(const T& newLimit);
 
+	void setCurVal(const T& newPos);
+
 protected:
 	double T_s;
 	T limit, maxDelta;

@@ -1,5 +1,5 @@
 /*
-	Copyright 2009, 2010 Barrett Technology <support@barrett.com>
+	Copyright 2009-2014 Barrett Technology <support@barrett.com>
 
 	This file is part of libbarrett.
 
@@ -17,8 +17,6 @@
 	with this version of libbarrett.  If not, see
 	<http://www.gnu.org/licenses/>.
 
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
 */
 
 /** Exception handling utilities.

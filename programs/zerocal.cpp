@@ -564,7 +564,9 @@ int main(int argc, char** argv) {
 	printf(">>> Please *carefully* place the WAM in its home position, then press [Enter].");
 	waitForEnter();
 
-	if (pm.foundWam4()) {
+	if (pm.foundWam3()){
+    return wam_main(argc, argv, pm, *pm.getWam3());
+  } else if (pm.foundWam4()) {
 		return wam_main(argc, argv, pm, *pm.getWam4());
 	} else if (pm.foundWam7()) {
 		return wam_main(argc, argv, pm, *pm.getWam7());
