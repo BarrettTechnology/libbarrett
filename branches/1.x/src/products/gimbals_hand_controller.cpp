@@ -1,8 +1,33 @@
-/*
- * gimbals_hand_controller.cpp
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
  *
- *  Created on: Jan 4, 2011
- *      Author: dc
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ *
+ */
+/**
+ * @file gimbals_hand_controller.cpp
+ * @date 01/04/2011
+ * @author Dan Cody
+ * 
  */
 
 #include <barrett/products/puck.h>
@@ -11,7 +36,7 @@
 
 namespace barrett {
 
-
+/** GimbalsHandController Constructor Elements */
 GimbalsHandController::GimbalsHandController(Puck* _p6, Puck* _p7) :
 	p6(*_p6), p7(*_p7),
 	thumbOpen(false), thumbClose(false),
@@ -33,7 +58,7 @@ GimbalsHandController::GimbalsHandController(Puck* _p6, Puck* _p7) :
 		ana1 = Puck::ANA0;
 	}
 }
-
+/** update Method gets the latest status of the pointer, thumb, rocker, middle fingers */
 void GimbalsHandController::update()
 {
 	int tmp;

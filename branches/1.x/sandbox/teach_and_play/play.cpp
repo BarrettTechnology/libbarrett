@@ -235,9 +235,11 @@ bool Play<DOF>::init() {
 			}
 			boost::get<0>(samp) = fLine[0];
 			// To handle the different WAM configurations
-			if (j == 5)
+			if (j == 4)
+				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3];
+			else if (j == 5)
 				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3], fLine[4];
-			else
+			else if (j == 8)
 				boost::get<1>(samp) << fLine[1], fLine[2], fLine[3], fLine[4], fLine[5], fLine[6], fLine[7];
 			jp_vec.push_back(samp);
 		}
@@ -402,7 +404,9 @@ int wam_main(int argc, char** argv, ProductManager& pm,
 // Load our vc_calibration file.
 	libconfig::Config config;
 	std::string calibration_file;
-	if (DOF == 4)
+	if (DOF == 3)
+		calibration_file = "calibration3.conf";
+	else if (DOF == 4)
 		calibration_file = "calibration4.conf";
 	else
 		calibration_file = "calibration7.conf";

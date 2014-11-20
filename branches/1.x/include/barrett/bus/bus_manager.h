@@ -1,8 +1,33 @@
-/*
- * bus_manager.h
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
  *
- *  Created on: Aug 18, 2010
- *      Author: dc
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ */
+
+/** Defines Communication::Bus
+ * 
+ * @file bus_manager.h
+ * @date 09/18/2010
+ * @author Dan Cody
  */
 
 #ifndef BARRETT_BUS_BUS_MANAGER_H_
@@ -25,21 +50,36 @@ namespace bus {
 
 class BusManager : public CommunicationsBus {
 public:
+	/** BusManager Constructors and Destructors
+	 */
 	BusManager(CommunicationsBus* bus = NULL);
 	BusManager(int port);
 	virtual ~BusManager();
-
+	/** getUnderlyingBus pointer returns bus.
+	 */
 	const CommunicationsBus& getUnderlyingBus() const { return *bus; }
+	/**
+	 */
 	virtual thread::Mutex& getMutex() const { return bus->getMutex(); }
-
+	/** Open Method creates the communication port on CANBus
+	 */
 	virtual void open(int port) { bus->open(port); }
+	/** close Method destroys the communication port on CANBus
+	 */
 	virtual void close() { bus->close(); }
+	/** isOpen Method is flag for available communication on CANBus
+	 */
 	virtual bool isOpen() const { return bus->isOpen(); }
-
+	/** send Method 
+	 */
 	virtual int send(int busId, const unsigned char* data, size_t len) const
 		{ return bus->send(busId, data, len); }
+	/** receive Method is thread safe way to update CANBus messages
+	 */
 	virtual int receive(int expectedBusId, unsigned char* data, size_t& len,
 			bool blocking = true, bool realtime = false) const;
+	/** receiveRaw Method works the same as receive but is realtime safe
+	 */
 	virtual int receiveRaw(int& busId, unsigned char* data, size_t& len,
 			bool blocking = true) const
 		{ return bus->receiveRaw(busId, data, len, blocking); }

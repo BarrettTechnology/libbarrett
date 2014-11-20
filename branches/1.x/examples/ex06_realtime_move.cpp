@@ -83,6 +83,15 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	const double CP_AMPLITUDE = 0.1;  // meters
 	const double FREQUENCY = 1.0;  // rad/s
 
+	//Rate Limiter
+	jp_type rt_jp_cmd;
+	systems::RateLimiter<jp_type> jp_rl;
+	//Sets the joints to move at 1 m/s
+	const double rLimit[] = {1, 1, 1, 1, 1, 1, 1};
+
+	for(size_t i = 0; i < DOF; ++i)
+		rt_jp_cmd[i] = rLimit[i];
+
 	jp_type startPos(0.0);
 	startPos[1] = -M_PI_2;
 	startPos[3] = M_PI_2 + JP_AMPLITUDE;
@@ -94,10 +103,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	waitForEnter();
 
 	wam.moveTo(startPos);
+	//Indicate the current position and the maximum rate limit to the rate limiter
+	jp_rl.setCurVal(wam.getJointPositions());
+	jp_rl.setLimit(rt_jp_cmd);
+
 	JpCircle<DOF> jpc(startPos, JP_AMPLITUDE, FREQUENCY);
 
 	systems::connect(time.output, jpc.input);
-	wam.trackReferenceSignal(jpc.output);
+	//Enforces that the individual joints move less than or equal to the above mentioned rate limit
+	systems::connect(jpc.output, jp_rl.input);
+	wam.trackReferenceSignal(jp_rl.output);
 	time.smoothStart(TRANSITION_DURATION);
 
 	printf("Press [Enter] to stop.");

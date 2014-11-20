@@ -1,31 +1,35 @@
-/*
-	Copyright 2011, 2012 Barrett Technology <support@barrett.com>
-
-	This file is part of libbarrett.
-
-	This version of libbarrett is free software: you can redistribute it
-	and/or modify it under the terms of the GNU General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This version of libbarrett is distributed in the hope that it will be
-	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License along
-	with this version of libbarrett.  If not, see
-	<http://www.gnu.org/licenses/>.
-
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
-*/
-
-/*
- * product_manager.cpp
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
  *
- *  Created on: Jan 3, 2011
- *      Author: dc
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ *
+ */
+
+/*
+ * @file product_manager.cpp
+ *
+ * @date Jan 3, 2011
+ * @author D.Cody
+ * @author J.Hagstrand
  */
 
 #include <stdexcept>
@@ -61,7 +65,7 @@ const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
 ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _bus) :
 	config(), bus(_bus), deleteBus(false),
 	pucks(), wamPucks(MAX_WAM_DOF), handPucks(Hand::DOF),
-	sm(NULL), rtem(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), ghc(NULL)
+	sm(NULL), rtem(NULL), wam3(NULL), wam4(NULL), wam7(NULL), fts(NULL), hand(NULL), ghc(NULL)
 {
 	int ret;
 
@@ -211,6 +215,12 @@ void ProductManager::enumerate()
 	logMessage("  Products:");
 	bool noProductsFound = true;
 	bool wamFound = false;
+	// TODO(JH): Rehab Update implement and test
+	if (foundWam3()) {
+		noProductsFound = false;
+		wamFound = true;
+		logMessage("    3-DOF WAM");
+	}
 	if (foundWam4()) {
 		noProductsFound = false;
 		wamFound = true;
@@ -252,6 +262,9 @@ void ProductManager::destroyEstopProducts()
 {
 	delete rtem;
 	rtem = NULL;
+	// TODO(JH): Rehab Update implement and test
+	delete wam3;
+	wam3 = NULL;
 	delete wam4;
 	wam4 = NULL;
 	delete wam7;
@@ -282,7 +295,11 @@ const std::vector<Puck*>& ProductManager::getWamPucks() const
 {
 	return wamPucks;
 }
-
+// TODO(JH): Rehab Update implement and test
+bool ProductManager::foundWam3() const
+{
+	return verifyWamPucks(3);
+}		
 bool ProductManager::foundWam4() const
 {
 	return verifyWamPucks(4);
@@ -337,7 +354,10 @@ void ProductManager::waitForWam(bool promptOnZeroing)
 }
 const char* ProductManager::getWamDefaultConfigPath()
 {
-	if (foundWam4()) {
+	// TODO(JH): Rehab Update implement and test
+	if (foundWam3()){
+	  return "wam3";
+	} else if (foundWam4()) {
 		return "wam4";
 	} else if (foundWam7Wrist()) {
 		return "wam7w";
@@ -347,7 +367,36 @@ const char* ProductManager::getWamDefaultConfigPath()
 		throw std::logic_error("ProductManager::getWamDefaultConfigPath(): No WAM found.");
 	}
 }
+// TODO(JH): Rehab Update implement and test
+systems::Wam<3>* ProductManager::getWam3(bool waitForShiftActivate, const char* configPath)
+{
+	if ( !foundWam3() ) {
+		throw std::logic_error("ProductManager::getWam3(): No WAM3 was found on the bus.");
+	}
 
+	if (wam3 == NULL) {
+		std::vector<Puck*> wam3Pucks = wamPucks;
+		wam3Pucks.resize(3);  // Discard all but the first 3 elements
+
+		if (configPath == NULL) {
+			configPath = getWamDefaultConfigPath();
+		}
+		wam3 = new systems::Wam<3>(getExecutionManager(), wam3Pucks, getSafetyModule(), getConfig().lookup(configPath));
+		startExecutionManager();
+	}
+
+	if (waitForShiftActivate) {
+		if ( !foundSafetyModule() ) {
+			throw std::logic_error("ProductManager::getWam3(): No SafetyModule was found on the bus.");
+		}
+
+		// Check rapidly in case the user wants to perform some action (like
+		// enabling gravity compensation) immediately after Shift-activate.
+		getSafetyModule()->waitForMode(SafetyModule::ACTIVE, true, 0.05);
+	}
+
+	return wam3;
+}
 systems::Wam<4>* ProductManager::getWam4(bool waitForShiftActivate, const char* configPath)
 {
 	if ( !foundWam4() ) {

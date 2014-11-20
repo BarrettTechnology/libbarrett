@@ -237,3 +237,9 @@ int bt_calgrav_eval(struct bt_calgrav * grav,
    }
    return 0;
 }
+
+int bt_calgrav_update(struct bt_calgrav * grav, double val)
+{
+  gsl_vector_set( grav->world_g, 2, val );
+  return 0;
+}

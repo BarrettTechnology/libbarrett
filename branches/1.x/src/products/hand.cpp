@@ -1,31 +1,34 @@
-/*
-	Copyright 2010, 2011, 2012 Barrett Technology <support@barrett.com>
-
-	This file is part of libbarrett.
-
-	This version of libbarrett is free software: you can redistribute it
-	and/or modify it under the terms of the GNU General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This version of libbarrett is distributed in the hope that it will be
-	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License along
-	with this version of libbarrett.  If not, see
-	<http://www.gnu.org/licenses/>.
-
-	Further, non-binding information about licensing is available at:
-	<http://wiki.barrett.com/libbarrett/wiki/LicenseNotes>
-*/
-
-/*
- * hand.cpp
+/**
+ *	Copyright 2009-2014 Barrett Technology <support@barrett.com>
  *
- *  Created on: Nov 9, 2010
- *      Author: dc
+ *	This file is part of libbarrett.
+ *
+ *	This version of libbarrett is free software: you can redistribute it
+ *	and/or modify it under the terms of the GNU General Public License as
+ *	published by the Free Software Foundation, either version 3 of the
+ *	License, or (at your option) any later version.
+ *
+ *	This version of libbarrett is distributed in the hope that it will be
+ *	useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License along
+ *	with this version of libbarrett.  If not, see
+ *	<http://www.gnu.org/licenses/>.
+ *
+ *
+ *	Barrett Technology Inc.
+ *	73 Chapel Street
+ *	Newton, MA 02458
+ *
+ */
+
+/**
+ * @file hand.cpp
+ * @date 11/09/2010
+ * @author Dan Cody
+ * 
  */
 
 #include <stdexcept>
@@ -50,7 +53,7 @@ namespace barrett {
 
 const enum Puck::Property Hand::props[] = { Puck::HOLD, Puck::CMD, Puck::MODE, Puck::P, Puck::T, Puck::SG };
 
-
+/** Hand Constructor */
 Hand::Hand(const std::vector<Puck*>& _pucks) :
 	MultiPuckProduct(DOF, _pucks, PuckGroup::BGRP_HAND, props, sizeof(props)/sizeof(props[0]), "Hand::Hand()"),
 	hasFtt(false), hasTact(false), useSecondaryEncoders(true), encoderTmp(DOF), primaryEncoder(DOF, 0), secondaryEncoder(DOF, 0), ftt(DOF, 0), tactilePucks()
@@ -96,11 +99,12 @@ Hand::Hand(const std::vector<Puck*>& _pucks) :
 	j2pp[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].getCountsPerRad() * SPREAD_RATIO;
 	j2pt[SPREAD_INDEX] = motorPucks[SPREAD_INDEX].getIpnm() / SPREAD_RATIO;
 }
+/** Hand Destructor */
 Hand::~Hand()
 {
 	detail::purge(tactilePucks);
 }
-
+/** initialize Method */
 void Hand::initialize() const
 {
 	for (size_t i = 0; i < DOF-1; ++i) {
@@ -111,7 +115,7 @@ void Hand::initialize() const
 	pucks[SPREAD_INDEX]->setProperty(Puck::CMD, CMD_HI);
 	waitUntilDoneMoving();
 }
-
+/** doneMoving Method */
 bool Hand::doneMoving(unsigned int whichDigits, bool realtime) const
 {
 	int modes[DOF];
@@ -131,29 +135,31 @@ bool Hand::doneMoving(unsigned int whichDigits, bool realtime) const
 	}
 	return true;
 }
+/** waitUntilDoneMoving Method prevents any subsequent actions until finger movement is completed. */
 void Hand::waitUntilDoneMoving(unsigned int whichDigits, double period_s) const
 {
 	while ( !doneMoving(whichDigits) ) {
 		btsleep(period_s);
 	}
 }
-
+/** open Method */
 void Hand::open(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_OPEN);
 	blockIf(blocking, whichDigits);
 }
+/** close Method */
 void Hand::close(unsigned int whichDigits, bool blocking) const {
 	setProperty(whichDigits, Puck::CMD, CMD_CLOSE);
 	blockIf(blocking, whichDigits);
 }
-
+/** trapezoidalMove Method */
 void Hand::trapezoidalMove(const jp_type& jp, unsigned int whichDigits, bool blocking) const
 {
 	setProperty(whichDigits, Puck::E, j2pp.cwise() * jp);
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TRAPEZOIDAL);
 	blockIf(blocking, whichDigits);
 }
-
+/** velocityMove Method */
 void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
 {
 	// Convert to counts/millisecond
@@ -161,18 +167,20 @@ void Hand::velocityMove(const jv_type& jv, unsigned int whichDigits) const
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_VELOCITY);
 }
 
-
+/** setPositionMode Method */
 void Hand::setPositionMode(unsigned int whichDigits) const {
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_PID);
 }
+/** setPositionCommand Method */
 void Hand::setPositionCommand(const jp_type& jp, unsigned int whichDigits) const
 {
 	setProperty(whichDigits, Puck::P, j2pp.cwise() * jp);
 }
-
+/** setTorqueMode Method */
 void Hand::setTorqueMode(unsigned int whichDigits) const {
 	setProperty(whichDigits, Puck::MODE, MotorPuck::MODE_TORQUE);
 }
+/** setTorqueCommand Method */
 void Hand::setTorqueCommand(const jt_type& jt, unsigned int whichDigits) const
 {
 	pt = j2pt.cwise() * jt;
@@ -182,7 +190,7 @@ void Hand::setTorqueCommand(const jt_type& jt, unsigned int whichDigits) const
 		setProperty(whichDigits, Puck::T, pt);
 	}
 }
-
+/** update Method */
 void Hand::update(unsigned int sensors, bool realtime)
 {
 	// Do we need to lock?
@@ -239,7 +247,7 @@ void Hand::update(unsigned int sensors, bool realtime)
 	}
 }
 
-
+/** */
 void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, int value) const
 {
 	if (whichDigits == WHOLE_HAND) {
@@ -252,7 +260,7 @@ void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, int v
 		}
 	}
 }
-
+/** setProperty Method */
 void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, const v_type& values) const
 {
 	for (size_t i = 0; i < DOF; ++i) {
@@ -261,7 +269,7 @@ void Hand::setProperty(unsigned int whichDigits, enum Puck::Property prop, const
 		}
 	}
 }
-
+/** blockIf Method */
 void Hand::blockIf(bool blocking, unsigned int whichDigits) const {
 	if (blocking) {
 		waitUntilDoneMoving(whichDigits);
