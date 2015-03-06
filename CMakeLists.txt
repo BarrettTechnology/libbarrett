@@ -100,7 +100,7 @@ set(exported_include_dirs ${exported_include_dirs} ${GSL_INCLUDE_DIRS})
 #for minor in range(45, 60):
 #	print '"1.%d" "1.%d.0"' % (minor, minor),
 set(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.46" "1.46.0" "1.47" "1.47.0" "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0" "1.51" "1.51.0" "1.52" "1.52.0" "1.53" "1.53.0" "1.54" "1.54.0" "1.55" "1.55.0" "1.56" "1.56.0" "1.57" "1.57.0" "1.58" "1.58.0" "1.59" "1.59.0")
-set(boost_components thread)
+set(boost_components system thread)
 if (WITH_PYTHON)
 	set(boost_components ${boost_components} python)
 endif()
