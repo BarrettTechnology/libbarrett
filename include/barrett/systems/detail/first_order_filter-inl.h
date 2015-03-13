@@ -54,7 +54,7 @@ FirstOrderFilter<T,MathTraits>::FirstOrderFilter(const libconfig::Setting& setti
 template<typename T, typename MathTraits>
 void FirstOrderFilter<T,MathTraits>::operate()
 {
-	eval(this->input.getValue());
+	this->eval(this->input.getValue());
 	this->outputValue->setData(&this->y_0);
 }
 
