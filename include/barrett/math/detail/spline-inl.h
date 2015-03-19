@@ -122,7 +122,7 @@ inline T Spline<T>::evalDerivative(double s) const
 }
 
 
-// Specialization for Eigen::Quaternion types
+// Specialization for Eigen::Quaternion  types
 template<typename Scalar>
 template<template<typename, typename> class Container, typename Allocator>
 Spline<Eigen::Quaternion<Scalar> >::Spline(const Container<tuple_type, Allocator>& samples, bool saturateS) :
