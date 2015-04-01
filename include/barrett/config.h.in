@@ -1,0 +1,13 @@
+#ifndef __LIBBARRETT_CONFIG_H
+#define __LIBBARRETT_CONFIG_H
+
+#include <string>
+
+// Path to installed "/etc/libbarrett" directory
+namespace barrett {
+  static const std::string EtcPathRelative(const std::string &relpath) {
+    return std::string("@BARRETT_ETC_PATH@/") + relpath;
+  }
+}
+
+#endif //ifndef __LIBBARRETT_CONFIG_H

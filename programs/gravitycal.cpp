@@ -50,6 +50,8 @@
 #include <barrett/cdlbt/kinematics.h>
 #include <barrett/cdlbt/calgrav.h>
 
+#include <barrett/config.h>
+
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
@@ -58,8 +60,8 @@
 
 using namespace barrett;
 
-const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
-const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/gravitycal.conf";
+const std::string CAL_CONFIG_FILE = barrett::EtcPathRelative("calibration.conf");
+const std::string DATA_CONFIG_FILE = barrett::EtcPathRelative("calibration_data/%s/gravitycal.conf");
 
 
 // Print this before the WAM is activated.
@@ -248,10 +250,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		config_setting_t * poses_array;
 
 		config_init(&cfg);
-		err = config_read_file(&cfg, CAL_CONFIG_FILE);
+		err = config_read_file(&cfg, CAL_CONFIG_FILE.c_str());
 		if (err != CONFIG_TRUE) {
-			syslog(LOG_ERR, "Calibration configuration file %s not found.", CAL_CONFIG_FILE);
-			printf("Calibration configuration file %s not found.\n", CAL_CONFIG_FILE);
+			syslog(LOG_ERR, "Calibration configuration file %s not found.", CAL_CONFIG_FILE.c_str());
+			printf("Calibration configuration file %s not found.\n", CAL_CONFIG_FILE.c_str());
 			config_destroy(&cfg);
 			endwin();
 			return -1;
@@ -612,8 +614,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		}
 
 
-		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
-		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE.c_str()) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE.c_str(), pm.getWamDefaultConfigPath());
 		manageBackups(dataConfigFile);  // Backup old calibration data
 
 		// Save to the data config file
