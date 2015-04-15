@@ -49,14 +49,16 @@
 #include <barrett/products/product_manager.h>
 #include <barrett/detail/stl_utils.h>
 
+#include <barrett/config.h>
+
 #include "utils.h"
 
 
 using namespace barrett;
 using detail::waitForEnter;
 
-const char CAL_CONFIG_FILE[] = "/etc/barrett/calibration.conf";
-const char DATA_CONFIG_FILE[] = "/etc/barrett/calibration_data/%s/zerocal.conf";
+const std::string CAL_CONFIG_FILE = barrett::EtcPathRelative("calibration.conf");
+const std::string DATA_CONFIG_FILE = barrett::EtcPathRelative("calibration_data/%s/zerocal.conf");
 
 
 // Convenience class that wraps ncurses text attributes.
@@ -359,7 +361,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	std::vector<CalibrationStep*> steps;
 	try {
 		libconfig::Config config;
-		config.readFile(CAL_CONFIG_FILE);
+		config.readFile(CAL_CONFIG_FILE.c_str());
 		const libconfig::Setting& setting = config.lookup("zerocal")[pm.getWamDefaultConfigPath()];
 		assert(setting.isList());
 		assert(setting.getLength() == (int)DOF);
@@ -369,13 +371,13 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &zeroAngle));
 		}
 	} catch (libconfig::ParseException e) {
-		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE, e.getError());
+		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE.c_str(), e.getError());
 		return 1;
 	} catch (libconfig::SettingNotFoundException e) {
-		printf(">>> CONFIG FILE ERROR in %s: could not find \"%s\"\n", CAL_CONFIG_FILE, e.getPath());
+		printf(">>> CONFIG FILE ERROR in %s: could not find \"%s\"\n", CAL_CONFIG_FILE.c_str(), e.getPath());
 		return 1;
 	} catch (libconfig::SettingTypeException e) {
-		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE, e.getPath());
+		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE.c_str(), e.getPath());
 		return 1;
 	}
 	steps.push_back(new ExitStep);
@@ -473,8 +475,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	if (done) {
 		printf(">>> Calibration completed!\n");
 
-		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
-		sprintf(dataConfigFile, DATA_CONFIG_FILE, pm.getWamDefaultConfigPath());
+		char* dataConfigFile = new char[strlen(DATA_CONFIG_FILE.c_str()) + strlen(pm.getWamDefaultConfigPath()) - 2 + 1];
+		sprintf(dataConfigFile, DATA_CONFIG_FILE.c_str(), pm.getWamDefaultConfigPath());
 		manageBackups(dataConfigFile);  // Backup old calibration data
 
 		// Save to the data config file
