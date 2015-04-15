@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <pwd.h>
 
-// Path to installed "/etc/libbarrett" directory
 namespace barrett {
   static const std::string EtcPathRelative(const std::string &relpath) {
 
