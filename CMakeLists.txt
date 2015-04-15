@@ -182,7 +182,7 @@ endif()
 #     products/zerocal.cpp
 #     products/gravitycal.cpp
 #     ... others?
-set(BARRETT_ETC_PATH ${CMAKE_INSTALL_PREFIX}/etc/barrett/)
+set(BARRETT_ETC_PATH /etc/barrett)
 configure_file(
   ${PROJECT_SOURCE_DIR}/include/barrett/config.h.in 
   ${PROJECT_BINARY_DIR}/include/barrett/config.h)
