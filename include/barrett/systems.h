@@ -88,5 +88,5 @@
 #include <barrett/systems/tuple_grouper.h>
 #include <barrett/systems/tuple_splitter.h>
 
-
+#include <barrett/systems/modXYZ.h>
 #endif /* BARRETT_SYSTEMS_H_ */
