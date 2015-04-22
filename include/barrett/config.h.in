@@ -10,7 +10,7 @@
 namespace barrett {
   static const std::string EtcPathRelative(const std::string &relpath) {
 
-std::string path = "/barrett/";
+std::string path = "/.barrett/";
 char *home;
 struct stat statbuf;
  
