@@ -8,23 +8,26 @@
 #include <pwd.h>
 
 namespace barrett {
-  static const std::string EtcPathRelative(const std::string &relpath) {
 
-std::string path = "/.barrett/";
-char *home;
-struct stat statbuf;
- 
-  home = getenv("HOME");
-  if(home == NULL)
-	home = getpwuid(getuid())->pw_dir;
-  path = home + path;
-  if(stat(path.c_str(), &statbuf) != -1){
-	if(S_ISDIR(statbuf.st_mode)) {
-		return (path + relpath);
+static const std::string EtcPathRelative(const std::string &relpath) {
+	std::string path = "/.barrett/";
+	char *home;
+	struct stat statbuf;
+
+	home = getenv("HOME");
+	if (home == NULL) {
+		home = getpwuid(getuid())->pw_dir;
 	}
-  }	
-    return std::string("@BARRETT_ETC_PATH@/") + relpath;
-  }
+
+	path = home + path;
+	if (stat(path.c_str(), &statbuf) != -1) {
+		if (S_ISDIR(statbuf.st_mode)) {
+			return (path + relpath);
+		}
+	}
+	return std::string("@BARRETT_ETC_PATH@/") + relpath;
+}
+
 }
 
 #endif //ifndef __LIBBARRETT_CONFIG_H
