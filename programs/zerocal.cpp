@@ -218,7 +218,7 @@ public:
 					LowLevelWam<DOF>& llw = wam.getLowLevelWam();
 
 					// Record actual joint position, not commanded joint position
-					zeroPos[j] = calPos[j] - wam.getJointPositions()[j];
+					zeroPos[j] = wam.getJointPositions()[j] - calPos[j];
 
 					// Record the motor angles that affect this joint
 					const sqm_type& m2jp = llw.getMotorToJointPositionTransform();
