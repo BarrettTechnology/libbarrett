@@ -9,23 +9,35 @@
 
 namespace barrett {
 
-static const std::string EtcPathRelative(const std::string &relpath) {
-	std::string path = "/.barrett/";
-	char *home;
+std::string EtcPath()
+{
+	static const std::string barrett_home_path = "/.barrett/";
+
 	struct stat statbuf;
 
-	home = getenv("HOME");
+	// Default to the BARRETT_ETC_PATH environment variable, if set.
+	char *etc_path = std::getenv("BARRETT_ETC_PATH");
+	if (stat(etc_path, &statbuf) != -1 && S_ISDIR(statbuf.st_mode)) {
+		return etc_path;
+	}
+
+	// Otherwise, fall back on the ".barrett" in the HOME directory.
+	char *home = std::getenv("HOME");
 	if (home == NULL) {
 		home = getpwuid(getuid())->pw_dir;
 	}
 
-	path = home + path;
-	if (stat(path.c_str(), &statbuf) != -1) {
-		if (S_ISDIR(statbuf.st_mode)) {
-			return (path + relpath);
-		}
+	std::string etc_path_std = std::string(home) + barrett_home_path;
+	if (stat(etc_path_std.c_str(), &statbuf) != -1 && S_ISDIR(statbuf.st_mode)) {
+		return etc_path_std;
 	}
-	return std::string("@BARRETT_ETC_PATH@/") + relpath;
+
+	// Finally, fall back on the compile-time constant.
+	return "@BARRETT_ETC_PATH@/";
+}
+
+std::string EtcPathRelative(const std::string &relpath) {
+	return EtcPath() + relpath;
 }
 
 }
