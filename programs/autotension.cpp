@@ -18,9 +18,11 @@
 #include <barrett/products/product_manager.h>
 #include <barrett/products/puck.h>
 
+#include <barrett/config.h>
+
 using namespace barrett;
 
-const char CAL_CONFIG_FILE[] = "/etc/barrett/autotension.conf";
+const std::string CAL_CONFIG_FILE = barrett::EtcPathRelative("autotension.conf");
 
 template<size_t DOF>
 std::vector<int> validate_args(int argc, char** argv) {
@@ -619,9 +621,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	/* Read configuration file */
 	libconfig::Config config;
 	try {
-		config.readFile(CAL_CONFIG_FILE);
+		config.readFile(CAL_CONFIG_FILE.c_str());
 	} catch (const libconfig::FileIOException &fioex) {
-		printf("EXITING: I/O error while reading %s\n", CAL_CONFIG_FILE);
+		printf("EXITING: I/O error while reading %s\n", CAL_CONFIG_FILE.c_str());
 		btsleep(5.0);
 		return (false);
 	} catch (const libconfig::ParseException &pex) {

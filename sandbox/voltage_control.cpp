@@ -20,6 +20,7 @@
 
 #include <barrett/standard_main_function.h>
 
+#include <barrett/config.h>
 
 using namespace barrett;
 
@@ -87,7 +88,7 @@ public:
 
 	void calculateTorqueGain() {
 		libconfig::Config config;
-		config.readFile("/etc/barrett/calibration.conf");
+		config.readFile(barrett::EtcPathRelative("calibration.conf").c_str());
 		libconfig::Setting& setting = config.lookup("gravitycal")[pm.getWamDefaultConfigPath()];
 
 		int scaleCount = 0;

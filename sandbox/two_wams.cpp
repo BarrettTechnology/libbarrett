@@ -15,6 +15,7 @@
 #include <barrett/systems.h>
 #include <barrett/products/product_manager.h>
 
+#include <barrett/config.h>
 
 using namespace barrett;
 
@@ -31,7 +32,7 @@ int main(int argc, char** argv) {
 	installExceptionHandler();
 
 	ProductManager pm0;
-	ProductManager pm1("/etc/barrett/bus1/default.conf");
+	ProductManager pm1(barrett::EtcPathRelative("bus1/default.conf").c_str());
 
 	printf("Starting the WAM on Bus 0...\n");
 	boost::thread wt0 = startWam(pm0, wamThread0<4>, wamThread0<7>);

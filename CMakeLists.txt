@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
 project(libbarrett)
-
 set(libbarrett_VERSION_MAJOR 1)
 set(libbarrett_VERSION_MINOR 2)
 set(libbarrett_VERSION_PATCH 4)
@@ -73,6 +72,7 @@ set(exported_libraries "")
 
 ## Put libbarrett headers in the include path
 include_directories("${PROJECT_SOURCE_DIR}/include/")
+include_directories("${PROJECT_BINARY_DIR}/include")
 set(exported_include_dirs ${exported_include_dirs} ${CMAKE_INSTALL_PREFIX}/include)
 set(exported_link_dirs ${exported_link_dirs} ${CMAKE_INSTALL_PREFIX}/lib)
 
@@ -143,6 +143,7 @@ add_subdirectory(src)
 # The trailing slash in "include/" is important
 install(DIRECTORY include/
 	DESTINATION include
+	PATTERN ".h"
 	PATTERN ".svn" EXCLUDE
 )
 
@@ -179,7 +180,14 @@ endif()
 #     products/zerocal.cpp
 #     products/gravitycal.cpp
 #     ... others?
-set(config_dir /etc/barrett/)
+set(BARRETT_ETC_PATH /etc/barrett)
+configure_file(
+  ${PROJECT_SOURCE_DIR}/include/barrett/config.h.in 
+  ${PROJECT_BINARY_DIR}/include/barrett/config.h)
+install(FILES ${PROJECT_BINARY_DIR}/include/barrett/config.h 
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/barrett)
+
+set(config_dir ${BARRETT_ETC_PATH})
 set(install_config_cmd ${PROJECT_SOURCE_DIR}/programs/install_config_files --source=${PROJECT_SOURCE_DIR}/config/ --dest=${config_dir})
 add_custom_target(install_config ${install_config_cmd} VERBATIM)
 
