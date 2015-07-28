@@ -63,7 +63,7 @@ class RealTimeExecutionManager;
 
 class ProductManager {
 public:
-	static const char DEFAULT_CONFIG_FILE[];  // = "/etc/barrett/default.conf"
+	static const std::string DEFAULT_CONFIG_FILE;  // = "/etc/barrett/default.conf"
 
 	explicit ProductManager(const char* configFile = NULL, bus::CommunicationsBus* bus = NULL);
 	virtual ~ProductManager();

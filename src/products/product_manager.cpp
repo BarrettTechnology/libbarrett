@@ -56,11 +56,12 @@
 #include <barrett/systems/wam.h>
 #include <barrett/products/product_manager.h>
 
+#include <barrett/config.h>
 
 namespace barrett {
 
 
-const char ProductManager::DEFAULT_CONFIG_FILE[] = "/etc/barrett/default.conf";
+const std::string ProductManager::DEFAULT_CONFIG_FILE = barrett::EtcPathRelative("default.conf");
 
 ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _bus) :
 	config(), bus(_bus), deleteBus(false),
@@ -76,7 +77,7 @@ ProductManager::ProductManager(const char* configFile, bus::CommunicationsBus* _
 	if (configFile == NULL  ||  configFile[0] == '\0') {
 		configFile = std::getenv("BARRETT_CONFIG_FILE");
 		if (configFile == NULL  ||  configFile[0] == '\0') {
-			configFile = DEFAULT_CONFIG_FILE;
+			configFile = DEFAULT_CONFIG_FILE.c_str();
 			strcpy(cfSource, "default");
 		} else {
 			strcpy(cfSource, "env");

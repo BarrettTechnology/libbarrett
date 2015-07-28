@@ -12,6 +12,7 @@
 #include <barrett/log.h>
 #include <barrett/systems.h>
 
+#include <barrett/config.h>
 
 using namespace barrett;
 
@@ -31,7 +32,7 @@ void waitForEnter() {
 
 int main() {
 	libconfig::Config config;
-	config.readFile("/etc/barrett/wam4.conf");
+	config.readFile(barrett::EtcPathRelative("wam4.conf").c_str());
 
 	systems::RealTimeExecutionManager rtem(T_s);
 	systems::System::defaultExecutionManager = &rtem;
