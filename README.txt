@@ -4,14 +4,54 @@ Barrett Technology
 
 
 Libbarrett is a real-time controls library written in C++ that runs Barrett
-Technology's products, including the WAM Arm and the BH8-280 BarrettHand. For
+Technology's products, including the WAM Arm, Proficio and the BH8-280 BarrettHand. For
 support, please email:
     support@barrett.com
 
-To build and install libbarrett, run:
-    cmake .
-    make
-    sudo make install
+To build and install libbarrett
+
+Source based install
+
+Pre-requisites:
+
+$ sudo apt-get install python-dev python-argparse
+$ sudo apt-get install libeigen2-dev libboost-all-dev libgsl0-dev
+$ sudo apt-get install libxenomai-dev libxenomai1
+$ wget http://web.barrett.com/svn/libbarrett/dependencies/libconfig-1.4.5-PATCHED.tar.gz
+$ tar -xf libconfig-1.4.5-PATCHED.tar.gz
+$ cd libconfig-1.4.5
+$ ./configure && make && sudo make install
+$ cd ../
+$ rm -rf libconfig-1.4.5 libconfig-1.4.5-PATCHED.tar.gz
+
+Download and install libbarrett:
+
+$ cd ~/
+$ git clone https://github.com/BarrettTechnology/libbarrett.git
+$ mv libbarrett/.bash_aliases .
+$ . ~/.bashrc
+$ cd libbarrett
+$ cmake .
+$ make
+$ sudo make install
+
+For Proficio support only:
+
+ - Before running the Proficio in a partifular configuration or immediately after switching the configuration of the proficio type
+
+$ leftConfig
+or
+$ rightConfig
+based on the configuration of the Proficio.
+
+The above bash aliases copies the particular configuration of the proficio from ~/libbarrett/proficio_sandbox/configurations into /etc/barrett directory.
+
+- Hit E-STOP and shift+idle.
+
+- If the outer elbow of the proficio is swapped, do gravity calibration before running the examples.
+
+P.S Some of the examples above may not work with any robot if the libbarrett is not installed from this source.
+
 Headers and shared libraries will be installed to their typical locations for
 your system. Configuration files will be installed to the /etc/barrett/
 directory. A copy of the examples/ directory will be placed in your home
