@@ -19,7 +19,25 @@ class JpCircle : public systems::SingleIO<double, typename units::JointPositions
 
 public:
 	JpCircle(jp_type startPos, double amplitude, double omega, const std::string& sysName = "JpCircle") :
-		systems::SingleIO<double, jp_type>(sysName), jp(startPos), jp_0(jp), amp(amplitude), omega(omega) {}
+		systems::SingleIO<double, jp_type>(sysName), jp(startPos), jp_0(jp), amp(amplitude), omega(omega) {
+			// Check for robot type
+			if (DOF>3) {
+				// WAM - Use joints 3 and 4.
+				i1 = 2;
+				i2 = 3;
+			} else if (DOF==3) {
+				// Proficio - Use joints 2 and 3.
+				i1 = 1;
+				i2 = 2;
+			} else {
+				// This should never happen, since DOF check is done in main.
+				std::cout << "Warning: No known robot with DOF < 3." << std::endl;
+				i1 = 0;
+				i2 = 0;
+				amp = 0;
+			}
+
+		}
 	virtual ~JpCircle() { this->mandatoryCleanUp(); }
 
 protected:
@@ -27,19 +45,13 @@ protected:
 	jp_type jp_0;
 	double amp, omega;
 	double theta;
+	int i1, i2;
 
 	virtual void operate() {
 		theta = omega * this->input.getValue();
 
-    if (DOF>3) {
-      // WAM - Use joints 3 and 4.
-      jp[2] = amp * std::sin(theta) + jp_0[2];
-      jp[3] = amp * (std::cos(theta) - 1.0) + jp_0[3];
-    } else {
-      // Proficio - Use joints 2 and 3.
-      jp[1] = amp * std::sin(theta) + jp_0[1];
-      jp[2] = amp * (std::cos(theta) - 1.0) + jp_0[2];
-    }
+		jp[i1] = amp * std::sin(theta) + jp_0[i1];
+		jp[i2] = amp * (std::cos(theta) - 1.0) + jp_0[i2];
 
 		this->outputValue->setData(&jp);
 	}
@@ -99,27 +111,32 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	for(size_t i = 0; i < DOF; ++i)
 		rt_jp_cmd[i] = rLimit[i];
 
+  // Set start position, depending on robot type and configuration.
 	jp_type startPos(0.0);
-  if (DOF > 3) {
-    // WAM - use joints 3 and 4.
-    startPos[1] = -M_PI_2;
-    startPos[3] = M_PI_2 + JP_AMPLITUDE;
-  } else {
-    // Proficio - use joints 2 and 3.
-    jp_type temp = wam.getJointPositions();
-    // Check configuration. Currently, there is no hardware support for determining
-    // Proficio configuration. However, assuming that the user has run leftConfig or
-    // rightConfig as needed, we can determine configuration from the angle of joint 3.
-    // Joint 3 range is [0.12, 2.76] for right-configured Proficio and [-2.76, -0.12]
-    // for left-configured Proficio.
-    if (temp[2] < 0) {
-      // left configuration
-      startPos[2] = -1.25 + JP_AMPLITUDE;
-    } else {
-      // right configuration
-      startPos[2] = 1.25 + JP_AMPLITUDE;
-    }
-  }
+	if (DOF > 3) {
+		// WAM
+		startPos[1] = -M_PI_2;
+		startPos[3] = M_PI_2 + JP_AMPLITUDE;
+	} else if (DOF == 3) {
+		//Proficio
+		jp_type temp = wam.getJointPositions();
+		// Check configuration. Currently, there is no hardware support for determining
+		// Proficio configuration. However, assuming that the user has run leftConfig or
+		// rightConfig as needed, we can determine configuration from the angle of joint 3.
+		// Joint 3 range is [0.12, 2.76] for right-configured Proficio and [-2.76, -0.12]
+		// for left-configured Proficio.
+		if (temp[2] < 0) {
+			// left configuration
+			startPos[2] = -1.25 + JP_AMPLITUDE;
+		} else {
+			// right configuration
+			startPos[2] = 1.25 + JP_AMPLITUDE;
+		}
+	} else {
+		std::cout << "Error: No known robot with DOF < 3. Quitting." << std::endl;
+		// error
+		return -1;
+	}
 
 	systems::Ramp time(pm.getExecutionManager(), 1.0);
 
@@ -164,8 +181,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	printf("Press [Enter] to return home.");
 	waitForEnter();
-  wam.moveHome();
-  wam.idle();
+	wam.moveHome();
+	wam.idle();
 
 	// Wait for the user to press Shift-idle
 	pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
