@@ -35,14 +35,33 @@ $ cmake .
 $ make
 $ sudo make install
 
+Configuration Files for the robots:
+
+Upon installation of libbarrett, the configuration files of the robot are installed to the /etc/barrett directory. However, to give an additional flexibility of each user maintaining their own configurations for the same robot, by default, the configuration files are read from ~/.barrett directory if it exists. If not, then libbarrett reads the necessary configuration files from/etc/barrett/ directory. It is upto the user to maintain and populate the ~/.barrett directory
+
 For Proficio support only:
 
- - Before running the Proficio in a partifular configuration or immediately after switching the configuration of the proficio type
+In addition to the above, there are two different configuration files for the Proficio to account for its variant.. So, the right set of configuration files have to be copied either to the /etc/barrett/ or ~/.barrett folder depending on the configuration of the robot in use. In order to ease this process, there is a bash aliases that copies the corresponding configuration files to the /etc/barrett directory. As before, copying it to the ~/.barrett directory has to be done manually by the user.
+
+To set it up for the first time after installing libbarrett,
+
+Copy the bash_aliases to the existing aliases
+
+$ cat .bash_aliases >> ~/libbarrett/.bash_aliases
+
+or if no bash aliases exist then create a new one
+
+$ mv libbarrett/.bash_aliases .
+
+Rerun the bash script
+
+$ . ~/.bashrc
+
+- Before running the Proficio in a particular configuration or immediately after switching the configuration of the proficio, type either of the following based on the configuration of the robot
 
 $ leftConfig
 or
 $ rightConfig
-based on the configuration of the Proficio.
 
 The above bash aliases copies the particular configuration of the proficio from ~/libbarrett/proficio_sandbox/configurations into /etc/barrett directory.
 
