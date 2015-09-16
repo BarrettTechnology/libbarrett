@@ -28,8 +28,6 @@ Download and install libbarrett:
 
 $ cd ~/
 $ git clone https://github.com/BarrettTechnology/libbarrett.git
-$ mv libbarrett/.bash_aliases .
-$ . ~/.bashrc
 $ cd libbarrett
 $ cmake .
 $ make
