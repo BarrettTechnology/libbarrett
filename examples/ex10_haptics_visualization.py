@@ -15,14 +15,15 @@ else:
 
 
 # set up socket
-PORT = 5555
+PORT_SRC = 5556
+PORT_DEST = 5557
 MSG_FORMAT = "ddd"  # messages contain 3 doubles
 MSG_SIZE = struct.calcsize(MSG_FORMAT)
 
 sock = socket(AF_INET, SOCK_DGRAM)
 #sock.setblocking(0)
-sock.bind(('', PORT))
-sock.connect((remoteHost,PORT))
+sock.bind(('', PORT_SRC))
+sock.connect((remoteHost,PORT_DEST))
 
 
 # set up visual

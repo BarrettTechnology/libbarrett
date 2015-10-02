@@ -72,9 +72,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
     // instantiate Systems
 	NetworkHaptics nh(pm.getExecutionManager(), remoteHost);
-
-	double xoff = 1.1, yoff = 0.0, zoff = 0;
-
+	
 	cp_type center;
 	center << 0.4, -0.3, 0.0;
 	systems::HapticBall ball(center, 0.2);
