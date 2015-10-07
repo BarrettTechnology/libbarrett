@@ -51,7 +51,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	const jp_type SYNC_POS(0.0);  // the position each WAM should move to before linking
-
+	
+	if(DOF ==3){
+		printf("The program is not currently supported for the Proficios");
+		return 0;
+	}
 
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);

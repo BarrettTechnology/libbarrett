@@ -72,11 +72,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
     // instantiate Systems
 	NetworkHaptics nh(pm.getExecutionManager(), remoteHost);
-
+	
 	cp_type center;
-	center << 0.4, -.3, 0.0;
+	center << 0.4, -0.3, 0.0;
 	systems::HapticBall ball(center, 0.2);
 	center << 0.35, 0.4, 0.0;
+		
 	math::Vector<3>::type size;
 	size << 0.3, 0.3, 0.3;
 	systems::HapticBox box(center, size);
@@ -96,14 +97,36 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	comp.setKp(kp);
 	comp.setKd(kd);
 
+	systems::modXYZ<cp_type> modcp;
+	modcp.negX();
+	modcp.negY();
+	modcp.xOffset(1);
+
+	systems::modXYZ<cf_type> modforce;
+	modforce.negX();
+	modforce.negY();
+	if(DOF == 3) { 
+	connect(wam.toolPosition.output, modcp.input);
+	connect(modcp.output, nh.input);
+
+	connect(modcp.output, ball.input);
+	connect(modcp.output, box.input);
+
+	connect(mult.output, modforce.input);
+	connect(modforce.output, tf2jt.input);
+	} else {
 	// connect Systems
 	connect(wam.toolPosition.output, nh.input);
 
 	connect(wam.toolPosition.output, ball.input);
+	connect(wam.toolPosition.output, box.input);
+
+	connect(mult.output, tf2jt.input);
+	}
+
 	connect(ball.directionOutput, dirSum.getInput(0));
 	connect(ball.depthOutput, depthSum.getInput(0));
 
-	connect(wam.toolPosition.output, box.input);
 	connect(box.directionOutput, dirSum.getInput(1));
 	connect(box.depthOutput, depthSum.getInput(1));
 
@@ -115,17 +138,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	connect(comp.controlOutput, tg.getInput<1>());
 
 	connect(tg.output, mult.input);
-	connect(mult.output, tf2jt.input);
 	connect(tf2jt.output, jtSat.input);
 
 
 	// adjust velocity fault limit
 	pm.getSafetyModule()->setVelocityLimit(1.5);
-
 	while (true) {
 		wam.gravityCompensate();
 		connect(jtSat.output, wam.input);
-
 		// block until the user Shift-idles
 		pm.getSafetyModule()->waitForMode(SafetyModule::IDLE);
 

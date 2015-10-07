@@ -52,7 +52,7 @@ class NetworkHaptics : public barrett::systems::SingleIO<barrett::units::Cartesi
 public:
 	static const int SIZE_OF_MSG = 3 * sizeof(double);
 
-	explicit NetworkHaptics(barrett::systems::ExecutionManager* em, char* remoteHost, int port = 5555, const std::string& sysName = "NetworkHaptics") :
+	explicit NetworkHaptics(barrett::systems::ExecutionManager* em, char* remoteHost, int port_src = 5557, int port_dest = 5556, const std::string& sysName = "NetworkHaptics") :
 		barrett::systems::SingleIO<cp_type, cf_type>(sysName), sock(-1), cp(0.0), numMissed(0), cf(0.0)
 	{
 		int err;
@@ -109,17 +109,17 @@ public:
 
 		/* Set up the bind address */
 		bind_addr.sin_family = AF_INET;
-		bind_addr.sin_port = htons(port);
+		bind_addr.sin_port = htons(port_src);
 		bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		err = bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
 		if (err == -1)
 		{
-			(barrett::logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not bind to socket on port %d") % __func__ % port).raise<std::runtime_error>();
+			(barrett::logMessage("(NetworkHaptics::NetworkHaptics): Ctor failed %s: Could not bind to socket on port %d") % __func__ % port_src).raise<std::runtime_error>();
 		}
 
 		/* Set up the other guy's address */
 		their_addr.sin_family = AF_INET;
-		their_addr.sin_port = htons(port);
+		their_addr.sin_port = htons(port_dest);
 		err = ! inet_pton(AF_INET, remoteHost, &their_addr.sin_addr);
 		if (err)
 		{
