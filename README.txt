@@ -35,7 +35,7 @@ $ sudo make install
 
 Configuration Files for the robots:
 
-Upon installation of libbarrett, the configuration files of the robot are installed to the /etc/barrett directory. However, to give an additional flexibility of each user maintaining their own configurations for the same robot, by default, the configuration files are read from ~/.barrett directory if it exists. If not, then libbarrett reads the necessary configuration files from/etc/barrett/ directory. It is upto the user to maintain and populate the ~/.barrett directory
+Upon installation of libbarrett, the configuration files of the robot are installed to the /etc/barrett directory. However, to give an additional flexibility of each user maintaining their own configurations for the same robot, by default, the configuration files are read from ~/.barrett directory if it exists. If not, then libbarrett reads the necessary configuration files from /etc/barrett/ directory. It is upto the user to maintain and populate the ~/.barrett directory
 
 For Proficio support only:
 
