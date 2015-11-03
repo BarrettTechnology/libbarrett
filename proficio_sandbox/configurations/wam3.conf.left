@@ -28,7 +28,7 @@ wam3:
 			# Note: alpha_pi = alpha / pi 
 			{ alpha_pi =  0.5; a =    0.0; d =      0; }, # Base Pitch
 			{ alpha_pi =  0.0; a =  0.650; d =    0.0; }, # Twist
-			{ alpha_pi = -0.5; a =  0.440; d =  0.234; }  # Elbow
+			{ alpha_pi = -0.5; a =  0.435; d =  0.225; }  # Elbow
 		);
 		toolplate = { alpha_pi = 0; theta_pi = 0; a = 0; d = 0.0; };
 	};
