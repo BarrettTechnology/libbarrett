@@ -1,10 +1,9 @@
 libbarrett -- README
 Barrett Technology
-2013-07-17
-
+Updated Feb 25, 2016
 
 Libbarrett is a real-time controls library written in C++ that runs Barrett
-Technology's products, including the WAM Arm, Proficio and the BH8-280 BarrettHand. For
+Technology's products, including the WAM Arm, Proficio and the BH8-280/282 BarrettHand. For
 support, please email:
     support@barrett.com
 
@@ -17,7 +16,7 @@ Pre-requisites:
 $ sudo apt-get install python-dev python-argparse
 $ sudo apt-get install libeigen2-dev libboost-all-dev libgsl0-dev
 $ sudo apt-get install libxenomai-dev libxenomai1
-$ wget http://web.barrett.com/svn/libbarrett/dependencies/libconfig-1.4.5-PATCHED.tar.gz
+$ wget http://web.barrett.com/support/WAM_Installer/libconfig-1.4.5-PATCHED.tar.gz
 $ tar -xf libconfig-1.4.5-PATCHED.tar.gz
 $ cd libconfig-1.4.5
 $ ./configure && make && sudo make install
@@ -77,7 +76,7 @@ folder.
 To get started, look through libbarrett's example code. For additional
 documentation, see:
     http://support.barrett.com/            - Barrett product support site
-    http://barrett.com/robot/support.htm   - File download area
+    http://barrett.com/support.htm         - File download area
     http://web.barrett.com/libbarrett/     - API documentation for libbarrett
 
 It is possible to use CMake to generate several output formats, including
@@ -95,9 +94,6 @@ for your application, you may use the SocketCAN driver from the standard Linux
 kernel. To use the Linux SocketCAN driver, add "-DNON_REALTIME=true" to your
 cmake command.
 
-For additional dependencies, see:
-    http://web.barrett.com/svn/libbarrett/dependencies/
-
 Additional Makefile targets include:
     make install_config      # Update or install configuration files only
     make package             # Package the library as a tar-ball
@@ -113,6 +109,6 @@ http://www.barrett.com/
 +1-617-252-9000
 
 Barrett Technology 
-625 Mount Auburn Street
-Cambridge, MA 02138
+73 Chapel Street
+Newton, MA 02458
 USA
