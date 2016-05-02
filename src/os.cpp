@@ -62,12 +62,19 @@ inline RTIME secondsToRTIME(double s) {
 // handler is installed to trap transitions from primary execution mode to
 // secondary execution mode; this aids in identifying code that breaks Xenomai's
 // realtime guarantee.
+//
+#define MAX_LOG_MESSAGE_SIZE (100)
 namespace {  // Using an anonymous namespace because no other code needs to
 			 // interact with these declarations. It is necessary to construct a
 			 // single instance of InitXenomai.
 	extern "C" {
 	void warnOnSwitchToSecondaryMode(int)
 	{
+	        char log_message [ MAX_LOG_MESSAGE_SIZE];
+                RT_TASK_INFO     the_info;
+                rt_task_inquire (NULL, &the_info);
+                sprintf (log_message, "WARNING: Switched out of RealTime for thread %s", the_info.name);
+		barrett::logMessage(log_message, true);
 		barrett::logMessage("WARNING: Switched out of RealTime. Stack-trace:", true);
 		barrett::detail::syslog_stacktrace();
 	}
@@ -93,6 +100,165 @@ namespace {  // Using an anonymous namespace because no other code needs to
 namespace barrett {
 
 
+//
+//  this static function inquires xenomai to get
+//  the current tasks info....mostly used at 
+//  present for fixing the btsleep functions
+//
+static bool  btInquireAboutTask (RT_TASK_INFO *current_task_info)
+{
+       int           inquire_results;
+       bool          the_results = true;
+
+       inquire_results = rt_task_inquire (NULL, current_task_info);
+       switch (inquire_results) {
+       case 0:
+         //
+         //  this is the good case and we need do nothing
+         //
+	 break;
+       case (-EINVAL):
+         //
+         //  this indicates that the task argument does
+         //  not point to a task discription. but
+         //  we are using NULL for the pointer...so this
+         //  should be impossible
+         //
+	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EINVAL");
+         the_results = false;
+	 break;
+       case (-EPERM):
+         //
+         //  this is the case where the task argument is 
+         //  NULL, but we are not in a task context
+         //
+ 	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EPERM");
+         the_results = false;
+	 break;
+       case (-EIDRM):
+         //
+         //  this is the case where the task argument is
+         //  pointing to a deleted task discriptor....so
+	 //  this should be impossible
+         //
+	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EIDRM");
+         the_results = false;
+	 break;
+      default:
+         //
+         //  this is really a bad situation... a xenomai
+         //  function returned a bogus value
+	 //
+	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got a totally bogus value");
+         the_results = false;
+ 	 break;
+       }
+
+     return (the_results);
+}
+
+
+//
+//   brad's improved btSleep function that insures we are a real time task
+//   prior to calling the xenomai sleep function
+//
+void btsleepRT(double duration_s)
+{
+#ifdef BARRETT_XENOMAI
+        RT_TASK_INFO  current_task_info;
+        RTIME   start_time;
+        RTIME   end_time;
+        RTIME   diff_time;
+        RTIME   delay_time;
+ 
+	assert(duration_s > 1e-9);  // Minimum duration is 1 ns
+        if ( btInquireAboutTask (&current_task_info)) {
+          if ((current_task_info.status & T_STARTED) ) {
+	    //
+            //  i presume it is okay to sleep if were are ready
+            //
+            delay_time = RTIME(duration_s * 1e9);
+ 
+            start_time = rt_timer_read ();
+            int ret = rt_task_sleep(delay_time);
+            end_time = rt_timer_read();
+            diff_time = end_time - start_time;
+            if (diff_time < delay_time) {
+              //
+              //  it seems the the actual measured delay is just slightly short of the 
+              //  requested time....so we only print out a message if the time is 
+              //  10% to short.....
+              //
+	      if ( (delay_time - diff_time) > (delay_time - (delay_time / 10))) {
+  	        syslog(LOG_ERR, "Yikes. In btsleepRT and the sleep was too short!!\n");
+                syslog(LOG_ERR, "Diff time is %llu, delay time is %llu\n",diff_time, delay_time);
+              }
+	    }
+
+	    if (ret != 0) {
+		(logMessage("%s: rt_task_sleep() returned error %d.") % __func__ % ret).raise<std::runtime_error>();
+	    }
+	  } else if ( (current_task_info.status & T_BLOCKED) || 
+                      (current_task_info.status & T_DELAYED) || 
+                      (current_task_info.status & T_DORMANT) || 
+                      (current_task_info.status & T_LOCK) ) {
+            //
+            //   uh oh...this task is blocked delayed dormant or
+            //   even worse it hold the scheduler lock....
+            //   don't sleep
+            //
+	    syslog(LOG_ERR, "Yikes. In btsleepRT and the task status is questionable\n");
+	  } else if (current_task_info.status & T_BOOST)  {
+            //
+            //  somebody call btsleepRT when the task is not RT
+            //  call the normal, boost thread
+            //
+ 	    syslog(LOG_ERR, "somebody is calling btsleepRT for a non-real-time thread\n");
+            btsleep(duration_s);
+	  }
+	} else {
+	    syslog(LOG_ERR, "Yikes.  btInquireAboutTask returned false\n");
+	}
+#else
+        //
+        //  BARRETT_XENOMAI is not defined...just use the boost sleep
+        //
+	btsleep(duration_s);
+#endif
+
+}
+
+
+
+//
+//
+//  this is the new version of btsleep that
+//  checks to insure it is only called from a 
+//  non-real-time thread
+//
+void btsleep(double duration_s)
+{
+       RT_TASK_INFO  current_task_info;
+
+       assert(duration_s > 1e-6);  // Minimum duration is 1 us
+
+       if ( btInquireAboutTask (&current_task_info)) {
+          printf (" here we are in btsleep and the current task info status is %4x\n", current_task_info.status);
+          if (current_task_info.status & XNRELAX)  {
+	    //
+            //  i presume it is okay to sleep if were are a relaxed thread
+            //
+            boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
+	  } else {
+            syslog (LOG_ERR, "Yikes. someone called btsleep in a real time thread\n");
+	  }
+	} else {
+	    syslog(LOG_ERR, "Yikes.  btInquireAboutTask returned false\n");
+	}
+}
+
+
+#if 0
 void btsleep(double duration_s)
 {
 	assert(duration_s > 1e-6);  // Minimum duration is 1 us
@@ -103,14 +269,19 @@ void btsleepRT(double duration_s)
 {
 #ifdef BARRETT_XENOMAI
 	assert(duration_s > 1e-9);  // Minimum duration is 1 ns
-	int ret = rt_task_sleep(RTIME(duration_s * 1e9));
-	if (ret != 0) {
+
+        int ret = rt_task_sleep(RTIME(duration_s * 1e9));
+        if (ret != 0) {
 		(logMessage("%s: rt_task_sleep() returned error %d.") % __func__ % ret).raise<std::runtime_error>();
-	}
+        }
+
 #else
 	btsleep(duration_s);
 #endif
 }
+
+#endif
+
 
 void btsleep(double duration_s, bool realtime)
 {
@@ -136,14 +307,14 @@ double highResolutionSystemTime()
 
 
 
-PeriodicLoopTimer::PeriodicLoopTimer(double period_, int threadPriority) :
+PeriodicLoopTimer::PeriodicLoopTimer(double period_,const char *thread_name, int threadPriority) :
 		firstRun(true), period(period_), releasePoint(-1.0)
 {
 #ifdef BARRETT_XENOMAI
 	int ret;
 
 	// Try to become a Xenomai task
-	ret = rt_task_shadow(NULL, NULL, threadPriority, 0);
+	ret = rt_task_shadow(NULL, thread_name, threadPriority, 0);
 	// EBUSY indicates the current thread is already a Xenomai task
 	if (ret != 0  &&  ret != -EBUSY) {
 		(logMessage("PeriodicLoopTimer::%s: rt_task_shadow(): (%d) %s")

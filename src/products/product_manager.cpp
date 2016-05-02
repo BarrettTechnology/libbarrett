@@ -283,10 +283,19 @@ bool ProductManager::foundSafetyModule() const
 {
 	return getPuck(SAFETY_MODULE_ID) != NULL;
 }
+//
+//  this function gets a pointer to the the safety module
+//  if no safety module has been found (during enumeration)
+//  then it is legal for the function to return null and
+//  the responsiblity of the called to check for null
+//
 SafetyModule* ProductManager::getSafetyModule()
 {
 	if (sm == NULL  &&  foundSafetyModule()) {
-		sm = new SafetyModule(getPuck(SAFETY_MODULE_ID));
+	  //
+          //  create a new safety module if we haven't already
+          //  and one was found.....
+          sm = new SafetyModule(getPuck(SAFETY_MODULE_ID));
 	}
 	return sm;
 }
@@ -465,10 +474,21 @@ systems::RealTimeExecutionManager* ProductManager::getExecutionManager(double pe
 	}
 	return rtem;
 }
+
+#define MAX_THREAD_NAME_SIZE (50)
 void ProductManager::startExecutionManager() {
+  //
+  //  here we are creating an unique name 
+  //  every time this function is called
+  //
+  static unsigned int ExecutionCount = 0;
+  char   thread_name [MAX_THREAD_NAME_SIZE];
+  sprintf (thread_name,"Execution Manager %d", ExecutionCount);
+  ExecutionCount++;
+
 	getExecutionManager();
 	if ( !rtem->isRunning() ) {
-		rtem->start();
+		rtem->start(thread_name);
 	}
 }
 

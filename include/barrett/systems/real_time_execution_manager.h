@@ -55,7 +55,7 @@ public:
 	explicit RealTimeExecutionManager(const libconfig::Setting& setting);  //TODO(dc): test!
 	virtual ~RealTimeExecutionManager();
 
-	void start();
+	void start(const char *thread_name);
 	bool isRunning() const { return running; }
 	void stop();
 
@@ -75,7 +75,7 @@ protected:
 	std::string errorStr;
 	callback_type errorCallback;
 
-	void executionLoopEntryPoint();
+	void executionLoopEntryPoint(const char *thread_name);
 
 private:
 	void init();

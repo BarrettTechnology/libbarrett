@@ -61,7 +61,7 @@ public:
 
 protected:
 	void init(size_t recordsInSingleBuffer);
-	void writeToDiskEntryPoint();
+	void writeToDiskEntryPoint(const char *);
 
 	double period;
 	size_t singleBufferSize;

@@ -82,6 +82,7 @@ RealTimeWriter<T, Traits>::RealTimeWriter(const char* fileName, double approxPer
 template<typename T, typename Traits>
 void RealTimeWriter<T, Traits>::init(size_t recordsInSingleBuffer) {
 	singleBufferSize = this->recordLength * recordsInSingleBuffer;
+        const char *thread_name = "Real Time Writer";
 
 	delete[] this->buffer;
 	this->buffer = new char[singleBufferSize * 2];  // log::Writer's dtor will delete this for us.
@@ -94,7 +95,7 @@ void RealTimeWriter<T, Traits>::init(size_t recordsInSingleBuffer) {
 	writeToDisk = false;
 
 	// start writing thread
-	boost::thread tmpThread(boost::bind(&RealTimeWriter<T, Traits>::writeToDiskEntryPoint, this));
+	boost::thread tmpThread(boost::bind(&RealTimeWriter<T, Traits>::writeToDiskEntryPoint, this, thread_name));
 	thread.swap(tmpThread);
 }
 
@@ -142,9 +143,9 @@ void RealTimeWriter<T, Traits>::close()
 }
 
 template<typename T, typename Traits>
-void RealTimeWriter<T, Traits>::writeToDiskEntryPoint()
+void RealTimeWriter<T, Traits>::writeToDiskEntryPoint(const char *thread_name)
 {
-	PeriodicLoopTimer loopTimer(period, priority);
+        PeriodicLoopTimer loopTimer(period, thread_name, priority);
 	while ( !boost::this_thread::interruption_requested() ) {
 		loopTimer.wait();
 		if (writeToDisk) {

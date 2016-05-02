@@ -49,7 +49,7 @@ double highResolutionSystemTime();
 
 class PeriodicLoopTimer {
 public:
-	explicit PeriodicLoopTimer(double period_, int threadPriority = 10);
+  explicit PeriodicLoopTimer(double period_, const char *treadName, int threadPriority = 10);
 
 	unsigned long wait();
 
