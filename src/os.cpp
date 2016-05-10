@@ -243,15 +243,33 @@ void btsleep(double duration_s)
        assert(duration_s > 1e-6);  // Minimum duration is 1 us
 
        if ( btInquireAboutTask (&current_task_info)) {
-          printf (" here we are in btsleep and the current task info status is %4x\n", current_task_info.status);
-          if (current_task_info.status & XNRELAX)  {
+	  //  TODO (bim) resolve this question....
+          //  
+	  //printf (" here we are in btsleep and the current task info status is %4x\n", current_task_info.status);
+          //
+          //  this i don't fully understand....I would assume a relaxed bit means the thread is
+	  //  not real time....however we see for a typical task
+          //  a status of 300180
+          //              200000  - a shadow task
+          //              100000  - uses the FPU
+          //                 100  - maps to a linux task
+          //                  80  - started.....
+	  //
+          //     this seems to differ from the real time task that
+          //                 200  -  relaxed is not set....
+          //
+          //  which seems strange to me cuz' I thought relaxed means
+          //  'fallen out of real time mode'
+          //   bim (5/10/16)
+          //
+          //if (!(current_task_info.status & XNRELAX))  {
 	    //
             //  i presume it is okay to sleep if were are a relaxed thread
             //
             boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
-	  } else {
-            syslog (LOG_ERR, "Yikes. someone called btsleep in a real time thread\n");
-	  }
+	    //} else {
+            //syslog (LOG_ERR, "Yikes. someone called btsleep in a real time thread\n");
+	    //}
 	} else {
 	    syslog(LOG_ERR, "Yikes.  btInquireAboutTask returned false\n");
 	}
