@@ -80,7 +80,7 @@ RealTimeExecutionManager::~RealTimeExecutionManager()
 }
 
 
-void RealTimeExecutionManager::start()
+void RealTimeExecutionManager::start(const char *thread_name)
 {
 	BARRETT_SCOPED_LOCK(getMutex());
 
@@ -91,7 +91,7 @@ void RealTimeExecutionManager::start()
 	if ( !isRunning() ) {
 		thread::DisableSecondaryModeWarning dsmw;
 
-		boost::thread tmpThread(&RealTimeExecutionManager::executionLoopEntryPoint, this);
+		boost::thread tmpThread(&RealTimeExecutionManager::executionLoopEntryPoint, this, thread_name);
 		thread.swap(tmpThread);
 
 		// block until the thread starts reporting its new state
@@ -130,7 +130,7 @@ void RealTimeExecutionManager::clearErrorCallback()
 	setErrorCallback(callback_type());
 }
 
-void RealTimeExecutionManager::executionLoopEntryPoint()
+void RealTimeExecutionManager::executionLoopEntryPoint(const char *thread_name)
 {
 	uint32_t period_us = period * 1e6;
 	double start;
@@ -142,8 +142,9 @@ void RealTimeExecutionManager::executionLoopEntryPoint()
 	uint32_t loopCount = 0;
 	uint32_t overruns = 0;
 	uint32_t missedReleasePoints = 0;
+        static unsigned int thread_count = 0;
 
-	PeriodicLoopTimer loopTimer(period, priority);
+	PeriodicLoopTimer loopTimer(period, thread_name, priority);
 	running = true;
 	try {
 		while (true) {
