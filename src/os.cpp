@@ -105,56 +105,83 @@ namespace barrett {
 //  the current tasks info....mostly used at 
 //  present for fixing the btsleep functions
 //
-static bool  btInquireAboutTask (RT_TASK_INFO *current_task_info)
+static int   btInquireAboutTask (RT_TASK_INFO *current_task_info)
 {
-       int           inquire_results;
-       bool          the_results = true;
+  int inquire_results;
 
-       inquire_results = rt_task_inquire (NULL, current_task_info);
-       switch (inquire_results) {
-       case 0:
-         //
-         //  this is the good case and we need do nothing
-         //
-	 break;
-       case (-EINVAL):
-         //
-         //  this indicates that the task argument does
-         //  not point to a task discription. but
-         //  we are using NULL for the pointer...so this
-         //  should be impossible
-         //
-	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EINVAL");
-         the_results = false;
-	 break;
-       case (-EPERM):
-         //
-         //  this is the case where the task argument is 
-         //  NULL, but we are not in a task context
-         //
- 	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EPERM");
-         the_results = false;
-	 break;
-       case (-EIDRM):
-         //
-         //  this is the case where the task argument is
-         //  pointing to a deleted task discriptor....so
-	 //  this should be impossible
-         //
-	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EIDRM");
-         the_results = false;
-	 break;
-      default:
-         //
-         //  this is really a bad situation... a xenomai
-         //  function returned a bogus value
-	 //
-	 syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got a totally bogus value");
-         the_results = false;
- 	 break;
-       }
-
-     return (the_results);
+  inquire_results = rt_task_inquire (NULL, current_task_info);
+  switch (inquire_results) {
+  case 0:
+    //
+    //  this is the good case and we need do nothing
+    //
+    break;
+  case (-EINVAL):
+    //
+    //  this indicates that the task argument does
+    //  not point to a task discription. but
+    //  we are using NULL for the pointer...so this
+    //  should be impossible
+    //
+    syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EINVAL");
+    break;
+  case (-EPERM):
+     //
+     //  this is the case where the task argument is 
+     //  NULL, but we are not in a task context
+     //
+     syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EPERM");
+     break;
+   case (-EIDRM):
+     //
+     //  this is the case where the task argument is
+     //  pointing to a deleted task discriptor....so
+     //  this should be impossible
+     //
+     syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EIDRM");
+     break;
+   case (-ENOMEM):
+     //
+     //  this is not discussed in the Xenomai documenation
+     //  but might be returned......
+     //  
+     //
+     syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -ENOMEM - no memory");
+     break;
+   case (-EACCES):
+     //
+     //  this is not discussed in the Xenomai documenation
+     //  but might be returned......
+     //  
+     //
+     syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -EACCES - permission denied");
+     break;
+   case (-EFAULT):
+     //
+     //  this is not discussed in the Xenomai documenation
+     //  but might be returned......
+     //  
+     //
+     syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -ENFAULT - bad address");
+     break;
+   case (-ESRCH):
+     //
+     //  this is not discussed in the Xenomai documenation
+     //  but might be returned......
+     //  
+     //
+     //syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got -ESRCH - task does not exist");
+     break;
+   default:
+      //
+      //  this is really a bad situation... a xenomai
+      //  function returned a bogus value
+      //
+      syslog(LOG_ERR, "Yikes. In btInquireAboutTask and we got a totally bogus value");
+      syslog(LOG_ERR, "The value is %x\n", inquire_results);
+      break;
+    }
+    return (inquire_results);
 }
 
 
@@ -172,7 +199,7 @@ void btsleepRT(double duration_s)
         RTIME   delay_time;
  
 	assert(duration_s > 1e-9);  // Minimum duration is 1 ns
-        if ( btInquireAboutTask (&current_task_info)) {
+        if ( 0 == btInquireAboutTask (&current_task_info)) {
           if ((current_task_info.status & T_STARTED) ) {
 	    //
             //  i presume it is okay to sleep if were are ready
@@ -217,7 +244,7 @@ void btsleepRT(double duration_s)
             btsleep(duration_s);
 	  }
 	} else {
-	    syslog(LOG_ERR, "Yikes.  btInquireAboutTask returned false\n");
+	    syslog(LOG_ERR, "Yikes.  In btsleepRT....btInquireAboutTask returned false\n");
 	}
 #else
         //
@@ -228,8 +255,6 @@ void btsleepRT(double duration_s)
 
 }
 
-
-
 //
 //
 //  this is the new version of btsleep that
@@ -238,44 +263,38 @@ void btsleepRT(double duration_s)
 //
 void btsleep(double duration_s)
 {
-       RT_TASK_INFO  current_task_info;
+  RT_TASK_INFO  current_task_info;
+  assert(duration_s > 1e-6);  // Minimum duration is 1 us
 
-       assert(duration_s > 1e-6);  // Minimum duration is 1 us
-
-       if ( btInquireAboutTask (&current_task_info)) {
-	  //  TODO (bim) resolve this question....
-          //  
-	  //printf (" here we are in btsleep and the current task info status is %4x\n", current_task_info.status);
-          //
-          //  this i don't fully understand....I would assume a relaxed bit means the thread is
-	  //  not real time....however we see for a typical task
-          //  a status of 300180
-          //              200000  - a shadow task
-          //              100000  - uses the FPU
-          //                 100  - maps to a linux task
-          //                  80  - started.....
-	  //
-          //     this seems to differ from the real time task that
-          //                 200  -  relaxed is not set....
-          //
-          //  which seems strange to me cuz' I thought relaxed means
-          //  'fallen out of real time mode'
-          //   bim (5/10/16)
-          //
-          //if (!(current_task_info.status & XNRELAX))  {
-	    //
-            //  i presume it is okay to sleep if were are a relaxed thread
-            //
-            boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
-	    //} else {
-            //syslog (LOG_ERR, "Yikes. someone called btsleep in a real time thread\n");
-	    //}
-	} else {
-	    syslog(LOG_ERR, "Yikes.  btInquireAboutTask returned false\n");
-	}
+  //if (  (-ESRCH) == btInquireAboutTask (&current_task_info)) {
+     //  TODO (bim) resolve this question....
+     //  
+     //printf (" here we are in btsleep and the current task info status is %4x\n", current_task_info.status);
+     //
+     //  this i don't fully understand....I would assume a relaxed bit means the thread is
+     //  not real time....however we see for a typical task
+     //  a status of 300180
+     //              200000  - a shadow task
+     //              100000  - uses the FPU
+     //                 100  - maps to a linux task
+     //                  80  - started.....
+     //
+     //     this seems to differ from the real time task that
+     //                 200  -  relaxed is not set....
+     //
+     //  which seems strange to me cuz' I thought relaxed means
+     //  'fallen out of real time mode'
+     //   bim (5/10/16)
+     //
+     //if (!(current_task_info.status & XNRELAX))  {
+     //
+     //  i presume it is okay to sleep if were are a relaxed thread
+     //
+     boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
+     //} else {
+     //syslog (LOG_ERR, "Yikes. someone called btsleep in a real time thread\n");
+     //} 
 }
-
-
 #if 0
 void btsleep(double duration_s)
 {
