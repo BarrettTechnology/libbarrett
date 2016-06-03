@@ -128,30 +128,98 @@ void btsleep(double duration_s)
   static bool     first_time_called = true;
   struct timespec start_of_sleep;
   struct timespec end_of_sleep;
+  struct timespec actual_sleep_time;
+
   unsigned int    delta_time;
   int             deviation_time;
+  int             nanosleep_return;
 
 
   if (first_time_called) {
     //
     //  if this is the first time in the call....
-    //  ... init all variables
+    //  ... init all global variables
+    //
     max_delay_deviation   = 0;
     min_delay_deviation   = NANO_SEC_PER_SECOND;
     total_delay_deviation = 0;
     loop_count            = 0;
     total_delay           = 0;
   }
-  
-  
-  assert(duration_s > 1e-6);  // Minimum duration is 1 us
-  
-  clock_gettime (CLOCK_MONOTONIC,  &start_of_sleep);
-  boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
-  clock_gettime (CLOCK_MONOTONIC,  &end_of_sleep);
 
   //
-  // are we in the same second?
+  //  who cares about this assert (not me)
+  //
+  //assert(duration_s > 1e-6);  // Minimum duration is 1 us
+
+  //
+  //
+  //  try using the more modern sleep function "clock_nanosleep"
+  //
+  clock_gettime (CLOCK_MONOTONIC, &actual_sleep_time);
+  
+  actual_sleep_time.tv_nsec = actual_sleep_time.tv_nsec + ((long) (duration_s * 1e9));
+  //
+  // if we have more nano seconds that are in one second...fix it
+  //
+  while (actual_sleep_time.tv_nsec >=  NANO_SEC_PER_SECOND) {
+    actual_sleep_time.tv_nsec = actual_sleep_time.tv_nsec - NANO_SEC_PER_SECOND;
+    actual_sleep_time.tv_sec++;
+  }
+
+  //
+  //  get the start of sleep
+  //
+  clock_gettime (CLOCK_MONOTONIC,  &start_of_sleep);
+  //
+  //  sleep....
+  //
+  nanosleep_return = clock_nanosleep (CLOCK_MONOTONIC, TIMER_ABSTIME, &actual_sleep_time, NULL);
+  //
+  //  nanosleep doesn't seem to work so kludge boost sleep back in for a test
+  //
+  // boost::this_thread::sleep(boost::posix_time::microseconds(long(duration_s * 1e6)));
+  // nanosleep_return = 0;
+
+  //
+  //  get the end of sleep
+  //
+  clock_gettime (CLOCK_MONOTONIC,  &end_of_sleep);
+
+  if (0 != nanosleep_return) {
+    switch (errno){
+    case 0:
+      //
+      // this is the happy path.
+      //
+      break;
+    case EFAULT:
+      //
+      //  this is bad
+      //
+      printf ("Yikes clock_nanosleep returned EFAULT\n");
+      break;
+    case EINTR:
+      //
+      //  this is less bad
+      //
+      printf ("Yikes clock_nanosleep returned EINTR\n");
+      break;
+    case EINVAL:
+      //
+      //  this is bad
+      //
+      printf ("Yikes clock_nanosleep returned EINVAL (bad interval) or maybe the clock id is bad\n");
+      break;
+    
+    default:
+      printf ("Yikes clock_nanosleep returned a weird number (%d)\n", errno);
+       break;
+    }
+  }
+
+  //
+  // are start and end of sleep the same second?
   //
   if ( start_of_sleep.tv_sec  == end_of_sleep.tv_sec) {
     //
@@ -160,7 +228,7 @@ void btsleep(double duration_s)
     delta_time = end_of_sleep.tv_nsec - start_of_sleep.tv_nsec;
   } else {
     //
-    //
+    //  not within the same second
     //
     delta_time = (end_of_sleep.tv_nsec + NANO_SEC_PER_SECOND) - start_of_sleep.tv_nsec;
   }
@@ -168,7 +236,7 @@ void btsleep(double duration_s)
   total_delay    = total_delay + (unsigned long long)(duration_s * 1e9);
 
   //
-  // now that we have delta time....
+  // now that we have deviation time....
   // do some time accounting
   //
   total_delay_deviation = total_delay_deviation + deviation_time;
@@ -182,18 +250,15 @@ void btsleep(double duration_s)
   }
 
   //
-  //  now print out some info...every 10 seconds....
-  //  this is ugly...we should do this at the end of the program
-  //  that will be the next step
+  //  first_time_called variable need to be set true
   //
-
-  //
-  //  set the first_time_called variable
-  //
-
   first_time_called = false;
 }
 
+//
+//  a useful function to report on how
+//  we are doing...more could be calculated and reported
+//
 void btPrintSleepStats (void) {
 
   printf ("Printing Sleep Statistics (all times in nano seconds)\n");
