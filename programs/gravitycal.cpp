@@ -660,5 +660,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		gsl_vector_free(mus[j]);
 	free(mus);
 
+	btPrintSleepStats();
+
 	return 0;
 }
