@@ -42,6 +42,9 @@
 namespace barrett {
 namespace systems {
 
+  namespace STUPIDNAMESPACE {
+int NSTEPS=1;
+  }
 
 template<size_t DOF>
 LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
@@ -61,24 +64,38 @@ LowLevelWamWrapper<DOF>::LowLevelWamWrapper(
 template<size_t DOF>
 void LowLevelWamWrapper<DOF>::Sink::operate()
 {
-	parent->llw.setTorques(this->input.getValue());
+  static int count = 0;
+  count++;
+  if (count == 1) { // make sure value gets set the first time through
+    parent->llw.setTorques(this->input.getValue());
+  }
+  if (count >= barrett::systems::STUPIDNAMESPACE::NSTEPS) {
+    count = 0;
+  }
 }
 
 template<size_t DOF>
 void LowLevelWamWrapper<DOF>::Source::operate()
 {
-	try {
-		parent->llw.update();
-	} catch (const std::runtime_error& e) {
-		if (parent->llw.getSafetyModule() != NULL  &&  parent->llw.getSafetyModule()->getMode(true) == SafetyModule::ESTOP) {
-			throw ExecutionManagerException("systems::LowLevelWamWrapper::Source::operate(): E-stop! Cannot communicate with Pucks.");
-		} else {
-			throw;
-		}
-	}
+  static int count = 0;
+  count++;
+  if (count == 1) { // make sure value gets set the first time through
+    try {
+      parent->llw.update();
+    } catch (const std::runtime_error& e) {
+      if (parent->llw.getSafetyModule() != NULL  &&  parent->llw.getSafetyModule()->getMode(true) == SafetyModule::ESTOP) {
+        throw ExecutionManagerException("systems::LowLevelWamWrapper::Source::operate(): E-stop! Cannot communicate with Pucks.");
+      } else {
+        throw;
+      }
+    }
 
-	this->jpOutputValue->setData( &(parent->llw.getJointPositions()) );
-	this->jvOutputValue->setData( &(parent->llw.getJointVelocities()) );
+    this->jpOutputValue->setData( &(parent->llw.getJointPositions()) );
+    this->jvOutputValue->setData( &(parent->llw.getJointVelocities()) );
+  }
+  if (count >= barrett::systems::STUPIDNAMESPACE::NSTEPS) {
+    count = 0;
+  }
 }
 
 
