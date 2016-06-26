@@ -22,7 +22,7 @@
 #define BARRETT_SMF_VALIDATE_ARGS
 #include <barrett/standard_main_function.h>
 
-#include "ex11_master_master.h"
+#include "ex11_master_master_proficio.h"
 
 
 using namespace barrett;
@@ -50,14 +50,22 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
 
-	const jp_type SYNC_POS(0.0);  // the position each WAM should move to before linking
+	jp_type SYNC_POS(0.0);  // the position each WAM should move to before linking
 	
-  /*
 	if(DOF ==3){
-		printf("The program is not currently supported for the Proficios");
-		return 0;
+    // Use home position instead because proficio can't reach (0,0,0)
+    jp_type jpos = wam.getJointPositions();
+    if(jpos[2] < 0) { // Left Config
+      SYNC_POS << -1.01, 0.96, -2.84;
+    }
+    else if(jpos[2] > 0) {
+      SYNC_POS  << -1.01, -0.96, 2.84;
+    }
+    else {
+      printf("No compatible robot was found ");
+      return 0;
+    }
 	}
-  */
 
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
 	systems::connect(wam.jpOutput, mm.input);
