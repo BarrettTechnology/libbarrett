@@ -56,12 +56,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     // Use J3 at 90 degrees instead because proficio can't reach (0,0,0)
     jp_type jpos = wam.getJointPositions();
     if(jpos[2] < 0) { // Left Config
-      SYNC_POS[2] = -M_PI_2;
-      //SYNC_POS << -1.01, 0.96, -2.84;
+      //SYNC_POS[2] = -M_PI_2;
+      SYNC_POS << -1.01, 0.96, -2.83;
     }
     else if(jpos[2] > 0) {
-      SYNC_POS[2] = M_PI_2;
-      //SYNC_POS  << -1.01, -0.96, 2.84;
+      //SYNC_POS[2] = M_PI_2;
+      SYNC_POS  << -1.01, -0.96, 2.83;
     }
     else {
       printf("No compatible robot was found ");
