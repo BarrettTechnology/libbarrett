@@ -67,6 +67,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
       printf("No compatible robot was found ");
       return 0;
     }
+    wam.jpController.setKp(wam.jpController.getKp()/10.0);
+    wam.jpController.setKi(wam.jpController.getKi()/10.0);
+    wam.jpController.setKd(wam.jpController.getKd()/10.0);
 	}
 
 	MasterMaster<DOF> mm(pm.getExecutionManager(), argv[1]);
