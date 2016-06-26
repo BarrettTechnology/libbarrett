@@ -38,6 +38,7 @@ add_programs(
 	ex09_torque_control
 	ex10_haptics
 	ex11_master_master
+	ex11_master_master_proficio
 )
 
 # ex04 uses the ncurses library
