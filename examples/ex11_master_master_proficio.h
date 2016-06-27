@@ -168,10 +168,14 @@ protected:
 		if ( !linked  ||  numMissed >= NUM_MISSED_LIMIT) {
 			linked = false;
 			theirJp = this->input.getValue();
-      // for proficio, check if the robots are same configuration or opposite
-      if (DOF == 3) {
+		} else if (DOF == 3) {
+      // For proficio, check if the robots are same configuration or opposite.
+      // If joint 3 position has opposite sign, configuration is opposite.
+      if ((this->input.getValue())[2]/theirJp[2] < 0) {
+        theirJp[1] = -1.0*theirJp[1];
+        theirJp[2] = -1.0*theirJp[2];
       }
-		}
+    }
 
 		this->outputValue->setData(&theirJp);
 	}
