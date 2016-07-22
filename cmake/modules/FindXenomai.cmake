@@ -48,7 +48,7 @@ if( UNIX )
     set( XENOMAI_EXE_LINKER_FLAGS "-Wl,@${XENOMAI_POSIX_WRAPPERS}" )
 
     # add compile/preprocess options
-    set(XENOMAI_DEFINITIONS "-D_GNU_SOURCE -D_REENTRANT -Wall -pipe -D__XENO__")
+    set(XENOMAI_DEFINITIONS "-D_GNU_SOURCE -D_REENTRANT -Wall -Wno-unused-local-typedefs -pipe -D__XENO__")
 
   else( XENOMAI_DIR )
     MESSAGE(STATUS "xenomai NOT found. (${XENOMAI_SEARCH_PATH})")
