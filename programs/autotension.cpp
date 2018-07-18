@@ -212,7 +212,7 @@ public:
 	}
 
 	std::vector<int> tensionJoint(std::vector<int> joint_list);
-	bool engage(int motor, double timeout);
+	bool engage(int motor, double timeout = 20.0);
 	double pullTension(int motor);
 	void connectSystems();
 };
@@ -550,7 +550,7 @@ std::vector<int> AutoTension<DOF>::tensionJoint(std::vector<int> joint_list) {
 }
 
 template<size_t DOF>
-bool AutoTension<DOF>::engage(int motor, double timeout = 20.0) {
+bool AutoTension<DOF>::engage(int motor, double timeout) {
 	btsleep(1.0); // Let system settle, tang engage
 	holdJP.setValue(wam.getJointPositions()); // Hold Position
 	motorRamp.setSlope(0.8);
