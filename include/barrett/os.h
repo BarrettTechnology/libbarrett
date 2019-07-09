@@ -41,6 +41,8 @@ namespace barrett {
 void btsleep(double duration_s);
 void btsleepRT(double duration_s);
 void btsleep(double duration_s, bool realtime);
+void btPrintSleepStats(void);
+
 
 /** highResolutionSystemTime maintains the current system time measured in seconds.
  *  The resolution is 1 nanosecond when using Xenomai.
@@ -77,3 +79,4 @@ detail::LogFormatter logMessage(const std::string& message,
 
 
 #endif /* BARRETT_OS_H_ */
+

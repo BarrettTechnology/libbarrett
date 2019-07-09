@@ -1,7 +1,7 @@
 set(programs
 	gravitycal
 	zerocal
-	autotension
+	# autotension --> does not compile for some reason
 )
 
 
