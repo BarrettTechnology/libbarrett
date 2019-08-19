@@ -53,10 +53,11 @@ cf_type scale(boost::tuple<cf_type, double> t) {
 }
 
 template <size_t DOF>
-typename units::JointTorques<DOF>::type saturateJt(const typename units::JointTorques<DOF>::type& x, const typename units::JointTorques<DOF>::type& limit) {
+typename units::JointTorques<DOF>::type saturateJt(const typename units::JointTorques<DOF>::type& x) {
+        BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+        jt_type limit(35.0);
 	int index;
 	double minRatio;
-
 	minRatio = (limit.array() / (x.cwiseAbs()).array()).minCoeff(&index);
 	if (minRatio < 1.0) {
 		return minRatio * x;
@@ -68,20 +69,14 @@ typename units::JointTorques<DOF>::type saturateJt(const typename units::JointTo
 template <size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
-
-
     // instantiate Systems
 	NetworkHaptics nh(pm.getExecutionManager(), remoteHost);
-	
 	cp_type center;
-	center << 0.4, -0.3, 0.0;
 	systems::HapticBall ball(center, 0.2);
 	center << 0.35, 0.4, 0.0;
-		
 	math::Vector<3>::type size;
 	size << 0.3, 0.3, 0.3;
 	systems::HapticBox box(center, size);
-
 	systems::Summer<cf_type> dirSum;
 	systems::Summer<double> depthSum;
 	systems::PIDController<double, double> comp;
@@ -89,10 +84,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::TupleGrouper<cf_type, double> tg;
 	systems::Callback<boost::tuple<cf_type, double>, cf_type> mult(scale);
 	systems::ToolForceToJointTorques<DOF> tf2jt;
-
 	jt_type jtLimits(35.0);
-	systems::Callback<jt_type> jtSat(boost::bind(saturateJt<DOF>, _1, jtLimits));
-
+	systems::Callback<jt_type, jt_type> jtSat(saturateJt<DOF>);
 	// configure Systems
 	comp.setKp(kp);
 	comp.setKd(kd);
@@ -139,7 +132,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	connect(tg.output, mult.input);
 	connect(tf2jt.output, jtSat.input);
-
 
 	// adjust velocity fault limit
 	pm.getSafetyModule()->setVelocityLimit(1.5);
