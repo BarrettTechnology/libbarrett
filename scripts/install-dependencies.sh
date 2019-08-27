@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # This script installs the following dependencies:
 #
-# GCC 7
+# GCC 7.4
 # Libconfig-Patched
-# Boost 1.58.0
+# Boost 1.65.1
 # Eigen 3.2.10
 
 # Import the Linux Version Number Variables
@@ -26,7 +26,7 @@ if [ "$DISTRIB_RELEASE" == "18.04" ]; then
 	wget http://bitbucket.org/eigen/eigen/get/3.2.10.tar.bz2
 	tar --bzip2 -xf 3.2.10.tar.bz2
 	cd eigen-eigen-b9cd8366d4e8/
-	mkdir build && cd build
+	mkdir -p build && cd build
 	cmake ../ && make && sudo make install
 
 else

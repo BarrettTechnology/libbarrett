@@ -25,7 +25,8 @@ using detail::waitForEnter;
 
 void printMenu() {
   printf("Commands:\n");
-  printf("  p  Enter a tool pose destination and move to that pose\n");
+  printf("  p  Print current tool pose\n");
+  printf("  t  Enter a tool pose destination and move to that pose\n");
   printf("  r  Record the current pose\n");
   printf("  m  Move to recorded pose\n");
   printf("  h  Move to the home position\n");
@@ -92,6 +93,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
   BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF); 
   pose_type p1;
   pose_type p2;
+  pose_type p3;
   bool recorded = false;
 
   wam.gravityCompensate();
@@ -105,6 +107,16 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
     switch (line[0]) {
     case 'p':
+      p3 = wam.getToolPose();
+      std::cout << "Current pose is: " << boost::get<0>(p3);
+      std::cout << ", [" << boost::get<1>(p3).w();
+      std::cout << ", " << boost::get<1>(p3).vec()[0] << "i";
+      std::cout << ", " << boost::get<1>(p3).vec()[1] << "j";
+      std::cout << ", " << boost::get<1>(p3).vec()[2] << "k]";
+      std::cout << std::endl;
+      break;
+
+    case 't':
       if (parsePose(&p2, line.substr(1))) {
         printPose(p2);
         wam.idle();
