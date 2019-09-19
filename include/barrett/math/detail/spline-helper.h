@@ -48,7 +48,8 @@ template<typename T> class Spline;
 #ifndef BARRETT_PARSED_BY_DOXYGEN
 namespace detail {
 
-
+#define EIGEN_DONT_VECTORIZE
+#define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 template<size_t N,
 	typename T0, typename T1, typename T2, typename T3, typename T4,
 	typename T5, typename T6, typename T7, typename T8, typename T9>
@@ -146,6 +147,8 @@ struct TupleSplineHolder<0, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 	mutable tuple_type data;
 };
 
+#undef EIGEN_DONT_VECTORIZE
+#undef EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
 }
 #endif // BARRETT_PARSED_BY_DOXYGEN
