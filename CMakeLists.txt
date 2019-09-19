@@ -39,6 +39,9 @@ if (OPTIMIZE_FOR_PROCESSOR)
 	set(NEW_FLAGS)  # unset
 endif()
 
+# Suppress warnings from Eigen update
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wno-enum-compare")
+
 # Record the name of the user executing the cmake command
 execute_process(COMMAND whoami OUTPUT_VARIABLE current_user OUTPUT_STRIP_TRAILING_WHITESPACE)
 
