@@ -30,7 +30,7 @@ sudo reboot
 
 ### Compile Libbarrett in non-realtime fashion
 ```
-cmake .
+cmake -DNON_REALTIME=true .
 make
 sudo make install
 ```
