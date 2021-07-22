@@ -325,6 +325,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	systems::connect(tg.output, muCallback.input);
 
 	wam.jpController.setControlSignalLimit(jp_type()); // Disable torque saturation because gravity comp isn't on
+	pm.getSafetyModule()->setTorqueLimit(3.0);
 
 
 	/* Start the GUI! */

@@ -52,7 +52,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	wam.gravityCompensate();
 
-
 	// Is an FTS attached?
 	ForceTorqueSensor* fts = NULL;
 	if (pm.foundForceTorqueSensor()) {
@@ -88,11 +87,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	int handY = 0, handX = 0;
 	int line = 0;
 
-	mvprintw(line++,0, "WAM");
+	mvprintw(line++,0, "WAM Kp: %6.3f, Ki: %6.3f, Kd: %6.3f", wam.jpController.getKp()[0], wam.jpController.getKd()[0], wam.jpController.getKi()[0]);
 	mvprintw(line++,0, "     Joint Positions (rad): ");
 	getyx(stdscr, wamY, wamX);
 	mvprintw(line++,0, "  Joint Velocities (rad/s): ");
 	mvprintw(line++,0, "       Joint Torques (N*m): ");
+	mvprintw(line++,0, "       Motor Torques (raw): ");
+	mvprintw(line++,0, "          Puck Temps (deg): ");
+	mvprintw(line++,0, "        Motor Therms (deg): ");
 	mvprintw(line++,0, "         Tool Position (m): ");
 	mvprintw(line++,0, "   Tool Orientation (quat): ");
 	line++;
@@ -150,6 +152,10 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	Hand::jp_type hjp;
 
+	const PuckGroup& pg = wam.getLowLevelWam().getPuckGroup();
+	int mtrq[DOF];
+	int temps[DOF];
+	int therm[DOF];
 
 	// Fall out of the loop once the user Shift-idles
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
@@ -178,6 +184,30 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		mvprintw(line++,wamX, "[%6.2f", jt[0]);
 		for (size_t i = 1; i < DOF; ++i) {
 			printw(", %6.2f", jt[i]);
+		}
+		printw("]");
+
+		// Puck Torque
+		pg.getProperty(Puck::T, mtrq);
+		mvprintw(line++,wamX, "[%6d", mtrq[0]);
+		for (size_t i = 1; i < DOF; ++i) {
+			printw(", %6d", mtrq[i]);
+		}
+		printw("]");
+
+		// Puck Temp
+		pg.getProperty(Puck::TEMP, temps);
+		mvprintw(line++,wamX, "[%6d", temps[0]);
+		for (size_t i = 1; i < DOF; ++i) {
+			printw(", %6d", temps[i]);
+		}
+		printw("]");
+
+		// Motor Therm
+		pg.getProperty(Puck::THERM, therm);
+		mvprintw(line++,wamX, "[%6d", therm[0]);
+		for (size_t i = 1; i < DOF; ++i) {
+			printw(", %6d", therm[i]);
 		}
 		printw("]");
 
@@ -241,6 +271,20 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 		refresh();  // Ask ncurses to display the new text
+
+		/* Check and handle user keypress */
+		char chr;
+      	if ((chr = getch()) != ERR){
+			  switch(chr){
+				  case 'j': // Hold joint position
+				  	wam.moveTo(wam.getJointPositions());
+				  break;
+				  case 'i': // Idle
+				  	wam.idle();
+				  break;
+			  }
+		}
+
 		btsleep(0.1);  // Slow the loop rate down to roughly 10 Hz
 	}
 
