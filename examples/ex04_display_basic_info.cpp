@@ -203,7 +203,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		to = wam.getToolOrientation();  // We work only with unit quaternions. No saturation necessary.
     	mvprintw(line++,wamX, "%+7.4f %+7.4fi %+7.4fj %+7.4fk", to.w(), to.x(), to.y(), to.z());
 
-    R = to.toRotationMatrix(); // convert to a 3x3 rotation matrix
+    	R = to.toRotationMatrix(); // convert to a 3x3 rotation matrix
     	line++;
     	mvprintw(line++,wamX, "[%+7.4f %+7.4f %+7.4f]", R(0,0), R(0,1), R(0,2));
     	mvprintw(line++,wamX, "[%+7.4f %+7.4f %+7.4f]", R(1,0), R(1,1), R(1,2));
