@@ -44,7 +44,6 @@ void drawBoard(WINDOW *win, int starty, int startx, int rows, int cols,
 void graphPressures(WINDOW *win, int starty, int startx,
 		const TactilePuck::v_type& pressures);
 
-
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
 	BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
@@ -94,6 +93,9 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 	mvprintw(line++,0, "  Joint Velocities (rad/s): ");
 	mvprintw(line++,0, "       Joint Torques (N*m): ");
 	mvprintw(line++,0, "         Tool Position (m): ");
+	mvprintw(line++,0, "     Tool Displacement (m): ");
+	mvprintw(line++,0, "            Tool Force (N): ");
+	mvprintw(line++,0, "      Tool Stiffness (N/m): ");
 	mvprintw(line++,0, "   Tool Orientation (quat): ");
 	line++;
 	mvprintw(line++,0, "                            ");
@@ -150,6 +152,12 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	Hand::jp_type hjp;
 
+	uint8_t chr;
+	cp_type sp; // Start pos
+	cf_type tf; // Tool force
+	double fv; // Force vector
+	double dx, dy, dz;
+	double dv; // Displacement vector
 
 	// Fall out of the loop once the user Shift-idles
 	while (pm.getSafetyModule()->getMode() == SafetyModule::ACTIVE) {
@@ -183,6 +191,14 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 		cp = math::saturate(wam.getToolPosition(), 9.999);
     	mvprintw(line++,wamX, "[%6.3f, %6.3f, %6.3f]", cp[0], cp[1], cp[2]);
+		dx = cp[0]-sp[0]; dy = cp[1]-sp[1]; dz = cp[2]-sp[2];
+		dv = sqrt(dx*dx+dy*dy+dz*dz);
+		mvprintw(line++,wamX, "[%6.3f, %6.3f, %6.3f] [%6.3f]", dx, dy, dz, dv);
+		
+		tf = math::saturate(wam.getToolForce(), 999.99); // Tool force
+		fv = sqrt(tf[0]*tf[0] + tf[1]*tf[1] + tf[2]*tf[2]); // Magnitude of the force vector
+		mvprintw(line++,wamX, "[%6.3f, %6.3f, %6.3f] [%6.3f]", tf[0], tf[1], tf[2], fv);
+		mvprintw(line++,wamX, "[%6.0f]", dv > 0 ? fv/dv : 0);
 
 		to = wam.getToolOrientation();  // We work only with unit quaternions. No saturation necessary.
     	mvprintw(line++,wamX, "%+7.4f %+7.4fi %+7.4fj %+7.4fk", to.w(), to.x(), to.y(), to.z());
@@ -238,6 +254,25 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 			}
 		}
 
+		/* Check and handle user keypress */
+      	if ((chr = getch()) != ERR){
+			switch (chr)
+			{
+			case 'p':
+				wam.moveTo(sp = wam.getToolPosition()); // Blocks by default
+				break;
+			case 'i':
+				wam.idle();
+				break;
+
+			default:
+				while(getch()!=ERR) {
+					// Do nothing
+				}
+
+				break;
+			}
+		}
 
 		refresh();  // Ask ncurses to display the new text
 		btsleep(0.1);  // Slow the loop rate down to roughly 10 Hz
@@ -245,7 +280,6 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	return 0;
 }
-
 
 void drawBoard(WINDOW *win, int starty, int startx, int rows, int cols,
 		int tileHeight, int tileWidth) {

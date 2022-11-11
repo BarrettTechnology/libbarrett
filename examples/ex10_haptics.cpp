@@ -142,7 +142,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	// adjust velocity fault limit
-	pm.getSafetyModule()->setVelocityLimit(1.5);
+	pm.getSafetyModule()->setVelocityLimit(3.0);
 	while (true) {
 		wam.gravityCompensate();
 		connect(jtSat.output, wam.input);
