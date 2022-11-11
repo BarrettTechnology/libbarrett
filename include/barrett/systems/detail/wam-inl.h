@@ -234,6 +234,20 @@ typename Wam<DOF>::cp_type Wam<DOF>::getToolPosition() const
 }
 
 template<size_t DOF>
+typename Wam<DOF>::cf_type Wam<DOF>::getToolForce() const
+{
+	{
+		BARRETT_SCOPED_LOCK(getEmMutex());
+		if (tf2jt.input.valueDefined()) {
+			return tf2jt.input.getValue();
+		}
+	}
+
+	//kin.eval(getJointPositions(), getJointVelocities());
+	return cf_type();
+}
+
+template<size_t DOF>
 typename Wam<DOF>::cv_type Wam<DOF>::getToolVelocity() const
 {
 	kin.eval(getJointPositions(), getJointVelocities());

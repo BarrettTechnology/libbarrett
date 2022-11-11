@@ -150,6 +150,9 @@ public:
 	/** getToolPosition() returns Tool Position in Cartesian Space meters
      */
 	cp_type getToolPosition() const;
+	/** getToolForce() returns Tool Force in Cartesian Space newtons
+     */
+	cf_type getToolForce() const;
 	/** getToolVelocity() returns Tool velocity in meters per second
      */
 	cv_type getToolVelocity() const;
