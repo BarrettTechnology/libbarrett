@@ -118,7 +118,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 	const double T_s = pm.getExecutionManager()->getPeriod();
 
-
+	pm.getSafetyModule()->setVelocityLimit(3.0);
 	wam.gravityCompensate();
 	boost::thread displayThread(displayEntryPoint, pm.getHand());
 
