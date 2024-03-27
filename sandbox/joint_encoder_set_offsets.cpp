@@ -41,13 +41,17 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 
 
 	if (argc == 2  &&  strcmp(argv[1], "--reset") == 0) {
-		for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
+		printf("Resetting...\n");
+    for (size_t i = 0; i < pm.getWamPucks().size(); ++i) {
 			if (pm.getWamPucks()[i] != NULL  &&  pm.getWamPucks()[i]->hasOption(Puck::RO_OpticalEncOnEnc)) {
 				pm.getWamPucks()[i]->setProperty(Puck::JOFST, 0);
-				pm.getWamPucks()[i]->saveProperty(Puck::JOFST);
+				for(size_t k = 0; k < 10; ++k){
+        pm.getWamPucks()[i]->saveAllProperties();
+        btsleep(0.1);
+        }
 			}
 		}
-
+    printf("Done.\n");
 		return 0;
 	}
 
@@ -71,8 +75,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 				printf("%f, %f, %d, %d\n", zeroAngle, je2jp[i], zeroCounts, offset);
 
 				pm.getWamPucks()[i]->setProperty(Puck::JOFST, offset - zeroCounts);
-				pm.getWamPucks()[i]->saveProperty(Puck::JOFST);
-
+				for(size_t j = 0; j < 10; ++j){
+          pm.getWamPucks()[i]->saveProperty(Puck::JOFST);
+          pm.getWamPucks()[i]->saveAllProperties();
+          btsleep(0.1);
+        }
 				angleIdx++;
 			}
 		}
