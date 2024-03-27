@@ -30,6 +30,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <cassert>
@@ -200,10 +201,10 @@ public:
 		default:
 			switch (k) {
 			case K_LEFT:
-				digit = std::min(0 /*MAX_DIGIT*/, digit+1);
+				digit = std::min(MAX_DIGIT, digit+1);
 				break;
 			case K_RIGHT:
-				digit = std::max(-3 /*MIN_DIGIT*/, digit-1);
+				digit = std::max(MIN_DIGIT, digit-1);
 				break;
 
 			case K_UP:
@@ -236,7 +237,14 @@ public:
 					// Log joint encoder data for factory calibration
 					if (llw.hasJointEncoders()) {
 						logMessage("Joint encoder angles: %s") % llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
-					}
+            if(j == 3){
+              std::ofstream out;
+              out.open("/home/robot/Desktop/Offsets.txt");
+              std::cout << out.is_open() << std::endl;
+              out << llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER) << std::endl;
+              out.close();
+              }
+          }
 
 					return false;  // Move on to the next joint!
 				}
