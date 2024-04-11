@@ -71,7 +71,7 @@ CANSocket::CANSocket() :
 {
 }
 
-CANSocket::CANSocket(int port) throw(std::runtime_error) :
+CANSocket::CANSocket(int port) :
 	mutex(), handle(new detail::can_handle)
 {
 	open(port);
@@ -85,7 +85,7 @@ CANSocket::~CANSocket()
 }
 
 
-void CANSocket::open(int port) throw(std::logic_error, std::runtime_error)
+void CANSocket::open(int port)
 {
 	if (isOpen()) {
 		(logMessage("CANSocket::%s(): This object is already associated with a CAN port.")

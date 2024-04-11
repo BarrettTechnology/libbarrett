@@ -161,7 +161,6 @@ int Puck::receiveGetPropertyReply(const bus::CommunicationsBus& bus, int id, int
 }
 
 inline int Puck::getPropertyId(enum Property prop, enum PuckType pt, int fwVers)
-		throw(std::runtime_error)
 {
 	int propId = getPropertyIdNoThrow(prop, pt, fwVers);
 	if (propId == -1) {

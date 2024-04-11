@@ -58,14 +58,14 @@ public:
 	/** CANSocket() Constructors
 	 */
 	CANSocket();
-	CANSocket(int port) throw(std::runtime_error);
+	CANSocket(int port);
 	~CANSocket();
 	/** getMutex() method gets and locks interthread data exchange assuring nothing critical is happening in either thread.
 	 */
 	virtual thread::RealTimeMutex& getMutex() const { return mutex; }
 	/** open() method creates socket communication on a specific port.
 	 */
-	virtual void open(int port) throw(std::logic_error, std::runtime_error);
+	virtual void open(int port);
 	/** close() method destorys socket communication port.
 	 */
 	virtual void close();

@@ -132,8 +132,8 @@ public:
 	void serialize(char* dest) const;
 	static Matrix<R,C, Units> unserialize(char* source);
 
-	void copyTo(gsl_type* gslType) const throw(std::logic_error);
-	void copyFrom(const gsl_type* gslType) throw(std::logic_error);
+	void copyTo(gsl_type* gslType) const;
+	void copyFrom(const gsl_type* gslType);
 
 	void copyFrom(const libconfig::Setting& setting);
 

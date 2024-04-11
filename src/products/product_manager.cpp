@@ -175,8 +175,16 @@ void ProductManager::enumerate()
 	int propId = Puck::getPropertyId(Puck::STAT, Puck::PT_Unknown, 0);
 	Puck* p = NULL;
 	int lastId = -1;
+	int id;
+	unsigned char data[8];
+	size_t len;
 
 	logMessage("ProductManager::%s()") % __func__;
+
+	// Clear out the socket
+	do {
+		ret  = bus->receiveRaw(id, data, len, false);
+	}while(ret != 1);
 
 	logMessage("  Pucks:");
 	for (int id = Puck::MIN_ID; id <= Puck::MAX_ID; ++id) {

@@ -44,8 +44,7 @@ Summer<T, numInputs, RequiresAlignment>::Polarity::Polarity() :  // default: all
 }
 
 template<typename T, size_t numInputs, bool RequiresAlignment>
-Summer<T, numInputs, RequiresAlignment>::Polarity::Polarity(std::string polarityStr)
-throw(std::invalid_argument) :
+Summer<T, numInputs, RequiresAlignment>::Polarity::Polarity(std::string polarityStr) :
 	polarity()
 {
 	if (polarityStr.size() != numInputs) {

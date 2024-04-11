@@ -56,8 +56,7 @@ public:
 			Conversion<OutputType>* conversion);
 
 	template<typename T>
-	void connectInputTo(System::Output<T>& output)  //NOLINT: non-const reference for syntax
-	throw(std::invalid_argument);
+	void connectInputTo(System::Output<T>& output);  //NOLINT: non-const reference for syntax
 
 	template<typename T>
 	bool connectInputToNoThrow(System::Output<T>& output);  //NOLINT: non-const reference for syntax

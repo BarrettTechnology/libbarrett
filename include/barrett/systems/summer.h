@@ -61,7 +61,7 @@ public:
 	class Polarity {
 	public:
 		Polarity();  // default: all positive
-		explicit Polarity(std::string polarityStr) throw(std::invalid_argument);
+		explicit Polarity(std::string polarityStr);
 		explicit Polarity(const std::bitset<numInputs>& inputPolarity) :
 			polarity(inputPolarity) {}
 		virtual ~Polarity() {}

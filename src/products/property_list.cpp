@@ -231,7 +231,6 @@ enum Puck::Property Puck::getPropertyEnumNoThrow(const char* str) {
 }
 
 enum Puck::Property Puck::getPropertyEnum(const char* str)
-throw(std::invalid_argument)
 {
 	enum Property prop = getPropertyEnumNoThrow(str);
 	if (prop == (enum Property) -1) {

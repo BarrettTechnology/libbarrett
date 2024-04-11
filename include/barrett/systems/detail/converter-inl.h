@@ -66,7 +66,6 @@ template<typename OutputType>
 template<typename T>
 void Converter<OutputType>::connectInputTo(
 		System::Output<T>& output)
-throw(std::invalid_argument)
 {
 	if ( !connectInputToNoThrow(output) ) {
 		throw std::invalid_argument(

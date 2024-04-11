@@ -8,6 +8,8 @@
 #include <barrett/math.h>
 #include <barrett/products/product_manager.h>
 #include <barrett/systems.h>
+#include <barrett/systems/abstract/system.h>
+#include <barrett/systems/abstract/single_io.h>
 #include <barrett/units.h>
 
 #define BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
@@ -184,7 +186,7 @@ class JeReader : public systems::SingleIO<double, typename units::JointPositions
 };
 
 template<size_t DOF, int R, int C, typename Units>
-void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, math::Matrix<R,C, Units>* farSideOfIndexes, const std::string& path) {
+void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIndexes, const std::string& path) {
   BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
   jp_type reach(0.0);
@@ -211,7 +213,7 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, math::Matrix<R,C, U
   // The JeReader doesn't use the timer input for anything, however JeReader
   // inherets from SingleIO and SingleIO objects don't run unless they
   // are regularly seeing inputs.
-  connect(time.output, jer.input);
+  //connect(time.output, jer.input);
 
   systems::TupleGrouper<double, jp_type, jp_type> tg;
   connect(time.output, tg.template getInput<0>());
@@ -232,9 +234,9 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, math::Matrix<R,C, U
   std::cout << "Resetting ECMAX and ECMIN..." << std::endl;
   resetEncoderCorrections(pm);
   std::cout << "Finding indexes..." << std::endl;
-  wam.moveTo(*farSideOfIndexes);
+  wam.moveTo(farSideOfIndexes);
   wam.moveHome();
-  wam.moveTo(*farSideOfIndexes);
+  wam.moveTo(farSideOfIndexes);
 
   // get info
   je_me_error = wam.getLowLevelWam().getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER) - wam.getLowLevelWam().getJointPositions(LowLevelWam<DOF>::PS_MOTOR_ENCODER);
@@ -256,7 +258,7 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, math::Matrix<R,C, U
   for (size_t i = 0; i < LOOPS; ++i) {
     std::cout << "Cycle " << i+1 << " of " << LOOPS << std::endl;
     wam.moveTo(reach);
-    wam.moveTo(*farSideOfIndexes);
+    wam.moveTo(farSideOfIndexes);
   }
   std::cout << "Done accumulating..." << std::endl;
 
@@ -452,7 +454,7 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
         break;
 
       case 'c':
-        je_checkout(wam, &pm, &farSideOfIndexes, line.substr(2));
+        je_checkout(wam, &pm, farSideOfIndexes, line.substr(2));
         break;
 
       default:

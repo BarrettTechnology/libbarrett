@@ -178,7 +178,6 @@ inline Matrix<R,C, Units> Matrix<R,C, Units>::unserialize(char* source)
 
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyTo(gsl_type* gslType) const
-throw(std::logic_error)
 {
 	checkSize(gslType);
 	copyToHelper(gslType);
@@ -186,7 +185,6 @@ throw(std::logic_error)
 
 template<int R, int C, typename Units>
 inline void Matrix<R,C, Units>::copyFrom(const gsl_type* gslType)
-throw(std::logic_error)
 {
 	checkSize(gslType);
 	copyFromHelper(gslType);

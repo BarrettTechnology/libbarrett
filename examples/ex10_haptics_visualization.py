@@ -118,7 +118,7 @@ def drawScene():
     glColor4f(*qaBlue)
     glPushMatrix()
     glTranslatef(4, 0, 3.5) # Horizontal, Vertical, Depth
-    #glRotatef(_angle, 0.0, 1.0, 0.0)
+    glRotatef(_angle, 0.0, 1.0, 0.0)
     glutSolidCube(3) # Length of a side
     glPopMatrix()
     
