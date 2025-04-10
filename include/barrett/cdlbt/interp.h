@@ -75,7 +75,7 @@ enum bt_interp_type {
 
 /** This is the GSL interpolator type object to be used with
  * gsl_interp_alloc() when a bt_interp type is to be used. */
-const gsl_interp_type * bt_interp;
+extern const gsl_interp_type * bt_interp;
 
 
 /** This function is used to set the types of the two endpoints before the

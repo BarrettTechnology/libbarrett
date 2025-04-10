@@ -50,7 +50,6 @@ extern "C" {
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_interp.h>
 
-
 /** A bt_spline has two different parameterization modes, arclen and
  *  external.
  *

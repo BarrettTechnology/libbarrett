@@ -27,6 +27,10 @@ option(INSTALL_SANDBOX "Set to ON to copy libbarrett sandbox programs to the cur
 option(CONFIG_PACKAGE "Set to ON to set up CPACK variables necessary for packaging" OFF)
 option(CONFIG_DEBIAN "Set to ON to copy standard barrett-config.cmake, required for Debian packaging" OFF)
 
+# Using std=c++14 because c++17 does not allow dynamic exception specifications (used by libconfig)
+# Defining BOOST_BIND_GLOBAL_PLACEHOLDERS is necessary for compatibility with boost
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -DBOOST_BIND_GLOBAL_PLACEHOLDERS")
+
 if (OPTIMIZE_FOR_PROCESSOR)
 	# TODO(dc): Does this turn on sse2 if supported by processor? What about -mfpmath=sse?
 	# WARNING: This option results in frequent segfaults (why?)

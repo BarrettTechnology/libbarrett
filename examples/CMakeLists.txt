@@ -17,6 +17,8 @@ message(STATUS "BARRETT_LIBRARY_DIRS: ${BARRETT_LIBRARY_DIRS}")
 add_definitions(${BARRETT_DEFINITIONS})
 message(STATUS "BARRETT_DEFINITIONS: ${BARRETT_DEFINITIONS}")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
 ## curses
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})

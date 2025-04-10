@@ -307,7 +307,7 @@ protected:
 		wam.moveTo(jp_type(calPos + calOffset), false);
 	}
 
-	size_t j;
+	int j;
 	const jp_type calPos;
 	std::string endCondition;
 

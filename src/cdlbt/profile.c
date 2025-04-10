@@ -35,8 +35,8 @@
 #include <syslog.h>
 #include <gsl/gsl_blas.h>
 
-#include <barrett/cdlbt/profile.h>
 #include <barrett/cdlbt/interp.h>
+#include <barrett/cdlbt/profile.h>
 
 /* Public functions */
 
