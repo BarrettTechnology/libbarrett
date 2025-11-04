@@ -1,0 +1,11 @@
+[Unit]
+Description=WAM UDP Daemon Service
+After=network.target 
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/wamudpd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
