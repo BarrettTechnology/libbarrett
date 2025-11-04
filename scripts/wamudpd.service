@@ -1,3 +1,8 @@
+# Copy to /etc/systemd/system/wamudpd.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable wamudpd.service
+# sudo systemctl start wamudpd.service
+
 [Unit]
 Description=WAM UDP Daemon Service
 After=network.target 

@@ -1,0 +1,2 @@
+# Copy to /etc/udev/rules.d/60-isacan.rules
+ACTION=="add", KERNEL=="sja1000_isa", RUN+="/usr/local/sbin/reset_can0.sh"
