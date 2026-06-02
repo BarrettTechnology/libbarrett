@@ -30,6 +30,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <cassert>
@@ -200,10 +201,10 @@ public:
 		default:
 			switch (k) {
 			case K_LEFT:
-				digit = std::min(0 /*MAX_DIGIT*/, digit+1);
+				digit = std::min(MAX_DIGIT, digit+1);
 				break;
 			case K_RIGHT:
-				digit = std::max(-3 /*MIN_DIGIT*/, digit-1);
+				digit = std::max(MIN_DIGIT, digit-1);
 				break;
 
 			case K_UP:
@@ -237,7 +238,7 @@ public:
 					if (llw.hasJointEncoders()) {
 						logMessage("Joint encoder angles: %s") % llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
 					  std::cout << "JP (Joint Encoders): " << llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
-          }
+                    }
 
 					return false;  // Move on to the next joint!
 				}
