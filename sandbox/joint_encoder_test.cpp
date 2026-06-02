@@ -3,14 +3,15 @@
 #include <cmath>
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <curses.h>
 
 #include <barrett/log.h>
 #include <barrett/math.h>
 #include <barrett/products/product_manager.h>
 #include <barrett/systems.h>
-#include <barrett/systems/abstract/system.h>
-#include <barrett/systems/abstract/single_io.h>
 #include <barrett/units.h>
+#include <barrett/config.h>
+#include "../programs/utils.h"
 
 #define BARRETT_SMF_DONT_WAIT_FOR_SHIFT_ACTIVATE
 #include <barrett/standard_main_function.h>
@@ -19,6 +20,7 @@
 using namespace barrett;
 using systems::connect;
 
+const std::string CAL_CONFIG_FILE = barrett::EtcPathRelative("calibration.conf");
 
 // Index pulses are 15 degrees away from the standard home position...
 const double OFFSET = 15 * M_PI/180.0;
@@ -27,6 +29,290 @@ const double TOLERANCE = 10 * M_PI/180.0;
 
 // Currently JE's are only available for the first 4 DOF
 const size_t NUM_JOINT_ENCODERS = 4;
+
+// Convenience class that wraps ncurses text attributes.
+class ScopedAttr {
+public:
+  ScopedAttr() : isOn(false), a(-1) {}
+  explicit ScopedAttr(unsigned long attr, bool startOn = false) : isOn(false), a(-1) {
+    set(attr, startOn);
+  }
+  ~ScopedAttr() { off(); }
+
+  void set(unsigned long attr, bool startOn = true) {
+    if (isOn) {
+      off();
+    }
+    a = attr;
+    if (startOn) {
+      on();
+    }
+  }
+  void on() {
+    if (!isOn) {
+      attron(a);
+      isOn = true;
+    }
+  }
+  void off() {
+    if (isOn) {
+      attroff(a);
+      isOn = false;
+    }
+  }
+
+protected:
+  bool isOn;
+  unsigned long a;
+};
+
+
+// Represents a generic step in the calibration process.
+// Handles displaying a menu item and provides hooks for keyboard interactions
+// and state transitions. Can be "selected" and/or "active".
+class CalibrationStep {
+public:
+  explicit CalibrationStep(const std::string& title_ = "") :
+    selected(false), active(false), title(title_) {}
+  virtual ~CalibrationStep() {}
+
+  void setSelected(bool on) { selected = on; }
+  void setActive(bool on) {
+    if (active != on) {
+      active = on;
+      onChangeActive();
+    }
+  }
+
+  virtual void onChangeActive() {}
+  virtual bool onKeyPress(enum Key k) {
+    return true;
+  }
+
+  static const int L_OFFSET = 10;
+
+  // Returns the number of lines that were displayed
+  virtual int display(int top, int left) {
+    ScopedAttr sa(A_BOLD);
+    if (selected) {
+      sa.on();
+      mvprintw(top,left, "--> ] ");
+    } else {
+      mvprintw(top,left, "    ] ");
+    }
+    printw("%s", title.c_str());
+
+    return height(top);
+  }
+
+  // Helper for calculating display heights
+  static int height(int origTop) {
+    return getcury(stdscr) - origTop + 1;
+  }
+
+protected:
+  bool selected, active;
+  std::string title;
+};
+
+// Handles actions an displays associated with adjusting the angle of a
+// particular joint.
+template<size_t DOF>
+class AdjustJointStep : public CalibrationStep {
+  BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+  static const int DEFAULT_DIGIT = -2;  // Start by adjusting the hundredth's place.
+  static const int MAX_DIGIT = 0;  // Display 1's...
+  static const int MIN_DIGIT = -3;  // ... through thousandth's.
+
+public:
+  explicit AdjustJointStep(const libconfig::Setting& setting, systems::Wam<DOF>* wamPtr, jp_type* calOffsetPtr, jp_type* zeroPosPtr, v_type* zeroAnglePtr) :
+    CalibrationStep("Joint " + boost::lexical_cast<std::string>((int)setting[0])),
+    j((int)setting[0] - 1), calPos(setting[1]), endCondition(setting[2].c_str()),
+    wam(*wamPtr), calOffset(*calOffsetPtr), zeroPos(*zeroPosPtr), zeroAngle(*zeroAnglePtr),
+    state(0), digit(DEFAULT_DIGIT)
+  {
+    assert(j >= 0);
+    assert(j < DOF);
+    assert(wamPtr != NULL);
+    assert(calOffsetPtr != NULL);
+    assert(zeroPosPtr != NULL);
+    assert(zeroAnglePtr != NULL);
+  }
+  virtual ~AdjustJointStep() {}
+
+
+  virtual void onChangeActive() {
+    if (active) {
+      // Reset
+      state = 0;
+      digit = DEFAULT_DIGIT;
+    }
+  }
+
+  virtual bool onKeyPress(enum Key k) {
+    switch (state) {
+    // Prompt to move the WAM
+    case 0:
+      if (k == K_ENTER) {
+        state++;
+        move();
+      }
+      break;
+
+    // Wait until the move is done
+    case 1:
+      // This transition is handled in display().
+      break;
+
+    // Adjust the offset
+    default:
+      switch (k) {
+      case K_LEFT:
+        digit = std::min(0 /*MAX_DIGIT*/, digit+1);
+        break;
+      case K_RIGHT:
+        digit = std::max(-3 /*MIN_DIGIT*/, digit-1);
+        break;
+
+      case K_UP:
+        calOffset[j] += std::pow(10.0, digit);
+        move();
+        break;
+      case K_DOWN:
+        calOffset[j] -= std::pow(10.0, digit);
+        move();
+        break;
+
+      case K_ENTER:
+        if (wam.moveIsDone()) {
+          LowLevelWam<DOF>& llw = wam.getLowLevelWam();
+
+          // Record actual joint position, not commanded joint position
+          zeroPos[j] = wam.getJointPositions()[j];
+
+          // Record the motor angles that affect this joint
+          const sqm_type& m2jp = llw.getMotorToJointPositionTransform();
+          double tolerance = m2jp.cwiseAbs().maxCoeff() * 1e-5;
+          for (size_t i = 0; i < DOF; ++i) {
+            // If the j,i entry is non-zero, then Motor i is in some way connected to Joint j
+            if (math::abs(m2jp(j,i)) > tolerance) {
+              int mech = llw.getPucks()[i]->getProperty(Puck::MECH);
+              zeroAngle[i] = llw.getMotorPucks()[i].counts2rad(mech);
+            }
+          }
+
+          // Log joint encoder data for factory calibration
+          if (llw.hasJointEncoders()) {
+            logMessage("Joint encoder angles: %s") % llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
+          }
+
+          return false;  // Move on to the next joint!
+        }
+        break;
+
+      default:
+        break;
+      }
+    }
+
+    return true;
+  }
+
+  virtual int display(int top, int left) {
+    int line = top + CalibrationStep::display(top, left);  // Call super
+    left += L_OFFSET;
+
+    if (active) {
+      ScopedAttr sa(A_STANDOUT, true);
+
+      switch (state) {
+      // Prompt to move the WAM
+      case 0:
+        mvprintw(line++,left, "Press [Enter] to move to: [%0.2f", calPos[0]);
+        for (size_t i = 1; i < DOF; ++i) {
+          printw(", %04.2f", calPos[i]);
+        }
+        printw("]");
+        break;
+
+      // Wait until the move is done
+      case 1:
+        mvprintw(line++,left, "Wait for the WAM to finish moving.");
+
+        if (wam.moveIsDone()) {  // Have we arrived yet?
+          state++;
+        }
+        break;
+
+      // Adjust the offset
+      default:
+        mvprintw(line++,left, "Use arrow keys to adjust the Joint %d offset.", j+1);
+        sa.off();
+        line++;
+        mvprintw(line++,left, "                 ");
+        attron(A_UNDERLINE);
+        printw("Offset (rad)");
+        attroff(A_UNDERLINE);
+        mvprintw(  line,left, "                    %+06.3f", calOffset[j]);
+
+        int x = getcurx(stdscr);
+        mvchgat(line, x-5-digit + ((digit<0) ? 1:0), 1, A_STANDOUT, 0, NULL);
+
+        line += 2;
+        mvprintw(line++,left, "Press [Enter] once %s.", endCondition.c_str());
+        break;
+      }
+    }
+
+    return height(top);
+  }
+
+protected:
+  void move() {
+    while ( !wam.moveIsDone() ) {
+      btsleep(0.02);
+    }
+    wam.moveTo(jp_type(calPos + calOffset), false);
+  }
+
+  size_t j;
+  const jp_type calPos;
+  std::string endCondition;
+
+  systems::Wam<DOF>& wam;
+  jp_type& calOffset;
+  jp_type& zeroPos;
+  v_type& zeroAngle;
+
+  int state, digit;
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+// The Exit menu item.
+class ExitStep : public CalibrationStep {
+public:
+  explicit ExitStep(const std::string& title_ = "Exit") : CalibrationStep(title_) {}
+  virtual ~ExitStep() {}
+
+  virtual bool onKeyPress(enum Key k) {
+    return k != K_ENTER;
+  }
+
+  virtual int display(int top, int left) {
+    int line = top + CalibrationStep::display(top, left);  // Call super
+    left += L_OFFSET;
+
+    if (active) {
+      ScopedAttr sa(A_STANDOUT, true);
+      mvprintw(line++,left, "Press [Enter] to move the home position and record calibration data.");
+    }
+
+    return height(top);
+  }
+};
 
 // Check if joint encoders have been initialized.
 template<size_t DOF>
@@ -51,8 +337,8 @@ void resetEncoderCorrections(ProductManager *pm) {
 // Check if ECMIN and ECMAX are within reasonable bounds. Typically we expect
 // them to be around 35-45, but 200 is a conservative estimate.
 bool checkEncoderCorrections(ProductManager *pm, uint bound = 200) {
-  int ecmin;
-  int ecmax;
+  uint ecmin;
+  uint ecmax;
   for (size_t i = 0; i < pm->getWamPucks().size(); ++i) {
     std::cout << "Checking puck " << i+1 << std::endl;
     if (pm->getWamPucks()[i] != NULL) {
@@ -60,10 +346,12 @@ bool checkEncoderCorrections(ProductManager *pm, uint bound = 200) {
       ecmax = abs(pm->getWamPucks()[i]->getProperty(Puck::ECMAX));
       std::cout << "ECMIN: " << std::setw (10) << ecmin << std::endl;
       std::cout << "ECMAX: " << std::setw (10) << ecmax << std::endl;
+      ///* bypassing encoder check
       if ((ecmin > bound) ||
           (ecmax > bound)) {
         return false;
       }
+      //*/
     }
   }
   return true;
@@ -77,6 +365,7 @@ void printMenu() {
     "   h     hold joint positions" << std::endl <<
     "   g     followed by DOF numbers to go to joint positions" << std::endl <<
     "   i     idle" << std::endl <<
+    "   l     calibrate" << std::endl <<
     "   c     checkout" << std::endl <<
     "   q     quit" << std::endl;
 }
@@ -186,20 +475,23 @@ class JeReader : public systems::SingleIO<double, typename units::JointPositions
 };
 
 template<size_t DOF, int R, int C, typename Units>
-void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIndexes, const std::string& path) {
+void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, math::Matrix<R,C, Units>* farSideOfIndexes, const std::string& path) {
   BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
 
+  printf("Setting up reach...");
   jp_type reach(0.0);
   reach[0] = -2.7;
   reach[1] = 1.8;
   reach[2] = -2.0;
   reach[3] = -0.5;
 
-  const int LOOPS = 20;
+  printf("Setting up loops & tracker arrays...");
+  unsigned int LOOPS = 20;
   int start_ecmax[4] = {0, 0, 0, 0};
   int start_ecmin[4] = {0, 0, 0, 0};
   jp_type je_me_error;
 
+  printf("Setting up temp file for logging...");
   // setup temp file for logging
   char tmpFile[] = "/tmp/btXXXXXX";
   if (mkstemp(tmpFile) == -1) {
@@ -207,14 +499,17 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIn
     return;
   }
 
+  printf("Setting up time system...");
   systems::Ramp time(pm->getExecutionManager(), 1.0);
 
+  printf("Setting up joint encoder reader...");
   JeReader<DOF> jer(&wam);
   // The JeReader doesn't use the timer input for anything, however JeReader
   // inherets from SingleIO and SingleIO objects don't run unless they
   // are regularly seeing inputs.
-  //connect(time.output, jer.input);
+  connect(time.output, jer.input);
 
+  printf("Setting up logger...");
   systems::TupleGrouper<double, jp_type, jp_type> tg;
   connect(time.output, tg.template getInput<0>());
   connect(wam.jpOutput, tg.template getInput<1>());
@@ -234,9 +529,9 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIn
   std::cout << "Resetting ECMAX and ECMIN..." << std::endl;
   resetEncoderCorrections(pm);
   std::cout << "Finding indexes..." << std::endl;
-  wam.moveTo(farSideOfIndexes);
+  wam.moveTo(*farSideOfIndexes);
   wam.moveHome();
-  wam.moveTo(farSideOfIndexes);
+  wam.moveTo(*farSideOfIndexes);
 
   // get info
   je_me_error = wam.getLowLevelWam().getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER) - wam.getLowLevelWam().getJointPositions(LowLevelWam<DOF>::PS_MOTOR_ENCODER);
@@ -258,7 +553,7 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIn
   for (size_t i = 0; i < LOOPS; ++i) {
     std::cout << "Cycle " << i+1 << " of " << LOOPS << std::endl;
     wam.moveTo(reach);
-    wam.moveTo(farSideOfIndexes);
+    wam.moveTo(*farSideOfIndexes);
   }
   std::cout << "Done accumulating..." << std::endl;
 
@@ -286,6 +581,153 @@ void je_checkout(systems::Wam<DOF>& wam, ProductManager* pm, jp_type farSideOfIn
   wam.idle();
 }
 
+template<size_t DOF>
+int je_calibration(systems::Wam<DOF>& wam, ProductManager* pm) {
+  BARRETT_UNITS_TEMPLATE_TYPEDEFS(DOF);
+
+	jp_type calOffset(0.0);  // The offsets as entered by the user
+	jp_type zeroPos(0.0);  // Zero position angles in joint space
+	v_type zeroAngle(0.0);  // Motor positions that correspond to zeroPos
+
+	// Disable torque saturation because gravity compensation is off
+  wam.jpController.setControlSignalLimit(jp_type());
+	wam.moveTo(wam.getJointPositions());  // Hold position
+
+  	// Read from config
+	std::vector<CalibrationStep*> steps;
+	try {
+		libconfig::Config config;
+		config.readFile(CAL_CONFIG_FILE.c_str());
+		const libconfig::Setting& setting = config.lookup("zerocal")[pm->getWamDefaultConfigPath()];
+    const unsigned int JE_DOF = 4; // number of joints with joint encoders
+		assert(setting.isList());
+		assert(setting.getLength() == (int)DOF);
+
+    // Only the first four joints need JE calibration, since we dont support
+    // joint encoders at joint 5 or above (circa 2024)
+		for (size_t i = 0; i < JE_DOF; ++i) {
+			// Populate the menu
+			steps.push_back(new AdjustJointStep<DOF>(setting[i], &wam, &calOffset, &zeroPos, &zeroAngle));
+		}
+	} catch (libconfig::ParseException e) {
+		printf(">>> CONFIG FILE ERROR on line %d of %s: \"%s\"\n", e.getLine(), CAL_CONFIG_FILE.c_str(), e.getError());
+		return 1;
+	} catch (libconfig::SettingNotFoundException e) {
+		printf(">>> CONFIG FILE ERROR in %s: could not find \"%s\"\n", CAL_CONFIG_FILE.c_str(), e.getPath());
+		return 1;
+	} catch (libconfig::SettingTypeException e) {
+		printf(">>> CONFIG FILE ERROR in %s: \"%s\" is the wrong type\n", CAL_CONFIG_FILE.c_str(), e.getPath());
+		return 1;
+	}
+	steps.push_back(new ExitStep);
+
+
+	// Set up ncurses
+	initscr();
+	curs_set(0);
+	noecho();
+	timeout(0);
+
+
+	// Display loop
+	assert(steps.size() >= 1);
+	int selected = 0;
+	steps[selected]->setSelected(true);
+	int active = 0;
+	steps[active]->setActive(true);
+	int maxStep = 0;
+
+	enum Key k;
+	bool done = false;
+	while (pm->getSafetyModule()->getMode() == SafetyModule::ACTIVE  &&  !done) {
+		k = getKey();
+		if (active == -1) {  // Menu mode
+			switch (k) {
+			case K_UP:
+				steps[selected]->setSelected(false);
+				selected = std::max(0, selected-1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_DOWN:
+				steps[selected]->setSelected(false);
+				selected = std::min(maxStep, selected+1);
+				steps[selected]->setSelected(true);
+				break;
+			case K_ENTER:
+				active = selected;
+				steps[active]->setActive(true);
+				break;
+			default:
+				break;
+			}
+		} else {  // Adjust mode
+			switch (k) {
+			case K_BACKSPACE:
+			case K_ESCAPE:
+			case K_TAB:
+				steps[active]->setActive(false);
+				active = -1;
+				break;
+			default:
+				// Forward to the active item by calling onKeyPress()
+				if ( !steps[active]->onKeyPress(k) ) {
+					// This step is done. Move to the next one.
+					steps[selected]->setSelected(false);
+					steps[active]->setActive(false);
+					++selected;
+					if (selected > maxStep)
+						maxStep = selected;
+					if (selected < (int)steps.size()) {
+						active = selected;
+						steps[selected]->setSelected(true);
+						steps[active]->setActive(true);
+					} else {  // Finished the last step!
+						done = true;
+					}
+				}
+				break;
+			}
+		}
+
+		// Display
+		clear();
+		mvprintw(0,18, "*** Barrett WAM Joint Encoder Calibration Utility ***");
+		int top = 3;
+		for (size_t i = 0; i < steps.size(); ++i) {
+			top += steps[i]->display(top,0);
+		}
+		refresh();
+
+		btsleep(0.1);  // Slow loop down to ~10Hz
+	}
+	endwin();  // Turn off ncurses
+	detail::purge(steps);
+
+
+	// Restore stdout's line buffering
+	if (freopen(NULL, "w", stdout) == NULL) {
+		fprintf(stderr, ">>> ERROR: freopen(stdout) failed.\n");
+		return 1;
+	}
+
+	if (done) {
+		printf(">>> Calibration completed!\n");
+
+		// Move home!
+		printf(">>> Moving back to home position.\n");
+		wam.moveHome();
+	} else {
+		printf(">>> ERROR: WAM was Idled before the calibration was completed.\n");
+		return 1;
+	}
+
+
+	pm->getSafetyModule()->waitForMode(SafetyModule::IDLE);
+	// Make sure the user applies their new calibration
+	pm->getSafetyModule()->setWamZeroed(false);
+
+	return 0;
+}
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {
@@ -392,6 +834,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
     jp_type diff;
     double diff_norm;
 
+    std::cout << line[0] << std::endl;
+
     switch (line[0]) {
       case 'h':
         wam.moveTo(wam.getJointPositions());
@@ -454,7 +898,11 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
         break;
 
       case 'c':
-        je_checkout(wam, &pm, farSideOfIndexes, line.substr(2));
+        je_checkout(wam, &pm, &farSideOfIndexes, line.substr(2));
+        break;
+
+      case 'l':
+        je_calibration(wam, &pm);
         break;
 
       default:

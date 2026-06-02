@@ -236,7 +236,8 @@ public:
 					// Log joint encoder data for factory calibration
 					if (llw.hasJointEncoders()) {
 						logMessage("Joint encoder angles: %s") % llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
-					}
+					  std::cout << "JP (Joint Encoders): " << llw.getJointPositions(LowLevelWam<DOF>::PS_JOINT_ENCODER);
+          }
 
 					return false;  // Move on to the next joint!
 				}
@@ -307,7 +308,7 @@ protected:
 		wam.moveTo(jp_type(calPos + calOffset), false);
 	}
 
-	int j;
+	size_t j;
 	const jp_type calPos;
 	std::string endCondition;
 

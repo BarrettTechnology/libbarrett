@@ -26,6 +26,17 @@ function(add_programs)
 	endforeach()
 endfunction()
 
+function(add_programs_with_get_key)
+	foreach (prog ${ARGV})
+		add_executable(${prog} ../programs/get_key.cpp ${prog}.cpp)
+		target_link_libraries(${prog} ${BARRETT_LIBRARIES})
+	endforeach()
+endfunction()
+
+add_programs_with_get_key(
+  joint_encoder_test
+)
+
 add_programs(
 #	autohome
 	can_terminal
@@ -45,7 +56,6 @@ add_programs(
 	joint_encoder_index_adjustments
 	joint_encoder_init
 	joint_encoder_set_offsets
-  joint_encoder_test
 	load_ft_cal
 #	log_ft_data
 #	log_hand_jp
@@ -78,3 +88,4 @@ add_programs(
 #target_link_libraries(hand_buttons_test parapin)
 #target_link_libraries(full_system_test ${CURSES_LIBRARIES})
 target_link_libraries(tactile_test ${CURSES_LIBRARIES})
+target_link_libraries(joint_encoder_test ${CURSES_LIBRARIES})
