@@ -145,7 +145,7 @@ TEST_F(PIDControllerTest, SetKp) {
 	eios.setOutputValue(a);
 	for (size_t i = 0; i < 10; ++i) {
 		mem.runExecutionCycle();
-		EXPECT_EQ(a.array()*a, eios.getInputValue());
+		EXPECT_EQ((a.array()*a.array()).matrix(), eios.getInputValue());
 	}
 }
 
@@ -216,7 +216,7 @@ TEST_F(PIDControllerTest, SetIntegratorLimit) {
 	for (size_t i = 0; i <= 11; ++i) {
 		mem.runExecutionCycle();
 //		EXPECT_EQ(5.8 + (a*i).array(), eios.getInputValue());
-		EXPECT_TRUE(eios.getInputValue().isApprox(5.8 + (a*i).array()));
+		EXPECT_TRUE(eios.getInputValue().isApprox((5.8 + (a*i).array()).matrix()));
 	}
 	for (size_t i = 12; i < 15; ++i) {
 		mem.runExecutionCycle();
@@ -241,7 +241,7 @@ TEST_F(PIDControllerTest, SetControlSignalLimit) {
 	eios.setOutputValue(i_type(0.1));
 	mem.runExecutionCycle();
 //	EXPECT_EQ(i_type(0.1).array() * a, eios.getInputValue());
-	EXPECT_TRUE(eios.getInputValue().isApprox(i_type(0.1).array() * a));
+	EXPECT_TRUE(eios.getInputValue().isApprox((i_type(0.1).array() * a.array()).matrix()));
 
 	eios.setOutputValue(i_type(2.0));
 	mem.runExecutionCycle();
