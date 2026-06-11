@@ -39,9 +39,9 @@ struct Vector {
 
 
 template<int R, int C, typename Units>
-class Matrix : public Eigen::Matrix<double, R,C, (C==1 && R>1) ? Eigen::ColMajor : Eigen::RowMajor> {
+class Matrix : public Eigen::Matrix<double, R,C, (C==1 && R!=1) ? Eigen::ColMajor : Eigen::RowMajor> {
 public:
-	typedef Eigen::Matrix<double, R,C, (C==1 && R>1) ? Eigen::ColMajor : Eigen::RowMajor> Base;
+	typedef Eigen::Matrix<double, R,C, (C==1 && R!=1) ? Eigen::ColMajor : Eigen::RowMajor> Base;
 	typedef Matrix<R,C, Units> type;
 
 	typedef typename boost::mpl::if_c<
