@@ -213,7 +213,11 @@ int bt_spline_get(struct bt_spline * spline, gsl_vector * result, double s)
    for (i=0; i<spline->dimension; i++)
    {
       double coord;
-      coord = gsl_interp_eval( spline->interps[i], spline->ss, spline->points[i], s, spline->acc );
+      /* Call the interpolation type's eval function directly because
+       * gsl_interp_eval() rejects values of s outside the sampled domain,
+       * while bt_interp is designed to extrapolate them. */
+      spline->interps[i]->type->eval( spline->interps[i]->state, spline->ss,
+            spline->points[i], spline->interps[i]->size, s, spline->acc, &coord );
       gsl_vector_set( result, i, coord );
    }
    return 0;
