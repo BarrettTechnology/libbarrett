@@ -28,16 +28,14 @@ if [ "$DISTRIB_RELEASE" = "20.04" ] || [ "$DISTRIB_RELEASE" = "24.04" ]; then
 	grep -qF GRUB_GFXPAYLOAD_LINUX /etc/default/grub || echo 'GRUB_GFXPAYLOAD_LINUX=keep' | sudo tee -a /etc/default/grub > /dev/null
 	sudo update-grub
 
+	# libbarrett now works with stock libconfig (no Barrett patch needed)
+	sudo apt install -y libconfig-dev libconfig++-dev libgtest-dev
+
 	if [ "$DISTRIB_RELEASE" = "20.04" ]; then
-		# Download and Install patched Libconfig 1.4.5 (supporting C & C++ simultaneously)
-		cd ~/Downloads && wget http://web.barrett.com/support/WAM_Installer/libconfig-1.4.5-PATCHED.tar.gz
-		tar -xf libconfig-1.4.5-PATCHED.tar.gz
-		cd libconfig-1.4.5 && ./configure && make -j$(nproc)
-		sudo make install
-		sudo ldconfig
-	else
-		# libbarrett now works with stock libconfig (no Barrett patch needed)
-		sudo apt install -y libconfig-dev libconfig++-dev libgtest-dev
+		# 20.04's libgtest-dev ships sources only; build and install the static libs
+		cmake -S /usr/src/googletest -B /tmp/gtest-build -DCMAKE_BUILD_TYPE=Release
+		make -C /tmp/gtest-build -j$(nproc)
+		sudo cp /tmp/gtest-build/lib/*.a /usr/lib
 	fi
 else
 	echo "This script must run under Ubuntu 20.04 or 24.04"
