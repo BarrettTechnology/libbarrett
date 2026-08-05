@@ -165,7 +165,8 @@ TEST(LogReaderTest, ExportCSVDouble) {
 	lr.exportCSV(tmpFile2);
 	lr.close();
 
-	char contents[] = "3e+07\n-12\n432\n8.888\n";
+	// 3e7 prints as 30000000 because exportCSV() uses precision(10)
+	char contents[] = "30000000\n-12\n432\n8.888\n";
 	verifyFileContents(tmpFile2, contents, sizeof(contents) - 1 /*ignore the \0 on the end! */);
 
 	std::remove(tmpFile);
@@ -197,7 +198,8 @@ TEST(LogReaderTest, ExportCSVArray) {
 	lr.exportCSV(tmpFile2);
 	lr.close();
 
-	char contents[] = "23,54,34,4,25,23,6,46,23,-6,11,868,12312,-44.2,1\n0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111,0.111111\n";
+	// 1.0/9.0 prints as 0.1111111111 because exportCSV() uses precision(10)
+	char contents[] = "23,54,34,4,25,23,6,46,23,-6,11,868,12312,-44.2,1\n0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111,0.1111111111\n";
 	verifyFileContents(tmpFile2, contents, sizeof(contents) - 1 /*ignore the \0 on the end! */);
 
 	std::remove(tmpFile);
@@ -239,7 +241,8 @@ TEST(LogReaderTest, ExportCSVTupleB) {
 	lr.exportCSV(tmpFile2);
 	lr.close();
 
-	char contents[] = "23,54,34,4,25,23,6,46,23,-6,11,868,12312,-44.2,1,2.32382e-06,-0.5,2.23,867,-3.478e+07\n23,6,46,23,-6,11,868,12312,-44.2,1,23,54,34,4,25,77712,8.5,234.23,65656,1\n";
+	// 2.323823e-06 and -34780000 are formatted by exportCSV()'s precision(10)
+	char contents[] = "23,54,34,4,25,23,6,46,23,-6,11,868,12312,-44.2,1,2.323823e-06,-0.5,2.23,867,-34780000\n23,6,46,23,-6,11,868,12312,-44.2,1,23,54,34,4,25,77712,8.5,234.23,65656,1\n";
 	verifyFileContents(tmpFile2, contents, sizeof(contents) - 1 /*ignore the \0 on the end! */);
 
 	std::remove(tmpFile);

@@ -7,6 +7,7 @@
 
 #include <libconfig.h++>
 
+#include <barrett/detail/libconfig_compat.h>
 #include <barrett/units.h>
 #include <barrett/cdlbt/dynamics.h>
 
@@ -18,7 +19,7 @@ namespace math {
 template<size_t DOF>
 Dynamics<DOF>::Dynamics(const libconfig::Setting& setting)
 {
-	if (bt_dynamics_create(&impl, setting.getCSetting(), DOF)) {
+	if (bt_dynamics_create(&impl, ::barrett::detail::getCSetting(setting), DOF)) {
 		throw(std::runtime_error("(math::Dynamics::Dynamics): Couldn't initialize Dynamics struct."));
 	}
 }

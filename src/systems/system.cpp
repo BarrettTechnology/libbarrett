@@ -98,6 +98,13 @@ void System::setExecutionManager(ExecutionManager* newEm)
 			assert(getExecutionManager() == newEm);
 		} else {
 			em = newEm;
+			// Reset the update token so that tokens issued by the new
+			// ExecutionManager can't collide with the token from the old one.
+			// Otherwise a System that moves to a new ExecutionManager skips
+			// the first execution cycle whose token happens to match the last
+			// token it saw. (Pivotal Tracker story 28313197, now offline;
+			// reproduced by ManualExecutionManagerTest.UpdateTokensDontCollide.)
+			ut = UT_NULL;
 			onExecutionManagerChanged();
 
 			child_input_list_type::iterator i(inputs.begin()), iEnd(inputs.end());

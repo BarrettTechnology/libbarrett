@@ -2,6 +2,12 @@ project(libbarrett_tests)
 
 # TODO(dc): gtest finder
 
+# The death tests depend on assert(), so make sure the optimized build types
+# don't define NDEBUG when compiling the tests.
+foreach(flags_var CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL)
+	string(REPLACE "-DNDEBUG" "" ${flags_var} "${${flags_var}}")
+endforeach()
+
 # Listing sources explicitly allows cmake to notice when a new source file is added.
 #file(GLOB_RECURSE tests_SOURCES "*.cpp")
 set(tests_SOURCES
@@ -47,6 +53,7 @@ add_executable(tests ${tests_SOURCES})
 target_link_libraries(tests
 	barrett
 	gtest_main
+	gtest
 	${Boost_LIBRARIES}
 	${GSL_LIBRARIES}
 	${XENOMAI_LIBRARY_XENOMAI} ${XENOMAI_LIBRARY_NATIVE}

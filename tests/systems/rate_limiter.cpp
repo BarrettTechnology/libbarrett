@@ -57,6 +57,9 @@ protected:
 	ExposedIOSystem<T> eios;
 };
 
+// Out-of-class definition is required when T_s is ODR-used (until C++17).
+template<typename T> constexpr double RateLimiterTest<T>::T_s;
+
 
 // Test for T = double
 typedef RateLimiterTest<double> RateLimiterDoubleTest;

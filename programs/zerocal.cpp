@@ -347,6 +347,10 @@ public:
 	}
 };
 
+// Out-of-class definitions are required when these are ODR-used (until C++17).
+template<size_t DOF> const int AdjustJointStep<DOF>::MAX_DIGIT;
+template<size_t DOF> const int AdjustJointStep<DOF>::MIN_DIGIT;
+
 
 template<size_t DOF>
 int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) {

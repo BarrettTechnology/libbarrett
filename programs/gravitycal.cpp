@@ -40,6 +40,7 @@
 #include <gsl/gsl_linalg.h>
 #include <boost/tuple/tuple.hpp>
 
+#include <barrett/detail/libconfig_compat.h>
 #include <barrett/exception.h>
 #include <barrett/units.h>
 #include <barrett/systems.h>
@@ -491,8 +492,8 @@ int wam_main(int argc, char** argv, ProductManager& pm, systems::Wam<DOF>& wam) 
 		 * in torques[] and positions[] */
 
 		libconfig::Setting& setting = pm.getConfig().lookup(pm.getWamDefaultConfigPath());
-		bt_kinematics_create(&kin, setting["kinematics"].getCSetting(), n);
-		bt_calgrav_create(&grav, setting["gravity_compensation"].getCSetting(), n);
+		bt_kinematics_create(&kin, detail::getCSetting(setting["kinematics"]), n);
+		bt_calgrav_create(&grav, detail::getCSetting(setting["gravity_compensation"]), n);
 
 		/* Make the nLL matrix */
 		nLL = gsl_matrix_calloc(3 * num_poses, 3 + 2 * num_poses);
